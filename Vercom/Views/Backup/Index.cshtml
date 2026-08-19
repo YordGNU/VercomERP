@@ -1,0 +1,121 @@
+@model IEnumerable<Vercom.Models.BackupLog>
+@using System.IO
+@{
+    ViewBag.Title = "Seguridad de Datos";    
+}
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Copias de Seguridad (Backup)</h4>
+    </div>
+</div>
+<div class="row mt-4">
+    <div class="col-12 mb-4">
+        <div class="alert alert-warning border-0 d-flex align-items-center mb-0">
+            <i class="ti ti-alert-triangle fs-24 me-2"></i>
+            <div>
+                <strong>Recomendación de Control Interno:</strong> Se sugiere realizar un respaldo completo antes de cada cierre de periodo contable.
+            </div>           
+        </div>
+    </div>
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header border-light justify-content-between">
+                <h4 class="card-title">Historial de Resguardos</h4>
+                <div>
+                    <form asp-action="Create" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-danger">
+                            <i class="ti ti-database-export me-1"></i> GENERAR RESPALDO AHORA
+                        </button>
+                    </form>
+                    <form asp-action="CleanOldBackups" method="post" class="d-inline ms-2">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="daysToKeep" value="30" />
+                        <button type="submit" class="btn btn-outline-secondary btn-sm"
+                                onclick="return confirm('¿Eliminar respaldos de más de 30 días?')">
+                            <i class="ti ti-trash me-1"></i> Limpiar antiguos
+                        </button>
+                    </form>
+                </div>                
+            </div>
+            <div class="card-body">
+                <table id="respaldoTable" class="table table-striped dt-responsive mb-0">
+                    <thead class ="thead-sm text-uppercase fs-xxs">
+                        <tr>
+                            <th>Fecha Iniciado</th>
+                            <th>Tipo</th>
+                            <th>Estado</th>
+                            <th>Tamaño</th>
+                            <th>Archivo</th>
+                            <th>Mensaje / Error</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var log in Model)
+                        {
+                            var statusClass = log.Estado == "COMPLETADO" ? "badge bg-success" : (log.Estado == "FALLIDO" ? "badge bg-danger" : "badge bg-warning");
+                            var fileName = System.IO.Path.GetFileName(log.RutaArchivo);
+                            var path = log.RutaArchivo;
+                            var exists = System.IO.File.Exists(path);
+
+                            <tr>
+                                <td class="fw-bold">@log.IniciadoEn.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                <td><span class="badge bg-secondary-subtle text-secondary">@log.Tipo</span></td>
+                                <td><span class="@statusClass">@log.Estado</span></td>
+                                <td>
+                                    @if (log.TamanoBytes > 0)
+                                    {
+                                        <span>@((log.TamanoBytes / 1024.0 / 1024.0)?.ToString("F2")) MB</span>
+                                    }
+                                    else
+                                    {
+                                        <span>-</span>
+                                    }
+                                </td>
+                                <td class="small text-muted">
+                                    <code class="text-dark">@fileName</code>
+                                </td>
+                                <td class="small text-danger">@log.MensajeError</td>
+                                <td>
+                                    @if (log.Estado == "COMPLETADO" && exists)
+                                    {
+                                        <div class="d-flex justify-content-center gap-1">
+                                            <a asp-action="Download" asp-route-id="@log.Id" class="btn btn-light btn-icon btn-sm rounded-circle" title="Descargar">
+                                                <i class="ti ti-download"></i>
+                                            </a>                                          
+                                            <form asp-action="Restore" asp-route-id="@log.Id" method="post" class="d-inline"
+                                                  onsubmit="return confirm('⚠️ ¿Restaurar la base de datos desde este respaldo? Esta acción reemplazará todos los datos actuales.')">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-light btn-icon btn-sm rounded-circle" title="Restaurar">
+                                                    <i class="ti ti-rotate-clockwise"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">No se han realizado respaldos todavía.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#respaldoTable').DataTable({
+                language: { url: '@Url.Content("~/lib/i18n/es-ES.json")' },
+                order: [[1, 'asc']],
+                dom: '<"row align-items-center"<"col-md-6"l><"col-md-6"f>>rt<"row align-items-center"<"col-md-5"i><"col-md-7"p>>',
+            });
+        });
+    </script>
+}
