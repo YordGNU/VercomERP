@@ -1,0 +1,91 @@
+﻿@model Vercom.Models.ApiToken
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+
+
+<h4>ApiToken</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Editar ApiToken</h4>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">ApiToken</a></li>
+            <li class="breadcrumb-item active">Editar</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Formulario de Edición</h4>
+                </div>
+                <div class="card-body">
+<form class="row g-3" asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="mb-3">
+                <label asp-for="ApiClienteId" class="form-label"></label>
+                <select asp-for="ApiClienteId" class="form-control" asp-items="ViewBag.ApiClienteId"></select>
+                <span asp-validation-for="ApiClienteId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="TokenHash" class="form-label"></label>
+                <input asp-for="TokenHash" class="form-control" />
+                <span asp-validation-for="TokenHash" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Tipo" class="form-label"></label>
+                <input asp-for="Tipo" class="form-control" />
+                <span asp-validation-for="Tipo" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="EmitidoEn" class="form-label"></label>
+                <input asp-for="EmitidoEn" class="form-control" />
+                <span asp-validation-for="EmitidoEn" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="ExpiraEn" class="form-label"></label>
+                <input asp-for="ExpiraEn" class="form-control" />
+                <span asp-validation-for="ExpiraEn" class="text-danger"></span>
+            </div>
+            <div class="form-group form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="Revocado" /> @Html.DisplayNameFor(model => model.Revocado)
+                </label>
+            </div>
+            <div class="mb-3">
+                <label asp-for="IpOrigen" class="form-label"></label>
+                <input asp-for="IpOrigen" class="form-control" />
+                <span asp-validation-for="IpOrigen" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

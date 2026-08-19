@@ -1,0 +1,50 @@
+@model Vercom.Models.Rol
+@{
+    ViewBag.Title = "Gestionar Permisos";
+    var allPermissions = ViewBag.AllPermissions as List<Vercom.Models.Permiso>;
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Matriz de Permisos: @Model.Nombre</h4>
+    </div>
+</div>
+
+<div class="container-xxl mt-4">
+    <div class="card">
+        <form asp-action="ManagePermissions" method="post">
+            <input type="hidden" asp-for="Id" />
+
+            <div class="card-body">
+                <p class="text-muted mb-4">Seleccione los permisos que tendrá este rol dentro de la plataforma.</p>
+
+                @foreach (var group in allPermissions.GroupBy(p => p.Modulo))
+                {
+                    <div class="mb-4">
+                        <h5 class="text-primary border-bottom pb-2">Módulo: @group.Key</h5>
+                        <div class="row">
+                            @foreach (var perm in group)
+                            {
+                                <div class="col-md-4 mb-2">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="selectedPermissions" value="@perm.Id"
+                                               id="perm_@perm.Id" @(Model.Permisos.Any(p => p.Id == perm.Id) ? "checked" : "")>
+                                        <label class="form-check-label" for="perm_@perm.Id">
+                                            <strong>@perm.Codigo</strong><br>
+                                            <small class="text-muted">@perm.Descripcion</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="card-footer bg-light d-flex justify-content-end gap-2">
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary">GUARDAR CAMBIOS</button>
+            </div>
+        </form>
+    </div>
+</div>

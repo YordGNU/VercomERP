@@ -1,0 +1,96 @@
+﻿@model Vercom.Models.PeriodoContable
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+
+
+<h4>PeriodoContable</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Editar PeriodoContable</h4>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">PeriodoContable</a></li>
+            <li class="breadcrumb-item active">Editar</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Formulario de Edición</h4>
+                </div>
+                <div class="card-body">
+<form class="row g-3" asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="mb-3">
+                <label asp-for="EntidadId" class="form-label"></label>
+                <input asp-for="EntidadId" class="form-control" />
+                <span asp-validation-for="EntidadId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Anio" class="form-label"></label>
+                <input asp-for="Anio" class="form-control" />
+                <span asp-validation-for="Anio" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Mes" class="form-label"></label>
+                <input asp-for="Mes" class="form-control" />
+                <span asp-validation-for="Mes" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="FechaInicio" class="form-label"></label>
+                <input asp-for="FechaInicio" class="form-control" />
+                <span asp-validation-for="FechaInicio" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="FechaFin" class="form-label"></label>
+                <input asp-for="FechaFin" class="form-control" />
+                <span asp-validation-for="FechaFin" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Estado" class="form-label"></label>
+                <input asp-for="Estado" class="form-control" />
+                <span asp-validation-for="Estado" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="CerradoPor" class="form-label"></label>
+                <input asp-for="CerradoPor" class="form-control" />
+                <span asp-validation-for="CerradoPor" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="CerradoEn" class="form-label"></label>
+                <input asp-for="CerradoEn" class="form-control" />
+                <span asp-validation-for="CerradoEn" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

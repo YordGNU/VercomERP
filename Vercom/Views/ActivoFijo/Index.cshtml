@@ -1,0 +1,158 @@
+﻿@model IEnumerable<Vercom.Models.ActivoFijo>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Gestión de ActivoFijo</h4>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">ActivoFijo</a></li>
+            <li class="breadcrumb-item active">Listado</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Listado de ActivoFijo</h4>
+                </div>
+                <div class="card-body">
+
+
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<div class="table-responsive"><table class="table data-table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.EntidadId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SucursalId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CodigoInventario)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Descripcion)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FechaAdquisicion)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ValorAdquisicion)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ValorResidual)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.VidaUtilMeses)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.TasaDepreciacionAnual)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MetodoDepreciacion)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DepreciacionAcumulada)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Estado)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FechaBaja)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MotivoBaja)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CuentaActivo)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CuentaDepreciacion)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CuentaGastoDep)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.EntidadId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.SucursalId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CodigoInventario)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Descripcion)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FechaAdquisicion)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ValorAdquisicion)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ValorResidual)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.VidaUtilMeses)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TasaDepreciacionAnual)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.MetodoDepreciacion)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DepreciacionAcumulada)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Estado)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FechaBaja)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.MotivoBaja)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CuentaActivo.Id)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CuentaDepreciacion.Id)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CuentaGastoDep.Id)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

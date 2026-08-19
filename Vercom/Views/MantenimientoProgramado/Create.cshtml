@@ -1,0 +1,84 @@
+﻿@model Vercom.Models.MantenimientoProgramado
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+
+
+<h4>MantenimientoProgramado</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Crear MantenimientoProgramado</h4>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">MantenimientoProgramado</a></li>
+            <li class="breadcrumb-item active">Crear</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Formulario de Creación</h4>
+                </div>
+                <div class="card-body">
+<form class="row g-3" asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="mb-3">
+                <label asp-for="EquipoId" class="form-label"></label>
+                <select asp-for="EquipoId" class ="form-control" asp-items="ViewBag.EquipoId"></select>
+            </div>
+            <div class="mb-3">
+                <label asp-for="FechaProgramada" class="form-label"></label>
+                <input asp-for="FechaProgramada" class="form-control" />
+                <span asp-validation-for="FechaProgramada" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="FechaEjecutada" class="form-label"></label>
+                <input asp-for="FechaEjecutada" class="form-control" />
+                <span asp-validation-for="FechaEjecutada" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Descripcion" class="form-label"></label>
+                <input asp-for="Descripcion" class="form-control" />
+                <span asp-validation-for="Descripcion" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Costo" class="form-label"></label>
+                <input asp-for="Costo" class="form-control" />
+                <span asp-validation-for="Costo" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="ResponsableId" class="form-label"></label>
+                <input asp-for="ResponsableId" class="form-control" />
+                <span asp-validation-for="ResponsableId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

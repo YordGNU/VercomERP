@@ -1,0 +1,93 @@
+﻿@model Vercom.Models.RegistroAsistencium
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+
+
+<h4>RegistroAsistencium</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Crear RegistroAsistencium</h4>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">RegistroAsistencium</a></li>
+            <li class="breadcrumb-item active">Crear</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Formulario de Creación</h4>
+                </div>
+                <div class="card-body">
+<form class="row g-3" asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="mb-3">
+                <label asp-for="EmpleadoId" class="form-label"></label>
+                <select asp-for="EmpleadoId" class ="form-control" asp-items="ViewBag.EmpleadoId"></select>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Fecha" class="form-label"></label>
+                <input asp-for="Fecha" class="form-control" />
+                <span asp-validation-for="Fecha" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="HoraEntrada" class="form-label"></label>
+                <input asp-for="HoraEntrada" class="form-control" />
+                <span asp-validation-for="HoraEntrada" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="HoraSalida" class="form-label"></label>
+                <input asp-for="HoraSalida" class="form-control" />
+                <span asp-validation-for="HoraSalida" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="HorasExtra" class="form-label"></label>
+                <input asp-for="HorasExtra" class="form-control" />
+                <span asp-validation-for="HorasExtra" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="TipoAusenciaId" class="form-label"></label>
+                <select asp-for="TipoAusenciaId" class ="form-control" asp-items="ViewBag.TipoAusenciaId"></select>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Observaciones" class="form-label"></label>
+                <input asp-for="Observaciones" class="form-control" />
+                <span asp-validation-for="Observaciones" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="RegistradoPor" class="form-label"></label>
+                <input asp-for="RegistradoPor" class="form-control" />
+                <span asp-validation-for="RegistradoPor" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

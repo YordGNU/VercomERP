@@ -1,0 +1,209 @@
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+
+<div class="sidenav-menu">
+
+    <!-- Brand Logo -->
+    <a asp-controller="Home" asp-action="Index" class="logo" style="text-align:center;">
+        <span class="logo logo-light">
+            <span class="logo-lg"><img src="~/css/images/logo.svg" alt="logo" style="height: calc(.9064rem + 1.5em + 16px);"></span>
+        </span>
+    </a>
+
+    <button class="button-on-hover"><i class="ti ti-menu-4 fs-22 align-middle"></i></button>
+    <button class="button-close-offcanvas"><i class="ti ti-x align-middle"></i></button>
+
+    <div class="scrollbar" data-simplebar="">
+        <ul class="side-nav">
+            <li class="side-nav-title">Navegación</li>
+
+            <!-- Dashboard -->
+            <li class="side-nav-item">
+                <a asp-controller="Dashboard" asp-action="Index" class="side-nav-link">
+                    <span class="menu-icon"><i class="ti ti-dashboard"></i></span>
+                    <span class="menu-text"> Dashboard </span>
+                </a>
+            </li>
+
+            <!-- Contabilidad -->
+            <li class="side-nav-item">
+                <a data-bs-toggle="collapse" href="#sidebarContabilidad" class="side-nav-link">
+                    <span class="menu-icon"><i class="ti ti-calculator"></i></span>
+                    <span class="menu-text"> Contabilidad </span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <div class="collapse" id="sidebarContabilidad">
+                    <ul class="sub-menu">
+                        <li class="side-nav-item"><a asp-controller="CuentaContable" asp-action="Index" class="side-nav-link">Plan de Cuentas</a></li>
+                        <li class="side-nav-item"><a asp-controller="AsientoContable" asp-action="Index" class="side-nav-link">Asientos Contables</a></li>
+                        <li class="side-nav-item"><a asp-controller="PeriodoContable" asp-action="Index" class="side-nav-link">Períodos Contables</a></li>
+                        <li class="side-nav-item"><a asp-controller="ActivoFijo" asp-action="Index" class="side-nav-link">Activos Fijos</a></li>
+                        <li class="side-nav-item"><a asp-controller="CuentaPorCobrar" asp-action="Index" class="side-nav-link">Cuentas por Cobrar</a></li>
+                        <li class="side-nav-item"><a asp-controller="CuentaPorPagar" asp-action="Index" class="side-nav-link">Cuentas por Pagar</a></li>
+                        <li class="side-nav-item"><a asp-controller="Presupuesto" asp-action="Index" class="side-nav-link">Presupuesto</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- Tesorería y Bancos -->
+            <li class="side-nav-item">
+                <a data-bs-toggle="collapse" href="#sidebarTesoreria" class="side-nav-link">
+                    <span class="menu-icon"><i class="ti ti-wallet"></i></span>
+                    <span class="menu-text"> Tesorería </span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <div class="collapse" id="sidebarTesoreria">
+                    <ul class="sub-menu">
+                        <li class="side-nav-item"><a asp-controller="Caja" asp-action="Index" class="side-nav-link">Cajas</a></li>
+                        <li class="side-nav-item"><a asp-controller="CuentaBancaria" asp-action="Index" class="side-nav-link">Cuentas Bancarias</a></li>
+                        <li class="side-nav-item"><a asp-controller="MovimientoBancario" asp-action="Index" class="side-nav-link">Movimientos Bancarios</a></li>
+                        <li class="side-nav-item"><a asp-controller="MovimientoCajaPos" asp-action="Index" class="side-nav-link">Movimientos de Caja</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- RRHH -->
+            <li class="side-nav-item">
+                <a data-bs-toggle="collapse" href="#sidebarRRHH" class="side-nav-link">
+                    <span class="menu-icon"><i class="ti ti-users"></i></span>
+                    <span class="menu-text"> RRHH </span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <div class="collapse" id="sidebarRRHH">
+                    <ul class="sub-menu">
+                        <li class="side-nav-item"><a asp-controller="Empleado" asp-action="Index" class="side-nav-link">Empleados</a></li>
+                        <li class="side-nav-item"><a asp-controller="ContratoLaboral" asp-action="Index" class="side-nav-link">Contratos Laborales</a></li>
+                        <li class="side-nav-item"><a asp-controller="RegistroAsistencia" asp-action="Index" class="side-nav-link">Asistencia</a></li>
+                        <li class="side-nav-item"><a asp-controller="PeriodoNomina" asp-action="Index" class="side-nav-link">Períodos de Nómina</a></li>
+                        <li class="side-nav-item"><a asp-controller="Nomina" asp-action="Index" class="side-nav-link">Nómina</a></li>
+                        <li class="side-nav-item"><a asp-controller="SaldoVacaciones" asp-action="Index" class="side-nav-link">Vacaciones</a></li>
+                        <li class="side-nav-item"><a asp-controller="PlantillaAprobada" asp-action="Index" class="side-nav-link">Plantilla Aprobada</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- Inventario -->
+            <li class="side-nav-item">
+                <a data-bs-toggle="collapse" href="#sidebarInventario" class="side-nav-link">
+                    <span class="menu-icon"><i class="ti ti-package"></i></span>
+                    <span class="menu-text"> Inventario </span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <div class="collapse" id="sidebarInventario">
+                    <ul class="sub-menu">
+                        <li class="side-nav-item"><a asp-controller="Producto" asp-action="Index" class="side-nav-link">Productos</a></li>
+                        <li class="side-nav-item"><a asp-controller="FamiliaProducto" asp-action="Index" class="side-nav-link">Familias de Productos</a></li>
+                        <li class="side-nav-item"><a asp-controller="Almacen" asp-action="Index" class="side-nav-link">Almacenes</a></li>
+                        <li class="side-nav-item"><a asp-controller="MovimientoInventario" asp-action="Index" class="side-nav-link">Movimientos</a></li>
+                        <li class="side-nav-item"><a asp-controller="ConteoFisico" asp-action="Index" class="side-nav-link">Conteos Físicos</a></li>
+                        <li class="side-nav-item"><a asp-controller="Existencia" asp-action="Index" class="side-nav-link">Existencias</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- Producción -->
+            <li class="side-nav-item">
+                <a data-bs-toggle="collapse" href="#sidebarProduccion" class="side-nav-link">
+                    <span class="menu-icon"><i class="ti ti-tools"></i></span>
+                    <span class="menu-text"> Producción </span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <div class="collapse" id="sidebarProduccion">
+                    <ul class="sub-menu">
+                        <li class="side-nav-item"><a asp-controller="OrdenProduccion" asp-action="Index" class="side-nav-link">Órdenes de Producción</a></li>
+                        <li class="side-nav-item"><a asp-controller="FichaCosto" asp-action="Index" class="side-nav-link">Fichas de Costo</a></li>
+                        <li class="side-nav-item"><a asp-controller="ListaMateriales" asp-action="Index" class="side-nav-link">Lista de Materiales</a></li>
+                        <li class="side-nav-item"><a asp-controller="Equipo" asp-action="Index" class="side-nav-link">Equipos</a></li>
+                        <li class="side-nav-item"><a asp-controller="MantenimientoProgramado" asp-action="Index" class="side-nav-link">Mantenimiento</a></li>
+                        <li class="side-nav-item"><a asp-controller="Merma" asp-action="Index" class="side-nav-link">Mermas</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- Compras -->
+            <li class="side-nav-item">
+                <a data-bs-toggle="collapse" href="#sidebarCompras" class="side-nav-link">
+                    <span class="menu-icon"><i class="ti ti-truck"></i></span>
+                    <span class="menu-text"> Compras </span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <div class="collapse" id="sidebarCompras">
+                    <ul class="sub-menu">
+                        <li class="side-nav-item"><a asp-controller="Proveedor" asp-action="Index" class="side-nav-link">Proveedores</a></li>
+                        <li class="side-nav-item"><a asp-controller="OrdenCompra" asp-action="Index" class="side-nav-link">Órdenes de Compra</a></li>
+                        <li class="side-nav-item"><a asp-controller="RecepcionCompra" asp-action="Index" class="side-nav-link">Recepción de Compras</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- Ventas -->
+            <li class="side-nav-item">
+                <a data-bs-toggle="collapse" href="#sidebarVentas" class="side-nav-link">
+                    <span class="menu-icon"><i class="ti ti-shopping-cart"></i></span>
+                    <span class="menu-text"> Ventas </span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <div class="collapse" id="sidebarVentas">
+                    <ul class="sub-menu">
+                        <li class="side-nav-item"><a asp-controller="Cliente" asp-action="Index" class="side-nav-link">Clientes</a></li>
+                        <li class="side-nav-item"><a asp-controller="FacturaVenta" asp-action="Index" class="side-nav-link">Facturas de Venta</a></li>
+                        <li class="side-nav-item"><a asp-controller="DevolucionVenta" asp-action="Index" class="side-nav-link">Devoluciones</a></li>
+                        <li class="side-nav-item"><a asp-controller="ListaPrecio" asp-action="Index" class="side-nav-link">Listas de Precios</a></li>
+                        <li class="side-nav-item"><a asp-controller="FormaPagoVenta" asp-action="Index" class="side-nav-link">Formas de Pago</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- Reportes -->
+            <li class="side-nav-item">
+                <a data-bs-toggle="collapse" href="#sidebarReportes" class="side-nav-link">
+                    <span class="menu-icon"><i class="ti ti-file-analytics"></i></span>
+                    <span class="menu-text"> Reportes </span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <div class="collapse" id="sidebarReportes">
+                    <ul class="sub-menu">
+                        <li class="side-nav-item"><a asp-controller="Indicador" asp-action="Index" class="side-nav-link">Indicadores</a></li>
+                        <li class="side-nav-item"><a asp-controller="ReporteGenerado" asp-action="Index" class="side-nav-link">Historial de Reportes</a></li>
+                        <li class="side-nav-item"><a asp-controller="PaqueteInformacion" asp-action="Index" class="side-nav-link">Paquete de Información</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- Integración -->
+            <li class="side-nav-item">
+                <a data-bs-toggle="collapse" href="#sidebarIntegracion" class="side-nav-link">
+                    <span class="menu-icon"><i class="ti ti-api"></i></span>
+                    <span class="menu-text"> Integración </span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <div class="collapse" id="sidebarIntegracion">
+                    <ul class="sub-menu">
+                        <li class="side-nav-item"><a asp-controller="DispositivoPos" asp-action="Index" class="side-nav-link">Terminales POS</a></li>
+                        <li class="side-nav-item"><a asp-controller="ApiCliente" asp-action="Index" class="side-nav-link">Clientes API</a></li>
+                        <li class="side-nav-item"><a asp-controller="ApiLog" asp-action="Index" class="side-nav-link">Logs de API</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- Seguridad y Administración -->
+            <li class="side-nav-item">
+                <a data-bs-toggle="collapse" href="#sidebarSeguridad" class="side-nav-link">
+                    <span class="menu-icon"><i class="ti ti-shield-lock"></i></span>
+                    <span class="menu-text"> Seguridad </span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <div class="collapse" id="sidebarSeguridad">
+                    <ul class="sub-menu">
+                        <li class="side-nav-item"><a asp-controller="Usuario" asp-action="Index" class="side-nav-link">Usuarios</a></li>
+                        <li class="side-nav-item"><a asp-controller="Rol" asp-action="Index" class="side-nav-link">Roles</a></li>
+                        <li class="side-nav-item"><a asp-controller="Permiso" asp-action="Index" class="side-nav-link">Permisos</a></li>
+                        <li class="side-nav-item"><a asp-controller="Auditoria" asp-action="Index" class="side-nav-link">Auditoría</a></li>
+                        <li class="side-nav-item"><a asp-controller="BackupLog" asp-action="Index" class="side-nav-link">Respaldos</a></li>
+                    </ul>
+                </div>
+            </li>
+
+        </ul>
+    </div>
+</div>

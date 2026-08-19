@@ -1,0 +1,96 @@
+﻿@model Vercom.Models.PagoAplicado
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+
+
+<h4>PagoAplicado</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Editar PagoAplicado</h4>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">PagoAplicado</a></li>
+            <li class="breadcrumb-item active">Editar</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Formulario de Edición</h4>
+                </div>
+                <div class="card-body">
+<form class="row g-3" asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="mb-3">
+                <label asp-for="Tipo" class="form-label"></label>
+                <input asp-for="Tipo" class="form-control" />
+                <span asp-validation-for="Tipo" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="CuentaPorCobrarId" class="form-label"></label>
+                <select asp-for="CuentaPorCobrarId" class="form-control" asp-items="ViewBag.CuentaPorCobrarId"></select>
+                <span asp-validation-for="CuentaPorCobrarId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="CuentaPorPagarId" class="form-label"></label>
+                <select asp-for="CuentaPorPagarId" class="form-control" asp-items="ViewBag.CuentaPorPagarId"></select>
+                <span asp-validation-for="CuentaPorPagarId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Fecha" class="form-label"></label>
+                <input asp-for="Fecha" class="form-control" />
+                <span asp-validation-for="Fecha" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Monto" class="form-label"></label>
+                <input asp-for="Monto" class="form-control" />
+                <span asp-validation-for="Monto" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="FormaPago" class="form-label"></label>
+                <input asp-for="FormaPago" class="form-control" />
+                <span asp-validation-for="FormaPago" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="AsientoId" class="form-label"></label>
+                <select asp-for="AsientoId" class="form-control" asp-items="ViewBag.AsientoId"></select>
+                <span asp-validation-for="AsientoId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="ReferenciaExterna" class="form-label"></label>
+                <input asp-for="ReferenciaExterna" class="form-control" />
+                <span asp-validation-for="ReferenciaExterna" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

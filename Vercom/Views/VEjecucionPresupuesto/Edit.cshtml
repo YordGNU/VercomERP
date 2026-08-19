@@ -1,0 +1,85 @@
+﻿@model Vercom.Models.VEjecucionPresupuesto
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+
+
+<h4>VEjecucionPresupuesto</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Editar VEjecucionPresupuesto</h4>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">VEjecucionPresupuesto</a></li>
+            <li class="breadcrumb-item active">Editar</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Formulario de Edición</h4>
+                </div>
+                <div class="card-body">
+<form class="row g-3" asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="mb-3">
+                <label asp-for="PresupuestoId" class="form-label"></label>
+                <input asp-for="PresupuestoId" class="form-control" />
+                <span asp-validation-for="PresupuestoId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="CuentaId" class="form-label"></label>
+                <input asp-for="CuentaId" class="form-control" />
+                <span asp-validation-for="CuentaId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="CentroCostoId" class="form-label"></label>
+                <input asp-for="CentroCostoId" class="form-control" />
+                <span asp-validation-for="CentroCostoId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Mes" class="form-label"></label>
+                <input asp-for="Mes" class="form-control" />
+                <span asp-validation-for="Mes" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="MontoPlanificado" class="form-label"></label>
+                <input asp-for="MontoPlanificado" class="form-control" />
+                <span asp-validation-for="MontoPlanificado" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="MontoReal" class="form-label"></label>
+                <input asp-for="MontoReal" class="form-control" />
+                <span asp-validation-for="MontoReal" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

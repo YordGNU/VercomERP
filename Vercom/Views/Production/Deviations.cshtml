@@ -1,0 +1,54 @@
+@model IEnumerable<Vercom.Models.AnalisisDesviacion>
+@{
+    ViewBag.Title = "Análisis de Ineficiencias";
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 text-danger">Desviaciones de Costo Real vs. Estándar</h4>
+    </div>
+</div>
+
+<div class="container-xxl mt-4">
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha Análisis</th>
+                            <th>Orden de Producción</th>
+                            <th>Componente</th>
+                            <th>Costo Estándar (Plan)</th>
+                            <th>Costo Real (Ejecución)</th>
+                            <th>Desviación ($)</th>
+                            <th>Impacto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var impactColor = item.Desviacion > 0 ? "text-danger" : "text-success";
+                            var impactIcon = item.Desviacion > 0 ? "ti-trending-up" : "ti-trending-down";
+
+                            <tr>
+                                <td>@item.AnalizadoEn.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@item.OrdenProduccion.NumeroOrden</td>
+                                <td>@item.Componente</td>
+                                <td>@item.CostoEstandar.ToString("C")</td>
+                                <td>@item.CostoReal.ToString("C")</td>
+                                <td class="fw-bold @impactColor">@item.Desviacion?.ToString("C")</td>
+                                <td>
+                                    <span class="@impactColor fw-bold">
+                                        <i class="ti @impactIcon me-1"></i>
+                                        @(item.Desviacion > 0 ? "Ineficiencia" : "Ahorro")
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

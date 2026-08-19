@@ -1,0 +1,116 @@
+@model Vercom.Models.FacturaVentum
+@{
+    ViewBag.Title = "Nueva Factura";
+}
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 text-primary">Emisión de Factura Fiscal</h4>
+    </div>
+</div>
+<div class="container-xxl mt-4">
+    <form asp-action="Create" method="post">
+        <div class="row">
+            <!-- Datos de Cabecera -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Información General</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Cliente</label>
+                                <select asp-for="ClienteId" class="form-select select2" asp-items="ViewBag.ClienteId">
+                                    <option value="">-- Seleccione Cliente --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Contrato Económico (Mayorista)</label>
+                                <select asp-for="ContratoId" class="form-select" asp-items="ViewBag.ContratoId">
+                                    <option value="">-- Consumo Final (Sin Contrato) --</option>
+                                </select>
+                                <small class="text-muted">Requerido para ventas entre entidades.</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Almacén de Salida</label>
+                                <select asp-for="AlmacenId" class="form-select" asp-items="ViewBag.AlmacenId"></select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Tipo de Venta</label>
+                                <select asp-for="TipoVenta" class="form-select">
+                                    <option value="MINORISTA">Minorista (B2C)</option>
+                                    <option value="MAYORISTA">Mayorista (B2B)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Serie</label>
+                                <input asp-for="Serie" class="form-control" placeholder="Ej: A" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detalle de Productos (Simulado para esta versión) -->
+                <div class="card mt-4">
+                    <div class="card-header d-flex justify-content-between">
+                        <h4 class="card-title">Líneas de Factura</h4>
+                        <button type="button" class="btn btn-sm btn-outline-primary"><i class="ti ti-plus"></i> Añadir Ítem</button>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th width="100">Cantidad</th>
+                                    <th width="150">Precio Unitario</th>
+                                    <th width="150">Importe</th>
+                                    <th width="50"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="text-center">
+                                    <td colspan="5" class="py-5 text-muted">Use el buscador para añadir productos a la factura.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen y Totales -->
+            <div class="col-lg-4">
+                <div class="card bg-light-subtle">
+                    <div class="card-header">
+                        <h4 class="card-title">Resumen de Importes</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal:</span>
+                            <span class="fw-bold">@Model.Subtotal.ToString("C")</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Impuesto Ventas (10%):</span>
+                            <span class="fw-bold">@Model.ImpuestoVentasTotal.ToString("C")</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h3 class="mb-0">TOTAL:</h3>
+                            <h3 class="mb-0 text-primary">@Model.Total.ToString("C")</h3>
+                        </div>
+
+                        <div class="mt-4 d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="ti ti-file-check me-1"></i> EMITIR FACTURA
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-3 small">
+                    <i class="ti ti-info-circle me-1"></i> La numeración fiscal será asignada automáticamente tras la emisión.
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

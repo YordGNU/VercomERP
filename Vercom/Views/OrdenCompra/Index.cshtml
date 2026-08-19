@@ -1,0 +1,140 @@
+﻿@model IEnumerable<Vercom.Models.OrdenCompra>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Gestión de OrdenCompra</h4>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">OrdenCompra</a></li>
+            <li class="breadcrumb-item active">Listado</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Listado de OrdenCompra</h4>
+                </div>
+                <div class="card-body">
+
+
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<div class="table-responsive"><table class="table data-table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.EntidadId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.NumeroOrden)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AlmacenDestinoId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Fecha)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FechaEntregaEsperada)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Moneda)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Subtotal)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Total)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Estado)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AprobadoPor)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CreadoPor)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CreadoEn)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Contrato)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Proveedor)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.EntidadId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.NumeroOrden)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AlmacenDestinoId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Fecha)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FechaEntregaEsperada)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Moneda)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Subtotal)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Total)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Estado)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AprobadoPor)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CreadoPor)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CreadoEn)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Contrato.Id)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Proveedor.Id)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

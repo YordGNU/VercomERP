@@ -1,0 +1,96 @@
+﻿@model Vercom.Models.PosSyncLog
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+
+
+<h4>PosSyncLog</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Editar PosSyncLog</h4>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">PosSyncLog</a></li>
+            <li class="breadcrumb-item active">Editar</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Formulario de Edición</h4>
+                </div>
+                <div class="card-body">
+<form class="row g-3" asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="mb-3">
+                <label asp-for="DispositivoPosId" class="form-label"></label>
+                <select asp-for="DispositivoPosId" class="form-control" asp-items="ViewBag.DispositivoPosId"></select>
+                <span asp-validation-for="DispositivoPosId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="TipoSync" class="form-label"></label>
+                <input asp-for="TipoSync" class="form-control" />
+                <span asp-validation-for="TipoSync" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Direccion" class="form-label"></label>
+                <input asp-for="Direccion" class="form-control" />
+                <span asp-validation-for="Direccion" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="RegistrosProcesados" class="form-label"></label>
+                <input asp-for="RegistrosProcesados" class="form-control" />
+                <span asp-validation-for="RegistrosProcesados" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Estado" class="form-label"></label>
+                <input asp-for="Estado" class="form-control" />
+                <span asp-validation-for="Estado" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="DetalleError" class="form-label"></label>
+                <input asp-for="DetalleError" class="form-control" />
+                <span asp-validation-for="DetalleError" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="IniciadoEn" class="form-label"></label>
+                <input asp-for="IniciadoEn" class="form-control" />
+                <span asp-validation-for="IniciadoEn" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="FinalizadoEn" class="form-label"></label>
+                <input asp-for="FinalizadoEn" class="form-control" />
+                <span asp-validation-for="FinalizadoEn" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

@@ -1,0 +1,56 @@
+@model IEnumerable<Vercom.Models.Existencium>
+@{
+    ViewBag.Title = "Alertas de Stock";
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 text-danger">Alertas de Reaprovisionamiento</h4>
+    </div>
+</div>
+
+<div class="container-xxl mt-4">
+    <div class="row">
+        @foreach (var item in Model)
+        {
+            <div class="col-md-4">
+                <div class="card border-danger-subtle">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge bg-danger">CRÍTICO</span>
+                            <span class="text-muted small">@item.Almacen.Nombre</span>
+                        </div>
+                        <h5 class="card-title">@item.Producto.Nombre</h5>
+                        <p class="text-muted small mb-3">SKU: @item.Producto.Codigo</p>
+
+                        <div class="row text-center bg-light rounded p-2 mb-3 g-0">
+                            <div class="col-6 border-end">
+                                <h4 class="mb-0">@item.Cantidad.ToString("N0")</h4>
+                                <small class="text-muted">Actual</small>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="mb-0">@item.StockMinimo.ToString("N0")</h4>
+                                <small class="text-muted">Mínimo</small>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <a asp-controller="Purchase" asp-action="Create" class="btn btn-outline-danger">
+                                <i class="ti ti-shopping-cart-plus me-1"></i> Generar Orden de Compra
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (!Model.Any())
+        {
+            <div class="col-12 text-center py-5">
+                <i class="ti ti-check-double fs-48 text-success mb-3"></i>
+                <h3>¡Todo en orden!</h3>
+                <p class="text-muted">No existen productos por debajo del nivel de seguridad.</p>
+            </div>
+        }
+    </div>
+</div>

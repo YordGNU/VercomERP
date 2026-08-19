@@ -1,0 +1,121 @@
+﻿@model Vercom.Models.FichaCosto
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+
+
+<h4>FichaCosto</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Editar FichaCosto</h4>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">FichaCosto</a></li>
+            <li class="breadcrumb-item active">Editar</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Formulario de Edición</h4>
+                </div>
+                <div class="card-body">
+<form class="row g-3" asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="mb-3">
+                <label asp-for="EntidadId" class="form-label"></label>
+                <input asp-for="EntidadId" class="form-control" />
+                <span asp-validation-for="EntidadId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="ProductoId" class="form-label"></label>
+                <input asp-for="ProductoId" class="form-control" />
+                <span asp-validation-for="ProductoId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Version" class="form-label"></label>
+                <input asp-for="Version" class="form-control" />
+                <span asp-validation-for="Version" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="VigenteDesde" class="form-label"></label>
+                <input asp-for="VigenteDesde" class="form-control" />
+                <span asp-validation-for="VigenteDesde" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="VigenteHasta" class="form-label"></label>
+                <input asp-for="VigenteHasta" class="form-control" />
+                <span asp-validation-for="VigenteHasta" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="CostoMateriaPrima" class="form-label"></label>
+                <input asp-for="CostoMateriaPrima" class="form-control" />
+                <span asp-validation-for="CostoMateriaPrima" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="CostoManoObra" class="form-label"></label>
+                <input asp-for="CostoManoObra" class="form-control" />
+                <span asp-validation-for="CostoManoObra" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="GastosIndirectos" class="form-label"></label>
+                <input asp-for="GastosIndirectos" class="form-control" />
+                <span asp-validation-for="GastosIndirectos" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="MargenPorcentaje" class="form-label"></label>
+                <input asp-for="MargenPorcentaje" class="form-control" />
+                <span asp-validation-for="MargenPorcentaje" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="PrecioSugerido" class="form-label"></label>
+                <input asp-for="PrecioSugerido" class="form-control" />
+                <span asp-validation-for="PrecioSugerido" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Estado" class="form-label"></label>
+                <input asp-for="Estado" class="form-control" />
+                <span asp-validation-for="Estado" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="CreadoPor" class="form-label"></label>
+                <input asp-for="CreadoPor" class="form-control" />
+                <span asp-validation-for="CreadoPor" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="CreadoEn" class="form-label"></label>
+                <input asp-for="CreadoEn" class="form-control" />
+                <span asp-validation-for="CreadoEn" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

@@ -1,0 +1,61 @@
+@model IEnumerable<Vercom.Models.FacturaVentum>
+@{
+    ViewBag.Title = "Historial de Ventas";
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Ventas y Facturación</h4>
+    </div>
+    <div class="text-end">
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="ti ti-plus me-1"></i> Nueva Venta Fiscal
+        </a>
+    </div>
+</div>
+
+<div class="container-xxl mt-4">
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Nº Factura</th>
+                            <th>Cliente</th>
+                            <th>Canal</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var statusClass = item.Estado == "EMITIDA" ? "badge bg-success-subtle text-success" : (item.Estado == "ANULADA" ? "badge bg-danger-subtle text-danger" : "badge bg-warning-subtle text-warning");
+
+                            <tr>
+                                <td>@item.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="fw-bold">@item.Serie-@item.NumeroFactura</td>
+                                <td>@item.Cliente.NombreRazonSocial</td>
+                                <td>
+                                    @if(item.CanalVenta == "POS") { <span class="text-info"><i class="ti ti-device-mobile"></i> POS</span> }
+                                    else { <span class="text-primary"><i class="ti ti-world"></i> ERP</span> }
+                                </td>
+                                <td class="fw-bold">@item.Total.ToString("C")</td>
+                                <td><span class="@statusClass">@item.Estado</span></td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-sm btn-light"><i class="ti ti-eye"></i></button>
+                                        <button class="btn btn-sm btn-light text-danger"><i class="ti ti-ban"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

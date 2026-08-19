@@ -1,0 +1,170 @@
+﻿@model IEnumerable<Vercom.Models.OrdenProduccion>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Gestión de OrdenProduccion</h4>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">OrdenProduccion</a></li>
+            <li class="breadcrumb-item active">Listado</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Listado de OrdenProduccion</h4>
+                </div>
+                <div class="card-body">
+
+
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<div class="table-responsive"><table class="table data-table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.EntidadId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.NumeroOrden)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ProductoTerminadoId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AlmacenInsumosId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AlmacenProductoId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CantidadPlanificada)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CantidadProducida)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FechaInicioPlan)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FechaFinPlan)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FechaInicioReal)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FechaFinReal)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Estado)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CostoRealTotal)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AsientoConsumoId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AsientoTerminadoId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CreadoPor)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CreadoEn)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FichaCosto)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ListaMateriales)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.EntidadId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.NumeroOrden)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ProductoTerminadoId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AlmacenInsumosId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AlmacenProductoId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CantidadPlanificada)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CantidadProducida)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FechaInicioPlan)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FechaFinPlan)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FechaInicioReal)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FechaFinReal)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Estado)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CostoRealTotal)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AsientoConsumoId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AsientoTerminadoId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CreadoPor)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CreadoEn)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FichaCosto.Id)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ListaMateriales.Id)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

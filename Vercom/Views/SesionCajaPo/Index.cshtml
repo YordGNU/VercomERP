@@ -1,0 +1,164 @@
+﻿@model IEnumerable<Vercom.Models.SesionCajaPo>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Gestión de SesionCajaPo</h4>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">SesionCajaPo</a></li>
+            <li class="breadcrumb-item active">Listado</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Listado de SesionCajaPo</h4>
+                </div>
+                <div class="card-body">
+
+
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<div class="table-responsive"><table class="table data-table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.CajeroId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FechaApertura)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MontoApertura)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FechaCierre)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MontoCierreDeclarado)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MontoCierreSistema)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DiferenciaArqueo)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.TotalVentas)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.TotalEfectivo)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.TotalTransfermovil)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.TotalEnzona)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.TotalOtrosMedios)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CantidadFacturas)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Estado)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AsientoCierreId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ObservacionesCierre)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SupervisorConciliacionId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DispositivoPos)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.CajeroId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FechaApertura)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.MontoApertura)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FechaCierre)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.MontoCierreDeclarado)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.MontoCierreSistema)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DiferenciaArqueo)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TotalVentas)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TotalEfectivo)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TotalTransfermovil)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TotalEnzona)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TotalOtrosMedios)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CantidadFacturas)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Estado)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AsientoCierreId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ObservacionesCierre)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.SupervisorConciliacionId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DispositivoPos.Id)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
