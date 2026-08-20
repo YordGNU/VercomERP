@@ -15,5 +15,5 @@ public partial class VEjecucionPresupuesto
 
     public decimal MontoPlanificado { get; set; }
 
-    public decimal MontoReal { get; set; }
+    public decimal? MontoReal { get; set; }
 }

@@ -1,104 +1,91 @@
 ﻿@model IEnumerable<Vercom.Models.PeriodoContable>
-
 @{
-    ViewData["Title"] = "Index";
+    ViewBag.Title = "Periodos Contables";
+    var meses = new[] { "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
 }
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Gestión de PeriodoContable</h4>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">PeriodoContable</a></li>
-            <li class="breadcrumb-item active">Listado</li>
-        </ol>
+        <h4 class="page-main-title m-0">Control de Periodos Fiscales</h4>
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="container-xxl mt-4">
     <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Listado de PeriodoContable</h4>
-                </div>
-                <div class="card-body">
+        @foreach (var item in Model)
+        {
+            var isClosed = item.Estado == "CERRADO";
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 @(isClosed ? "bg-light-subtle" : "border-primary border-top border-3")">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h3 class="fw-bold mb-0">@meses[item.Mes]</h3>
+                                <h5 class="text-muted">Año @item.Anio</h5>
+                            </div>
+                            <span class="badge @(isClosed ? "bg-danger" : "bg-success")">@item.Estado</span>
+                        </div>
 
+                        <div class="small text-muted mb-3">
+                            <i class="ti ti-calendar-range me-1"></i> @item.FechaInicio.ToString("dd/MM") al @item.FechaFin.ToString("dd/MM")
+                        </div>
 
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<div class="table-responsive"><table class="table data-table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.EntidadId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Anio)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Mes)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FechaInicio)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FechaFin)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Estado)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CerradoPor)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CerradoEn)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.EntidadId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Anio)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Mes)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FechaInicio)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FechaFin)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Estado)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CerradoPor)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CerradoEn)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table></div>
+                        @if (isClosed)
+                        {
+                            <div class="alert alert-secondary py-2 small mb-0 mt-3">
+                                <i class="ti ti-lock me-1"></i> Cerrado el @item.CerradoEn?.ToString("dd/MM/yyyy")
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="d-grid mt-4">
+                                <button type="button" class="btn btn-outline-danger btn-sm"
+                                        onclick="confirmClose('@item.Id', '@meses[item.Mes] @item.Anio')">
+                                    <i class="ti ti-lock-square-rounded me-1"></i> CERRAR PERIODO
+                                </button>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
-        </div>
+        }
     </div>
 </div>
+
+<!-- Modal de Confirmación -->
+<div class="modal fade" id="closePeriodModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form asp-action="Close" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" id="closePeriodId" />
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Cierre Fiscal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <i class="ti ti-alert-triangle fs-48 text-warning mb-3"></i>
+                    <h4>¿Cerrar el periodo <span id="periodNameLabel"></span>?</h4>
+                    <p class="text-muted">
+                        Al cerrar el periodo, ya no se podrán registrar nuevos asientos contables.
+                        Esta acción es definitiva y asegura la integridad de los estados financieros.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger px-4">SÍ, CERRAR PERIODO</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function confirmClose(id, name) {
+            document.getElementById('closePeriodId').value = id;
+            document.getElementById('periodNameLabel').innerText = name;
+            new bootstrap.Modal(document.getElementById('closePeriodModal')).show();
+        }
+    </script>
+}

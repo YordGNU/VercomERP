@@ -1,0 +1,81 @@
+@model Vercom.Models.OrdenCompra
+@{
+    ViewBag.Title = "Recepción de Mercancía";
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 text-success">Reportar Entrada de Almacén</h4>
+    </div>
+</div>
+
+<div class="container-xxl mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <form asp-action="Receive" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+
+                <div class="card border-success-subtle shadow-sm">
+                    <div class="card-header bg-success-subtle">
+                        <h4 class="card-title mb-0">Datos del Informe de Recepción (REC)</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info py-2 small mb-4">
+                            <i class="ti ti-info-circle me-1"></i> Al procesar esta recepción, se incrementará el stock físico y se generará automáticamente la **Cuenta por Pagar** al proveedor @Model.Proveedor.RazonSocial.
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Número de Informe de Recepción</label>
+                                <input type="text" name="receiptNumber" class="form-control form-control-lg" placeholder="Ej: REC-2026-001" required />
+                                <small class="text-muted">Debe coincidir con el documento físico firmado.</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Almacén de Entrada</label>
+                                <select name="almacenId" class="form-select form-select-lg" asp-items="ViewBag.AlmacenId" required></select>
+                            </div>
+
+                            <div class="col-12 mt-4">
+                                <h5 class="border-bottom pb-2">Resumen del Pedido</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-sm small">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Producto</th>
+                                                <th class="text-end">Cantidad a Recibir</th>
+                                                <th class="text-end">Costo Unitario</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var det in Model.OrdenCompraDetalles)
+                                            {
+                                                <tr>
+                                                    <td>@det.Producto.Nombre</td>
+                                                    <td class="text-end fw-bold">@det.CantidadSolicitada.ToString("N2") @det.Producto.UnidadMedida.Codigo</td>
+                                                    <td class="text-end">@det.PrecioUnitario.ToString("C")</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                        <tfoot class="fw-bold">
+                                            <tr>
+                                                <td colspan="2" class="text-end text-uppercase">Total a Contabilizar:</td>
+                                                <td class="text-end text-primary">@Model.Total.ToString("C")</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light d-flex justify-content-end gap-2">
+                        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-success px-5 py-2 fw-bold">
+                            <i class="ti ti-circle-check me-1"></i> FINALIZAR RECEPCIÓN
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

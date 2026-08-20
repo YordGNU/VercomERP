@@ -1,0 +1,104 @@
+@{
+    ViewBag.Title = "Central de Reportes";
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Reportes Oficiales y Fiscales</h4>
+    </div>
+</div>
+
+<div class="container-xxl mt-4">
+    <div class="row">
+        <!-- Contabilidad -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0 text-white"><i class="ti ti-calculator me-1"></i> Estados Financieros (NCC)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" data-bs-toggle="modal" data-bs-target="#reportModal" data-type="BALANCE">
+                            Balance General Consolidado <i class="ti ti-chevron-right"></i>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" data-bs-toggle="modal" data-bs-target="#reportModal" data-type="RESULTADOS">
+                            Estado de Resultados (P y G) <i class="ti ti-chevron-right"></i>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            Estado de Flujo de Efectivo <span class="badge bg-light text-dark">Próximamente</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cumplimiento ONAT -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="card-title mb-0 text-white"><i class="ti ti-file-certificate me-1"></i> Cumplimiento ONAT/MFP</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <a asp-controller="DeclaracionJuradum" asp-action="Index" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            Declaraciones Juradas (DJ-08/02) <i class="ti ti-external-link"></i>
+                        </a>
+                        <a asp-action="Packages" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            Paquetes Informativos Mensuales <i class="ti ti-package"></i>
+                        </a>
+                        <a asp-controller="Auditoria" asp-action="Index" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            Bitácora de Auditoría (Res. 60) <i class="ti ti-shield-check"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Generador de Reporte -->
+<div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form asp-action="FinancialStatement" method="get">
+            <input type="hidden" name="type" id="reportType" />
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Configurar Reporte</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Periodo Contable</label>
+                        <select name="periodId" class="form-select" id="periodSelect">
+                            @foreach(var p in ViewBag.Periods as List<Vercom.Models.PeriodoContable>) {
+                                <option value="@p.Id">@p.Mes / @p.Anio (@p.Estado)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Formato de Salida</label>
+                        <select class="form-select">
+                            <option value="HTML">Vista Web Interactiva</option>
+                            <option value="PDF">Documento PDF (Oficial)</option>
+                            <option value="EXCEL">Hoja de Cálculo (.xlsx)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary w-100">VISUALIZAR REPORTE</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const reportModal = document.getElementById('reportModal');
+        reportModal.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+            const type = button.getAttribute('data-type');
+            document.getElementById('reportType').value = type;
+        });
+    </script>
+}

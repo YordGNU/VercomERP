@@ -1,89 +1,67 @@
 ﻿@model Vercom.Models.Merma
-
 @{
-    ViewData["Title"] = "Create";
+    ViewBag.Title = "Reportar Merma";
 }
 
-
-
-<h4>Merma</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Crear Merma</h4>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Merma</a></li>
-            <li class="breadcrumb-item active">Crear</li>
-        </ol>
+        <h4 class="page-main-title m-0 text-danger">Registro de Ineficiencia Extraordinaria</h4>
     </div>
 </div>
 
-<div class="container-xxl">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Formulario de Creación</h4>
+<div class="container-xxl mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <form asp-action="Create" method="post">
+                <div class="card border-danger-subtle">
+                    <div class="card-body">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label asp-for="OrdenProduccionId" class="form-label fw-bold">Orden de Producción Asociada</label>
+                                <select asp-for="OrdenProduccionId" class="form-select" asp-items="ViewBag.OrdenProduccionId">
+                                    <option value="">-- Merma no vinculada a OP --</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="ProductoId" class="form-label fw-bold">Artículo Dañado / Desperdiciado</label>
+                                <select asp-for="ProductoId" class="form-select select2" asp-items="ViewBag.ProductoId" required>
+                                    <option value="">-- Seleccione Producto --</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Cantidad" class="form-label fw-bold">Cantidad</label>
+                                <input asp-for="Cantidad" type="number" step="0.01" class="form-control" required />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Causa" class="form-label fw-bold">Motivo / Causa</label>
+                                <select asp-for="Causa" class="form-select">
+                                    <option value="DURANTE_PROCESO">Desperdicio en Proceso</option>
+                                    <option value="ROTURA_MAQUINARIA">Falla Técnica</option>
+                                    <option value="ERROR_HUMANO">Error de Operación</option>
+                                    <option value="VENCIMIENTO">Caducidad</option>
+                                    <option value="OTRO">Otros Motivos</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Observaciones" class="form-label fw-bold">Detalle del Incidente</label>
+                                <textarea asp-for="Observaciones" class="form-control" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light d-flex justify-content-end gap-2">
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-danger px-4">
+                            <i class="ti ti-alert-triangle me-1"></i> REGISTRAR MERMA
+                        </button>
+                    </div>
                 </div>
-                <div class="card-body">
-<form class="row g-3" asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="mb-3">
-                <label asp-for="OrdenProduccionId" class="form-label"></label>
-                <select asp-for="OrdenProduccionId" class ="form-control" asp-items="ViewBag.OrdenProduccionId"></select>
-            </div>
-            <div class="mb-3">
-                <label asp-for="ProductoId" class="form-label"></label>
-                <input asp-for="ProductoId" class="form-control" />
-                <span asp-validation-for="ProductoId" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Cantidad" class="form-label"></label>
-                <input asp-for="Cantidad" class="form-control" />
-                <span asp-validation-for="Cantidad" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Causa" class="form-label"></label>
-                <input asp-for="Causa" class="form-control" />
-                <span asp-validation-for="Causa" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="ValorContable" class="form-label"></label>
-                <input asp-for="ValorContable" class="form-control" />
-                <span asp-validation-for="ValorContable" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="AsientoId" class="form-label"></label>
-                <input asp-for="AsientoId" class="form-control" />
-                <span asp-validation-for="AsientoId" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Observaciones" class="form-label"></label>
-                <input asp-for="Observaciones" class="form-control" />
-                <span asp-validation-for="Observaciones" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <button type="submit" class="btn btn-primary">Guardar</button>
-            </div>
-        </form>
-                </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>
-    </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
-

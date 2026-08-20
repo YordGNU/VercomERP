@@ -2,16 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
 
 namespace Vercom.Controllers
 {
+    [Authorize]
     public class CuentaPorPagarController : Controller
     {
-       private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+        private readonly AppDbContext _context;
+        private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
 
         public CuentaPorPagarController(AppDbContext context)
         {
@@ -19,146 +21,30 @@ namespace Vercom.Controllers
         }
 
         // GET: CuentaPorPagar
+        [Authorize(Policy = "CONTABILIDAD.CXP.VER")]
         public async Task<IActionResult> Index()
         {
-            var appDbContext = _context.CuentaPorPagars.Include(c => c.AsientoOrigen);
-            return View(await appDbContext.ToListAsync());
+            var cxp = await _context.CuentaPorPagars              
+                .Where(c => c.EntidadId == CurrentEntidadId)
+                .OrderBy(c => c.FechaVencimiento)
+                .ToListAsync();
+            return View(cxp);
         }
 
         // GET: CuentaPorPagar/Details/5
+        [Authorize(Policy = "CONTABILIDAD.CXP.VER")]
         public async Task<IActionResult> Details(Guid? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var cuentaPorPagar = await _context.CuentaPorPagars
+            var cxp = await _context.CuentaPorPagars                
                 .Include(c => c.AsientoOrigen)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (cuentaPorPagar == null)
-            {
-                return NotFound();
-            }
+                .Include(c => c.PagoAplicados)
+                .FirstOrDefaultAsync(m => m.Id == id && m.EntidadId == CurrentEntidadId);
 
-            return View(cuentaPorPagar);
-        }
+            if (cxp == null) return NotFound();
 
-        // GET: CuentaPorPagar/Create
-        public IActionResult Create()
-        {
-            ViewData["AsientoOrigenId"] = new SelectList(_context.AsientoContables, "Id", "Id");
-            return View();
-        }
-
-        // POST: CuentaPorPagar/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,EntidadId,ProveedorId,DocumentoOrigenTipo,DocumentoOrigenId,AsientoOrigenId,FechaEmision,FechaVencimiento,MontoOriginal,SaldoPendiente,Moneda,Estado,CreadoEn")] CuentaPorPagar cuentaPorPagar)
-        {
-            if (ModelState.IsValid)
-            {
-                cuentaPorPagar.Id = Guid.NewGuid();
-                _context.Add(cuentaPorPagar);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["AsientoOrigenId"] = new SelectList(_context.AsientoContables, "Id", "Id", cuentaPorPagar.AsientoOrigenId);
-            return View(cuentaPorPagar);
-        }
-
-        // GET: CuentaPorPagar/Edit/5
-        public async Task<IActionResult> Edit(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var cuentaPorPagar = await _context.CuentaPorPagars.FindAsync(id);
-            if (cuentaPorPagar == null)
-            {
-                return NotFound();
-            }
-            ViewData["AsientoOrigenId"] = new SelectList(_context.AsientoContables, "Id", "Id", cuentaPorPagar.AsientoOrigenId);
-            return View(cuentaPorPagar);
-        }
-
-        // POST: CuentaPorPagar/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,EntidadId,ProveedorId,DocumentoOrigenTipo,DocumentoOrigenId,AsientoOrigenId,FechaEmision,FechaVencimiento,MontoOriginal,SaldoPendiente,Moneda,Estado,CreadoEn")] CuentaPorPagar cuentaPorPagar)
-        {
-            if (id != cuentaPorPagar.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(cuentaPorPagar);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!CuentaPorPagarExists(cuentaPorPagar.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["AsientoOrigenId"] = new SelectList(_context.AsientoContables, "Id", "Id", cuentaPorPagar.AsientoOrigenId);
-            return View(cuentaPorPagar);
-        }
-
-        // GET: CuentaPorPagar/Delete/5
-        public async Task<IActionResult> Delete(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var cuentaPorPagar = await _context.CuentaPorPagars
-                .Include(c => c.AsientoOrigen)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (cuentaPorPagar == null)
-            {
-                return NotFound();
-            }
-
-            return View(cuentaPorPagar);
-        }
-
-        // POST: CuentaPorPagar/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
-        {
-            var cuentaPorPagar = await _context.CuentaPorPagars.FindAsync(id);
-            if (cuentaPorPagar != null)
-            {
-                _context.CuentaPorPagars.Remove(cuentaPorPagar);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool CuentaPorPagarExists(Guid id)
-        {
-            return _context.CuentaPorPagars.Any(e => e.Id == id);
+            return View(cxp);
         }
     }
 }

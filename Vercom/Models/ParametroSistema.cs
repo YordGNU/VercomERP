@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 namespace Vercom.Models;
 
+/// <summary>
+/// Tasas fiscales, escalas salariales, % vacaciones, etc. Versionado por vigencia para resistir cambios normativos frecuentes del MFP/ONAT.
+/// </summary>
 public partial class ParametroSistema
 {
     public int Id { get; set; }

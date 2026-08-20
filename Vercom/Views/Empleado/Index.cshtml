@@ -1,170 +1,79 @@
-﻿@model IEnumerable<Vercom.Models.Empleado>
-
+﻿@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@model IEnumerable<Vercom.Models.Empleado>
 @{
-    ViewData["Title"] = "Index";
+    ViewBag.Title = "Plantilla de Empleados";
 }
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Gestión de Empleado</h4>
+        <h4 class="page-main-title m-0">Expedientes del Personal</h4>
     </div>
     <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Empleado</a></li>
-            <li class="breadcrumb-item active">Listado</li>
-        </ol>
+        @if ((await AuthorizationService.AuthorizeAsync(User, "RRHH.EMPLEADO.CREAR")).Succeeded)
+        {
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="ti ti-user-plus me-1"></i> Nuevo Ingreso
+            </a>
+        }
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="container-xxl mt-4">
     <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Listado de Empleado</h4>
-                </div>
-                <div class="card-body">
+        @foreach (var item in Model)
+        {
+            <div class="col-xl-4 col-md-6 mb-4">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="avatar-lg bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+                                <i class="ti ti-user fs-28"></i>
+                            </div>
+                            <div class="flex-grow-1 overflow-hidden">
+                                <h5 class="mb-0 text-truncate"><a asp-action="File" asp-route-id="@item.Id" class="text-dark">@item.Nombres @item.Apellidos</a></h5>
+                                <p class="text-muted mb-0 small">@item.Cargo.Nombre</p>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-light btn-icon" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" asp-action="File" asp-route-id="@item.Id"><i class="ti ti-folder me-1"></i> Ver Expediente</a></li>
+                                    <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@item.Id"><i class="ti ti-edit me-1"></i> Editar</a></li>
+                                </ul>
+                            </div>
+                        </div>
 
+                        <div class="bg-light rounded p-2 mb-3">
+                            <div class="row g-0 text-center">
+                                <div class="col-6 border-end">
+                                    <span class="d-block small text-muted">CI</span>
+                                    <span class="fw-bold small">@item.CarnetIdentidad</span>
+                                </div>
+                                <div class="col-6">
+                                    <span class="d-block small text-muted">Ingreso</span>
+                                    <span class="fw-bold small">@item.FechaIngreso.ToString("dd/MM/yyyy")</span>
+                                </div>
+                            </div>
+                        </div>
 
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<div class="table-responsive"><table class="table data-table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.EntidadId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.SucursalId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CarnetIdentidad)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Nombres)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Apellidos)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FechaNacimiento)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Sexo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Direccion)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Telefono)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Email)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Calificacion)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.NivelEscolaridad)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FechaIngreso)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FechaBaja)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.MotivoBaja)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CuentaBancariaPago)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Estado)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreadoEn)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Cargo)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.EntidadId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.SucursalId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CarnetIdentidad)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Nombres)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Apellidos)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FechaNacimiento)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Sexo)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Direccion)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Telefono)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Email)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Calificacion)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.NivelEscolaridad)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FechaIngreso)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FechaBaja)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.MotivoBaja)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CuentaBancariaPago)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Estado)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreadoEn)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Cargo.Id)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table></div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge @(item.Estado == "ACTIVO" ? "bg-success" : "bg-danger")">@item.Estado</span>
+                            <div class="small text-muted">
+                                <i class="ti ti-phone me-1"></i> @item.Telefono
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        }
+
+        @if (!Model.Any())
+        {
+            <div class="col-12 text-center py-5 text-muted">
+                <i class="ti ti-users-group fs-48 mb-3"></i>
+                <h3>No hay empleados registrados</h3>
+                <p>Comience dando de alta al personal para gestionar la nómina.</p>
+            </div>
+        }
     </div>
 </div>

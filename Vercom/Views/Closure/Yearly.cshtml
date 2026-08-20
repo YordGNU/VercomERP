@@ -1,0 +1,62 @@
+@{
+    ViewBag.Title = "Cierre de Ejercicio Fiscal";
+    decimal profit = ViewBag.Profit ?? 0;
+    short year = ViewBag.Year;
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Asistente de Cierre Anual: @year</h4>
+    </div>
+</div>
+
+<div class="container-xxl mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="card-title text-white mb-0">Balance de Resultados Preliminar</h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-5">
+                        <div class="avatar-lg bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                            <i class="ti ti-lock-square-rounded fs-40 text-primary"></i>
+                        </div>
+                        <h3>Ejercicio Fiscal @year</h3>
+                        <p class="text-muted">Estado actual de las cuentas nominales antes del cierre.</p>
+                    </div>
+
+                    <div class="row text-center mb-4">
+                        <div class="col-6 border-end">
+                            <h5 class="text-muted small text-uppercase">Utilidad/Pérdida Calculada</h5>
+                            <h2 class="fw-bold @(profit >= 0 ? "text-success" : "text-danger")">@profit.ToString("C")</h2>
+                        </div>
+                        <div class="col-6">
+                            <h5 class="text-muted small text-uppercase">Impuesto estimado (35%)</h5>
+                            <h2 class="fw-bold text-dark">@((profit > 0 ? profit * 0.35m : 0).ToString("C"))</h2>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning mb-4">
+                        <h6 class="fw-bold"><i class="ti ti-alert-triangle me-1"></i> Advertencias Previas:</h6>
+                        <ul class="mb-0 small">
+                            <li>Todos los periodos mensuales deben estar cerrados.</li>
+                            <li>Se generará un asiento de cierre que dejará en cero las cuentas de Ingresos y Gastos.</li>
+                            <li>Esta operación no se puede deshacer de forma automática.</li>
+                        </ul>
+                    </div>
+
+                    <div class="d-grid">
+                        <form asp-action="ExecuteYearly" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="year" value="@year" />
+                            <button type="submit" class="btn btn-primary btn-lg py-3 fw-bold">
+                                <i class="ti ti-checkup-list me-1"></i> FINALIZAR EJERCICIO FISCAL @year
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,117 +1,146 @@
 ﻿@model Vercom.Models.AsientoContable
-
 @{
-    ViewData["Title"] = "Create";
+    ViewBag.Title = "Nuevo Asiento";
+    var cuentas = ViewBag.Cuentas as IEnumerable<dynamic>;
 }
 
-
-
-<h4>AsientoContable</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Crear AsientoContable</h4>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">AsientoContable</a></li>
-            <li class="breadcrumb-item active">Crear</li>
-        </ol>
+        <h4 class="page-main-title m-0">Registrar Operación Manual</h4>
     </div>
 </div>
 
-<div class="container-xxl">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Formulario de Creación</h4>
+<div class="container-xxl mt-4">
+    <form asp-action="Create" method="post" id="asientoForm">
+        <div class="row">
+            <!-- Datos de Cabecera -->
+            <div class="col-lg-12 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label asp-for="Fecha" class="form-label fw-bold">Fecha Contable</label>
+                                <input asp-for="Fecha" type="date" class="form-control" required />
+                            </div>
+                            <div class="col-md-3">
+                                <label asp-for="TipoComprobanteId" class="form-label fw-bold">Tipo de Comprobante</label>
+                                <select asp-for="TipoComprobanteId" class="form-select" asp-items="ViewBag.TipoComprobanteId"></select>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Concepto" class="form-label fw-bold">Concepto General</label>
+                                <input asp-for="Concepto" class="form-control" placeholder="Ej: Pago de servicios básicos mes actual..." required />
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-<form class="row g-3" asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="mb-3">
-                <label asp-for="EntidadId" class="form-label"></label>
-                <input asp-for="EntidadId" class="form-control" />
-                <span asp-validation-for="EntidadId" class="text-danger"></span>
             </div>
-            <div class="mb-3">
-                <label asp-for="SucursalId" class="form-label"></label>
-                <input asp-for="SucursalId" class="form-control" />
-                <span asp-validation-for="SucursalId" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="PeriodoId" class="form-label"></label>
-                <select asp-for="PeriodoId" class ="form-control" asp-items="ViewBag.PeriodoId"></select>
-            </div>
-            <div class="mb-3">
-                <label asp-for="TipoComprobanteId" class="form-label"></label>
-                <select asp-for="TipoComprobanteId" class ="form-control" asp-items="ViewBag.TipoComprobanteId"></select>
-            </div>
-            <div class="mb-3">
-                <label asp-for="NumeroComprobante" class="form-label"></label>
-                <input asp-for="NumeroComprobante" class="form-control" />
-                <span asp-validation-for="NumeroComprobante" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Fecha" class="form-label"></label>
-                <input asp-for="Fecha" class="form-control" />
-                <span asp-validation-for="Fecha" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Concepto" class="form-label"></label>
-                <input asp-for="Concepto" class="form-control" />
-                <span asp-validation-for="Concepto" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="DocumentoOrigenTipo" class="form-label"></label>
-                <input asp-for="DocumentoOrigenTipo" class="form-control" />
-                <span asp-validation-for="DocumentoOrigenTipo" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="DocumentoOrigenId" class="form-label"></label>
-                <input asp-for="DocumentoOrigenId" class="form-control" />
-                <span asp-validation-for="DocumentoOrigenId" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="TotalDebe" class="form-label"></label>
-                <input asp-for="TotalDebe" class="form-control" />
-                <span asp-validation-for="TotalDebe" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="TotalHaber" class="form-label"></label>
-                <input asp-for="TotalHaber" class="form-control" />
-                <span asp-validation-for="TotalHaber" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="AsientoReversionId" class="form-label"></label>
-                <select asp-for="AsientoReversionId" class ="form-control" asp-items="ViewBag.AsientoReversionId"></select>
-            </div>
-            <div class="mb-3">
-                <label asp-for="CreadoPor" class="form-label"></label>
-                <input asp-for="CreadoPor" class="form-control" />
-                <span asp-validation-for="CreadoPor" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <button type="submit" class="btn btn-primary">Guardar</button>
-            </div>
-        </form>
+
+            <!-- Tabla de Detalles -->
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="card-title mb-0">Partidas del Asiento</h4>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addRow()">
+                            <i class="ti ti-plus me-1"></i> Añadir Línea
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table mb-0" id="detailsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="40%">Cuenta Contable</th>
+                                    <th width="15%" class="text-end">DEBE</th>
+                                    <th width="15%" class="text-end">HABER</th>
+                                    <th>Glosa Detallada</th>
+                                    <th width="50"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Las filas se añadirán por JS -->
+                            </tbody>
+                            <tfoot class="bg-light-subtle">
+                                <tr class="fw-bold fs-15">
+                                    <td class="text-end">TOTALES:</td>
+                                    <td class="text-end text-primary" id="totalDebe">0.00</td>
+                                    <td class="text-end text-primary" id="totalHaber">0.00</td>
+                                    <td colspan="2" id="statusDiff" class="text-danger small italic text-center">Descuadrado</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <div class="card-footer d-flex justify-content-end gap-2">
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary btn-lg px-5" id="btnSubmit" disabled>
+                            <i class="ti ti-device-floppy me-1"></i> GUARDAR ASIENTO
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-    </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
+    </form>
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
+    <script>
+        let rowCount = 0;
+        const cuentasOptions = `@Html.Raw(Json.Serialize(cuentas))`;
+        const parsedCuentas = JSON.parse(cuentasOptions);
 
+        function addRow() {
+            const tbody = document.querySelector("#detailsTable tbody");
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>
+                    <select name="AsientoDetalles[${rowCount}].CuentaId" class="form-select select2" required>
+                        <option value="">-- Seleccione Cuenta --</option>
+                        ${parsedCuentas.map(c => `<option value="${c.id}">${c.display}</option>`).join('')}
+                    </select>
+                </td>
+                <td><input name="AsientoDetalles[${rowCount}].Debe" type="number" step="0.01" class="form-control text-end input-debe" value="0.00" onchange="calculateTotals()" /></td>
+                <td><input name="AsientoDetalles[${rowCount}].Haber" type="number" step="0.01" class="form-control text-end input-haber" value="0.00" onchange="calculateTotals()" /></td>
+                <td><input name="AsientoDetalles[${rowCount}].Glosa" class="form-control" placeholder="Detalle..." /></td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-link text-danger" onclick="this.closest('tr').remove(); calculateTotals();">
+                        <i class="ti ti-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+            rowCount++;
+            // Re-inicializar select2 si está disponible
+            calculateTotals();
+        }
+
+        function calculateTotals() {
+            let totalDebe = 0;
+            let totalHaber = 0;
+
+            document.querySelectorAll(".input-debe").forEach(input => totalDebe += parseFloat(input.value || 0));
+            document.querySelectorAll(".input-haber").forEach(input => totalHaber += parseFloat(input.value || 0));
+
+            document.getElementById("totalDebe").innerText = totalDebe.toLocaleString('en-US', { minimumFractionDigits: 2 });
+            document.getElementById("totalHaber").innerText = totalHaber.toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+            const diff = Math.abs(totalDebe - totalHaber);
+            const isBalanced = diff < 0.01 && totalDebe > 0;
+            const statusDiv = document.getElementById("statusDiff");
+
+            if (isBalanced) {
+                statusDiv.innerText = "CUADRADO";
+                statusDiv.className = "text-success small italic text-center";
+                document.getElementById("btnSubmit").disabled = false;
+            } else {
+                statusDiv.innerText = totalDebe === 0 ? "Sin datos" : "DESCUADRADO: " + diff.toFixed(2);
+                statusDiv.className = "text-danger small italic text-center";
+                document.getElementById("btnSubmit").disabled = true;
+            }
+        }
+
+        // Añadir dos filas iniciales
+        document.addEventListener('DOMContentLoaded', () => {
+            addRow();
+            addRow();
+        });
+    </script>
+}

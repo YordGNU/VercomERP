@@ -30,6 +30,12 @@ builder.Services.AddScoped<ISalesService, SalesService>();
 builder.Services.AddScoped<IBIService, BIService>();
 builder.Services.AddScoped<IReportingService, ReportingService>();
 builder.Services.AddScoped<IClosureService, ClosureService>();
+builder.Services.AddScoped<ICashBankService, CashBankService>();
+builder.Services.AddScoped<IParametroSistemaService, ParametroSistemaService>();
+builder.Services.AddScoped<IConsecutivoService, ConsecutivoService>();
+
+// Workers de Fondo
+builder.Services.AddHostedService<PosSyncBackgroundWorker>();
 
 // Seguridad avanzada
 builder.Services.AddSingleton<IAuthorizationHandler, PermissionHandler>();

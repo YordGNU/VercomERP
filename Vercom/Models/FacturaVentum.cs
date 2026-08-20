@@ -11,6 +11,9 @@ public partial class FacturaVentum
 
     public Guid SucursalId { get; set; }
 
+    /// <summary>
+    /// RNF-51: asignado vía nucleo.consecutivo con SELECT...FOR UPDATE; numeración reservada por sesión offline (ver integracion.pos_venta_pendiente) para sobrevivir cortes de red del POS.
+    /// </summary>
     public string NumeroFactura { get; set; } = null!;
 
     public string Serie { get; set; } = null!;

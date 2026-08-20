@@ -17,7 +17,7 @@ public partial class ApiCliente
 
     public string ClientSecretHash { get; set; } = null!;
 
-    public string? Scopes { get; set; }
+    public string Scopes { get; set; } = null!;
 
     public bool Activo { get; set; }
 

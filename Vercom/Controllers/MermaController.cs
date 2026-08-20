@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -9,9 +10,11 @@ using Vercom.Models;
 
 namespace Vercom.Controllers
 {
+    [Authorize]
     public class MermaController : Controller
     {
-       private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+        private readonly AppDbContext _context;
+        private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
 
         public MermaController(AppDbContext context)
         {
@@ -19,141 +22,50 @@ namespace Vercom.Controllers
         }
 
         // GET: Merma
+        [Authorize(Policy = "PRODUCCION.ORDEN.VER")]
         public async Task<IActionResult> Index()
         {
-            var appDbContext = _context.Mermas.Include(m => m.OrdenProduccion);
-            return View(await appDbContext.ToListAsync());
-        }
-
-        // GET: Merma/Details/5
-        public async Task<IActionResult> Details(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var merma = await _context.Mermas
+            var mermas = await _context.Mermas
                 .Include(m => m.OrdenProduccion)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (merma == null)
-            {
-                return NotFound();
-            }
-
-            return View(merma);
+                .Include(m => m.Producto)
+                .Where(m => m.OrdenProduccion.EntidadId == CurrentEntidadId)
+                .OrderByDescending(m => m.Fecha)
+                .ToListAsync();
+            return View(mermas);
         }
 
         // GET: Merma/Create
-        public IActionResult Create()
+        [Authorize(Policy = "PRODUCCION.MERMA.REGISTRAR")]
+        public IActionResult Create(Guid? opId)
         {
-            ViewData["OrdenProduccionId"] = new SelectList(_context.OrdenProduccions, "Id", "Id");
-            return View();
+            var ops = _context.OrdenProduccions
+                .Where(o => o.EntidadId == CurrentEntidadId && o.Estado == "EN_PROCESO")
+                .Select(o => new { o.Id, Display = o.NumeroOrden + " - " + o.ProductoTerminado.Nombre })
+                .ToList();
+
+            ViewData["OrdenProduccionId"] = new SelectList(ops, "Id", "Display", opId);
+
+            ViewData["ProductoId"] = new SelectList(_context.Productos
+                .Where(p => p.EntidadId == CurrentEntidadId && p.Activo), "Id", "Nombre");
+
+            return View(new Merma { Fecha = DateOnly.FromDateTime(DateTime.Now) });
         }
 
-        // POST: Merma/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,OrdenProduccionId,ProductoId,Cantidad,Causa,ValorContable,AsientoId,Fecha,Observaciones")] Merma merma)
+        [Authorize(Policy = "PRODUCCION.MERMA.REGISTRAR")]
+        public async Task<IActionResult> Create(Merma merma)
         {
             if (ModelState.IsValid)
             {
                 merma.Id = Guid.NewGuid();
                 _context.Add(merma);
                 await _context.SaveChangesAsync();
+
+                TempData["Success"] = "Merma registrada correctamente.";
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["OrdenProduccionId"] = new SelectList(_context.OrdenProduccions, "Id", "Id", merma.OrdenProduccionId);
             return View(merma);
-        }
-
-        // GET: Merma/Edit/5
-        public async Task<IActionResult> Edit(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var merma = await _context.Mermas.FindAsync(id);
-            if (merma == null)
-            {
-                return NotFound();
-            }
-            ViewData["OrdenProduccionId"] = new SelectList(_context.OrdenProduccions, "Id", "Id", merma.OrdenProduccionId);
-            return View(merma);
-        }
-
-        // POST: Merma/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,OrdenProduccionId,ProductoId,Cantidad,Causa,ValorContable,AsientoId,Fecha,Observaciones")] Merma merma)
-        {
-            if (id != merma.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(merma);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!MermaExists(merma.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["OrdenProduccionId"] = new SelectList(_context.OrdenProduccions, "Id", "Id", merma.OrdenProduccionId);
-            return View(merma);
-        }
-
-        // GET: Merma/Delete/5
-        public async Task<IActionResult> Delete(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var merma = await _context.Mermas
-                .Include(m => m.OrdenProduccion)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (merma == null)
-            {
-                return NotFound();
-            }
-
-            return View(merma);
-        }
-
-        // POST: Merma/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
-        {
-            var merma = await _context.Mermas.FindAsync(id);
-            if (merma != null)
-            {
-                _context.Mermas.Remove(merma);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
         }
 
         private bool MermaExists(Guid id)

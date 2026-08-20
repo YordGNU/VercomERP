@@ -1,151 +1,85 @@
 ﻿@model IEnumerable<Vercom.Models.AsientoContable>
-
 @{
-    ViewData["Title"] = "Index";
+    ViewBag.Title = "Diario Contable";
 }
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Gestión de AsientoContable</h4>
+        <h4 class="page-main-title m-0">Comprobantes y Asientos</h4>
     </div>
     <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">AsientoContable</a></li>
-            <li class="breadcrumb-item active">Listado</li>
-        </ol>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="ti ti-plus me-1"></i> Nuevo Asiento Manual
+        </a>
     </div>
 </div>
 
-<div class="container-xxl">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Listado de AsientoContable</h4>
+<div class="container-xxl mt-4">
+    <!-- Filtro de Periodo -->
+    <div class="card mb-4 bg-light-subtle">
+        <div class="card-body py-2">
+            <form method="get" class="row g-2 align-items-center">
+                <div class="col-auto">
+                    <label class="small fw-bold mb-0">Periodo Contable:</label>
                 </div>
-                <div class="card-body">
-
-
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<div class="table-responsive"><table class="table data-table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.EntidadId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.SucursalId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.NumeroComprobante)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Fecha)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Concepto)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ModuloOrigen)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DocumentoOrigenTipo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DocumentoOrigenId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.TotalDebe)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.TotalHaber)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Estado)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreadoPor)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreadoEn)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.AsientoReversion)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Periodo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.TipoComprobante)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.EntidadId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.SucursalId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.NumeroComprobante)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Fecha)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Concepto)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ModuloOrigen)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DocumentoOrigenTipo)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DocumentoOrigenId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.TotalDebe)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.TotalHaber)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Estado)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreadoPor)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreadoEn)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.AsientoReversion.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Periodo.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.TipoComprobante.Id)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table></div>
+                <div class="col-auto">
+                    <select name="periodId" class="form-select form-select-sm" onchange="this.form.submit()" asp-items="ViewBag.Periods"></select>
                 </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nº Comprobante</th>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Concepto</th>
+                            <th class="text-end">Debe</th>
+                            <th class="text-end">Haber</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var statusClass = item.Estado switch {
+                                "CONTABILIZADO" => "badge bg-success",
+                                "REVERTIDO" => "badge bg-danger",
+                                _ => "badge bg-warning"
+                            };
+
+                            <tr>
+                                <td class="fw-bold">@item.NumeroComprobante.ToString("D8")</td>
+                                <td>@item.Fecha.ToString("dd/MM/yyyy")</td>
+                                <td><span class="badge border text-dark">@item.TipoComprobante.Codigo</span></td>
+                                <td class="small">@item.Concepto</td>
+                                <td class="text-end fw-bold">@item.TotalDebe.ToString("N2")</td>
+                                <td class="text-end fw-bold">@item.TotalHaber.ToString("N2")</td>
+                                <td class="text-center"><span class="@statusClass">@item.Estado</span></td>
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end gap-1">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-xs btn-light"><i class="ti ti-eye"></i></a>
+                                        @if (item.Estado == "BORRADOR") {
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-xs btn-light"><i class="ti ti-edit"></i></a>
+                                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-xs btn-light text-danger"><i class="ti ti-trash"></i></a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.Any()) {
+                            <tr>
+                                <td colspan="8" class="text-center py-4 text-muted small italic">No existen asientos registrados en este periodo.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

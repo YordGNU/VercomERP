@@ -23,6 +23,10 @@ public partial class PeriodoContable
 
     public DateTimeOffset? CerradoEn { get; set; }
 
+    public DateTimeOffset? CreadoEn { get; set; }
+
+    public DateTimeOffset? ActualizadoEn { get; set; }
+
     public virtual ICollection<ActivoFijoDepreciacion> ActivoFijoDepreciacions { get; set; } = new List<ActivoFijoDepreciacion>();
 
     public virtual ICollection<AsientoContable> AsientoContables { get; set; } = new List<AsientoContable>();

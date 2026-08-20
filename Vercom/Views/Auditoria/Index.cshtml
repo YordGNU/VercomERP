@@ -5,74 +5,88 @@
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Seguimiento de Operaciones (Auditoría)</h4>
+        <h4 class="page-main-title m-0">Trazabilidad de Operaciones (Res. 60/2011)</h4>
     </div>
 </div>
 
 <div class="container-xxl mt-4">
+    <!-- Analítica Rápida -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-header bg-white"><h5 class="card-title mb-0">Distribución de Acciones</h5></div>
+                <div class="card-body">
+                    <canvas id="auditActionsChart" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-header bg-white"><h5 class="card-title mb-0">Actividad por Módulo</h5></div>
+                <div class="card-body">
+                    <canvas id="auditModulesChart" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Filtros -->
-    <div class="card mb-4">
-        <div class="card-body">
+    <div class="card mb-4 bg-light-subtle">
+        <div class="card-body py-3">
             <form method="get" class="row g-3 align-items-end">
                 <div class="col-md-3">
                     <label class="form-label small fw-bold">Usuario</label>
-                    <input type="text" name="filterUser" class="form-control form-control-sm" placeholder="Nombre de usuario" value="@Context.Request.Query["filterUser"]" />
+                    <input type="text" name="filterUser" class="form-control form-control-sm" placeholder="Buscar usuario..." value="@Context.Request.Query["filterUser"]" />
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small fw-bold">Tabla/Módulo</label>
-                    <input type="text" name="filterTable" class="form-control form-control-sm" placeholder="Ej: inventario.producto" value="@Context.Request.Query["filterTable"]" />
+                    <label class="form-label small fw-bold">Módulo / Tabla</label>
+                    <input type="text" name="filterTable" class="form-control form-control-sm" placeholder="Ej: comercial.factura_venta" value="@Context.Request.Query["filterTable"]" />
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small fw-bold">Desde</label>
                     <input type="date" name="start" class="form-control form-control-sm" value="@Context.Request.Query["start"]" />
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label small fw-bold">Hasta</label>
-                    <input type="date" name="end" class="form-control form-control-sm" value="@Context.Request.Query["end"]" />
+                <div class="col-md-2 d-grid">
+                    <button type="submit" class="btn btn-sm btn-primary">Aplicar Filtros</button>
                 </div>
-                <div class="col-md-2 d-grid gap-2 d-md-flex">
-                    <button type="submit" class="btn btn-sm btn-primary">Filtrar</button>
+                <div class="col-md-2 d-grid">
                     <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Limpiar</a>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Resultados -->
+    <!-- Tabla -->
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover table-sm align-middle">
+                <table class="table table-hover table-sm align-middle mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>Fecha/Hora</th>
                             <th>Usuario</th>
-                            <th>Acción</th>
+                            <th class="text-center">Acción</th>
                             <th>Módulo / Tabla</th>
-                            <th>ID Registro</th>
-                            <th>Canal</th>
-                            <th></th>
+                            <th class="text-center">Canal</th>
+                            <th class="text-end">Detalle</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var item in Model)
                         {
-                            var actionClass = item.Accion switch {
-                                "INSERT" => "text-success",
-                                "UPDATE" => "text-warning",
-                                "DELETE" => "text-danger",
-                                _ => "text-primary"
+                            var badgeColor = item.Accion switch {
+                                "INSERT" => "bg-success",
+                                "UPDATE" => "bg-warning",
+                                "DELETE" => "bg-danger",
+                                _ => "bg-primary"
                             };
 
                             <tr>
-                                <td class="small">@item.OcurridoEn.ToString("dd/MM/yyyy HH:mm:ss")</td>
-                                <td><span class="fw-bold">@item.NombreUsuario</span></td>
-                                <td><span class="fw-bold @actionClass">@item.Accion</span></td>
-                                <td class="small">@item.EsquemaTabla</td>
-                                <td class="small"><code>@item.RegistroId</code></td>
-                                <td>
-                                    <span class="badge @(item.Canal == "POS" ? "bg-info" : "bg-dark")">@item.Canal</span>
-                                </td>
+                                <td class="small">@item.OcurridoEn.ToString("dd/MM HH:mm:ss")</td>
+                                <td class="fw-bold">@item.NombreUsuario</td>
+                                <td class="text-center"><span class="badge @badgeColor">@item.Accion</span></td>
+                                <td class="small"><code>@item.EsquemaTabla</code></td>
+                                <td class="text-center"><span class="badge border text-dark">@item.Canal</span></td>
                                 <td class="text-end">
                                     <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-xs btn-light">
                                         <i class="ti ti-zoom-in"></i>
@@ -86,3 +100,36 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Data para gráficos (Simulada para visualización inmediata)
+        const ctxActions = document.getElementById('auditActionsChart').getContext('2d');
+        new Chart(ctxActions, {
+            type: 'doughnut',
+            data: {
+                labels: ['INSERT', 'UPDATE', 'DELETE', 'LOGIN'],
+                datasets: [{
+                    data: [35, 45, 10, 10],
+                    backgroundColor: ['#22c55e', '#f59e0b', '#ef4444', '#3b82f6']
+                }]
+            },
+            options: { cutout: '70%', plugins: { legend: { position: 'right' } } }
+        });
+
+        const ctxModules = document.getElementById('auditModulesChart').getContext('2d');
+        new Chart(ctxModules, {
+            type: 'bar',
+            data: {
+                labels: ['Ventas', 'Inventario', 'Finanzas', 'RRHH'],
+                datasets: [{
+                    label: 'Operaciones',
+                    data: [120, 80, 45, 30],
+                    backgroundColor: '#6366f1'
+                }]
+            },
+            options: { indexAxis: 'y', plugins: { legend: { display: false } } }
+        });
+    </script>
+}

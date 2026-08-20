@@ -1,122 +1,58 @@
 ﻿@model IEnumerable<Vercom.Models.Proveedor>
-
 @{
-    ViewData["Title"] = "Index";
+    ViewBag.Title = "Registro de Proveedores";
 }
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Gestión de Proveedor</h4>
+        <h4 class="page-main-title m-0">Gestión de Abastecimiento: Proveedores</h4>
     </div>
     <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Proveedor</a></li>
-            <li class="breadcrumb-item active">Listado</li>
-        </ol>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="ti ti-truck me-1"></i> Nuevo Proveedor
+        </a>
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="container-xxl mt-4">
     <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Listado de Proveedor</h4>
-                </div>
-                <div class="card-body">
+        @foreach (var item in Model)
+        {
+            <div class="col-xl-4 col-md-6 mb-4">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="avatar-lg bg-info-subtle text-info rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                <i class="ti ti-building-factory fs-24"></i>
+                            </div>
+                            <div class="flex-grow-1 overflow-hidden">
+                                <h5 class="mb-0 text-truncate">@item.RazonSocial</h5>
+                                <p class="text-muted mb-0 small">NIT: @item.Nit</p>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-light btn-icon" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" asp-action="Details" asp-route-id="@item.Id"><i class="ti ti-eye me-1"></i> Detalles</a></li>
+                                    <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@item.Id"><i class="ti ti-edit me-1"></i> Editar</a></li>
+                                </ul>
+                            </div>
+                        </div>
 
+                        <div class="small text-muted mb-3">
+                            <p class="mb-1"><i class="ti ti-phone me-1"></i> @item.Telefono</p>
+                            <p class="mb-0 text-truncate"><i class="ti ti-mail me-1"></i> @item.Email</p>
+                        </div>
 
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<div class="table-responsive"><table class="table data-table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.EntidadId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.TipoPersona)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Nit)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.RazonSocial)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Direccion)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Telefono)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Email)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CuentaBancaria)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CuentaContableId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Activo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreadoEn)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.EntidadId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.TipoPersona)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Nit)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.RazonSocial)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Direccion)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Telefono)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Email)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CuentaBancaria)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CuentaContableId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Activo)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreadoEn)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table></div>
+                        <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                            <span class="badge @(item.Activo ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")">@(item.Activo ? "Activo" : "Inactivo")</span>
+                            <a asp-controller="Purchase" asp-action="Index" asp-route-proveedorId="@item.Id" class="small text-decoration-none">Ver Compras <i class="ti ti-chevron-right ms-1"></i></a>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        }
+        @if (!Model.Any()) {
+            <div class="col-12 text-center py-5 text-muted">No hay proveedores registrados.</div>
+        }
     </div>
 </div>

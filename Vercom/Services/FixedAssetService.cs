@@ -7,11 +7,12 @@ public interface IFixedAssetService
 {
     Task<(bool Succeeded, string Message)> GenerateMonthlyDepreciationAsync(Guid entidadId, Guid periodId);
     Task<List<ActivoFijo>> GetActiveAssetsAsync(Guid entidadId);
+    Task<(bool Succeeded, string Message)> RetireAssetAsync(Guid assetId, string reason, Guid userId);
 }
 
 public class FixedAssetService : IFixedAssetService
 {
-   private readonly AppDbContext _context;   
+    private readonly AppDbContext _context;
     private readonly IAccountingService _accountingService;
 
     public FixedAssetService(AppDbContext context, IAccountingService accountingService)
@@ -32,6 +33,10 @@ public class FixedAssetService : IFixedAssetService
 
         if (!assets.Any()) return (true, "No hay activos fijos para depreciar.");
 
+        // Verificar si ya se corrió la depreciación para este periodo
+        var alreadyDone = await _context.ActivoFijoDepreciacions.AnyAsync(d => d.PeriodoId == periodId);
+        if (alreadyDone) return (true, "La depreciación de este mes ya fue procesada.");
+
         var entry = new AsientoContable
         {
             Id = Guid.NewGuid(),
@@ -49,7 +54,6 @@ public class FixedAssetService : IFixedAssetService
 
         foreach (var asset in assets)
         {
-            // Cálculo simplificado: (Valor - Residual) / Vida Útil
             var cuotaMensual = (asset.ValorAdquisicion - asset.ValorResidual) / asset.VidaUtilMeses;
 
             if (asset.DepreciacionAcumulada + cuotaMensual > asset.ValorAdquisicion)
@@ -57,7 +61,6 @@ public class FixedAssetService : IFixedAssetService
 
             if (cuotaMensual <= 0) continue;
 
-            // Detalle Gasto Depreciación (Debe)
             entry.AsientoDetalles.Add(new AsientoDetalle
             {
                 Id = Guid.NewGuid(),
@@ -66,7 +69,6 @@ public class FixedAssetService : IFixedAssetService
                 Glosa = $"Gasto Dep. {asset.CodigoInventario}"
             });
 
-            // Detalle Depreciación Acumulada (Haber)
             entry.AsientoDetalles.Add(new AsientoDetalle
             {
                 Id = Guid.NewGuid(),
@@ -79,14 +81,14 @@ public class FixedAssetService : IFixedAssetService
             totalDepreciacion += cuotaMensual;
 
             _context.ActivoFijoDepreciacions.Add(new ActivoFijoDepreciacion
-                {
-                    Id = Guid.NewGuid(),
-                    ActivoFijoId = asset.Id,
-                    PeriodoId = periodId,
-                    Monto = cuotaMensual,
-                    AsientoId = entry.Id,
-                    CalculadoEn = DateTimeOffset.Now
-                });
+            {
+                Id = Guid.NewGuid(),
+                ActivoFijoId = asset.Id,
+                PeriodoId = periodId,
+                Monto = cuotaMensual,
+                AsientoId = entry.Id,
+                CalculadoEn = DateTimeOffset.Now
+            });
         }
 
         if (totalDepreciacion > 0)
@@ -106,5 +108,78 @@ public class FixedAssetService : IFixedAssetService
         return await _context.ActivoFijos
             .Where(a => a.EntidadId == entidadId && a.Estado == "ACTIVO")
             .ToListAsync();
+    }
+
+    public async Task<(bool Succeeded, string Message)> RetireAssetAsync(Guid assetId, string reason, Guid userId)
+    {
+        var asset = await _context.ActivoFijos.FindAsync(assetId);
+        if (asset == null) return (false, "Activo no encontrado.");
+        if (asset.Estado == "BAJA") return (false, "El activo ya está de baja.");
+
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            var entry = new AsientoContable
+            {
+                Id = Guid.NewGuid(),
+                EntidadId = asset.EntidadId,
+                Fecha = DateOnly.FromDateTime(DateTime.Now),
+                Concepto = $"BAJA DE ACTIVO {asset.CodigoInventario}: {reason}",
+                ModuloOrigen = "ACTIVOS_FIJOS",
+                TipoComprobanteId = 7, // Ajustes
+                Estado = "CONTABILIZADO",
+                CreadoPor = userId,
+                CreadoEn = DateTimeOffset.Now
+            };
+
+            // 1. Revertir Depreciación Acumulada (Debe)
+            entry.AsientoDetalles.Add(new AsientoDetalle {
+                Id = Guid.NewGuid(),
+                CuentaId = asset.CuentaDepreciacionId,
+                Debe = asset.DepreciacionAcumulada,
+                Glosa = $"Cancel. Dep. Acum. por Baja"
+            });
+
+            // 2. Reconocer Pérdida por Baja (si aplica) (Debe)
+            var valorNeto = asset.ValorAdquisicion - asset.DepreciacionAcumulada;
+            if (valorNeto > 0)
+            {
+                // Buscar cuenta de gastos por pérdida de activos (ej: 7xx)
+                var lossAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "701" && c.EntidadId == asset.EntidadId);
+                if (lossAccount != null) {
+                    entry.AsientoDetalles.Add(new AsientoDetalle {
+                        Id = Guid.NewGuid(),
+                        CuentaId = lossAccount.Id,
+                        Debe = valorNeto,
+                        Glosa = $"Pérdida por Baja de Activo"
+                    });
+                }
+            }
+
+            // 3. Cancelar Valor de Adquisición (Haber)
+            entry.AsientoDetalles.Add(new AsientoDetalle {
+                Id = Guid.NewGuid(),
+                CuentaId = asset.CuentaActivoId,
+                Haber = asset.ValorAdquisicion,
+                Glosa = $"Baja Activo {asset.CodigoInventario}"
+            });
+
+            var accResult = await _accountingService.CreateEntryAsync(entry);
+            if (!accResult.Succeeded) throw new Exception(accResult.Message);
+
+            asset.Estado = "BAJA";
+            asset.FechaBaja = DateOnly.FromDateTime(DateTime.Now);
+            asset.MotivoBaja = reason;
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return (true, "Activo dado de baja y asiento contable generado.");
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            return (false, $"Error al dar de baja: {ex.Message}");
+        }
     }
 }

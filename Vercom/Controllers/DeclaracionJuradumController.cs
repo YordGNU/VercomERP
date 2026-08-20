@@ -2,175 +2,99 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
+using Vercom.Services;
 
 namespace Vercom.Controllers
 {
+    [Authorize]
     public class DeclaracionJuradumController : Controller
     {
-       private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+        private readonly AppDbContext _context;
+        private readonly ITaxService _taxService;
+        private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
 
-        public DeclaracionJuradumController(AppDbContext context)
+        public DeclaracionJuradumController(AppDbContext context, ITaxService taxService)
         {
             _context = context;
+            _taxService = taxService;
         }
 
         // GET: DeclaracionJuradum
+        [Authorize(Policy = "ACC_VIEW_PLAN")]
         public async Task<IActionResult> Index()
         {
-            var appDbContext = _context.DeclaracionJurada.Include(d => d.Asiento).Include(d => d.Periodo).Include(d => d.TipoObligacion);
-            return View(await appDbContext.ToListAsync());
-        }
-
-        // GET: DeclaracionJuradum/Details/5
-        public async Task<IActionResult> Details(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var declaracionJuradum = await _context.DeclaracionJurada
-                .Include(d => d.Asiento)
+            var declaraciones = await _context.DeclaracionJurada
                 .Include(d => d.Periodo)
                 .Include(d => d.TipoObligacion)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (declaracionJuradum == null)
-            {
-                return NotFound();
-            }
-
-            return View(declaracionJuradum);
+                .Where(d => d.EntidadId == CurrentEntidadId)
+                .OrderByDescending(d => d.CreadoEn)
+                .ToListAsync();
+            return View(declaraciones);
         }
 
-        // GET: DeclaracionJuradum/Create
+        [Authorize(Policy = "ACC_VIEW_PLAN")]
+        public async Task<IActionResult> Details(Guid? id)
+        {
+            if (id == null) return NotFound();
+
+            var entry = await _context.DeclaracionJurada
+                .Include(d => d.Periodo)
+                .Include(d => d.TipoObligacion)
+                .Include(d => d.Asiento)
+                .FirstOrDefaultAsync(m => m.Id == id && m.EntidadId == CurrentEntidadId);
+
+            if (entry == null) return NotFound();
+            return View(entry);
+        }
+
+        [HttpGet]
+        [Authorize(Policy = "CONTABILIDAD.DECLARACION.CREAR")]
         public IActionResult Create()
         {
-            ViewData["AsientoId"] = new SelectList(_context.AsientoContables, "Id", "Id");
-            ViewData["PeriodoId"] = new SelectList(_context.PeriodoContables, "Id", "Id");
-            ViewData["TipoObligacionId"] = new SelectList(_context.TipoObligacionFiscals, "Id", "Id");
+            var periodos = _context.PeriodoContables
+                .Where(p => p.EntidadId == CurrentEntidadId)
+                .OrderByDescending(p => p.Anio).ThenByDescending(p => p.Mes)
+                .Select(p => new { p.Id, Display = p.Mes + " / " + p.Anio })
+                .ToList();
+
+            ViewData["PeriodoId"] = new SelectList(periodos, "Id", "Display");
+            ViewData["TipoObligacionId"] = new SelectList(_context.TipoObligacionFiscals, "Id", "Nombre");
             return View();
         }
 
-        // POST: DeclaracionJuradum/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,EntidadId,TipoObligacionId,PeriodoId,BaseImponible,MontoCalculado,MontoPagado,FechaLimite,FechaPresentacion,Estado,NumeroDj,AsientoId,GeneradoPor,CreadoEn")] DeclaracionJuradum declaracionJuradum)
+        [Authorize(Policy = "CONTABILIDAD.DECLARACION.CREAR")]
+        public async Task<IActionResult> Create(int tipoObligacionId, Guid periodoId)
         {
-            if (ModelState.IsValid)
+            var result = await _taxService.GenerateTaxDeclarationAsync(CurrentEntidadId, tipoObligacionId, periodoId);
+
+            if (result.Succeeded)
             {
-                declaracionJuradum.Id = Guid.NewGuid();
-                _context.Add(declaracionJuradum);
-                await _context.SaveChangesAsync();
+                TempData["Success"] = result.Message;
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["AsientoId"] = new SelectList(_context.AsientoContables, "Id", "Id", declaracionJuradum.AsientoId);
-            ViewData["PeriodoId"] = new SelectList(_context.PeriodoContables, "Id", "Id", declaracionJuradum.PeriodoId);
-            ViewData["TipoObligacionId"] = new SelectList(_context.TipoObligacionFiscals, "Id", "Id", declaracionJuradum.TipoObligacionId);
-            return View(declaracionJuradum);
-        }
 
-        // GET: DeclaracionJuradum/Edit/5
-        public async Task<IActionResult> Edit(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            ModelState.AddModelError("", result.Message);
+            var periodos = _context.PeriodoContables
+                .Where(p => p.EntidadId == CurrentEntidadId)
+                .Select(p => new { p.Id, Display = p.Mes + " / " + p.Anio })
+                .ToList();
 
-            var declaracionJuradum = await _context.DeclaracionJurada.FindAsync(id);
-            if (declaracionJuradum == null)
-            {
-                return NotFound();
-            }
-            ViewData["AsientoId"] = new SelectList(_context.AsientoContables, "Id", "Id", declaracionJuradum.AsientoId);
-            ViewData["PeriodoId"] = new SelectList(_context.PeriodoContables, "Id", "Id", declaracionJuradum.PeriodoId);
-            ViewData["TipoObligacionId"] = new SelectList(_context.TipoObligacionFiscals, "Id", "Id", declaracionJuradum.TipoObligacionId);
-            return View(declaracionJuradum);
-        }
-
-        // POST: DeclaracionJuradum/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,EntidadId,TipoObligacionId,PeriodoId,BaseImponible,MontoCalculado,MontoPagado,FechaLimite,FechaPresentacion,Estado,NumeroDj,AsientoId,GeneradoPor,CreadoEn")] DeclaracionJuradum declaracionJuradum)
-        {
-            if (id != declaracionJuradum.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(declaracionJuradum);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!DeclaracionJuradumExists(declaracionJuradum.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["AsientoId"] = new SelectList(_context.AsientoContables, "Id", "Id", declaracionJuradum.AsientoId);
-            ViewData["PeriodoId"] = new SelectList(_context.PeriodoContables, "Id", "Id", declaracionJuradum.PeriodoId);
-            ViewData["TipoObligacionId"] = new SelectList(_context.TipoObligacionFiscals, "Id", "Id", declaracionJuradum.TipoObligacionId);
-            return View(declaracionJuradum);
-        }
-
-        // GET: DeclaracionJuradum/Delete/5
-        public async Task<IActionResult> Delete(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var declaracionJuradum = await _context.DeclaracionJurada
-                .Include(d => d.Asiento)
-                .Include(d => d.Periodo)
-                .Include(d => d.TipoObligacion)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (declaracionJuradum == null)
-            {
-                return NotFound();
-            }
-
-            return View(declaracionJuradum);
-        }
-
-        // POST: DeclaracionJuradum/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
-        {
-            var declaracionJuradum = await _context.DeclaracionJurada.FindAsync(id);
-            if (declaracionJuradum != null)
-            {
-                _context.DeclaracionJurada.Remove(declaracionJuradum);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            ViewData["PeriodoId"] = new SelectList(periodos, "Id", "Display", periodoId);
+            ViewData["TipoObligacionId"] = new SelectList(_context.TipoObligacionFiscals, "Id", "Nombre", tipoObligacionId);
+            return View();
         }
 
         private bool DeclaracionJuradumExists(Guid id)
         {
-            return _context.DeclaracionJurada.Any(e => e.Id == id);
+            return _context.DeclaracionJurada.Any(e => e.Id == id && e.EntidadId == CurrentEntidadId);
         }
     }
 }

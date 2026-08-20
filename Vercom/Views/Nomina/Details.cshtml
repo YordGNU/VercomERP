@@ -1,0 +1,74 @@
+@model Vercom.Models.PeriodoNomina
+@{
+    ViewBag.Title = "Detalle de Nómina";
+    var meses = new[] { "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Nómina @meses[Model.Mes] @Model.Anio</h4>
+    </div>
+    <div class="text-end d-flex gap-2">
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Volver al Listado</a>
+        @if (Model.Estado == "PRENOMINA")
+        {
+            <form asp-action="Approve" method="post">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-sm btn-success"><i class="ti ti-check me-1"></i> APROBAR Y CONTABILIZAR</button>
+            </form>
+        }
+        @if (Model.AsientoId.HasValue)
+        {
+            <a asp-controller="AsientoContable" asp-action="Details" asp-route-id="@Model.AsientoId" class="btn btn-sm btn-info">
+                <i class="ti ti-calculator me-1"></i> Ver Asiento
+            </a>
+        }
+    </div>
+</div>
+
+<div class="container-xxl mt-4">
+    <div class="card">
+        <div class="card-header bg-light-subtle d-flex justify-content-between align-items-center">
+            <h4 class="card-title">Resumen de Pagos por Empleado</h4>
+            <span class="badge @(Model.Estado == "APROBADA" ? "bg-success" : "bg-warning")">ESTADO: @Model.Estado</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Empleado</th>
+                            <th class="text-center">Días</th>
+                            <th class="text-center">Extras</th>
+                            <th class="text-end">Devengado</th>
+                            <th class="text-end">Retención (5%)</th>
+                            <th class="text-end">Neto a Cobrar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var det in Model.NominaDetalles)
+                        {
+                            <tr>
+                                <td class="fw-bold">@det.Empleado.Nombres @det.Empleado.Apellidos</td>
+                                <td class="text-center">@det.DiasTrabajados.ToString("N1")</td>
+                                <td class="text-center">@det.HorasExtra.ToString("N1")</td>
+                                <td class="text-end">@det.SalarioDevengado.ToString("C")</td>
+                                <td class="text-end text-danger">- @det.TotalDeducciones.ToString("C")</td>
+                                <td class="text-end fw-bold text-primary">@det.SalarioNeto.ToString("C")</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot class="table-light fw-bold fs-15">
+                        <tr>
+                            <td>TOTALES:</td>
+                            <td colspan="2"></td>
+                            <td class="text-end">@Model.NominaDetalles.Sum(d => d.SalarioDevengado).ToString("C")</td>
+                            <td class="text-end text-danger">- @Model.NominaDetalles.Sum(d => d.TotalDeducciones).ToString("C")</td>
+                            <td class="text-end text-primary">@Model.NominaDetalles.Sum(d => d.SalarioNeto).ToString("C")</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

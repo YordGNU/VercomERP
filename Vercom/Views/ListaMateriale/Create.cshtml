@@ -1,60 +1,108 @@
 ﻿@model Vercom.Models.ListaMateriale
-
 @{
-    ViewData["Title"] = "Create";
+    ViewBag.Title = "Definir Composición (BOM)";
+    var insumos = ViewBag.Insumos as IEnumerable<dynamic>;
 }
 
-
-
-<h4>ListaMateriale</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Crear ListaMateriale</h4>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">ListaMateriale</a></li>
-            <li class="breadcrumb-item active">Crear</li>
-        </ol>
+        <h4 class="page-main-title m-0">Diseño de Producto (BOM)</h4>
     </div>
 </div>
 
-<div class="container-xxl">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Formulario de Creación</h4>
+<div class="container-xxl mt-4">
+    <form asp-action="Create" method="post" id="bomForm">
+        <div class="row">
+            <div class="col-lg-12 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-6">
+                                <label asp-for="ProductoTerminadoId" class="form-label fw-bold">Producto Elaborado (Resultado)</label>
+                                <select asp-for="ProductoTerminadoId" class="form-select" asp-items="ViewBag.ProductoTerminadoId" required>
+                                    <option value="">-- Seleccione el producto final --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label asp-for="Version" class="form-label fw-bold">Versión</label>
+                                <input asp-for="Version" class="form-control" value="1" required />
+                            </div>
+                            <div class="col-md-4 pb-2">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" asp-for="Activa" checked>
+                                    <label class="form-check-label fw-bold" asp-for="Activa">Establecer como Activa</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-<form class="row g-3" asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="mb-3">
-                <label asp-for="ProductoTerminadoId" class="form-label"></label>
-                <input asp-for="ProductoTerminadoId" class="form-control" />
-                <span asp-validation-for="ProductoTerminadoId" class="text-danger"></span>
             </div>
-            <div class="mb-3">
-                <button type="submit" class="btn btn-primary">Guardar</button>
-            </div>
-        </form>
+
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="card-title mb-0">Componentes e Insumos Necesarios</h4>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addRow()">
+                            <i class="ti ti-plus me-1"></i> Añadir Insumo
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table mb-0" id="detailsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="40%">Insumo / Materia Prima</th>
+                                    <th width="20%" class="text-end">Cant. Requerida (Unitaria)</th>
+                                    <th width="15%" class="text-center">% Merma Técnica</th>
+                                    <th>Notas</th>
+                                    <th width="50"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Dinámico -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-footer bg-light d-flex justify-content-end gap-2">
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary btn-lg px-5">
+                            <i class="ti ti-device-floppy me-1"></i> GUARDAR ESTRUCTURA (BOM)
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-    </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
+    </form>
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
+    <script>
+        let rowCount = 0;
+        const insumosOptions = `@Html.Raw(Json.Serialize(insumos))`;
+        const parsedInsumos = JSON.parse(insumosOptions);
 
+        function addRow() {
+            const tbody = document.querySelector("#detailsTable tbody");
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>
+                    <select name="ListaMaterialesDetalles[${rowCount}].ProductoInsumoId" class="form-select select2" required>
+                        <option value="">-- Seleccione Insumo --</option>
+                        ${parsedInsumos.map(i => `<option value="${i.id}">${i.display}</option>`).join('')}
+                    </select>
+                </td>
+                <td><input name="ListaMaterialesDetalles[${rowCount}].CantidadRequerida" type="number" step="0.0001" class="form-control text-end" value="0.0000" required /></td>
+                <td><input name="ListaMaterialesDetalles[${rowCount}].PorcentajeMerma" type="number" step="0.01" class="form-control text-center" value="0.00" /></td>
+                <td><input name="ListaMaterialesDetalles[${rowCount}].Observaciones" class="form-control" placeholder="..." /></td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-link text-danger" onclick="this.closest('tr').remove();">
+                        <i class="ti ti-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+            rowCount++;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => { addRow(); });
+    </script>
+}

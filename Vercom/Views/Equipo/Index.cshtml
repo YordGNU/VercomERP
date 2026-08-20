@@ -1,104 +1,47 @@
 ﻿@model IEnumerable<Vercom.Models.Equipo>
-
 @{
-    ViewData["Title"] = "Index";
+    ViewBag.Title = "Equipos de Planta";
 }
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Gestión de Equipo</h4>
+        <h4 class="page-main-title m-0">Parque de Maquinaria e Inmuebles</h4>
     </div>
     <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Equipo</a></li>
-            <li class="breadcrumb-item active">Listado</li>
-        </ol>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="ti ti-plus me-1"></i> Añadir Equipo
+        </a>
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="container-xxl mt-4">
     <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Listado de Equipo</h4>
-                </div>
-                <div class="card-body">
+        @foreach (var item in Model)
+        {
+            var statusColor = item.Estado == "OPERATIVO" ? "success" : (item.Estado == "MANTENIMIENTO" ? "warning" : "danger");
 
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-3">
+                            <div>
+                                <h4 class="card-title mb-0">@item.Nombre</h4>
+                                <code class="text-muted small">@item.Codigo</code>
+                            </div>
+                            <span class="badge bg-@statusColor-subtle text-@statusColor">@item.Estado</span>
+                        </div>
 
+                        <div class="bg-light rounded p-2 mb-3 small">
+                            <p class="mb-1"><i class="ti ti-calendar-check me-1"></i> Última Revisión: @(item.FechaUltimaRevision?.ToString("dd/MM/yyyy") ?? "N/A")</p>
+                            <p class="mb-0"><i class="ti ti-refresh me-1"></i> Frecuencia: Cada @item.FrecuenciaMantenimientoDias días</p>
+                        </div>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<div class="table-responsive"><table class="table data-table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.EntidadId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.SucursalId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ActivoFijoId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Codigo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Nombre)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FechaUltimaRevision)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FrecuenciaMantenimientoDias)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Estado)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.EntidadId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.SucursalId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ActivoFijoId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Codigo)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Nombre)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FechaUltimaRevision)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FrecuenciaMantenimientoDias)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Estado)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table></div>
+                        <div class="d-grid gap-2">
+                            <a asp-controller="MantenimientoProgramado" asp-action="Create" asp-route-equipoId="@item.Id" class="btn btn-sm btn-outline-primary">Programar Mantenimiento</a>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        }
     </div>
 </div>

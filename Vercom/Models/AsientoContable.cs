@@ -33,6 +33,9 @@ public partial class AsientoContable
 
     public string Estado { get; set; } = null!;
 
+    /// <summary>
+    /// RF-12: un asiento contabilizado jamás se edita ni elimina; solo se revierte mediante un nuevo asiento de ajuste enlazado aquí.
+    /// </summary>
     public Guid? AsientoReversionId { get; set; }
 
     public Guid CreadoPor { get; set; }

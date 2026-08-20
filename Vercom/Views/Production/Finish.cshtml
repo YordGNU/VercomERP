@@ -1,0 +1,89 @@
+@model Vercom.Models.OrdenProduccion
+@{
+    ViewBag.Title = "Cierre de Producción";
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 text-success">Reporte de Cierre de Trabajo</h4>
+    </div>
+</div>
+
+<div class="container-xxl mt-4">
+    <form asp-action="Finish" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="id" value="@Model.Id" />
+
+        <div class="row">
+            <div class="col-lg-12 mb-4">
+                <div class="card bg-success-subtle border-0">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h4 class="mb-1 text-success">@Model.ProductoTerminado.Nombre</h4>
+                                <p class="mb-0 text-muted">Orden: @Model.NumeroOrden | Cantidad Planificada: @Model.CantidadPlanificada.ToString("N0")</p>
+                            </div>
+                            <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                                <label class="fw-bold d-block mb-1">CANTIDAD REAL PRODUCIDA:</label>
+                                <div class="input-group input-group-lg float-md-end" style="max-width: 250px;">
+                                    <input type="number" name="actualQuantity" class="form-control text-center fw-bold" value="@Model.CantidadPlanificada" step="0.01" required />
+                                    <span class="input-group-text">UND</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header"><h4 class="card-title">Consumo Real de Insumos</h4></div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Material / Insumo</th>
+                                        <th class="text-end">Planificado</th>
+                                        <th class="text-end" width="200">Consumo Real</th>
+                                        <th width="100">U.M.</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{ int i = 0; }
+                                    @foreach (var c in Model.OrdenProduccionConsumos)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <input type="hidden" name="actualConsumptions[@i].ProductoInsumoId" value="@c.ProductoInsumoId" />
+                                                <div class="fw-bold">@c.ProductoInsumo.Nombre</div>
+                                                <small class="text-muted">@c.ProductoInsumo.Codigo</small>
+                                            </td>
+                                            <td class="text-end">@c.CantidadPlanificada.ToString("N2")</td>
+                                            <td>
+                                                <input type="number" name="actualConsumptions[@i].CantidadReal" class="form-control text-end" value="@c.CantidadPlanificada.ToString("F2")" step="0.0001" required />
+                                            </td>
+                                            <td class="small text-muted">@c.ProductoInsumo.UnidadMedida?.Nombre</td>
+                                        </tr>
+                                        i++;
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light d-flex justify-content-between align-items-center">
+                        <div class="text-muted small">
+                            <i class="ti ti-info-circle me-1"></i> Al finalizar, se generará el movimiento de inventario y el asiento de costo real.
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-success px-5">
+                                <i class="ti ti-circle-check me-1"></i> FINALIZAR PRODUCCIÓN
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

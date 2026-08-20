@@ -1,0 +1,84 @@
+@model IEnumerable<dynamic>
+@{
+    ViewBag.Title = "Consola de Asistencia";
+    var date = (DateOnly)ViewBag.Date;
+    var tiposAusencia = ViewBag.TipoAusenciaId as List<Vercom.Models.TipoAusencium>;
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Control de Jornada: @date.ToString("dddd, dd MMMM yyyy")</h4>
+    </div>
+    <div class="text-end d-flex gap-2">
+        <input type="date" class="form-control form-control-sm" id="jumpDate" value="@date.ToString("yyyy-MM-dd")" onchange="window.location.href='?date=' + this.value" />
+    </div>
+</div>
+
+<div class="container-xxl mt-4">
+    <form asp-action="SaveConsole" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="date" value="@date.ToString("yyyy-MM-dd")" />
+
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Empleado</th>
+                                <th width="120">Entrada</th>
+                                <th width="120">Salida</th>
+                                <th width="100">Extras (h)</th>
+                                <th width="200">Incidencia / Ausencia</th>
+                                <th>Observaciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{ int i = 0; }
+                            @foreach (var item in Model)
+                            {
+                                var emp = item.Employee as Vercom.Models.Empleado;
+                                var record = item.Record as Vercom.Models.RegistroAsistencium;
+
+                                <tr>
+                                    <td>
+                                        <input type="hidden" name="logs[@i].EmployeeId" value="@emp.Id" />
+                                        <div class="fw-bold">@emp.Nombres @emp.Apellidos</div>
+                                        <small class="text-muted">@emp.Cargo.Nombre</small>
+                                    </td>
+                                    <td>
+                                        <input type="time" name="logs[@i].HoraEntrada" class="form-control form-control-sm" value="@(record?.HoraEntrada?.ToString("HH:mm") ?? "08:00")" />
+                                    </td>
+                                    <td>
+                                        <input type="time" name="logs[@i].HoraSalida" class="form-control form-control-sm" value="@(record?.HoraSalida?.ToString("HH:mm") ?? "17:00")" />
+                                    </td>
+                                    <td>
+                                        <input type="number" step="0.5" name="logs[@i].HorasExtra" class="form-control form-control-sm" value="@(record?.HorasExtra ?? 0)" />
+                                    </td>
+                                    <td>
+                                        <select name="logs[@i].TipoAusenciaId" class="form-select form-select-sm">
+                                            <option value="">-- Presente --</option>
+                                            @foreach (var ta in tiposAusencia)
+                                            {
+                                                <!option value="@ta.Id" @(record?.TipoAusenciaId == ta.Id ? "selected" : "")>@ta.Nombre</!option>
+                                            }
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input name="logs[@i].Observaciones" class="form-control form-control-sm" value="@record?.Observaciones" placeholder="..." />
+                                    </td>
+                                </tr>
+                                i++;
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-light d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary px-5">
+                    <i class="ti ti-device-floppy me-1"></i> GUARDAR ASISTENCIA DEL DÍA
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

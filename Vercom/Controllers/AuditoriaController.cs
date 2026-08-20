@@ -5,10 +5,10 @@ using Vercom.Models;
 
 namespace Vercom.Controllers
 {
-    [Authorize(Policy = "NUCLEO.AUDITORIA.VER")]
+    [Authorize(Policy = "SEGURIDAD.AUDITORIA.VER")]
     public class AuditoriaController : Controller
     {
-       private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+        private readonly AppDbContext _context;
 
         public AuditoriaController(AppDbContext context)
         {

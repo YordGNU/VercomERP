@@ -1,103 +1,57 @@
 ﻿@model IEnumerable<Vercom.Models.Merma>
-
 @{
-    ViewData["Title"] = "Index";
+    ViewBag.Title = "Registro de Mermas";
 }
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Gestión de Merma</h4>
+        <h4 class="page-main-title m-0">Control de Desperdicios y Mermas</h4>
     </div>
     <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Merma</a></li>
-            <li class="breadcrumb-item active">Listado</li>
-        </ol>
+        <a asp-action="Create" class="btn btn-danger">
+            <i class="ti ti-minus me-1"></i> Reportar Nueva Merma
+        </a>
     </div>
 </div>
 
-<div class="container-xxl">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Listado de Merma</h4>
-                </div>
-                <div class="card-body">
-
-
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<div class="table-responsive"><table class="table data-table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.ProductoId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Cantidad)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Causa)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ValorContable)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.AsientoId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Fecha)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Observaciones)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.OrdenProduccion)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.ProductoId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Cantidad)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Causa)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ValorContable)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.AsientoId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Fecha)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Observaciones)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.OrdenProduccion.Id)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table></div>
-                </div>
+<div class="container-xxl mt-4">
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Orden de Producción</th>
+                            <th>Producto / Insumo</th>
+                            <th class="text-end">Cantidad</th>
+                            <th>Causa / Motivo</th>
+                            <th class="text-end">Valor Contable</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Fecha.ToString("dd/MM/yyyy")</td>
+                                <td><code class="text-primary">@item.OrdenProduccion?.NumeroOrden</code></td>
+                                <td class="fw-bold">@item.Producto?.Nombre</td>
+                                <td class="text-end fw-bold text-danger">@item.Cantidad.ToString("N2")</td>
+                                <td><span class="badge border text-dark">@item.Causa</span></td>
+                                <td class="text-end">@item.ValorContable?.ToString("C")</td>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-xs btn-light"><i class="ti ti-eye"></i></a>
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.Any()) {
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted small">No hay mermas extraordinarias registradas.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

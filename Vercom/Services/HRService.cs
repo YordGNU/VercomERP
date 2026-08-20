@@ -10,15 +10,18 @@ public interface IHRService
     Task<(bool Succeeded, string Message)> AddMedicalCertificateAsync(CertificadoMedico certificate);
     Task<decimal> GetAccumulatedVacationsAsync(Guid employeeId);
     Task<List<ContratoLaboral>> GetEmployeeContractsAsync(Guid employeeId);
+    Task<(bool Succeeded, string Message)> AccumulateMonthlyVacationsAsync(Guid entidadId, int year, int month, Guid userId);
 }
 
 public class HRService : IHRService
 {
-   private readonly AppDbContext _context;   
+    private readonly AppDbContext _context;
+    private readonly IParametroSistemaService _paramService;
 
-    public HRService(AppDbContext context)
+    public HRService(AppDbContext context, IParametroSistemaService paramService)
     {
         _context = context;
+        _paramService = paramService;
     }
 
     public async Task<List<Empleado>> GetActiveEmployeesAsync(Guid entidadId)
@@ -45,7 +48,6 @@ public class HRService : IHRService
     {
         _context.CertificadoMedicos.Add(certificate);
 
-        // Registrar días de ausencia en la tabla de asistencia automáticamente
         for (var date = certificate.FechaInicio; date <= certificate.FechaFin; date = date.AddDays(1))
         {
             var attendance = new RegistroAsistencium
@@ -53,7 +55,7 @@ public class HRService : IHRService
                 Id = Guid.NewGuid(),
                 EmpleadoId = certificate.EmpleadoId,
                 Fecha = date,
-                TipoAusenciaId = 1, // ID para "Certificado Médico" (debería estar en Tipos de Ausencia)
+                TipoAusenciaId = 1,
                 Observaciones = $"Certificado #{certificate.NumeroCertificado}"
             };
             _context.RegistroAsistencia.Add(attendance);
@@ -65,16 +67,11 @@ public class HRService : IHRService
 
     public async Task<decimal> GetAccumulatedVacationsAsync(Guid employeeId)
     {
-        // En Cuba: 9.09% del tiempo trabajado.
-        // Simplificado: Sumar todos los días trabajados y multiplicar por 0.0909
-        var diasTrabajados = await _context.RegistroAsistencia
-            .CountAsync(a => a.EmpleadoId == employeeId && a.TipoAusenciaId == null);
-
-        // También restamos los días ya disfrutados
         var saldo = await _context.SaldoVacaciones
-            .FirstOrDefaultAsync(s => s.EmpleadoId == employeeId);
-
-        return saldo?.SaldoActual ?? (diasTrabajados * 0.0909m);
+            .Where(s => s.EmpleadoId == employeeId)
+            .Select(s => s.SaldoActual)
+            .FirstOrDefaultAsync() ?? 0;
+        return saldo;
     }
 
     public async Task<List<ContratoLaboral>> GetEmployeeContractsAsync(Guid employeeId)
@@ -83,5 +80,44 @@ public class HRService : IHRService
             .Where(c => c.EmpleadoId == employeeId)
             .OrderByDescending(c => c.FechaInicio)
             .ToListAsync();
+    }
+
+    public async Task<(bool Succeeded, string Message)> AccumulateMonthlyVacationsAsync(Guid entidadId, int year, int month, Guid userId)
+    {
+        var employees = await GetActiveEmployeesAsync(entidadId);
+        var factor = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "FACTOR_VAC");
+        if (factor == 0) factor = 0.0909m;
+
+        foreach (var emp in employees)
+        {
+            var daysWorked = await _context.RegistroAsistencia
+                .CountAsync(a => a.EmpleadoId == emp.Id && a.Fecha.Year == year && a.Fecha.Month == month && a.TipoAusenciaId == null);
+
+            var earned = daysWorked * factor;
+
+            var saldo = await _context.SaldoVacaciones
+                .FirstOrDefaultAsync(s => s.EmpleadoId == emp.Id && s.Anio == (short)year);
+
+            if (saldo == null)
+            {
+                saldo = new SaldoVacacione
+                {
+                    Id = Guid.NewGuid(),
+                    EmpleadoId = emp.Id,
+                    Anio = (short)year,
+                    DiasAcumulados = earned,
+                    DiasDisfrutados = 0,
+                    DiasCompensados = 0
+                };
+                _context.SaldoVacaciones.Add(saldo);
+            }
+            else
+            {
+                saldo.DiasAcumulados += earned;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        return (true, "Vacaciones del mes acumuladas correctamente.");
     }
 }

@@ -10,10 +10,10 @@ using Vercom.Models;
 
 namespace Vercom.Controllers
 {
-    [Authorize(Policy = "NUCLEO.ROL.ASIGNAR")]
+    [Authorize(Policy = "SEGURIDAD.ROL.VER")]
     public class RolController : Controller
     {
-       private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+        private readonly AppDbContext _context;
 
         public RolController(AppDbContext context)
         {
@@ -41,6 +41,7 @@ namespace Vercom.Controllers
         }
 
         // GET: Rol/Create
+        [Authorize(Policy = "SEGURIDAD.ROL.ASIGNAR")]
         public IActionResult Create()
         {
             return View();
@@ -48,6 +49,7 @@ namespace Vercom.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "SEGURIDAD.ROL.ASIGNAR")]
         public async Task<IActionResult> Create([Bind("Codigo,Nombre,Descripcion")] Rol rol)
         {
             if (ModelState.IsValid)
@@ -62,6 +64,7 @@ namespace Vercom.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "SEGURIDAD.ROL.ASIGNAR")]
         public async Task<IActionResult> ManagePermissions(int id)
         {
             var rol = await _context.Rols.Include(r => r.Permisos).FirstOrDefaultAsync(r => r.Id == id);
@@ -75,6 +78,7 @@ namespace Vercom.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "SEGURIDAD.ROL.ASIGNAR")]
         public async Task<IActionResult> ManagePermissions(int id, int[] selectedPermissions)
         {
             var rol = await _context.Rols.Include(r => r.Permisos).FirstOrDefaultAsync(r => r.Id == id);

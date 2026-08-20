@@ -1,157 +1,65 @@
 ﻿@model IEnumerable<Vercom.Models.ActivoFijo>
-
 @{
-    ViewData["Title"] = "Index";
+    ViewBag.Title = "Submayor de Activos Fijos";
 }
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Gestión de ActivoFijo</h4>
+        <h4 class="page-main-title m-0">Control de Medios Básicos y Activos</h4>
     </div>
     <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">ActivoFijo</a></li>
-            <li class="breadcrumb-item active">Listado</li>
-        </ol>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="ti ti-plus me-1"></i> Alta de Activo
+        </a>
     </div>
 </div>
 
-<div class="container-xxl">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Listado de ActivoFijo</h4>
-                </div>
-                <div class="card-body">
-
-
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<div class="table-responsive"><table class="table data-table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.EntidadId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.SucursalId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CodigoInventario)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Descripcion)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FechaAdquisicion)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ValorAdquisicion)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ValorResidual)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.VidaUtilMeses)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.TasaDepreciacionAnual)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.MetodoDepreciacion)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DepreciacionAcumulada)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Estado)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FechaBaja)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.MotivoBaja)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CuentaActivo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CuentaDepreciacion)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CuentaGastoDep)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.EntidadId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.SucursalId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CodigoInventario)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Descripcion)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FechaAdquisicion)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ValorAdquisicion)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ValorResidual)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.VidaUtilMeses)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.TasaDepreciacionAnual)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.MetodoDepreciacion)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DepreciacionAcumulada)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Estado)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FechaBaja)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.MotivoBaja)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CuentaActivo.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CuentaDepreciacion.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CuentaGastoDep.Id)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table></div>
-                </div>
+<div class="container-xxl mt-4">
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Cód. Inventario</th>
+                            <th>Descripción</th>
+                            <th>F. Adquisición</th>
+                            <th class="text-end">Valor Inicial</th>
+                            <th class="text-end">Deprec. Acumulada</th>
+                            <th class="text-end">Valor Neto</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var valorNeto = item.ValorAdquisicion - item.DepreciacionAcumulada;
+                            <tr>
+                                <td class="fw-bold">@item.CodigoInventario</td>
+                                <td>@item.Descripcion</td>
+                                <td>@item.FechaAdquisicion.ToString("dd/MM/yyyy")</td>
+                                <td class="text-end">@item.ValorAdquisicion.ToString("N2")</td>
+                                <td class="text-end text-danger">@item.DepreciacionAcumulada.ToString("N2")</td>
+                                <td class="text-end fw-bold">@valorNeto.ToString("N2")</td>
+                                <td class="text-center">
+                                    <span class="badge @(item.Estado == "ACTIVO" ? "bg-success" : "bg-secondary")">@item.Estado</span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end gap-1">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-xs btn-light"><i class="ti ti-eye"></i></a>
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-xs btn-light"><i class="ti ti-edit"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.Any()) {
+                            <tr>
+                                <td colspan="8" class="text-center py-4 text-muted small">No hay activos fijos registrados.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

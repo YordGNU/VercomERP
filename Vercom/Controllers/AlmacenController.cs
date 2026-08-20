@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -9,9 +10,11 @@ using Vercom.Models;
 
 namespace Vercom.Controllers
 {
+    [Authorize]
     public class AlmacenController : Controller
     {
-       private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+        private readonly AppDbContext _context;
+        private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
 
         public AlmacenController(AppDbContext context)
         {
@@ -19,139 +22,100 @@ namespace Vercom.Controllers
         }
 
         // GET: Almacen
+        [Authorize(Policy = "INVENTARIO.ALMACEN.VER")]
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Almacens.ToListAsync());
+            var almacenes = await _context.Almacens
+                .Include(a => a.Sucursal)
+                .Where(a => a.EntidadId == CurrentEntidadId)
+                .OrderBy(a => a.Nombre)
+                .ToListAsync();
+            return View(almacenes);
         }
 
         // GET: Almacen/Details/5
+        [Authorize(Policy = "INVENTARIO.ALMACEN.VER")]
         public async Task<IActionResult> Details(Guid? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var almacen = await _context.Almacens
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (almacen == null)
-            {
-                return NotFound();
-            }
+                .Include(a => a.Sucursal)
+                .Include(a => a.Existencia).ThenInclude(e => e.Producto)
+                .FirstOrDefaultAsync(m => m.Id == id && m.EntidadId == CurrentEntidadId);
+
+            if (almacen == null) return NotFound();
 
             return View(almacen);
         }
 
         // GET: Almacen/Create
+        [Authorize(Policy = "INVENTARIO.ALMACEN.CREAR")]
         public IActionResult Create()
         {
-            return View();
+            ViewData["SucursalId"] = new SelectList(_context.Sucursals.Where(s => s.EntidadId == CurrentEntidadId), "Id", "Nombre");
+            return View(new Almacen { Activo = true });
         }
 
-        // POST: Almacen/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,EntidadId,SucursalId,Codigo,Nombre,EsPuntoVenta,Activo")] Almacen almacen)
+        [Authorize(Policy = "INVENTARIO.ALMACEN.CREAR")]
+        public async Task<IActionResult> Create(Almacen almacen)
         {
             if (ModelState.IsValid)
             {
                 almacen.Id = Guid.NewGuid();
+                almacen.EntidadId = CurrentEntidadId;
                 _context.Add(almacen);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+            ViewData["SucursalId"] = new SelectList(_context.Sucursals.Where(s => s.EntidadId == CurrentEntidadId), "Id", "Nombre", almacen.SucursalId);
             return View(almacen);
         }
 
         // GET: Almacen/Edit/5
+        [Authorize(Policy = "INVENTARIO.ALMACEN.CREAR")]
         public async Task<IActionResult> Edit(Guid? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var almacen = await _context.Almacens.FindAsync(id);
-            if (almacen == null)
-            {
-                return NotFound();
-            }
+            var almacen = await _context.Almacens.FirstOrDefaultAsync(a => a.Id == id && a.EntidadId == CurrentEntidadId);
+            if (almacen == null) return NotFound();
+
+            ViewData["SucursalId"] = new SelectList(_context.Sucursals.Where(s => s.EntidadId == CurrentEntidadId), "Id", "Nombre", almacen.SucursalId);
             return View(almacen);
         }
 
-        // POST: Almacen/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,EntidadId,SucursalId,Codigo,Nombre,EsPuntoVenta,Activo")] Almacen almacen)
+        [Authorize(Policy = "INVENTARIO.ALMACEN.CREAR")]
+        public async Task<IActionResult> Edit(Guid id, Almacen almacen)
         {
-            if (id != almacen.Id)
-            {
-                return NotFound();
-            }
+            if (id != almacen.Id) return NotFound();
 
             if (ModelState.IsValid)
             {
                 try
                 {
+                    almacen.EntidadId = CurrentEntidadId;
                     _context.Update(almacen);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!AlmacenExists(almacen.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    if (!AlmacenExists(almacen.Id)) return NotFound();
+                    else throw;
                 }
                 return RedirectToAction(nameof(Index));
             }
+            ViewData["SucursalId"] = new SelectList(_context.Sucursals.Where(s => s.EntidadId == CurrentEntidadId), "Id", "Nombre", almacen.SucursalId);
             return View(almacen);
-        }
-
-        // GET: Almacen/Delete/5
-        public async Task<IActionResult> Delete(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var almacen = await _context.Almacens
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (almacen == null)
-            {
-                return NotFound();
-            }
-
-            return View(almacen);
-        }
-
-        // POST: Almacen/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
-        {
-            var almacen = await _context.Almacens.FindAsync(id);
-            if (almacen != null)
-            {
-                _context.Almacens.Remove(almacen);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
         }
 
         private bool AlmacenExists(Guid id)
         {
-            return _context.Almacens.Any(e => e.Id == id);
+            return _context.Almacens.Any(e => e.Id == id && e.EntidadId == CurrentEntidadId);
         }
     }
 }

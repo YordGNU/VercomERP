@@ -11,17 +11,19 @@ public interface ISalesService
 
 public class SalesService : ISalesService
 {
-   private readonly AppDbContext _context;   
+    private readonly AppDbContext _context;
     private readonly IInventoryService _inventoryService;
     private readonly IContractService _contractService;
     private readonly ITaxService _taxService;
+    private readonly IConsecutivoService _consecutivoService;
 
-    public SalesService(AppDbContext context, IInventoryService inventoryService, IContractService contractService, ITaxService taxService)
+    public SalesService(AppDbContext context, IInventoryService inventoryService, IContractService contractService, ITaxService taxService, IConsecutivoService consecutivoService)
     {
         _context = context;
         _inventoryService = inventoryService;
         _contractService = contractService;
         _taxService = taxService;
+        _consecutivoService = consecutivoService;
     }
 
     public async Task<(bool Succeeded, string Message, FacturaVentum? Invoice)> CreateInvoiceAsync(FacturaVentum invoice)
@@ -29,25 +31,20 @@ public class SalesService : ISalesService
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            // 1. Validar Contrato si es mayorista
+            // 1. Validar Contrato si es mayorista (RF-50)
             var contractCheck = await _contractService.ValidateContractForOperationAsync(invoice.ContratoId, invoice.EntidadId, invoice.TipoVenta);
             if (!contractCheck.Succeeded) return (false, contractCheck.Message, null);
 
-            // 2. Generar Número de Factura (RNF-51)
-            // Se usa el consecutivo centralizado del núcleo
-            var lastNum = await _context.FacturaVenta
-                .Where(f => f.EntidadId == invoice.EntidadId && f.Serie == invoice.Serie)
-                .OrderByDescending(f => f.NumeroFactura)
-                .Select(f => f.NumeroFactura)
-                .FirstOrDefaultAsync();
-
-            int nextNum = 1;
-            if (lastNum != null && int.TryParse(lastNum, out var parsed)) nextNum = parsed + 1;
-            invoice.NumeroFactura = nextNum.ToString().PadLeft(8, '0');
+            // 2. Generar Número de Factura Seguro (RNF-51)
+            if (string.IsNullOrEmpty(invoice.NumeroFactura))
+            {
+                invoice.NumeroFactura = await _consecutivoService.ObtenerSiguienteNumeroAsync(
+                    invoice.EntidadId, invoice.SucursalId, "FACTURA_VENTA", invoice.Serie);
+            }
 
             invoice.Id = Guid.NewGuid();
             invoice.Estado = "EMITIDA";
-            invoice.Fecha = DateTimeOffset.Now;
+            if (invoice.Fecha == default) invoice.Fecha = DateTimeOffset.Now;
             invoice.CreadoEn = DateTimeOffset.Now;
 
             decimal totalTax = 0;
@@ -58,23 +55,24 @@ public class SalesService : ISalesService
                 detail.Id = Guid.NewGuid();
                 detail.FacturaId = invoice.Id;
 
-                // Obtener costo actual (para registro de costo de venta)
+                // Obtener costo actual para registro de costo de venta (RF-35)
                 var stock = await _context.Existencia
                     .FirstOrDefaultAsync(e => e.AlmacenId == invoice.AlmacenId && e.ProductoId == detail.ProductoId);
                 detail.CostoUnitarioVenta = stock?.CostoPromedio ?? 0;
 
-                // Calcular Impuesto
+                // Cálculo de Impuesto Dinámico (RF-53)
                 var prod = await _context.Productos.FindAsync(detail.ProductoId);
                 if (prod != null && prod.AplicaImpuestoVentas)
                 {
-                    detail.ImpuestoPorcentaje = 10.0m; // MiPyMES tasa general
-                    totalTax += (detail.PrecioUnitario * detail.Cantidad * 0.10m);
+                    var taxAmount = await _taxService.CalculateSalesTaxAsync(invoice.EntidadId, detail.PrecioUnitario * detail.Cantidad);
+                    detail.ImpuestoPorcentaje = 10.0m; // Informativo
+                    totalTax += taxAmount;
                 }
 
                 detail.SubtotalLinea = (detail.PrecioUnitario * detail.Cantidad);
                 subtotal += detail.SubtotalLinea;
 
-                // 3. Descuento automático de Inventario (VEN: Salida por Venta)
+                // 3. Descuento automático de Inventario (VEN)
                 var movSalida = new MovimientoInventario
                 {
                     EntidadId = invoice.EntidadId,
@@ -96,7 +94,7 @@ public class SalesService : ISalesService
                 });
 
                 var invResult = await _inventoryService.ProcessMovementAsync(movSalida);
-                if (!invResult.Succeeded) throw new Exception($"Stock insuficiente para {prod?.Nombre}: {invResult.Message}");
+                if (!invResult.Succeeded) throw new Exception($"Stock insuficiente: {invResult.Message}");
 
                 detail.MovimientoInventarioId = movSalida.Id;
             }
@@ -105,7 +103,7 @@ public class SalesService : ISalesService
             invoice.ImpuestoVentasTotal = totalTax;
             invoice.Total = subtotal + totalTax - invoice.DescuentoTotal;
 
-            // 4. Generar Cuenta por Cobrar si no es pagada totalmente en efectivo al momento
+            // 4. Gestión de Cobros (RF-54)
             var totalPagado = invoice.FormaPagoVenta.Sum(p => p.Monto);
             if (totalPagado < invoice.Total)
             {
@@ -117,7 +115,7 @@ public class SalesService : ISalesService
                     DocumentoOrigenTipo = "FACTURA_VENTA",
                     DocumentoOrigenId = invoice.Id,
                     FechaEmision = DateOnly.FromDateTime(DateTime.Now),
-                    FechaVencimiento = DateOnly.FromDateTime(DateTime.Now.AddDays(15)), // Ejemplo
+                    FechaVencimiento = DateOnly.FromDateTime(DateTime.Now.AddDays(30)),
                     MontoOriginal = invoice.Total,
                     SaldoPendiente = invoice.Total - totalPagado,
                     Estado = totalPagado > 0 ? "PARCIAL" : "PENDIENTE",
@@ -131,12 +129,12 @@ public class SalesService : ISalesService
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            return (true, $"Factura {invoice.NumeroFactura} emitida con éxito.", invoice);
+            return (true, $"Factura {invoice.NumeroFactura} emitida.", invoice);
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            return (false, $"Error al facturar: {ex.Message}", null);
+            return (false, $"Fallo comercial: {ex.Message}", null);
         }
     }
 
@@ -146,26 +144,24 @@ public class SalesService : ISalesService
             .Include(f => f.FacturaVentaDetalles)
             .FirstOrDefaultAsync(f => f.Id == invoiceId);
 
-        if (invoice == null) return (false, "Factura no encontrada.");
-        if (invoice.Estado == "ANULADA") return (false, "La factura ya está anulada.");
+        if (invoice == null) return (false, "No existe.");
+        if (invoice.Estado == "ANULADA") return (false, "Ya anulada.");
 
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            // 1. Revertir Inventario
             foreach (var detail in invoice.FacturaVentaDetalles)
             {
                 var movRegreso = new MovimientoInventario
                 {
                     EntidadId = invoice.EntidadId,
-                    TipoMovimientoId = 4, // AJU: Ajuste (Reingreso por anulación)
-                    NumeroDocumento = $"REV-{invoice.NumeroFactura}",
+                    TipoMovimientoId = 4,
+                    NumeroDocumento = $"ANUL-{invoice.NumeroFactura}",
                     AlmacenDestinoId = invoice.AlmacenId,
                     Fecha = DateTimeOffset.Now,
-                    ReferenciaExternaTipo = "ANULACION_FACTURA",
+                    ReferenciaExternaTipo = "ANULACION",
                     ReferenciaExternaId = invoice.Id,
-                    Canal = "ERP",
-                    Observaciones = $"Reingreso por anulación: {reason}"
+                    Canal = "ERP"
                 };
                 movRegreso.MovimientoInventarioDetalles.Add(new MovimientoInventarioDetalle
                 {
@@ -177,18 +173,17 @@ public class SalesService : ISalesService
                 await _inventoryService.ProcessMovementAsync(movRegreso);
             }
 
-            // 2. Marcar como anulada
             invoice.Estado = "ANULADA";
             invoice.MotivoAnulacion = reason;
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
-            return (true, "Factura anulada y stock devuelto.");
+            return (true, "Operación anulada.");
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            return (false, $"Error al anular: {ex.Message}");
+            return (false, ex.Message);
         }
     }
 }

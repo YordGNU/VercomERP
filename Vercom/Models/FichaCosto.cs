@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 namespace Vercom.Models;
 
+/// <summary>
+/// RNF-40: versionada para permitir redefinición ágil ante cambios de precios de insumos.
+/// </summary>
 public partial class FichaCosto
 {
     public Guid Id { get; set; }

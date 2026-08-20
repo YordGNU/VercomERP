@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
-using Vercom.Services;
 
 namespace Vercom.Services;
 
@@ -12,16 +11,19 @@ public interface IAccountingService
     Task<decimal> GetAccountBalanceAsync(Guid accountId, Guid? periodId = null);
     Task<List<AsientoContable>> GetEntriesByPeriodAsync(Guid periodId);
     Task<(bool Succeeded, string Message)> ClosePeriodAsync(Guid periodId, Guid userId);
+    Task<(bool Succeeded, string Message)> ReopenPeriodAsync(Guid periodId, string reason, Guid userId);
     Task<PeriodoContable?> GetOrCreateActivePeriodAsync(Guid entidadId, DateTime date);
 }
 
 public class AccountingService : IAccountingService
 {
-   private readonly AppDbContext _context;   
+    private readonly AppDbContext _context;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public AccountingService(AppDbContext context)
+    public AccountingService(AppDbContext context, IServiceScopeFactory scopeFactory)
     {
         _context = context;
+        _scopeFactory = scopeFactory;
     }
 
     public async Task<(bool Succeeded, string Message, AsientoContable? Entry)> CreateEntryAsync(AsientoContable entry)
@@ -44,7 +46,7 @@ public class AccountingService : IAccountingService
         entry.PeriodoId = period.Id;
         entry.TotalDebe = totalDebe;
         entry.TotalHaber = totalHaber;
-        entry.Estado = "BORRADOR"; // Empieza como borrador por defecto
+        entry.Estado = "BORRADOR";
         entry.CreadoEn = DateTimeOffset.Now;
 
         // 3. Generar número consecutivo si no existe
@@ -89,7 +91,6 @@ public class AccountingService : IAccountingService
         if (original == null) return (false, "Asiento original no encontrado.", null);
         if (original.Estado != "CONTABILIZADO") return (false, "Solo se pueden revertir asientos contabilizados.", null);
 
-        // Crear asiento de reversión (valores invertidos)
         var adjustment = new AsientoContable
         {
             Id = Guid.NewGuid(),
@@ -103,7 +104,7 @@ public class AccountingService : IAccountingService
             DocumentoOrigenId = original.Id,
             Estado = "CONTABILIZADO",
             AsientoReversionId = original.Id,
-            CreadoPor = original.CreadoPor, // Debería ser el usuario actual
+            CreadoPor = original.CreadoPor,
             CreadoEn = DateTimeOffset.Now
         };
 
@@ -116,8 +117,8 @@ public class AccountingService : IAccountingService
                 CentroCostoId = det.CentroCostoId,
                 TerceroId = det.TerceroId,
                 TerceroTipo = det.TerceroTipo,
-                Debe = det.Haber, // Invertido
-                Haber = det.Debe, // Invertido
+                Debe = det.Haber,
+                Haber = det.Debe,
                 Glosa = $"REV: {det.Glosa}"
             });
         }
@@ -172,19 +173,55 @@ public class AccountingService : IAccountingService
         if (period == null) return (false, "Periodo no encontrado.");
         if (period.Estado == "CERRADO") return (false, "El periodo ya está cerrado.");
 
-        // Validar que todos los asientos estén contabilizados o anulados
+        // 1. Validar asientos en borrador
         var pending = await _context.AsientoContables
             .AnyAsync(a => a.PeriodoId == periodId && a.Estado == "BORRADOR");
 
         if (pending)
             return (false, "No se puede cerrar el periodo. Existen asientos en estado BORRADOR.");
 
+        // 2. Disparar Depreciación de Activos (RF-14)
+        using (var scope = _scopeFactory.CreateScope())
+        {
+            var assetService = scope.ServiceProvider.GetRequiredService<IFixedAssetService>();
+            var depResult = await assetService.GenerateMonthlyDepreciationAsync(period.EntidadId, periodId);
+            if (!depResult.Succeeded) return (false, $"Fallo en depreciación: {depResult.Message}");
+        }
+
         period.Estado = "CERRADO";
         period.CerradoPor = userId;
         period.CerradoEn = DateTimeOffset.Now;
 
         await _context.SaveChangesAsync();
-        return (true, "Periodo cerrado exitosamente.");
+        return (true, "Periodo cerrado exitosamente. Depreciación de activos generada.");
+    }
+
+    public async Task<(bool Succeeded, string Message)> ReopenPeriodAsync(Guid periodId, string reason, Guid userId)
+    {
+        var period = await _context.PeriodoContables.FindAsync(periodId);
+        if (period == null) return (false, "Periodo no encontrado.");
+        if (period.Estado == "ABIERTO") return (false, "El periodo ya está abierto.");
+
+        period.Estado = "ABIERTO";
+        period.ActualizadoEn = DateTimeOffset.Now;
+
+        // Registrar en auditoría manual (complementario al interceptor)
+        var audit = new Auditorium
+        {
+            UsuarioId = userId,
+            NombreUsuario = "SISTEMA",
+            Accion = "REAPERTURA_PERIODO",
+            EsquemaTabla = "contabilidad.periodo_contable",
+            RegistroId = periodId.ToString(),
+            ValoresAnteriores = "Estado: CERRADO",
+            ValoresNuevos = $"Motivo: {reason}",
+            Canal = "ERP",
+            OcurridoEn = DateTime.Now
+        };
+        _context.Auditoria.Add(audit);
+
+        await _context.SaveChangesAsync();
+        return (true, "Periodo reabierto con éxito. Registrado en bitácora.");
     }
 
     public async Task<PeriodoContable?> GetOrCreateActivePeriodAsync(Guid entidadId, DateTime date)
@@ -207,7 +244,9 @@ public class AccountingService : IAccountingService
                 Mes = month,
                 FechaInicio = new DateOnly(year, month, 1),
                 FechaFin = new DateOnly(year, month, DateTime.DaysInMonth(year, month)),
-                Estado = "ABIERTO"
+                Estado = "ABIERTO",
+                CreadoEn = DateTimeOffset.Now,
+                ActualizadoEn = DateTimeOffset.Now
             };
             _context.PeriodoContables.Add(period);
             await _context.SaveChangesAsync();

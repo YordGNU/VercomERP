@@ -1,108 +1,126 @@
 ﻿@model Vercom.Models.Producto
-
 @{
-    ViewData["Title"] = "Create";
+    ViewBag.Title = "Nuevo Producto";
 }
 
-
-
-<h4>Producto</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Crear Producto</h4>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Producto</a></li>
-            <li class="breadcrumb-item active">Crear</li>
-        </ol>
+        <h4 class="page-main-title m-0">Alta de Producto / Insumo</h4>
     </div>
 </div>
 
-<div class="container-xxl">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Formulario de Creación</h4>
+<div class="container-xxl mt-4">
+    <form asp-action="Create" method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <!-- Nav Tabs -->
+                <ul class="nav nav-tabs nav-justified bg-white rounded-top border-bottom-0 shadow-sm" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active fw-bold" data-bs-toggle="tab" href="#tab-general" role="tab">1. Datos Generales</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fw-bold" data-bs-toggle="tab" href="#tab-accounting" role="tab">2. Configuración Contable</a>
+                    </li>
+                </ul>
+
+                <div class="tab-content bg-white shadow-sm rounded-bottom p-4">
+                    <!-- Tab: Datos Generales -->
+                    <div class="tab-pane fade show active" id="tab-general" role="tabpanel">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label asp-for="Codigo" class="form-label fw-bold">Código Interno (SKU)</label>
+                                <input asp-for="Codigo" class="form-control" placeholder="Ej: PROD-001" required />
+                                <span asp-validation-for="Codigo" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-3">
+                                <label asp-for="CodigoBarras" class="form-label fw-bold">Código de Barras</label>
+                                <input asp-for="CodigoBarras" class="form-control" placeholder="UPC / EAN" />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Nombre" class="form-label fw-bold">Nombre del Producto</label>
+                                <input asp-for="Nombre" class="form-control" required />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label asp-for="FamiliaId" class="form-label fw-bold">Familia / Categoría</label>
+                                <select asp-for="FamiliaId" class="form-select" asp-items="ViewBag.FamiliaId"></select>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="UnidadMedidaId" class="form-label fw-bold">Unidad de Medida</label>
+                                <select asp-for="UnidadMedidaId" class="form-select" asp-items="ViewBag.UnidadMedidaId"></select>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Tipo" class="form-label fw-bold">Tipo de Ítem</label>
+                                <select asp-for="Tipo" class="form-select" asp-items="ViewBag.Tipos"></select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label asp-for="PrecioVentaActual" class="form-label fw-bold">Precio de Venta</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input asp-for="PrecioVentaActual" type="number" step="0.01" class="form-control" />
+                                </div>
+                            </div>
+
+                            <div class="col-md-8 d-flex align-items-end gap-4 pb-1">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" asp-for="AplicaImpuestoVentas">
+                                    <label class="form-check-label fw-bold" asp-for="AplicaImpuestoVentas">Aplica Impuesto (10%)</label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" asp-for="Activo">
+                                    <label class="form-check-label fw-bold" asp-for="Activo">Activo para Operación</label>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Descripcion" class="form-label fw-bold">Descripción / Especificaciones</label>
+                                <textarea asp-for="Descripcion" class="form-control" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Contabilidad -->
+                    <div class="tab-pane fade" id="tab-accounting" role="tabpanel">
+                        <div class="alert alert-info py-2 small mb-4">
+                            <i class="ti ti-info-circle me-1"></i> Defina las cuentas donde se registrarán automáticamente los movimientos de este producto.
+                        </div>
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <label asp-for="CuentaInventarioId" class="form-label fw-bold">Cuenta de Inventario (Existencias)</label>
+                                <select asp-for="CuentaInventarioId" class="form-select" asp-items="ViewBag.CuentaInventarioId">
+                                    <option value="">-- Usar por defecto --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="CuentaCostoVentaId" class="form-label fw-bold">Cuenta de Costo de Ventas</label>
+                                <select asp-for="CuentaCostoVentaId" class="form-select" asp-items="ViewBag.CuentaCostoVentaId">
+                                    <option value="">-- Usar por defecto --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="CuentaIngresoId" class="form-label fw-bold">Cuenta de Ingresos (Ventas)</label>
+                                <select asp-for="CuentaIngresoId" class="form-select" asp-items="ViewBag.CuentaIngresoId">
+                                    <option value="">-- Usar por defecto --</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-<form class="row g-3" asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="mb-3">
-                <label asp-for="EntidadId" class="form-label"></label>
-                <input asp-for="EntidadId" class="form-control" />
-                <span asp-validation-for="EntidadId" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Codigo" class="form-label"></label>
-                <input asp-for="Codigo" class="form-control" />
-                <span asp-validation-for="Codigo" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="CodigoBarras" class="form-label"></label>
-                <input asp-for="CodigoBarras" class="form-control" />
-                <span asp-validation-for="CodigoBarras" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Nombre" class="form-label"></label>
-                <input asp-for="Nombre" class="form-control" />
-                <span asp-validation-for="Nombre" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Descripcion" class="form-label"></label>
-                <input asp-for="Descripcion" class="form-control" />
-                <span asp-validation-for="Descripcion" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="FamiliaId" class="form-label"></label>
-                <select asp-for="FamiliaId" class ="form-control" asp-items="ViewBag.FamiliaId"></select>
-            </div>
-            <div class="mb-3">
-                <label asp-for="UnidadMedidaId" class="form-label"></label>
-                <select asp-for="UnidadMedidaId" class ="form-control" asp-items="ViewBag.UnidadMedidaId"></select>
-            </div>
-            <div class="mb-3">
-                <label asp-for="CuentaInventarioId" class="form-label"></label>
-                <input asp-for="CuentaInventarioId" class="form-control" />
-                <span asp-validation-for="CuentaInventarioId" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="CuentaCostoVentaId" class="form-label"></label>
-                <input asp-for="CuentaCostoVentaId" class="form-control" />
-                <span asp-validation-for="CuentaCostoVentaId" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="CuentaIngresoId" class="form-label"></label>
-                <input asp-for="CuentaIngresoId" class="form-control" />
-                <span asp-validation-for="CuentaIngresoId" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="PrecioVentaActual" class="form-label"></label>
-                <input asp-for="PrecioVentaActual" class="form-control" />
-                <span asp-validation-for="PrecioVentaActual" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <button type="submit" class="btn btn-primary">Guardar</button>
-            </div>
-        </form>
+
+                <div class="mt-4 pt-3 d-flex justify-content-end gap-2">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary px-5">
+                        <i class="ti ti-device-floppy me-1"></i> REGISTRAR PRODUCTO
+                    </button>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-    </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
+    </form>
 </div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }
-

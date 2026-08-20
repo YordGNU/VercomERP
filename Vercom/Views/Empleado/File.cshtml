@@ -1,0 +1,165 @@
+@model Vercom.Models.Empleado
+@{
+    ViewBag.Title = "Expediente: " + Model.Nombres;
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Expediente Digital: @Model.Nombres @Model.Apellidos</h4>
+    </div>
+    <div class="text-end">
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Volver al Directorio</a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">Editar Perfil</a>
+    </div>
+</div>
+
+<div class="container-xxl mt-4">
+    <div class="row">
+        <!-- Columna Izquierda: Datos del Perfil -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="avatar-xl bg-primary-subtle text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 100px; height: 100px;">
+                        <i class="ti ti-user fs-48"></i>
+                    </div>
+                    <h4 class="mb-1">@Model.Nombres @Model.Apellidos</h4>
+                    <p class="text-muted">@Model.Cargo.Nombre</p>
+                    <span class="badge @(Model.Estado == "ACTIVO" ? "bg-success" : "bg-danger")">@Model.Estado</span>
+                </div>
+                <div class="card-body border-top p-0">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span class="text-muted">CI:</span> <span class="fw-bold">@Model.CarnetIdentidad</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Sexo:</span> <span class="fw-bold">@Model.Sexo</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Fecha Ingreso:</span> <span class="fw-bold">@Model.FechaIngreso.ToString("dd/MM/yyyy")</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Email:</span> <span class="small">@Model.Email</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Resumen de Vacaciones -->
+            <div class="card mt-4 bg-info-subtle border-0">
+                <div class="card-body">
+                    <h5 class="card-title text-info mb-3">Control de Vacaciones</h5>
+                    <div class="text-center py-3">
+                        <h2 class="fw-bold mb-0">@ViewBag.AccumulatedVacations.ToString("N2")</h2>
+                        <small class="text-muted">Días Acumulados (9.09%)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Derecha: Detalles Laborales -->
+        <div class="col-lg-8">
+            <!-- Nav Tabs -->
+            <ul class="nav nav-tabs nav-justified bg-white rounded-top border-bottom-0 shadow-sm" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="tab" href="#tab-contracts" role="tab">Contratos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#tab-attendance" role="tab">Asistencia</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#tab-medical" role="tab">Certificados Médicos</a>
+                </li>
+            </ul>
+
+            <div class="tab-content bg-white shadow-sm rounded-bottom p-4">
+                <!-- Tab Contratos -->
+                <div class="tab-pane fade show active" id="tab-contracts" role="tabpanel">
+                    <h5 class="mb-3">Historial de Contratación</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Fecha Inicio</th>
+                                    <th>Tipo</th>
+                                    <th class="text-end">Salario</th>
+                                    <th class="text-center">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var c in Model.ContratoLaborals)
+                                {
+                                    <tr>
+                                        <td>@c.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                        <td>@c.TipoContrato</td>
+                                        <td class="text-end fw-bold">@c.SalarioPactado.ToString("C")</td>
+                                        <td class="text-center">
+                                            <span class="badge @(c.Estado == "VIGENTE" ? "bg-success-subtle text-success" : "bg-light text-dark")">@c.Estado</span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab Asistencia -->
+                <div class="tab-pane fade" id="tab-attendance" role="tabpanel">
+                    <h5 class="mb-3">Últimos 10 Registros</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Entrada</th>
+                                    <th>Salida</th>
+                                    <th>Extras</th>
+                                    <th>Incidencia</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var a in Model.RegistroAsistencia.OrderByDescending(x => x.Fecha).Take(10))
+                                {
+                                    <tr>
+                                        <td>@a.Fecha.ToString("dd/MM/yyyy")</td>
+                                        <td>@a.HoraEntrada</td>
+                                        <td>@a.HoraSalida</td>
+                                        <td>@a.HorasExtra.ToString("N1")</td>
+                                        <td><span class="text-danger small">@a.TipoAusencia?.Nombre</span></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab Médicos -->
+                <div class="tab-pane fade" id="tab-medical" role="tabpanel">
+                    <h5 class="mb-3">Certificados de Seguridad Social</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Nº Certificado</th>
+                                    <th>Inicio</th>
+                                    <th>Días</th>
+                                    <th class="text-center">Subsidio</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var cm in Model.CertificadoMedicos)
+                                {
+                                    <tr>
+                                        <td><code>@cm.NumeroCertificado</code></td>
+                                        <td>@cm.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                        <td>@cm.Dias</td>
+                                        <td class="text-center">@cm.PorcentajeSubsidio%</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

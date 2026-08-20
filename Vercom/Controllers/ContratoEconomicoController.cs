@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -9,9 +10,11 @@ using Vercom.Models;
 
 namespace Vercom.Controllers
 {
+    [Authorize]
     public class ContratoEconomicoController : Controller
     {
-       private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+        private readonly AppDbContext _context;
+        private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
 
         public ContratoEconomicoController(AppDbContext context)
         {
@@ -19,152 +22,107 @@ namespace Vercom.Controllers
         }
 
         // GET: ContratoEconomico
+        [Authorize(Policy = "COMERCIAL.CONTRATO.VER")]
         public async Task<IActionResult> Index()
         {
-            var appDbContext = _context.ContratoEconomicos.Include(c => c.Cliente).Include(c => c.Proveedor);
-            return View(await appDbContext.ToListAsync());
+            var contratos = await _context.ContratoEconomicos
+                .Include(c => c.Cliente)
+                .Include(c => c.Proveedor)
+                .Where(c => c.EntidadId == CurrentEntidadId)
+                .OrderByDescending(c => c.FechaInicio)
+                .ToListAsync();
+            return View(contratos);
         }
 
         // GET: ContratoEconomico/Details/5
+        [Authorize(Policy = "COMERCIAL.CONTRATO.VER")]
         public async Task<IActionResult> Details(Guid? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var contratoEconomico = await _context.ContratoEconomicos
                 .Include(c => c.Cliente)
                 .Include(c => c.Proveedor)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (contratoEconomico == null)
-            {
-                return NotFound();
-            }
+                .FirstOrDefaultAsync(m => m.Id == id && m.EntidadId == CurrentEntidadId);
+
+            if (contratoEconomico == null) return NotFound();
 
             return View(contratoEconomico);
         }
 
         // GET: ContratoEconomico/Create
+        [Authorize(Policy = "COMERCIAL.CONTRATO.CREAR")]
         public IActionResult Create()
         {
-            ViewData["ClienteId"] = new SelectList(_context.Clientes, "Id", "Id");
-            ViewData["ProveedorId"] = new SelectList(_context.Proveedors, "Id", "Id");
-            return View();
+            ViewData["ClienteId"] = new SelectList(_context.Clientes.Where(c => c.EntidadId == CurrentEntidadId && c.Activo), "Id", "NombreRazonSocial");
+            ViewData["ProveedorId"] = new SelectList(_context.Proveedors.Where(p => p.EntidadId == CurrentEntidadId && p.Activo), "Id", "RazonSocial");
+            return View(new ContratoEconomico {
+                Estado = "VIGENTE",
+                FechaInicio = DateOnly.FromDateTime(DateTime.Now),
+                TerceroTipo = "CLIENTE"
+            });
         }
 
-        // POST: ContratoEconomico/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,EntidadId,TerceroTipo,ClienteId,ProveedorId,NumeroContrato,Objeto,FechaFirma,FechaInicio,FechaFin,MontoTotal,DocumentoUrl,Estado")] ContratoEconomico contratoEconomico)
+        [Authorize(Policy = "COMERCIAL.CONTRATO.CREAR")]
+        public async Task<IActionResult> Create(ContratoEconomico contratoEconomico)
         {
             if (ModelState.IsValid)
             {
                 contratoEconomico.Id = Guid.NewGuid();
+                contratoEconomico.EntidadId = CurrentEntidadId;
                 _context.Add(contratoEconomico);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ClienteId"] = new SelectList(_context.Clientes, "Id", "Id", contratoEconomico.ClienteId);
-            ViewData["ProveedorId"] = new SelectList(_context.Proveedors, "Id", "Id", contratoEconomico.ProveedorId);
+            ViewData["ClienteId"] = new SelectList(_context.Clientes.Where(c => c.EntidadId == CurrentEntidadId), "Id", "NombreRazonSocial", contratoEconomico.ClienteId);
+            ViewData["ProveedorId"] = new SelectList(_context.Proveedors.Where(p => p.EntidadId == CurrentEntidadId), "Id", "RazonSocial", contratoEconomico.ProveedorId);
             return View(contratoEconomico);
         }
 
         // GET: ContratoEconomico/Edit/5
+        [Authorize(Policy = "COMERCIAL.CONTRATO.CREAR")]
         public async Task<IActionResult> Edit(Guid? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var contratoEconomico = await _context.ContratoEconomicos.FindAsync(id);
-            if (contratoEconomico == null)
-            {
-                return NotFound();
-            }
-            ViewData["ClienteId"] = new SelectList(_context.Clientes, "Id", "Id", contratoEconomico.ClienteId);
-            ViewData["ProveedorId"] = new SelectList(_context.Proveedors, "Id", "Id", contratoEconomico.ProveedorId);
+            var contratoEconomico = await _context.ContratoEconomicos.FirstOrDefaultAsync(c => c.Id == id && c.EntidadId == CurrentEntidadId);
+            if (contratoEconomico == null) return NotFound();
+
+            ViewData["ClienteId"] = new SelectList(_context.Clientes.Where(c => c.EntidadId == CurrentEntidadId), "Id", "NombreRazonSocial", contratoEconomico.ClienteId);
+            ViewData["ProveedorId"] = new SelectList(_context.Proveedors.Where(p => p.EntidadId == CurrentEntidadId), "Id", "RazonSocial", contratoEconomico.ProveedorId);
             return View(contratoEconomico);
         }
 
-        // POST: ContratoEconomico/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,EntidadId,TerceroTipo,ClienteId,ProveedorId,NumeroContrato,Objeto,FechaFirma,FechaInicio,FechaFin,MontoTotal,DocumentoUrl,Estado")] ContratoEconomico contratoEconomico)
+        [Authorize(Policy = "COMERCIAL.CONTRATO.CREAR")]
+        public async Task<IActionResult> Edit(Guid id, ContratoEconomico contratoEconomico)
         {
-            if (id != contratoEconomico.Id)
-            {
-                return NotFound();
-            }
+            if (id != contratoEconomico.Id) return NotFound();
 
             if (ModelState.IsValid)
             {
                 try
                 {
+                    contratoEconomico.EntidadId = CurrentEntidadId;
                     _context.Update(contratoEconomico);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ContratoEconomicoExists(contratoEconomico.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    if (!ContratoEconomicoExists(contratoEconomico.Id)) return NotFound();
+                    else throw;
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ClienteId"] = new SelectList(_context.Clientes, "Id", "Id", contratoEconomico.ClienteId);
-            ViewData["ProveedorId"] = new SelectList(_context.Proveedors, "Id", "Id", contratoEconomico.ProveedorId);
             return View(contratoEconomico);
-        }
-
-        // GET: ContratoEconomico/Delete/5
-        public async Task<IActionResult> Delete(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var contratoEconomico = await _context.ContratoEconomicos
-                .Include(c => c.Cliente)
-                .Include(c => c.Proveedor)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (contratoEconomico == null)
-            {
-                return NotFound();
-            }
-
-            return View(contratoEconomico);
-        }
-
-        // POST: ContratoEconomico/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
-        {
-            var contratoEconomico = await _context.ContratoEconomicos.FindAsync(id);
-            if (contratoEconomico != null)
-            {
-                _context.ContratoEconomicos.Remove(contratoEconomico);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
         }
 
         private bool ContratoEconomicoExists(Guid id)
         {
-            return _context.ContratoEconomicos.Any(e => e.Id == id);
+            return _context.ContratoEconomicos.Any(e => e.Id == id && e.EntidadId == CurrentEntidadId);
         }
     }
 }

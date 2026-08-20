@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 namespace Vercom.Models;
 
+/// <summary>
+/// Equivalente a modelo SC-4-08 u oficial vigente MTSS.
+/// </summary>
 public partial class RegistroSalarioTiempoServicio
 {
     public Guid Id { get; set; }

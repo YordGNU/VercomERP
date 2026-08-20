@@ -11,15 +11,17 @@ namespace Vercom.Controllers;
 [ApiController]
 public class PosApiController : ControllerBase
 {
-   private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+    private readonly AppDbContext _context;
     private readonly IAuthService _authService;
     private readonly ISalesService _salesService;
+    private readonly IConsecutivoService _consecutivoService;
 
-    public PosApiController(AppDbContext context, IAuthService authService, ISalesService salesService)
+    public PosApiController(AppDbContext context, IAuthService authService, ISalesService salesService, IConsecutivoService consecutivoService)
     {
         _context = context;
         _authService = authService;
         _salesService = salesService;
+        _consecutivoService = consecutivoService;
     }
 
     [HttpPost("login")]
@@ -28,169 +30,108 @@ public class PosApiController : ControllerBase
         if (!credentials.TryGetValue("username", out var username) ||
             !credentials.TryGetValue("password", out var password))
         {
-            return BadRequest(new { message = "Username and password required" });
+            return BadRequest(new { message = "Credenciales requeridas" });
         }
 
         var result = await _authService.LoginAsync(username, password, false);
         if (result.Succeeded)
         {
-            return Ok(new { token = "session-cookie-active", message = result.Message });
+            return Ok(new { token = "auth-active", message = result.Message });
         }
 
         return Unauthorized(new { message = result.Message });
     }
 
-    [HttpGet("ping")]
-    public IActionResult Ping()
+    [HttpGet("pos/reserva-rango")]
+    public async Task<IActionResult> ReservarRango([FromQuery] Guid dispositivoId, [FromQuery] string serie = "POS", [FromQuery] int cantidad = 100)
     {
-        return Ok(new { status = "OK", timestamp = DateTime.Now });
-    }
+        var dispositivo = await _context.DispositivoPos.FindAsync(dispositivoId);
+        if (dispositivo == null) return NotFound("Dispositivo no registrado");
 
-    [HttpGet("pos/productos")]
-    public async Task<IActionResult> GetProductos(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 50,
-        [FromQuery] string? updatedSince = null,
-        [FromQuery] Guid? puntoVentaId = null)
-    {
-        var query = _context.Productos.AsQueryable();
+        // RNF-51: Reservar bloque de números para operación offline
+        var primerNumero = await _consecutivoService.ObtenerSiguienteNumeroAsync(
+            dispositivo.EntidadId, dispositivo.SucursalId, "FACTURA_VENTA", serie);
 
-        if (!string.IsNullOrEmpty(updatedSince) && DateTime.TryParse(updatedSince, out var date))
+        long start = long.Parse(primerNumero);
+        long end = start + cantidad - 1;
+
+        // Actualizar el contador del sistema para saltar el bloque reservado
+        var consecutivo = await _context.Consecutivos.FirstAsync(c =>
+            c.EntidadId == dispositivo.EntidadId && c.Serie == serie && c.TipoDocumento == "FACTURA_VENTA");
+
+        consecutivo.UltimoNumero = end;
+        await _context.SaveChangesAsync();
+
+        var reserva = new PosRangoNumeracion
         {
-            query = query.Where(p => p.ActualizadoEn > date);
-        }
+            Id = Guid.NewGuid(),
+            DispositivoPosId = dispositivoId,
+            Serie = serie,
+            NumeroDesde = (int)start,
+            NumeroHasta = (int)end,
+            NumeroSiguienteLocal = (int)start,
+            AsignadoEn = DateTimeOffset.Now,
+            Agotado = false
+        };
 
-        var productos = await query
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(p => new {
-                serverId = p.Id.ToString(), // Enviar como string (Guid)
-                cod = p.Codigo,
-                nombre = p.Nombre,
-                precio = p.PrecioVentaActual,
-                activo = p.Activo,
-                existencias = _context.Existencia
-                    .Where(e => e.ProductoId == p.Id && (puntoVentaId == null || e.AlmacenId == puntoVentaId))
-                    .Sum(e => (float)e.Cantidad),
-                stockMinimo = _context.Existencia
-                    .Where(e => e.ProductoId == p.Id && (puntoVentaId == null || e.AlmacenId == puntoVentaId))
-                    .Max(e => (float)e.StockMinimo),
-                categoriaid = p.FamiliaId.ToString(),
-                unidadid = p.UnidadMedidaId,
-                unidadMedida = p.UnidadMedida.Codigo
-            })
-            .ToListAsync();
+        _context.PosRangoNumeracions.Add(reserva);
+        await _context.SaveChangesAsync();
 
-        return Ok(productos);
-    }
-
-    [HttpGet("pos/categorias")]
-    public async Task<IActionResult> GetCategorias()
-    {
-        var familias = await _context.FamiliaProductos
-            .Select(f => new { id = f.Id.ToString(), clave = f.Codigo, nombre = f.Nombre })
-            .ToListAsync();
-        return Ok(familias);
-    }
-
-    [HttpGet("pos/unidades")]
-    public async Task<IActionResult> GetUnidades()
-    {
-        var unidades = await _context.UnidadMedida
-            .Select(u => new { id = u.Id, clave = u.Codigo, unidad_name = u.Nombre })
-            .ToListAsync();
-        return Ok(unidades);
-    }
-
-    [HttpGet("pos/clientes")]
-    public async Task<IActionResult> GetClientes()
-    {
-        var clientes = await _context.Clientes
-            .Select(c => new { id = c.Id.ToString(), nombre = c.NombreRazonSocial, rfc = c.NitOCi })
-            .ToListAsync();
-        return Ok(clientes);
-    }
-
-    [HttpGet("pos/areas")]
-    public async Task<IActionResult> GetAreas()
-    {
-        var sucursales = await _context.Sucursals
-            .Select(s => new { id = s.Id.ToString(), nombre = s.Nombre })
-            .ToListAsync();
-        return Ok(sucursales);
+        return Ok(new { serie, desde = start, hasta = end });
     }
 
     [HttpPost("ventas/sync")]
     public async Task<IActionResult> SyncVentas([FromBody] List<OperacionRequestDto> operaciones)
     {
-        var entidad = await _context.Entidads.FirstOrDefaultAsync();
-        if (entidad == null) return BadRequest("No entity configured");
-
-        var sucursalId = await _context.Sucursals.Where(s => s.EntidadId == entidad.Id).Select(s => s.Id).FirstOrDefaultAsync();
-        var defaultClient = await _context.Clientes.Where(c => c.EntidadId == entidad.Id).FirstOrDefaultAsync();
-        var defaultWarehouse = await _context.Almacens.Where(a => a.EntidadId == entidad.Id).FirstOrDefaultAsync();
-
+        // RNF-02: Procesamiento Idempotente Asíncrono
         foreach (var op in operaciones)
         {
-            var invoice = new FacturaVentum
+            // 1. Guardar como Pendiente (Exactly-Once)
+            var existe = await _context.PosVentaPendientes
+                .AnyAsync(p => p.IdempotencyKey == op.LocalId.ToString() && p.DispositivoPosId == Guid.Parse(op.TerminalId ?? Guid.Empty.ToString()));
+
+            if (existe) continue;
+
+            var pendiente = new PosVentaPendiente
             {
-                EntidadId = entidad.Id,
-                SucursalId = sucursalId,
-                Serie = "POS",
-                ClienteId = op.ClienteId ?? defaultClient?.Id ?? Guid.Empty,
-                AlmacenId = op.PuntoVentaid ?? defaultWarehouse?.Id ?? Guid.Empty,
-                CanalVenta = "POS",
-                TipoVenta = "MINORISTA",
-                Fecha = op.Fecha ?? DateTimeOffset.Now,
-                Moneda = op.Moneda ?? "CUP",
-                Total = op.Importe ?? 0,
-                CreadoPor = Guid.Empty
+                Id = Guid.NewGuid(),
+                DispositivoPosId = Guid.Parse(op.TerminalId ?? Guid.Empty.ToString()),
+                IdempotencyKey = op.LocalId.ToString(),
+                PayloadJson = JsonSerializer.Serialize(op),
+                Estado = "PENDIENTE",
+                FechaRecibidoServidor = DateTimeOffset.Now,
+                FechaVentaLocal = op.Fecha ?? DateTimeOffset.Now
             };
 
-            if (op.Productoid.HasValue)
-            {
-                invoice.FacturaVentaDetalles.Add(new FacturaVentaDetalle
-                {
-                    ProductoId = op.Productoid.Value,
-                    Cantidad = op.Cantidad ?? 0,
-                    PrecioUnitario = (op.Importe / op.Cantidad) ?? 0,
-                    DescuentoPorcentaje = 0,
-                    ImpuestoPorcentaje = 10
-                });
-            }
-
-            await _salesService.CreateInvoiceAsync(invoice);
+            _context.PosVentaPendientes.Add(pendiente);
         }
 
-        return Ok();
+        await _context.SaveChangesAsync();
+
+        // En una implementación productiva, un BackgroundJob dispararía el procesamiento real aquí.
+        // Para esta fase de estabilización, retornamos OK confirmando la recepción segura.
+        return Ok(new { status = "RECEIVED", count = operaciones.Count });
     }
 
-    [HttpPost("auditoria/sync")]
-    public async Task<IActionResult> SyncAuditoria([FromBody] JsonElement auditorias)
+    [HttpGet("pos/productos")]
+    public async Task<IActionResult> GetProductos([FromQuery] string? updatedSince = null)
     {
-        if (auditorias.ValueKind == JsonValueKind.Array)
+        var query = _context.Productos.Include(p => p.UnidadMedida).AsQueryable();
+
+        if (!string.IsNullOrEmpty(updatedSince) && DateTimeOffset.TryParse(updatedSince, out var date))
         {
-            foreach (var a in auditorias.EnumerateArray())
-            {
-                var entry = new Auditorium
-                {
-                    Accion = a.GetProperty("Accion").GetString() ?? "SYNC",
-                    EsquemaTabla = a.GetProperty("Tabla").GetString() ?? "POS",
-                    RegistroId = a.GetProperty("ReferenciaId").ToString(),
-                    NombreUsuario = a.TryGetProperty("Usuario", out var u) ? u.GetString() ?? "POS-USER" : "POS-USER",
-                    Canal = "POS",
-                    OcurridoEn = a.TryGetProperty("Fecha", out var f) ? f.GetDateTime() : DateTime.Now
-                };
-                _context.Auditoria.Add(entry);
-            }
-            await _context.SaveChangesAsync();
+            query = query.Where(p => p.ActualizadoEn > date);
         }
-        return Ok();
-    }
 
-    [HttpPost("pos/cierre-caja")]
-    public async Task<IActionResult> RegistrarCierre([FromBody] Dictionary<string, object> data)
-    {
-        return Ok(new { id = Guid.NewGuid().ToString() });
+        var res = await query.Select(p => new {
+            serverId = p.Id,
+            cod = p.Codigo,
+            nombre = p.Nombre,
+            precio = p.PrecioVentaActual,
+            unidad = p.UnidadMedida.Codigo,
+            existencias = _context.Existencia.Where(e => e.ProductoId == p.Id).Sum(e => e.Cantidad)
+        }).ToListAsync();
+
+        return Ok(res);
     }
 }

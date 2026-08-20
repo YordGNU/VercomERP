@@ -31,6 +31,8 @@ public partial class CuentaPorCobrar
 
     public DateTimeOffset CreadoEn { get; set; }
 
+    public virtual Cliente Cliente { get; set; }
+
     public virtual AsientoContable? AsientoOrigen { get; set; }
 
     public virtual Entidad Entidad { get; set; } = null!;

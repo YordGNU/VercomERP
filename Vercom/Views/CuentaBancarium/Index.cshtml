@@ -1,98 +1,52 @@
 ﻿@model IEnumerable<Vercom.Models.CuentaBancarium>
-
 @{
-    ViewData["Title"] = "Index";
+    ViewBag.Title = "Cuentas Bancarias";
 }
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Gestión de CuentaBancarium</h4>
+        <h4 class="page-main-title m-0">Saldos en Bancos</h4>
     </div>
     <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">CuentaBancarium</a></li>
-            <li class="breadcrumb-item active">Listado</li>
-        </ol>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="ti ti-plus me-1"></i> Añadir Cuenta
+        </a>
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="container-xxl mt-4">
     <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Listado de CuentaBancarium</h4>
-                </div>
-                <div class="card-body">
+        @foreach (var item in Model)
+        {
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 border-start border-info border-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-3">
+                            <div>
+                                <h4 class="card-title mb-1">@item.Banco</h4>
+                                <code class="text-primary fs-15">@item.NumeroCuenta</code>
+                            </div>
+                            <span class="badge bg-info-subtle text-info">@item.TipoCuenta</span>
+                        </div>
 
+                        <div class="d-flex align-items-center justify-content-between py-2 px-3 bg-light rounded">
+                            <h3 class="fw-bold mb-0">@item.SaldoActual.ToString("C")</h3>
+                            <div class="text-end small">
+                                <span class="text-muted d-block">Saldo Contable</span>
+                                <span class="text-success"><i class="ti ti-check me-1"></i>Conciliado</span>
+                            </div>
+                        </div>
 
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<div class="table-responsive"><table class="table data-table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.EntidadId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Banco)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.NumeroCuenta)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.TipoCuenta)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.SaldoActual)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Activa)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CuentaContable)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.EntidadId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Banco)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.NumeroCuenta)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.TipoCuenta)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.SaldoActual)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Activa)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CuentaContable.Id)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table></div>
+                        <div class="mt-3 d-flex gap-2">
+                            <a asp-controller="MovimientoBancario" asp-action="Index" asp-route-cuentaId="@item.Id" class="btn btn-sm btn-outline-secondary w-100">Ver Movimientos</a>
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-light btn-icon"><i class="ti ti-settings"></i></a>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        }
+        @if (!Model.Any()) {
+            <div class="col-12 text-center py-5 text-muted small">No hay cuentas bancarias registradas.</div>
+        }
     </div>
 </div>

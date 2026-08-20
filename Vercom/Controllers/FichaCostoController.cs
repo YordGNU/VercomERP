@@ -2,156 +2,93 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
+using Vercom.Services;
 
 namespace Vercom.Controllers
 {
+    [Authorize]
     public class FichaCostoController : Controller
     {
-       private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+        private readonly AppDbContext _context;
+        private readonly IProductionService _productionService;
+        private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
 
-        public FichaCostoController(AppDbContext context)
+        public FichaCostoController(AppDbContext context, IProductionService productionService)
         {
             _context = context;
+            _productionService = productionService;
         }
 
         // GET: FichaCosto
+        [Authorize(Policy = "PRODUCCION.FICHA.VER")]
         public async Task<IActionResult> Index()
         {
-            return View(await _context.FichaCostos.ToListAsync());
+            var fichas = await _context.FichaCostos
+                .Include(f => f.Producto)
+                .Where(f => f.EntidadId == CurrentEntidadId)
+                .OrderBy(f => f.Producto.Nombre).ThenByDescending(f => f.Version)
+                .ToListAsync();
+            return View(fichas);
         }
 
         // GET: FichaCosto/Details/5
+        [Authorize(Policy = "PRODUCCION.FICHA.VER")]
         public async Task<IActionResult> Details(Guid? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var fichaCosto = await _context.FichaCostos
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (fichaCosto == null)
-            {
-                return NotFound();
-            }
+                .Include(f => f.Producto).ThenInclude(p => p.UnidadMedida)
+                .FirstOrDefaultAsync(m => m.Id == id && m.EntidadId == CurrentEntidadId);
+
+            if (fichaCosto == null) return NotFound();
 
             return View(fichaCosto);
         }
 
         // GET: FichaCosto/Create
-        public IActionResult Create()
+        [Authorize(Policy = "PRODUCCION.FICHA.CREAR")]
+        public IActionResult Create(Guid? productoId)
         {
-            return View();
+            ViewData["ProductoId"] = new SelectList(_context.Productos
+                .Where(p => p.EntidadId == CurrentEntidadId && (p.Tipo == "ELABORADO" || p.Tipo == "TERMINADO")), "Id", "Nombre", productoId);
+
+            return View(new FichaCosto {
+                VigenteDesde = DateOnly.FromDateTime(DateTime.Now),
+                MargenPorcentaje = 20
+            });
         }
 
-        // POST: FichaCosto/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,EntidadId,ProductoId,Version,VigenteDesde,VigenteHasta,CostoMateriaPrima,CostoManoObra,GastosIndirectos,CostoTotalUnitario,MargenPorcentaje,PrecioSugerido,Estado,CreadoPor,CreadoEn")] FichaCosto fichaCosto)
+        [Authorize(Policy = "PRODUCCION.FICHA.CREAR")]
+        public async Task<IActionResult> Create(FichaCosto fichaCosto)
         {
             if (ModelState.IsValid)
             {
-                fichaCosto.Id = Guid.NewGuid();
-                _context.Add(fichaCosto);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(fichaCosto);
-        }
+                fichaCosto.EntidadId = CurrentEntidadId;
+                fichaCosto.CreadoPor = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
-        // GET: FichaCosto/Edit/5
-        public async Task<IActionResult> Edit(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var fichaCosto = await _context.FichaCostos.FindAsync(id);
-            if (fichaCosto == null)
-            {
-                return NotFound();
-            }
-            return View(fichaCosto);
-        }
-
-        // POST: FichaCosto/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,EntidadId,ProductoId,Version,VigenteDesde,VigenteHasta,CostoMateriaPrima,CostoManoObra,GastosIndirectos,CostoTotalUnitario,MargenPorcentaje,PrecioSugerido,Estado,CreadoPor,CreadoEn")] FichaCosto fichaCosto)
-        {
-            if (id != fichaCosto.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
+                var result = await _productionService.CreateCostSheetAsync(fichaCosto);
+                if (result.Succeeded)
                 {
-                    _context.Update(fichaCosto);
-                    await _context.SaveChangesAsync();
+                    TempData["Success"] = result.Message;
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!FichaCostoExists(fichaCosto.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                ModelState.AddModelError("", result.Message);
             }
+            ViewData["ProductoId"] = new SelectList(_context.Productos.Where(p => p.EntidadId == CurrentEntidadId), "Id", "Nombre", fichaCosto.ProductoId);
             return View(fichaCosto);
-        }
-
-        // GET: FichaCosto/Delete/5
-        public async Task<IActionResult> Delete(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var fichaCosto = await _context.FichaCostos
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (fichaCosto == null)
-            {
-                return NotFound();
-            }
-
-            return View(fichaCosto);
-        }
-
-        // POST: FichaCosto/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
-        {
-            var fichaCosto = await _context.FichaCostos.FindAsync(id);
-            if (fichaCosto != null)
-            {
-                _context.FichaCostos.Remove(fichaCosto);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
         }
 
         private bool FichaCostoExists(Guid id)
         {
-            return _context.FichaCostos.Any(e => e.Id == id);
+            return _context.FichaCostos.Any(e => e.Id == id && e.EntidadId == CurrentEntidadId);
         }
     }
 }

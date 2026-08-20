@@ -5,103 +5,124 @@
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Dashboard de Gestión</h4>
+        <h4 class="page-main-title m-0">Dashboard de Gestión Inteligente</h4>
     </div>
     <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item active">Dashboard</li>
-        </ol>
+        <span class="badge bg-light text-dark py-2 px-3 border">
+            <i class="ti ti-calendar me-1"></i> Periodo Actual: @DateTime.Now.ToString("MMMM yyyy")
+        </span>
     </div>
 </div>
 
-<div class="container-xxl">
-    <!-- Indicadores BI (KPIs) -->
+<div class="container-xxl mt-4">
+    <!-- Fila 1: KPIs Principales -->
     <div class="row">
         <div class="col-md-3">
-            <div class="card overflow-hidden">
+            <div class="card overflow-hidden shadow-sm border-0">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
                             <h3 class="mb-1 text-primary">@Model["Liquidez"]</h3>
-                            <p class="text-muted mb-0">Índice de Liquidez</p>
+                            <p class="text-muted mb-0 small text-uppercase fw-bold">Liquidez Corriente</p>
                         </div>
-                        <div class="flex-shrink-0">
-                            <div class="avatar-md bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center">
-                                <i class="ti ti-cash fs-24"></i>
-                            </div>
+                        <div class="avatar-md bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center">
+                            <i class="ti ti-cash fs-24"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card overflow-hidden">
+            <div class="card overflow-hidden shadow-sm border-0">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
                             <h3 class="mb-1 text-success">@Model["Rentabilidad"]%</h3>
-                            <p class="text-muted mb-0">Rentabilidad Neta</p>
+                            <p class="text-muted mb-0 small text-uppercase fw-bold">Margen de Utilidad</p>
                         </div>
-                        <div class="flex-shrink-0">
-                            <div class="avatar-md bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center">
-                                <i class="ti ti-chart-line fs-24"></i>
-                            </div>
+                        <div class="avatar-md bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center">
+                            <i class="ti ti-chart-pie fs-24"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card overflow-hidden">
+            <div class="card overflow-hidden shadow-sm border-0">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
                             <h3 class="mb-1 text-info">@Model["Rotacion"]</h3>
-                            <p class="text-muted mb-0">Rotación de Inventario</p>
+                            <p class="text-muted mb-0 small text-uppercase fw-bold">Rotación Stock</p>
                         </div>
-                        <div class="flex-shrink-0">
-                            <div class="avatar-md bg-info-subtle text-info rounded-circle d-flex align-items-center justify-content-center">
-                                <i class="ti ti-refresh fs-24"></i>
-                            </div>
+                        <div class="avatar-md bg-info-subtle text-info rounded-circle d-flex align-items-center justify-content-center">
+                            <i class="ti ti-refresh fs-24"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card overflow-hidden text-center bg-primary text-white">
+            <div class="card bg-primary text-white shadow-sm border-0">
                 <div class="card-body">
-                    <h3 class="mb-1 text-white">@DateTime.Now.ToString("dd/MM/yyyy")</h3>
-                    <p class="mb-0 op-7">Periodo Fiscal Abierto</p>
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h3 class="mb-1 text-white">@DateTime.Now.ToString("dd/MM/yyyy")</h3>
+                            <p class="text-white-50 mb-0 small text-uppercase fw-bold">Cierre de Caja Hoy</p>
+                        </div>
+                        <i class="ti ti-device-laptop fs-32 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fila 2: Gráficos de Tendencia BI -->
+    <div class="row mt-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title mb-0">Evolución de Rentabilidad (Últimos 6 meses)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="profitTrendChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title mb-0">Tendencia de Liquidez</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="liquidityTrendChart" height="250"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="row mt-4">
-        <!-- Alertas de Stock Bajo -->
+        <!-- Acciones Críticas -->
         <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4 class="card-title">Alertas de Inventario Crítico</h4>
-                    <a asp-controller="Inventory" asp-action="LowStock" class="btn btn-sm btn-outline-danger">Ver Todos</a>
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0 text-danger">Alertas de Almacén Críticas</h5>
+                    <a asp-controller="Inventory" asp-action="LowStock" class="btn btn-xs btn-outline-danger">Ver todo</a>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
+                        <table class="table table-sm table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
                                     <th>Producto</th>
-                                    <th>Almacén</th>
-                                    <th>Actual</th>
-                                    <th>Mínimo</th>
-                                    <th>Estado</th>
+                                    <th class="text-center">Actual</th>
+                                    <th class="text-center">Mínimo</th>
+                                    <th class="text-end">Acción</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr class="text-center">
-                                    <td colspan="5" class="text-muted py-4">No hay alertas críticas registradas.</td>
+                                    <td colspan="4" class="py-4 text-muted small">No se detectan faltantes críticos.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -110,22 +131,19 @@
             </div>
         </div>
 
-        <!-- Acciones Rápidas -->
         <div class="col-lg-4">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h4 class="card-title">Acciones Operativas</h4>
-                </div>
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white"><h5 class="card-title mb-0">Acciones Directas</h5></div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a asp-controller="Sales" asp-action="Create" class="btn btn-primary btn-lg">
+                        <a asp-controller="Sales" asp-action="Create" class="btn btn-primary">
                             <i class="ti ti-plus me-1"></i> Nueva Venta Fiscal
                         </a>
-                        <a asp-controller="Production" asp-action="CreateOrder" class="btn btn-outline-primary btn-lg">
-                            <i class="ti ti-settings me-1"></i> Iniciar Producción
+                        <a asp-controller="Inventory" asp-action="CreateMovement" class="btn btn-outline-secondary">
+                            <i class="ti ti-download me-1"></i> Recepción de Insumos
                         </a>
-                        <a asp-controller="Inventory" asp-action="CreateMovement" class="btn btn-outline-secondary btn-lg">
-                            <i class="ti ti-package me-1"></i> Recepción de Mercancía
+                        <a asp-controller="AsientoContable" asp-action="Create" class="btn btn-outline-info">
+                            <i class="ti ti-calculator me-1"></i> Asiento Manual
                         </a>
                     </div>
                 </div>
@@ -133,3 +151,44 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctxProfit = document.getElementById('profitTrendChart').getContext('2d');
+        const profitData = @Html.Raw(Json.Serialize(ViewBag.TrendRentabilidad));
+
+        new Chart(ctxProfit, {
+            type: 'line',
+            data: {
+                labels: ['M-5', 'M-4', 'M-3', 'M-2', 'M-1', 'Actual'],
+                datasets: [{
+                    label: 'Rentabilidad (%)',
+                    data: profitData,
+                    borderColor: '#22c55e',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+
+        const ctxLiq = document.getElementById('liquidityTrendChart').getContext('2d');
+        const liqData = @Html.Raw(Json.Serialize(ViewBag.TrendLiquidez));
+
+        new Chart(ctxLiq, {
+            type: 'bar',
+            data: {
+                labels: ['M-5', 'M-4', 'M-3', 'M-2', 'M-1', 'Actual'],
+                datasets: [{
+                    label: 'Liquidez (Veces)',
+                    data: liqData,
+                    backgroundColor: '#3b82f6',
+                    borderRadius: 5
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+    </script>
+}

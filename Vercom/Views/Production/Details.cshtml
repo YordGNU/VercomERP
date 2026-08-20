@@ -1,0 +1,122 @@
+@model Vercom.Models.OrdenProduccion
+@{
+    ViewBag.Title = "Detalle de OP: " + Model.NumeroOrden;
+    var isFinalized = Model.Estado == "FINALIZADA";
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Hoja de Ruta: @Model.NumeroOrden</h4>
+    </div>
+    <div class="text-end d-flex gap-2">
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Volver al Monitor</a>
+        @if (Model.Estado == "EN_PROCESO") {
+            <a asp-action="Finish" asp-route-id="@Model.Id" class="btn btn-sm btn-success">Reportar Producción Final</a>
+        }
+        @if (Model.AsientoTerminadoId.HasValue) {
+            <a asp-controller="AsientoContable" asp-action="Details" asp-route-id="@Model.AsientoTerminadoId" class="btn btn-sm btn-info"><i class="ti ti-calculator"></i> Ver Contabilidad</a>
+        }
+    </div>
+</div>
+
+<div class="container-xxl mt-4">
+    <div class="row">
+        <!-- Resumen de la Orden -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header"><h4 class="card-title">Información de la Orden</h4></div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="avatar-lg bg-info-subtle text-info rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 70px; height: 70px;">
+                            <i class="ti ti-settings fs-32"></i>
+                        </div>
+                        <h5 class="mb-0">@Model.ProductoTerminado.Nombre</h5>
+                        <code class="text-muted">@Model.ProductoTerminado.Codigo</code>
+                    </div>
+
+                    <ul class="list-group list-group-flush small">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Estado:</span> <span class="badge @(isFinalized ? "bg-success" : "bg-warning")">@Model.Estado</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Planificado:</span> <span class="fw-bold">@Model.CantidadPlanificada.ToString("N0") @Model.ProductoTerminado.UnidadMedida.Codigo</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Producido:</span> <span class="fw-bold text-primary">@Model.CantidadProducida.ToString("N0") @Model.ProductoTerminado.UnidadMedida.Codigo</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Almacén PT:</span> <span>@Model.AlmacenProducto?.Nombre</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            @if (isFinalized && Model.FichaCosto != null) {
+                <div class="card bg-light-subtle border-0">
+                    <div class="card-body">
+                        <h6 class="text-uppercase small text-muted mb-3">Valoración de la Producción</h6>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Costo Total Real:</span>
+                            <span class="fw-bold">@Model.CostoRealTotal?.ToString("C")</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Costo Unitario Real:</span>
+                            <span class="fw-bold text-success">@((Model.CostoRealTotal / Model.CantidadProducida)?.ToString("C"))</span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Consumos y Materiales -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header"><h4 class="card-title">Explosión de Consumos (Insumos)</h4></div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light small">
+                                <tr>
+                                    <th>Insumo / Materia Prima</th>
+                                    <th class="text-end">Planificado</th>
+                                    <th class="text-end">Real</th>
+                                    <th class="text-center">Eficiencia</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var c in Model.OrdenProduccionConsumos)
+                                {
+                                    var eficiencia = c.CantidadReal > 0 ? (c.CantidadPlanificada / c.CantidadReal * 100) : 0;
+                                    var color = eficiencia < 95 ? "text-danger" : (eficiencia > 105 ? "text-success" : "");
+
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold">@c.ProductoInsumo.Nombre</div>
+                                            <small class="text-muted">@c.ProductoInsumo.Codigo</small>
+                                        </td>
+                                        <td class="text-end">@c.CantidadPlanificada.ToString("N2")</td>
+                                        <td class="text-end fw-bold">@(c.CantidadReal > 0 ? c.CantidadReal.ToString("N2") : "-")</td>
+                                        <td class="text-center @color">
+                                            @if (c.CantidadReal > 0) { <span>@eficiencia.ToString("N1")%</span> }
+                                            else { <i class="ti ti-clock"></i> }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4 border-info-subtle">
+                <div class="card-body d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">Control de Mermas</h6>
+                        <p class="text-muted mb-0 small">¿Hubo desperdicios o roturas extraordinarias durante el proceso?</p>
+                    </div>
+                    <a asp-controller="Merma" asp-action="Create" asp-route-opId="@Model.Id" class="btn btn-sm btn-outline-info">Reportar Merma</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -12,18 +12,19 @@ public interface IPayrollService
 
 public class PayrollService : IPayrollService
 {
-   private readonly AppDbContext _context;  
+    private readonly AppDbContext _context;
     private readonly IAccountingService _accountingService;
+    private readonly IParametroSistemaService _paramService;
 
-    public PayrollService(AppDbContext context, IAccountingService accountingService)
+    public PayrollService(AppDbContext context, IAccountingService accountingService, IParametroSistemaService paramService)
     {
         _context = context;
         _accountingService = accountingService;
+        _paramService = paramService;
     }
 
     public async Task<(bool Succeeded, string Message)> CalculatePayrollAsync(Guid entidadId, short anio, short mes)
     {
-        // 1. Obtener o crear periodo de nómina
         var period = await _context.PeriodoNominas
             .FirstOrDefaultAsync(p => p.EntidadId == entidadId && p.Anio == anio && p.Mes == mes);
 
@@ -45,23 +46,23 @@ public class PayrollService : IPayrollService
             return (false, "El periodo de nómina ya está calculado o aprobado.");
         }
 
-        // 2. Limpiar cálculos previos
         var existingDetails = _context.NominaDetalles.Where(d => d.PeriodoNominaId == period.Id);
         _context.NominaDetalles.RemoveRange(existingDetails);
 
-        // 3. Obtener empleados activos
         var employees = await _context.Empleados
             .Include(e => e.ContratoLaborals)
             .Include(e => e.Cargo)
             .Where(e => e.EntidadId == entidadId && e.Estado == "ACTIVO")
             .ToListAsync();
 
+        var ssTasa = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "RET_SS_TRAB");
+        if (ssTasa == 0) ssTasa = 0.05m;
+
         foreach (var emp in employees)
         {
             var contract = emp.ContratoLaborals.FirstOrDefault(c => c.Estado == "VIGENTE");
             if (contract == null) continue;
 
-            // Días trabajados en el mes (Simplificado: 24 días laborales base)
             var attendanceCount = await _context.RegistroAsistencia
                 .CountAsync(a => a.EmpleadoId == emp.Id && a.Fecha.Year == anio && a.Fecha.Month == mes && a.TipoAusenciaId == null);
 
@@ -69,15 +70,13 @@ public class PayrollService : IPayrollService
             var dailyRate = scaleSalary / 24;
             var earnedSalary = dailyRate * attendanceCount;
 
-            // Horas extra
             var overtimeHours = await _context.RegistroAsistencia
                 .Where(a => a.EmpleadoId == emp.Id && a.Fecha.Year == anio && a.Fecha.Month == mes)
                 .SumAsync(a => a.HorasExtra);
 
-            var overtimeAmount = dailyRate / 8 * overtimeHours * 2; // Pago doble por simplificación
+            var overtimeAmount = dailyRate / 8 * overtimeHours * 2;
 
-            // Retención Seguridad Social (5%)
-            var ssRetention = (earnedSalary + overtimeAmount) * 0.05m;
+            var ssRetention = (earnedSalary + overtimeAmount) * ssTasa;
 
             var detail = new NominaDetalle
             {
@@ -117,7 +116,6 @@ public class PayrollService : IPayrollService
         if (period == null) return (false, "Periodo no encontrado.");
         if (period.Estado != "PRENOMINA") return (false, "La nómina ya fue aprobada.");
 
-        // Generar asiento contable automático
         var totalDevengado = period.NominaDetalles.Sum(d => d.SalarioDevengado);
         var totalRetenciones = period.NominaDetalles.Sum(d => d.TotalDeducciones);
         var totalNeto = period.NominaDetalles.Sum(d => d.SalarioNeto);
@@ -131,13 +129,12 @@ public class PayrollService : IPayrollService
             ModuloOrigen = "NOMINA",
             DocumentoOrigenTipo = "PERIODO_NOMINA",
             DocumentoOrigenId = period.Id,
-            TipoComprobanteId = 8, // Nómina (NO)
+            TipoComprobanteId = 8,
             CreadoPor = userId,
             CreadoEn = DateTimeOffset.Now
         };
 
-        // Gasto de Salarios (Debe) - Usar cuenta 701 de SeedData
-        var expenseAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "701");
+        var expenseAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "701" && c.EntidadId == period.EntidadId);
         if (expenseAccount != null)
         {
             entry.AsientoDetalles.Add(new AsientoDetalle
@@ -149,8 +146,7 @@ public class PayrollService : IPayrollService
             });
         }
 
-        // Retenciones por Pagar (Haber) - Usar cuenta 401 de SeedData
-        var payableAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "401");
+        var payableAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "401" && c.EntidadId == period.EntidadId);
         if (payableAccount != null)
         {
             entry.AsientoDetalles.Add(new AsientoDetalle
@@ -158,7 +154,7 @@ public class PayrollService : IPayrollService
                 Id = Guid.NewGuid(),
                 CuentaId = payableAccount.Id,
                 Haber = totalRetenciones,
-                Glosa = "Retenciones Seg. Social (5%)"
+                Glosa = "Retenciones Seg. Social"
             });
 
             entry.AsientoDetalles.Add(new AsientoDetalle

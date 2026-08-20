@@ -2,156 +2,55 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
+using Vercom.Services;
 
 namespace Vercom.Controllers
 {
+    [Authorize]
     public class PeriodoContableController : Controller
     {
-       private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+        private readonly AppDbContext _context;
+        private readonly IAccountingService _accountingService;
+        private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
 
-        public PeriodoContableController(AppDbContext context)
+        public PeriodoContableController(AppDbContext context, IAccountingService accountingService)
         {
             _context = context;
+            _accountingService = accountingService;
         }
 
         // GET: PeriodoContable
+        [Authorize(Policy = "ACC_VIEW_PLAN")] // Reutilizando permiso de vista contable
         public async Task<IActionResult> Index()
         {
-            return View(await _context.PeriodoContables.ToListAsync());
+            var periodos = await _context.PeriodoContables
+                .Where(p => p.EntidadId == CurrentEntidadId)
+                .OrderByDescending(p => p.Anio).ThenByDescending(p => p.Mes)
+                .ToListAsync();
+            return View(periodos);
         }
 
-        // GET: PeriodoContable/Details/5
-        public async Task<IActionResult> Details(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var periodoContable = await _context.PeriodoContables
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (periodoContable == null)
-            {
-                return NotFound();
-            }
-
-            return View(periodoContable);
-        }
-
-        // GET: PeriodoContable/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: PeriodoContable/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,EntidadId,Anio,Mes,FechaInicio,FechaFin,Estado,CerradoPor,CerradoEn")] PeriodoContable periodoContable)
+        [Authorize(Policy = "ACC_CLOSE_PERIOD")]
+        public async Task<IActionResult> Close(Guid id)
         {
-            if (ModelState.IsValid)
-            {
-                periodoContable.Id = Guid.NewGuid();
-                _context.Add(periodoContable);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(periodoContable);
-        }
+            var userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            var result = await _accountingService.ClosePeriodAsync(id, userId);
 
-        // GET: PeriodoContable/Edit/5
-        public async Task<IActionResult> Edit(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (result.Succeeded) TempData["Success"] = result.Message;
+            else TempData["Error"] = result.Message;
 
-            var periodoContable = await _context.PeriodoContables.FindAsync(id);
-            if (periodoContable == null)
-            {
-                return NotFound();
-            }
-            return View(periodoContable);
-        }
-
-        // POST: PeriodoContable/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,EntidadId,Anio,Mes,FechaInicio,FechaFin,Estado,CerradoPor,CerradoEn")] PeriodoContable periodoContable)
-        {
-            if (id != periodoContable.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(periodoContable);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!PeriodoContableExists(periodoContable.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(periodoContable);
-        }
-
-        // GET: PeriodoContable/Delete/5
-        public async Task<IActionResult> Delete(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var periodoContable = await _context.PeriodoContables
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (periodoContable == null)
-            {
-                return NotFound();
-            }
-
-            return View(periodoContable);
-        }
-
-        // POST: PeriodoContable/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
-        {
-            var periodoContable = await _context.PeriodoContables.FindAsync(id);
-            if (periodoContable != null)
-            {
-                _context.PeriodoContables.Remove(periodoContable);
-            }
-
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool PeriodoContableExists(Guid id)
         {
-            return _context.PeriodoContables.Any(e => e.Id == id);
+            return _context.PeriodoContables.Any(e => e.Id == id && e.EntidadId == CurrentEntidadId);
         }
     }
 }

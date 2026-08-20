@@ -1,103 +1,57 @@
 ﻿@model IEnumerable<Vercom.Models.MantenimientoProgramado>
-
 @{
-    ViewData["Title"] = "Index";
+    ViewBag.Title = "Calendario de Mantenimiento";
 }
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Gestión de MantenimientoProgramado</h4>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">MantenimientoProgramado</a></li>
-            <li class="breadcrumb-item active">Listado</li>
-        </ol>
+        <h4 class="page-main-title m-0">Planificación de Mantenimientos Preventivos</h4>
     </div>
 </div>
 
-<div class="container-xxl">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Listado de MantenimientoProgramado</h4>
-                </div>
-                <div class="card-body">
+<div class="container-xxl mt-4">
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha Programada</th>
+                            <th>Equipo / Maquinaria</th>
+                            <th>Tipo</th>
+                            <th>Estado</th>
+                            <th class="text-end">Costo Est.</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.OrderBy(m => m.FechaProgramada))
+                        {
+                            var rowClass = item.FechaProgramada < DateOnly.FromDateTime(DateTime.Now) && item.Estado == "PROGRAMADO" ? "table-danger" : "";
 
-
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<div class="table-responsive"><table class="table data-table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.FechaProgramada)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FechaEjecutada)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Tipo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Descripcion)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Costo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ResponsableId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Estado)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Equipo)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.FechaProgramada)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FechaEjecutada)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Tipo)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Descripcion)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Costo)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ResponsableId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Estado)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Equipo.Id)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table></div>
-                </div>
+                            <tr class="@rowClass">
+                                <td class="fw-bold">@item.FechaProgramada.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    <div class="fw-bold">@item.Equipo.Nombre</div>
+                                    <small class="text-muted">@item.Equipo.Codigo</small>
+                                </td>
+                                <td><span class="badge border text-dark">@item.Tipo</span></td>
+                                <td>
+                                    <span class="badge @(item.Estado == "EJECUTADO" ? "bg-success" : "bg-warning")">@item.Estado</span>
+                                </td>
+                                <td class="text-end">@(item.Costo?.ToString("C") ?? "0.00")</td>
+                                <td class="text-end">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-xs btn-light"><i class="ti ti-edit"></i></a>
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.Any()) {
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted small">No hay mantenimientos programados para el periodo actual.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

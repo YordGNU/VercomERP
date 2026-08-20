@@ -1,0 +1,112 @@
+@model Vercom.Models.OrdenCompra
+@{
+    ViewBag.Title = "Detalle de Orden de Compra";
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Orden de Compra: @Model.NumeroOrden</h4>
+    </div>
+    <div class="text-end d-flex gap-2">
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Volver al Listado</a>
+        @if (Model.Estado == "BORRADOR") {
+            <form asp-action="Approve" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-sm btn-info"><i class="ti ti-check me-1"></i> APROBAR PEDIDO</button>
+            </form>
+        }
+        @if (Model.Estado == "APROBADA") {
+            <a asp-action="Receive" asp-route-id="@Model.Id" class="btn btn-sm btn-success"><i class="ti ti-download me-1"></i> RECIBIR MERCANCÍA</a>
+        }
+    </div>
+</div>
+
+<div class="container-xxl mt-4">
+    <div class="row">
+        <!-- Resumen -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-light-subtle"><h4 class="card-title">Información del Pedido</h4></div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="avatar-lg bg-info-subtle text-info rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 70px; height: 70px;">
+                            <i class="ti ti-truck fs-32"></i>
+                        </div>
+                        <h5 class="mb-0">@Model.Proveedor.RazonSocial</h5>
+                        <p class="text-muted small">NIT: @Model.Proveedor.Nit</p>
+                    </div>
+
+                    <ul class="list-group list-group-flush small">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Estado:</span> <span class="badge @(Model.Estado == "RECIBIDA" ? "bg-success" : "bg-info")">@Model.Estado</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Fecha Pedido:</span> <span>@Model.Fecha.ToString("dd/MM/yyyy")</span>
+                        </li>
+                        @if(Model.Contrato != null) {
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Contrato:</span> <span class="text-primary fw-bold">@Model.Contrato.NumeroContrato</span>
+                            </li>
+                        }
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Destino:</span> <span>@Model.AlmacenDestino?.Nombre</span>
+                        </li>
+                    </ul>
+
+                    <div class="mt-4 p-3 bg-light rounded text-center">
+                        <h3 class="fw-bold mb-0 text-primary">@Model.Total.ToString("C")</h3>
+                        <small class="text-muted">Total de la Orden (@Model.Moneda)</small>
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.RecepcionCompras.Any()) {
+                <div class="card border-success-subtle">
+                    <div class="card-header bg-success-subtle"><h5 class="card-title mb-0">Datos de Recepción</h5></div>
+                    <div class="card-body small">
+                        @foreach(var r in Model.RecepcionCompras) {
+                            <p class="mb-1"><strong>Nº Informe:</strong> @r.NumeroInformeRecepcion</p>
+                            <p class="mb-0"><strong>Fecha:</strong> @r.Fecha.ToString("dd/MM/yyyy")</p>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Partidas -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header"><h4 class="card-title">Listado de Productos Solicitados</h4></div>
+                <div class="card-body p-0">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light small">
+                            <tr>
+                                <th>Descripción</th>
+                                <th class="text-end">Solicitado</th>
+                                <th class="text-end">Recibido</th>
+                                <th class="text-end">Precio Unit.</th>
+                                <th class="text-end">Importe</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var det in Model.OrdenCompraDetalles)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">@det.Producto.Nombre</div>
+                                        <small class="text-muted">@det.Producto.Codigo</small>
+                                    </td>
+                                    <td class="text-end">@det.CantidadSolicitada.ToString("N2")</td>
+                                    <td class="text-end text-success fw-bold">@det.CantidadRecibida.ToString("N2") </td>
+                                    <td class="text-end">@det.PrecioUnitario.ToString("C")</td>
+                                    <td class="text-end fw-bold">@det.SubtotalLinea?.ToString("C")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,89 @@
+@model IEnumerable<Vercom.Models.PeriodoNomina>
+@{
+    ViewBag.Title = "Gestión de Nóminas";
+    var meses = new[] { "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Nómina de Salarios</h4>
+    </div>
+    <div class="text-end">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#calcPayrollModal">
+            <i class="ti ti-calculator me-1"></i> Calcular Nueva Nómina
+        </button>
+    </div>
+</div>
+
+<div class="container-xxl mt-4">
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Periodo</th>
+                            <th>Tipo</th>
+                            <th>Estado</th>
+                            <th>F. Cálculo</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var statusClass = item.Estado == "APROBADA" ? "badge bg-success" : "badge bg-warning";
+
+                            <tr>
+                                <td class="fw-bold">@meses[item.Mes] @item.Anio</td>
+                                <td>@item.Tipo</td>
+                                <td><span class="@statusClass">@item.Estado</span></td>
+                                <td class="small text-muted">@item.CalculadoEn?.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-end">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-light">
+                                        <i class="ti ti-eye me-1"></i> Ver Detalle
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Cálculo -->
+<div class="modal fade" id="calcPayrollModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form asp-action="Calculate" method="post">
+            @Html.AntiForgeryToken()
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Iniciar Cálculo de Nómina</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Año</label>
+                            <input type="number" name="anio" class="form-control" value="@DateTime.Now.Year" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Mes</label>
+                            <select name="mes" class="form-select" required>
+                                @for(int m=1; m<=12; m++) {
+                                    <!option value="@m" @(DateTime.Now.Month == m ? "selected" : "")>@meses[m]</!option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">PROCESAR CÁLCULO</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -9,9 +10,11 @@ using Vercom.Models;
 
 namespace Vercom.Controllers
 {
+    [Authorize]
     public class ListaMaterialeController : Controller
     {
-       private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+        private readonly AppDbContext _context;
+        private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
 
         public ListaMaterialeController(AppDbContext context)
         {
@@ -19,134 +22,69 @@ namespace Vercom.Controllers
         }
 
         // GET: ListaMateriale
+        [Authorize(Policy = "PRODUCCION.BOM.VER")]
         public async Task<IActionResult> Index()
         {
-            return View(await _context.ListaMateriales.ToListAsync());
+            var boms = await _context.ListaMateriales
+                .Include(l => l.ProductoTerminado)
+                .Where(l => l.ProductoTerminado.EntidadId == CurrentEntidadId)
+                .OrderBy(l => l.ProductoTerminado.Nombre)
+                .ToListAsync();
+            return View(boms);
         }
 
         // GET: ListaMateriale/Details/5
+        [Authorize(Policy = "PRODUCCION.BOM.VER")]
         public async Task<IActionResult> Details(Guid? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var listaMateriale = await _context.ListaMateriales
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (listaMateriale == null)
-            {
-                return NotFound();
-            }
+                .Include(l => l.ProductoTerminado)
+                .Include(l => l.ListaMaterialesDetalles).ThenInclude(d => d.ProductoInsumo).ThenInclude(p => p.UnidadMedida)
+                .FirstOrDefaultAsync(m => m.Id == id && m.ProductoTerminado.EntidadId == CurrentEntidadId);
+
+            if (listaMateriale == null) return NotFound();
 
             return View(listaMateriale);
         }
 
         // GET: ListaMateriale/Create
+        [Authorize(Policy = "PRODUCCION.BOM.CREAR")]
         public IActionResult Create()
         {
-            return View();
+            ViewData["ProductoTerminadoId"] = new SelectList(_context.Productos
+                .Where(p => p.EntidadId == CurrentEntidadId && (p.Tipo == "ELABORADO" || p.Tipo == "TERMINADO")), "Id", "Nombre");
+
+            ViewBag.Insumos = _context.Productos
+                .Where(p => p.EntidadId == CurrentEntidadId && p.Tipo == "INSUMO")
+                .Select(p => new { p.Id, Display = p.Codigo + " - " + p.Nombre })
+                .ToList();
+
+            return View(new ListaMateriale { Activa = true });
         }
 
-        // POST: ListaMateriale/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,ProductoTerminadoId,Version,Activa,CreadoEn")] ListaMateriale listaMateriale)
+        [Authorize(Policy = "PRODUCCION.BOM.CREAR")]
+        public async Task<IActionResult> Create(ListaMateriale bom)
         {
             if (ModelState.IsValid)
             {
-                listaMateriale.Id = Guid.NewGuid();
-                _context.Add(listaMateriale);
+                bom.Id = Guid.NewGuid();
+                bom.CreadoEn = DateTimeOffset.Now;
+
+                // Desactivar versiones anteriores
+                var previous = await _context.ListaMateriales
+                    .Where(l => l.ProductoTerminadoId == bom.ProductoTerminadoId && l.Activa)
+                    .ToListAsync();
+                foreach (var p in previous) p.Activa = false;
+
+                _context.Add(bom);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(listaMateriale);
-        }
-
-        // GET: ListaMateriale/Edit/5
-        public async Task<IActionResult> Edit(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var listaMateriale = await _context.ListaMateriales.FindAsync(id);
-            if (listaMateriale == null)
-            {
-                return NotFound();
-            }
-            return View(listaMateriale);
-        }
-
-        // POST: ListaMateriale/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,ProductoTerminadoId,Version,Activa,CreadoEn")] ListaMateriale listaMateriale)
-        {
-            if (id != listaMateriale.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(listaMateriale);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ListaMaterialeExists(listaMateriale.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(listaMateriale);
-        }
-
-        // GET: ListaMateriale/Delete/5
-        public async Task<IActionResult> Delete(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var listaMateriale = await _context.ListaMateriales
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (listaMateriale == null)
-            {
-                return NotFound();
-            }
-
-            return View(listaMateriale);
-        }
-
-        // POST: ListaMateriale/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
-        {
-            var listaMateriale = await _context.ListaMateriales.FindAsync(id);
-            if (listaMateriale != null)
-            {
-                _context.ListaMateriales.Remove(listaMateriale);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return View(bom);
         }
 
         private bool ListaMaterialeExists(Guid id)

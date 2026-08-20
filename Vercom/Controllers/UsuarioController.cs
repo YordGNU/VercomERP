@@ -15,9 +15,7 @@ namespace Vercom.Controllers
     [Authorize]
     public class UsuarioController : Controller
     {
-       
-        private readonly AppDbContext _context; 
-        private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+        private readonly AppDbContext _context;
         private readonly IAuthService _authService;
 
         public UsuarioController(AppDbContext context, IAuthService authService)
@@ -25,10 +23,11 @@ namespace Vercom.Controllers
             _context = context;
             _authService = authService;
         }
-      
+
+        private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
 
         // GET: Usuario
-        [Authorize(Policy = "NUCLEO.USUARIO.VER")]
+        [Authorize(Policy = "SEGURIDAD.USUARIO.VER")]
         public async Task<IActionResult> Index()
         {
             var usuarios = await _context.Usuarios
@@ -40,7 +39,7 @@ namespace Vercom.Controllers
         }
 
         // GET: Usuario/Details/5
-        [Authorize(Policy = "NUCLEO.USUARIO.VER")]
+        [Authorize(Policy = "SEGURIDAD.USUARIO.VER")]
         public async Task<IActionResult> Details(Guid? id)
         {
             if (id == null) return NotFound();
@@ -57,7 +56,7 @@ namespace Vercom.Controllers
         }
 
         // GET: Usuario/Create
-        [Authorize(Policy = "NUCLEO.USUARIO.CREAR")]
+        [Authorize(Policy = "SEGURIDAD.USUARIO.CREAR")]
         public IActionResult Create()
         {
             ViewData["EsEmpleadoId"] = new SelectList(_context.Empleados.Where(e => e.EntidadId == CurrentEntidadId), "Id", "NombreCompleto");
@@ -68,7 +67,7 @@ namespace Vercom.Controllers
         // POST: Usuario/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "NUCLEO.USUARIO.CREAR")]
+        [Authorize(Policy = "SEGURIDAD.USUARIO.CREAR")]
         public async Task<IActionResult> Create(Usuario usuario, string password)
         {
             if (string.IsNullOrEmpty(password))
@@ -95,12 +94,12 @@ namespace Vercom.Controllers
         }
 
         // GET: Usuario/Edit/5
-        [Authorize(Policy = "NUCLEO.USUARIO.EDITAR")]
+        [Authorize(Policy = "SEGURIDAD.USUARIO.EDITAR")]
         public async Task<IActionResult> Edit(Guid? id)
         {
             if (id == null) return NotFound();
 
-            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == id && u.EntidadId == CurrentEntidadId);
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(p => p.Id == id && p.EntidadId == CurrentEntidadId);
             if (usuario == null) return NotFound();
 
             ViewData["EsEmpleadoId"] = new SelectList(_context.Empleados.Where(e => e.EntidadId == CurrentEntidadId), "Id", "NombreCompleto", usuario.EsEmpleadoId);
@@ -111,7 +110,7 @@ namespace Vercom.Controllers
         // POST: Usuario/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "NUCLEO.USUARIO.EDITAR")]
+        [Authorize(Policy = "SEGURIDAD.USUARIO.EDITAR")]
         public async Task<IActionResult> Edit(Guid id, Usuario usuario)
         {
             if (id != usuario.Id) return NotFound();
@@ -122,7 +121,7 @@ namespace Vercom.Controllers
             if (ModelState.IsValid)
             {
                 usuario.EntidadId = CurrentEntidadId;
-                usuario.HashPassword = dbUser.HashPassword; // No permitir editar hash desde aquí
+                usuario.HashPassword = dbUser.HashPassword;
                 usuario.ActualizadoEn = DateTimeOffset.Now;
 
                 _context.Update(usuario);
@@ -135,7 +134,7 @@ namespace Vercom.Controllers
         }
 
         [HttpPost]
-        [Authorize(Policy = "NUCLEO.USUARIO.EDITAR")]
+        [Authorize(Policy = "SEGURIDAD.USUARIO.EDITAR")]
         public async Task<IActionResult> ToggleStatus(Guid id)
         {
             var user = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == id && u.EntidadId == CurrentEntidadId);
@@ -147,7 +146,7 @@ namespace Vercom.Controllers
         }
 
         [HttpPost]
-        [Authorize(Policy = "NUCLEO.USUARIO.EDITAR")]
+        [Authorize(Policy = "SEGURIDAD.USUARIO.EDITAR")]
         public async Task<IActionResult> ResetPassword(Guid id, string newPassword)
         {
             var user = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == id && u.EntidadId == CurrentEntidadId);

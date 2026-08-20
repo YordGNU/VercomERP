@@ -61,15 +61,16 @@
                     </a>
                     <div class="collapse" id="sidebarInventario">
                         <ul class="sub-menu">
-                            <li class="side-nav-item"><a asp-controller="Inventory" asp-action="Index" class="side-nav-link">Existencias</a></li>
+                            <li class="side-nav-item"><a asp-controller="Inventory" asp-action="Index" class="side-nav-link">Submayor Existencias</a></li>
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "INVENTARIO.MOVIMIENTO.VER")).Succeeded)
+                            {
+                                <li class="side-nav-item"><a asp-controller="Inventory" asp-action="Movements" class="side-nav-link">Bitácora de Movimientos</a></li>
+                            }
                             @if ((await AuthorizationService.AuthorizeAsync(User, "INVENTARIO.PRODUCTO.VER")).Succeeded)
                             {
-                                <li class="side-nav-item"><a asp-controller="Producto" asp-action="Index" class="side-nav-link">Productos</a></li>
+                                <li class="side-nav-item"><a asp-controller="Producto" asp-action="Index" class="side-nav-link">Maestro Productos</a></li>
                             }
-                            @if ((await AuthorizationService.AuthorizeAsync(User, "INVENTARIO.MOVIMIENTO.CREAR")).Succeeded)
-                            {
-                                <li class="side-nav-item"><a asp-controller="Inventory" asp-action="CreateMovement" class="side-nav-link">Registrar Movimiento</a></li>
-                            }
+                            <li class="side-nav-item"><a asp-controller="Inventory" asp-action="LowStock" class="side-nav-link text-danger">Alertas de Stock</a></li>
                         </ul>
                     </div>
                 </li>
@@ -110,11 +111,17 @@
                     </a>
                     <div class="collapse" id="sidebarRRHH">
                         <ul class="sub-menu">
-                            <li class="side-nav-item"><a asp-controller="Empleado" asp-action="Index" class="side-nav-link">Empleados</a></li>
-                            @if ((await AuthorizationService.AuthorizeAsync(User, "RRHH.NOMINA.CALCULAR")).Succeeded)
+                            <li class="side-nav-item"><a asp-controller="Empleado" asp-action="Index" class="side-nav-link">Expedientes</a></li>
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "RRHH.ASISTENCIA.REGISTRAR")).Succeeded)
                             {
-                                <li class="side-nav-item"><a asp-controller="Nomina" asp-action="Index" class="side-nav-link">Nómina</a></li>
+                                <li class="side-nav-item"><a asp-controller="RegistroAsistencia" asp-action="Console" class="side-nav-link">Consola Asistencia</a></li>
                             }
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "RRHH.NOMINA.VER")).Succeeded)
+                            {
+                                <li class="side-nav-item"><a asp-controller="Nomina" asp-action="Index" class="side-nav-link">Nómina de Salarios</a></li>
+                            }
+                            <li class="side-nav-item"><a asp-controller="SaldoVacaciones" asp-action="Index" class="side-nav-link">Control Vacaciones</a></li>
+                            <li class="side-nav-item"><a asp-controller="RegistroSalarioTiempoServicio" asp-action="Index" class="side-nav-link">Modelo SC-4-08</a></li>
                         </ul>
                     </div>
                 </li>
@@ -153,15 +160,15 @@
                 </a>
                 <div class="collapse" id="sidebarSeguridad">
                     <ul class="sub-menu">
-                        @if ((await AuthorizationService.AuthorizeAsync(User, "NUCLEO.USUARIO.VER")).Succeeded)
+                        @if ((await AuthorizationService.AuthorizeAsync(User, "SEGURIDAD.USUARIO.VER")).Succeeded)
                         {
                             <li class="side-nav-item"><a asp-controller="Usuario" asp-action="Index" class="side-nav-link">Usuarios</a></li>
                         }
-                        @if ((await AuthorizationService.AuthorizeAsync(User, "NUCLEO.ROL.ASIGNAR")).Succeeded)
+                        @if ((await AuthorizationService.AuthorizeAsync(User, "SEGURIDAD.ROL.VER")).Succeeded)
                         {
                             <li class="side-nav-item"><a asp-controller="Rol" asp-action="Index" class="side-nav-link">Roles y Permisos</a></li>
                         }
-                        @if ((await AuthorizationService.AuthorizeAsync(User, "NUCLEO.AUDITORIA.VER")).Succeeded)
+                        @if ((await AuthorizationService.AuthorizeAsync(User, "SEGURIDAD.AUDITORIA.VER")).Succeeded)
                         {
                             <li class="side-nav-item"><a asp-controller="Auditoria" asp-action="Index" class="side-nav-link">Bitácora de Auditoría</a></li>
                         }

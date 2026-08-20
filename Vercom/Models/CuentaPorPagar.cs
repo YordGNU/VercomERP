@@ -30,6 +30,7 @@ public partial class CuentaPorPagar
     public string Estado { get; set; } = null!;
 
     public DateTimeOffset CreadoEn { get; set; }
+    public virtual Proveedor Proveedor { get; set; }
 
     public virtual AsientoContable? AsientoOrigen { get; set; }
 

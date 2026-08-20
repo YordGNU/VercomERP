@@ -22,6 +22,11 @@ public class DashboardController : Controller
         var period = await _accountingService.GetOrCreateActivePeriodAsync(entidadId, DateTime.Now);
 
         var stats = await _biService.GetDashboardStatsAsync(entidadId, period?.Id ?? Guid.Empty);
+
+        // Cargar tendencias para gráficos (últimos 6 meses)
+        ViewBag.TrendRentabilidad = await _biService.GetTrendDataAsync(entidadId, "RENTABILIDAD", 6);
+        ViewBag.TrendLiquidez = await _biService.GetTrendDataAsync(entidadId, "LIQUIDEZ", 6);
+
         return View(stats);
     }
 }
