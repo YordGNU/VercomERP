@@ -9,7 +9,8 @@ namespace Vercom.Controllers
     [Authorize(Roles = "ADMINISTRADOR,RRHH,DIRECCION")]
     public class EmpleadoController : Controller
     {
-        private readonly AppDbContext _context;
+       private readonly AppDbContext _context;   
+        private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());     
 
         public EmpleadoController(AppDbContext context)
         {
@@ -46,6 +47,8 @@ namespace Vercom.Controllers
         public IActionResult Create()
         {
             ViewData["CargoId"] = new SelectList(_context.Cargos, "Id", "Id");
+            ViewData["EntidadId"] = new SelectList(_context.Entidads, "Id", "NombreComercial");
+            ViewData["SucursalId"] = new SelectList(_context.Sucursals.Where(s => s.EntidadId == CurrentEntidadId), "Id", "Nombre");        
             return View();
         }
 
@@ -64,6 +67,7 @@ namespace Vercom.Controllers
                 return RedirectToAction(nameof(Index));
             }
             ViewData["CargoId"] = new SelectList(_context.Cargos, "Id", "Id", empleado.CargoId);
+
             return View(empleado);
         }
 

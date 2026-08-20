@@ -33,13 +33,14 @@
 
                         <div class="col-md-6">
                             <label asp-for="EntidadId" class="form-label"></label>
-                            <select asp-for="EntidadId" class="form-select" asp-items="ViewBag.EntidadId"></select>
+                            <select asp-for="EntidadId" class="form-select" asp-items="ViewBag.EntidadId">    
+                            </select>
                             <span asp-validation-for="EntidadId" class="text-danger"></span>
                         </div>
 
                         <div class="col-md-6">
                             <label asp-for="SucursalId" class="form-label"></label>
-                            <select asp-for="SucursalId" class="form-select" asp-items="ViewBag.SucursalId"></select>
+             <select asp-for="SucursalId" class="form-select" asp-items="ViewBag.SucursalId"></select>
                             <span asp-validation-for="SucursalId" class="text-danger"></span>
                         </div>
 

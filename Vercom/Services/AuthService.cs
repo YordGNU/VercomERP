@@ -18,7 +18,7 @@ public interface IAuthService
 
 public class AuthService : IAuthService
 {
-    private readonly AppDbContext _context;
+   private readonly AppDbContext _context;   
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     public AuthService(AppDbContext context, IHttpContextAccessor httpContextAccessor)
@@ -75,6 +75,16 @@ public class AuthService : IAuthService
         foreach (var ur in usuario.UsuarioRolUsuarios)
         {
             claims.Add(new Claim(ClaimTypes.Role, ur.Rol.Codigo));
+
+            // Cargar permisos del rol como claims para evitar consultas repetitivas a la DB
+            var roleWithPerms = await _context.Rols.Include(r => r.Permisos).FirstAsync(r => r.Id == ur.RolId);
+            foreach (var p in roleWithPerms.Permisos)
+            {
+                if (!claims.Any(c => c.Type == "Permission" && c.Value == p.Codigo))
+                {
+                    claims.Add(new Claim("Permission", p.Codigo));
+                }
+            }
         }
 
         var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

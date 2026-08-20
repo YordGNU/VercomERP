@@ -14,7 +14,7 @@ public interface IProductionService
 
 public class ProductionService : IProductionService
 {
-    private readonly AppDbContext _context;
+   private readonly AppDbContext _context;  
     private readonly IInventoryService _inventoryService;
     private readonly IAccountingService _accountingService;
 

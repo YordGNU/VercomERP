@@ -13,7 +13,7 @@ public interface IBIService
 
 public class BIService : IBIService
 {
-    private readonly AppDbContext _context;
+   private readonly AppDbContext _context;  
     private readonly IAccountingService _accountingService;
 
     public BIService(AppDbContext context, IAccountingService accountingService)

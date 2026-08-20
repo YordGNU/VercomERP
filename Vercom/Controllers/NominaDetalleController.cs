@@ -10,7 +10,7 @@ namespace Vercom.Controllers
     [Authorize(Roles = "ADMINISTRADOR,RRHH,DIRECCION")]
     public class NominaDetalleController : Controller
     {
-        private readonly AppDbContext _context;
+       private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
         private readonly IPayrollService _payrollService;
 
         public NominaDetalleController(AppDbContext context, IPayrollService payrollService)

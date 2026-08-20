@@ -1,38 +1,24 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using Vercom.Models;
 
 namespace Vercom.Security;
 
 public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
 {
-    private readonly IServiceScopeFactory _scopeFactory;
-
-    public PermissionHandler(IServiceScopeFactory scopeFactory)
+    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
     {
-        _scopeFactory = scopeFactory;
-    }
+        // Verificamos si el usuario tiene el claim de permiso correspondiente
+        // Los permisos se cargaron en el AuthService durante el Login
+        var hasPermission = context.User.HasClaim(c => c.Type == "Permission" && c.Value == requirement.Permission);
 
-    protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
-    {
-        var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null) return;
+        // El Administrador del Sistema (Rol) tiene acceso total por defecto
+        var isAdmin = context.User.IsInRole("ADMINISTRADOR");
 
-        using var scope = _scopeFactory.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-        var userId = Guid.Parse(userIdClaim.Value);
-
-        // Verificar si el usuario tiene algún rol que contenga el permiso requerido
-        var hasPermission = await dbContext.UsuarioRols
-            .Where(ur => ur.UsuarioId == userId)
-            .Select(ur => ur.Rol)
-            .AnyAsync(r => r.Permisos.Any(p => p.Codigo == requirement.Permission));
-
-        if (hasPermission)
+        if (hasPermission || isAdmin)
         {
             context.Succeed(requirement);
         }
+
+        return Task.CompletedTask;
     }
 }

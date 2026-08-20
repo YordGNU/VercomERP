@@ -11,7 +11,7 @@ namespace Vercom.Controllers;
 [ApiController]
 public class PosApiController : ControllerBase
 {
-    private readonly AppDbContext _context;
+   private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
     private readonly IAuthService _authService;
     private readonly ISalesService _salesService;
 

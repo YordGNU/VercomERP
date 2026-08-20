@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
 
@@ -20,26 +19,31 @@ namespace Vercom.Controllers
             _context = context;
         }
 
+        private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+        private bool IsMasterUser => User.Identity?.Name == "master";
+
         // GET: Entidad
         public async Task<IActionResult> Index()
         {
+            if (!IsMasterUser)
+            {
+                return RedirectToAction(nameof(Details), new { id = CurrentEntidadId });
+            }
             return View(await _context.Entidads.ToListAsync());
         }
 
         // GET: Entidad/Details/5
         public async Task<IActionResult> Details(Guid? id)
         {
-            if (id == null)
+            if (id == null) id = CurrentEntidadId;
+
+            if (!IsMasterUser && id != CurrentEntidadId)
             {
-                return NotFound();
+                return Forbid();
             }
 
-            var entidad = await _context.Entidads
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (entidad == null)
-            {
-                return NotFound();
-            }
+            var entidad = await _context.Entidads.FirstOrDefaultAsync(m => m.Id == id);
+            if (entidad == null) return NotFound();
 
             return View(entidad);
         }
@@ -47,19 +51,21 @@ namespace Vercom.Controllers
         // GET: Entidad/Create
         public IActionResult Create()
         {
+            if (!IsMasterUser) return Forbid();
             return View();
         }
 
-        // POST: Entidad/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,RazonSocial,NombreComercial,Nit,CodigoReeup,FormaJuridica,DireccionLegal,Municipio,Provincia,Telefono,Email,FechaConstitucion,LicenciaActividad,MonedaBase,Activo,CreadoEn,ActualizadoEn")] Entidad entidad)
+        public async Task<IActionResult> Create(Entidad entidad)
         {
+            if (!IsMasterUser) return Forbid();
+
             if (ModelState.IsValid)
             {
                 entidad.Id = Guid.NewGuid();
+                entidad.CreadoEn = DateTimeOffset.Now;
+                entidad.ActualizadoEn = DateTimeOffset.Now;
                 _context.Add(entidad);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -70,50 +76,36 @@ namespace Vercom.Controllers
         // GET: Entidad/Edit/5
         public async Task<IActionResult> Edit(Guid? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) id = CurrentEntidadId;
+
+            if (!IsMasterUser && id != CurrentEntidadId) return Forbid();
 
             var entidad = await _context.Entidads.FindAsync(id);
-            if (entidad == null)
-            {
-                return NotFound();
-            }
+            if (entidad == null) return NotFound();
             return View(entidad);
         }
 
-        // POST: Entidad/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,RazonSocial,NombreComercial,Nit,CodigoReeup,FormaJuridica,DireccionLegal,Municipio,Provincia,Telefono,Email,FechaConstitucion,LicenciaActividad,MonedaBase,Activo,CreadoEn,ActualizadoEn")] Entidad entidad)
+        public async Task<IActionResult> Edit(Guid id, Entidad entidad)
         {
-            if (id != entidad.Id)
-            {
-                return NotFound();
-            }
+            if (id != entidad.Id) return NotFound();
+            if (!IsMasterUser && id != CurrentEntidadId) return Forbid();
 
             if (ModelState.IsValid)
             {
                 try
                 {
+                    entidad.ActualizadoEn = DateTimeOffset.Now;
                     _context.Update(entidad);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!EntidadExists(entidad.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    if (!EntidadExists(entidad.Id)) return NotFound();
+                    else throw;
                 }
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Details), new { id = entidad.Id });
             }
             return View(entidad);
         }
@@ -121,26 +113,21 @@ namespace Vercom.Controllers
         // GET: Entidad/Delete/5
         public async Task<IActionResult> Delete(Guid? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (!IsMasterUser) return Forbid();
+            if (id == null) return NotFound();
 
-            var entidad = await _context.Entidads
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (entidad == null)
-            {
-                return NotFound();
-            }
+            var entidad = await _context.Entidads.FirstOrDefaultAsync(m => m.Id == id);
+            if (entidad == null) return NotFound();
 
             return View(entidad);
         }
 
-        // POST: Entidad/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
+            if (!IsMasterUser) return Forbid();
+
             var entidad = await _context.Entidads.FindAsync(id);
             if (entidad != null)
             {

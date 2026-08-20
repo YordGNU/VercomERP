@@ -11,7 +11,7 @@ namespace Vercom.Controllers
 {
     public class SesionCajaPoController : Controller
     {
-        private readonly AppDbContext _context;
+       private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
 
         public SesionCajaPoController(AppDbContext context)
         {

@@ -1,0 +1,146 @@
+@model Vercom.Models.Usuario
+@{
+    ViewBag.Title = "Detalles de Usuario";
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Perfil de Usuario: @Model.NombreUsuario</h4>
+    </div>
+</div>
+
+<div class="container-xxl mt-4">
+    <div class="row">
+        <!-- Resumen de Cuenta -->
+        <div class="col-lg-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="avatar-xl bg-primary-subtle text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 100px; height: 100px;">
+                        <i class="ti ti-user fs-48"></i>
+                    </div>
+                    <h4 class="mb-1">@Model.NombreCompleto</h4>
+                    <p class="text-muted">@Model.Email</p>
+                    <div class="d-flex justify-content-center gap-2 mb-3">
+                        @foreach (var ur in Model.UsuarioRolUsuarios)
+                        {
+                            <span class="badge bg-info-subtle text-info">@ur.Rol.Nombre</span>
+                        }
+                    </div>
+                    <hr>
+                    <div class="row text-start small">
+                        <div class="col-6 mb-2"><strong>Estado:</strong></div>
+                        <div class="col-6 text-end">
+                            <span class="badge @(Model.Activo ? "bg-success" : "bg-danger")">@(Model.Activo ? "ACTIVO" : "INACTIVO")</span>
+                        </div>
+                        <div class="col-6 mb-2"><strong>Sucursal:</strong></div>
+                        <div class="col-6 text-end text-muted">@(Model.Sucursal?.Nombre ?? "Global")</div>
+                        <div class="col-6 mb-2"><strong>Último Login:</strong></div>
+                        <div class="col-6 text-end text-muted">@(Model.UltimoLogin?.ToString("dd/MM HH:mm") ?? "N/A")</div>
+                        <div class="col-6"><strong>Intentos Fallidos:</strong></div>
+                        <div class="col-6 text-end text-danger">@Model.IntentosFallidos</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Acciones de Seguridad -->
+            <div class="card mt-4 border-danger-subtle">
+                <div class="card-header bg-danger-subtle">
+                    <h5 class="card-title text-danger mb-0">Gestión de Acceso</h5>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-4">Establecer una clave temporal obligará al usuario a cambiarla en su próximo acceso.</p>
+                    <form asp-action="ResetPassword" method="post">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Nueva Clave Temporal</label>
+                            <input type="password" name="newPassword" class="form-control form-control-sm" required minlength="6" />
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-sm btn-danger">REINICIAR CONTRASEÑA</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información Detallada y Roles -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between">
+                    <h4 class="card-title">Información Administrativa</h4>
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary">Editar Datos</a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-6 mb-4">
+                            <label class="text-muted small d-block mb-1">ID Único (GUID)</label>
+                            <code>@Model.Id</code>
+                        </div>
+                        <div class="col-sm-6 mb-4">
+                            <label class="text-muted small d-block mb-1">Entidad Legal</label>
+                            <span class="fw-bold">@Model.Entidad.RazonSocial</span>
+                        </div>
+                        <div class="col-sm-6 mb-4">
+                            <label class="text-muted small d-block mb-1">Fecha de Registro</label>
+                            <span>@Model.CreadoEn.ToString("F")</span>
+                        </div>
+                        <div class="col-sm-6 mb-4">
+                            <label class="text-muted small d-block mb-1">Última Actualización</label>
+                            <span>@Model.ActualizadoEn.ToString("F")</span>
+                        </div>
+                        @if (Model.EsEmpleadoId.HasValue)
+                        {
+                            <div class="col-12 mb-4">
+                                <div class="alert alert-info d-flex align-items-center mb-0">
+                                    <i class="ti ti-info-circle fs-24 me-2"></i>
+                                    <div>
+                                        Este usuario está vinculado al expediente laboral de <strong>@Model.EsEmpleado.Nombres @Model.EsEmpleado.Apellidos</strong>.
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4 class="card-title">Roles y Permisos Efectivos</h4>
+                </div>
+                <div class="card-body">
+                    @if (Model.UsuarioRolUsuarios.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Rol</th>
+                                        <th>Descripción</th>
+                                        <th>Asignado En</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var ur in Model.UsuarioRolUsuarios)
+                                    {
+                                        <tr>
+                                            <td><span class="fw-bold">@ur.Rol.Nombre</span></td>
+                                            <td class="small">@ur.Rol.Descripcion</td>
+                                            <td class="small text-muted">@ur.AsignadoEn.ToString("dd/MM/yyyy")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <p class="text-muted italic">Este usuario no tiene roles asignados y no podrá realizar ninguna acción.</p>
+                            <a asp-controller="UsuarioRol" asp-action="Create" asp-route-usuarioId="@Model.Id" class="btn btn-sm btn-primary">Asignar Rol Ahora</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

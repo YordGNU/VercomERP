@@ -29,7 +29,7 @@ public interface IFinancialReportService
 
 public class FinancialReportService : IFinancialReportService
 {
-    private readonly AppDbContext _context;
+   private readonly AppDbContext _context;   
     private readonly IAccountingService _accountingService;
 
     public FinancialReportService(AppDbContext context, IAccountingService accountingService)

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
+using Vercom.Services;
 
 namespace Vercom.Services;
 
@@ -16,7 +17,7 @@ public interface IAccountingService
 
 public class AccountingService : IAccountingService
 {
-    private readonly AppDbContext _context;
+   private readonly AppDbContext _context;   
 
     public AccountingService(AppDbContext context)
     {

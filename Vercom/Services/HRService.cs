@@ -14,7 +14,7 @@ public interface IHRService
 
 public class HRService : IHRService
 {
-    private readonly AppDbContext _context;
+   private readonly AppDbContext _context;   
 
     public HRService(AppDbContext context)
     {

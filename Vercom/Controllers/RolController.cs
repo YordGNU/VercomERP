@@ -13,7 +13,7 @@ namespace Vercom.Controllers
     [Authorize(Policy = "NUCLEO.ROL.ASIGNAR")]
     public class RolController : Controller
     {
-        private readonly AppDbContext _context;
+       private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
 
         public RolController(AppDbContext context)
         {
@@ -41,7 +41,6 @@ namespace Vercom.Controllers
         }
 
         // GET: Rol/Create
-        [Authorize(Policy = "SEC_EDIT_USERS")] // Quien edita usuarios suele gestionar roles básicos
         public IActionResult Create()
         {
             return View();
@@ -49,7 +48,6 @@ namespace Vercom.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "SEC_EDIT_USERS")]
         public async Task<IActionResult> Create([Bind("Codigo,Nombre,Descripcion")] Rol rol)
         {
             if (ModelState.IsValid)

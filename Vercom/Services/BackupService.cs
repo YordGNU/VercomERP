@@ -26,7 +26,9 @@ public class BackupService : IBackupService
         var dbName = _context.Database.GetDbConnection().Database;
         var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
         var fileName = $"{dbName}_{timestamp}.bak";
-        var backupPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Backups");
+
+        // Usar carpeta de datos de la app para mayor probabilidad de permisos
+        var backupPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "App_Data", "Backups");
 
         if (!Directory.Exists(backupPath))
             Directory.CreateDirectory(backupPath);
@@ -37,7 +39,7 @@ public class BackupService : IBackupService
         {
             Id = Guid.NewGuid(),
             Tipo = "COMPLETO",
-            IniciadoEn = DateTime.Now,
+            IniciadoEn = DateTimeOffset.Now,
             Estado = "EN_PROGRESO",
             RutaArchivo = fullPath
         };
@@ -47,15 +49,11 @@ public class BackupService : IBackupService
 
         try
         {
-            // Nota: El usuario de SQL Server debe tener permisos de escritura en la carpeta de destino
-            // En muchos entornos, SQL Server no puede escribir en carpetas de usuario.
-            // Para esta implementación "al pie de la letra", usamos el comando SQL estándar.
             var sql = $"BACKUP DATABASE [{dbName}] TO DISK = '{fullPath}' WITH FORMAT, MEDIANAME = 'VercomBackup', NAME = 'Full Backup of {dbName}';";
-
             await _context.Database.ExecuteSqlRawAsync(sql);
 
             log.Estado = "EXITOSO";
-            log.FinalizadoEn = DateTime.Now;
+            log.FinalizadoEn = DateTimeOffset.Now;
             var fileInfo = new FileInfo(fullPath);
             log.TamanoBytes = fileInfo.Exists ? fileInfo.Length : 0;
 
@@ -66,7 +64,7 @@ public class BackupService : IBackupService
         {
             log.Estado = "FALLIDO";
             log.MensajeError = ex.Message;
-            log.FinalizadoEn = DateTime.Now;
+            log.FinalizadoEn = DateTimeOffset.Now;
             await _context.SaveChangesAsync();
             return (false, $"Error al crear respaldo: {ex.Message}", null);
         }

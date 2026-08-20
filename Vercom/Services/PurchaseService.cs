@@ -12,7 +12,7 @@ public interface IPurchaseService
 
 public class PurchaseService : IPurchaseService
 {
-    private readonly AppDbContext _context;
+   private readonly AppDbContext _context;  
     private readonly IInventoryService _inventoryService;
     private readonly IContractService _contractService;
 

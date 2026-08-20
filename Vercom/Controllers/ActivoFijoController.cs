@@ -11,17 +11,19 @@ namespace Vercom.Controllers
 {
     public class ActivoFijoController : Controller
     {
-        private readonly AppDbContext _context;
+      private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());  
 
         public ActivoFijoController(AppDbContext context)
         {
             _context = context;
         }
 
+
+
         // GET: ActivoFijo
         public async Task<IActionResult> Index()
-        {
-            var appDbContext = _context.ActivoFijos.Include(a => a.CuentaActivo).Include(a => a.CuentaDepreciacion).Include(a => a.CuentaGastoDep);
+        {         
+            var appDbContext = _context.ActivoFijos.Include(a => a.CuentaActivo).Include(a => a.CuentaDepreciacion).Include(a => a.CuentaGastoDep);          
             return View(await appDbContext.ToListAsync());
         }
 
@@ -52,6 +54,7 @@ namespace Vercom.Controllers
             ViewData["CuentaActivoId"] = new SelectList(_context.CuentaContables, "Id", "Id");
             ViewData["CuentaDepreciacionId"] = new SelectList(_context.CuentaContables, "Id", "Id");
             ViewData["CuentaGastoDepId"] = new SelectList(_context.CuentaContables, "Id", "Id");
+            ViewData["SucursalId"] = new SelectList(_context.Sucursals.Where(s => s.EntidadId == CurrentEntidadId), "Id", "Nombre");
             return View();
         }
 

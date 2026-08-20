@@ -1,139 +1,80 @@
 ﻿@model IEnumerable<Vercom.Models.Usuario>
-
 @{
-    ViewData["Title"] = "Index";
+    ViewBag.Title = "Gestión de Usuarios";
 }
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Gestión de Usuario</h4>
+        <h4 class="page-main-title m-0">Usuarios del Sistema</h4>
     </div>
     <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Usuario</a></li>
-            <li class="breadcrumb-item active">Listado</li>
-        </ol>
+        @if (User.HasClaim(c => c.Type == "Permission" && c.Value == "SEC_EDIT_USERS") || User.IsInRole("ADMINISTRADOR"))
+        {
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="ti ti-plus me-1"></i> Nuevo Usuario
+            </a>
+        }
     </div>
 </div>
 
-<div class="container-xxl">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Listado de Usuario</h4>
-                </div>
-                <div class="card-body">
+<div class="container-xxl mt-4">
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Nombre Completo</th>
+                            <th>Email</th>
+                            <th>Sucursal</th>
+                            <th>Estado</th>
+                            <th>Último Acceso</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var statusClass = item.Activo ? "badge bg-success-subtle text-success" : "badge bg-danger-subtle text-danger";
+                            var statusText = item.Activo ? "Activo" : "Inactivo";
 
-
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<div class="table-responsive"><table class="table data-table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.NombreUsuario)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.NombreCompleto)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Email)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.HashPassword)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DebeCambiarPass)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.IntentosFallidos)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.BloqueadoHasta)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.UltimoLogin)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Activo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreadoEn)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ActualizadoEn)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Entidad)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.EsEmpleado)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Sucursal)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.NombreUsuario)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.NombreCompleto)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Email)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.HashPassword)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DebeCambiarPass)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IntentosFallidos)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.BloqueadoHasta)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.UltimoLogin)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Activo)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreadoEn)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ActualizadoEn)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Entidad.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.EsEmpleado.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Sucursal.Id)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table></div>
-                </div>
+                            <tr>
+                                <td class="fw-bold">
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-xs bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                            <i class="ti ti-user fs-16"></i>
+                                        </div>
+                                        @item.NombreUsuario
+                                    </div>
+                                </td>
+                                <td>@item.NombreCompleto</td>
+                                <td>@item.Email</td>
+                                <td>@(item.Sucursal?.Nombre ?? "Acceso Global")</td>
+                                <td><span class="@statusClass">@statusText</span></td>
+                                <td class="small text-muted">
+                                    @(item.UltimoLogin.HasValue ? item.UltimoLogin.Value.ToString("dd/MM/yyyy HH:mm") : "Nunca")
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-light" title="Ver Detalles">
+                                            <i class="ti ti-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-light" title="Editar">
+                                            <i class="ti ti-edit"></i>
+                                        </a>
+                                        <form asp-action="ToggleStatus" asp-route-id="@item.Id" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-sm @(item.Activo ? "btn-outline-danger" : "btn-outline-success")"
+                                                    title="@(item.Activo ? "Desactivar" : "Activar")">
+                                                <i class="ti @(item.Activo ? "ti-user-off" : "ti-user-check")"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

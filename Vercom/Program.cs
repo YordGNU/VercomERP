@@ -4,6 +4,8 @@ using Vercom.Models;
 using Vercom.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Vercom.Filters;
+using Microsoft.AspNetCore.Authorization;
+using Vercom.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpContextAccessor();
@@ -29,6 +31,10 @@ builder.Services.AddScoped<IBIService, BIService>();
 builder.Services.AddScoped<IReportingService, ReportingService>();
 builder.Services.AddScoped<IClosureService, ClosureService>();
 
+// Seguridad avanzada
+builder.Services.AddSingleton<IAuthorizationHandler, PermissionHandler>();
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>((sp, options) =>
 {
@@ -36,13 +42,15 @@ builder.Services.AddDbContext<AppDbContext>((sp, options) =>
            .AddInterceptors(sp.GetRequiredService<AuditInterceptor>());
 });
 
-builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme)
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
         options.LoginPath = "/Account/Login";
         options.AccessDeniedPath = "/Account/AccessDenied";
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
     });
+
+builder.Services.AddAuthorization();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews(options =>
@@ -63,7 +71,6 @@ using (var scope = app.Services.CreateScope())
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 

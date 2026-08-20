@@ -21,7 +21,7 @@ public interface IReceivablesPayablesService
 
 public class ReceivablesPayablesService : IReceivablesPayablesService
 {
-    private readonly AppDbContext _context;
+   private readonly AppDbContext _context;   
 
     public ReceivablesPayablesService(AppDbContext context)
     {

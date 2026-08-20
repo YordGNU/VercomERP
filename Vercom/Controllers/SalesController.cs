@@ -10,7 +10,7 @@ namespace Vercom.Controllers;
 [Authorize]
 public class SalesController : Controller
 {
-    private readonly AppDbContext _context;
+   private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
     private readonly ISalesService _salesService;
 
     public SalesController(AppDbContext context, ISalesService salesService)

@@ -1,151 +1,55 @@
 ﻿@model IEnumerable<Vercom.Models.Entidad>
-
 @{
-    ViewData["Title"] = "Index";
+    ViewBag.Title = "Consola de Entidades";
 }
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Gestión de Entidad</h4>
+        <h4 class="page-main-title m-0">Administración Global (Multi-entidad)</h4>
     </div>
     <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Entidad</a></li>
-            <li class="breadcrumb-item active">Listado</li>
-        </ol>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="ti ti-plus me-1"></i> Nueva Empresa
+        </a>
     </div>
 </div>
 
-<div class="container-xxl">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Listado de Entidad</h4>
-                </div>
-                <div class="card-body">
-
-
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<div class="table-responsive"><table class="table data-table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.RazonSocial)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.NombreComercial)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Nit)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CodigoReeup)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FormaJuridica)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DireccionLegal)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Municipio)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Provincia)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Telefono)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Email)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FechaConstitucion)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.LicenciaActividad)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.MonedaBase)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Activo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreadoEn)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ActualizadoEn)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.RazonSocial)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.NombreComercial)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Nit)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CodigoReeup)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FormaJuridica)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DireccionLegal)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Municipio)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Provincia)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Telefono)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Email)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FechaConstitucion)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.LicenciaActividad)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.MonedaBase)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Activo)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreadoEn)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ActualizadoEn)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table></div>
-                </div>
+<div class="container-xxl mt-4">
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Razón Social / Empresa</th>
+                            <th>NIT</th>
+                            <th>Provincia</th>
+                            <th>Moneda</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="fw-bold">@item.RazonSocial</td>
+                                <td><code>@item.Nit</code></td>
+                                <td>@item.Provincia</td>
+                                <td><span class="badge bg-dark">@item.MonedaBase</span></td>
+                                <td>
+                                    <span class="badge @(item.Activo ? "bg-success" : "bg-danger")">@(item.Activo ? "Activa" : "Suspendida")</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-light"><i class="ti ti-eye"></i></a>
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-light"><i class="ti ti-edit"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

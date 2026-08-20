@@ -1,102 +1,82 @@
 ﻿@model Vercom.Models.Usuario
-
 @{
-    ViewData["Title"] = "Create";
+    ViewBag.Title = "Nuevo Usuario";
 }
 
-
-
-<h4>Usuario</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Crear Usuario</h4>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Usuario</a></li>
-            <li class="breadcrumb-item active">Crear</li>
-        </ol>
+        <h4 class="page-main-title m-0">Registro de Usuario</h4>
     </div>
 </div>
 
-<div class="container-xxl">
-    <div class="row">
-        <div class="col-lg-12">
+<div class="container-xxl mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="card-title">Formulario de Creación</h4>
+                    <h4 class="card-title">Datos de Acceso y Perfil</h4>
                 </div>
                 <div class="card-body">
-<form class="row g-3" asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="mb-3">
-                <label asp-for="EntidadId" class="form-label"></label>
-                <select asp-for="EntidadId" class ="form-control" asp-items="ViewBag.EntidadId"></select>
-            </div>
-            <div class="mb-3">
-                <label asp-for="SucursalId" class="form-label"></label>
-                <select asp-for="SucursalId" class ="form-control" asp-items="ViewBag.SucursalId"></select>
-            </div>
-            <div class="mb-3">
-                <label asp-for="NombreUsuario" class="form-label"></label>
-                <input asp-for="NombreUsuario" class="form-control" />
-                <span asp-validation-for="NombreUsuario" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="NombreCompleto" class="form-label"></label>
-                <input asp-for="NombreCompleto" class="form-control" />
-                <span asp-validation-for="NombreCompleto" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Email" class="form-label"></label>
-                <input asp-for="Email" class="form-control" />
-                <span asp-validation-for="Email" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="HashPassword" class="form-label"></label>
-                <input asp-for="HashPassword" class="form-control" />
-                <span asp-validation-for="HashPassword" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="IntentosFallidos" class="form-label"></label>
-                <input asp-for="IntentosFallidos" class="form-control" />
-                <span asp-validation-for="IntentosFallidos" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="BloqueadoHasta" class="form-label"></label>
-                <input asp-for="BloqueadoHasta" class="form-control" />
-                <span asp-validation-for="BloqueadoHasta" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="UltimoLogin" class="form-label"></label>
-                <input asp-for="UltimoLogin" class="form-control" />
-                <span asp-validation-for="UltimoLogin" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="EsEmpleadoId" class="form-label"></label>
-                <select asp-for="EsEmpleadoId" class ="form-control" asp-items="ViewBag.EsEmpleadoId"></select>
-            </div>
-            <div class="mb-3">
-                <button type="submit" class="btn btn-primary">Guardar</button>
-            </div>
-        </form>
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="NombreUsuario" class="form-label fw-bold">Nombre de Usuario</label>
+                                <input asp-for="NombreUsuario" class="form-control" placeholder="ej: jsmith" required />
+                                <span asp-validation-for="NombreUsuario" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="password" class="form-label fw-bold">Contraseña Inicial</label>
+                                <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" required />
+                                <small class="text-muted">Se le obligará a cambiarla al primer ingreso.</small>
+                            </div>
+
+                            <div class="col-md-12">
+                                <label asp-for="NombreCompleto" class="form-label fw-bold">Nombre Completo</label>
+                                <input asp-for="NombreCompleto" class="form-control" placeholder="ej: Juan Pérez" required />
+                                <span asp-validation-for="NombreCompleto" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Email" class="form-label fw-bold">Correo Electrónico</label>
+                                <input asp-for="Email" type="email" class="form-control" placeholder="usuario@empresa.com" />
+                                <span asp-validation-for="Email" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="SucursalId" class="form-label fw-bold">Asignar a Sucursal</label>
+                                <select asp-for="SucursalId" class="form-select" asp-items="ViewBag.SucursalId"><option value="">Acceso Global (Todas)</option></select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="EsEmpleadoId" class="form-label fw-bold">Vincular con Empleado</label>
+                                <select asp-for="EsEmpleadoId" class="form-select" asp-items="ViewBag.EsEmpleadoId">
+                                    <option value="">-- No vincular --</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 d-flex align-items-center mt-4">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" asp-for="Activo" checked>
+                                    <label class="form-check-label fw-bold" asp-for="Activo">Usuario Activo</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                            <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="ti ti-device-floppy me-1"></i> GUARDAR USUARIO
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
-    </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }
-

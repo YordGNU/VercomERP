@@ -1,0 +1,88 @@
+@model IEnumerable<Vercom.Models.Auditorium>
+@{
+    ViewBag.Title = "Bitácora de Auditoría";
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Seguimiento de Operaciones (Auditoría)</h4>
+    </div>
+</div>
+
+<div class="container-xxl mt-4">
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Usuario</label>
+                    <input type="text" name="filterUser" class="form-control form-control-sm" placeholder="Nombre de usuario" value="@Context.Request.Query["filterUser"]" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Tabla/Módulo</label>
+                    <input type="text" name="filterTable" class="form-control form-control-sm" placeholder="Ej: inventario.producto" value="@Context.Request.Query["filterTable"]" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Desde</label>
+                    <input type="date" name="start" class="form-control form-control-sm" value="@Context.Request.Query["start"]" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Hasta</label>
+                    <input type="date" name="end" class="form-control form-control-sm" value="@Context.Request.Query["end"]" />
+                </div>
+                <div class="col-md-2 d-grid gap-2 d-md-flex">
+                    <button type="submit" class="btn btn-sm btn-primary">Filtrar</button>
+                    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Limpiar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Resultados -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-sm align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha/Hora</th>
+                            <th>Usuario</th>
+                            <th>Acción</th>
+                            <th>Módulo / Tabla</th>
+                            <th>ID Registro</th>
+                            <th>Canal</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var actionClass = item.Accion switch {
+                                "INSERT" => "text-success",
+                                "UPDATE" => "text-warning",
+                                "DELETE" => "text-danger",
+                                _ => "text-primary"
+                            };
+
+                            <tr>
+                                <td class="small">@item.OcurridoEn.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                <td><span class="fw-bold">@item.NombreUsuario</span></td>
+                                <td><span class="fw-bold @actionClass">@item.Accion</span></td>
+                                <td class="small">@item.EsquemaTabla</td>
+                                <td class="small"><code>@item.RegistroId</code></td>
+                                <td>
+                                    <span class="badge @(item.Canal == "POS" ? "bg-info" : "bg-dark")">@item.Canal</span>
+                                </td>
+                                <td class="text-end">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-xs btn-light">
+                                        <i class="ti ti-zoom-in"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

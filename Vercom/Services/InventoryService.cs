@@ -12,7 +12,7 @@ public interface IInventoryService
 
 public class InventoryService : IInventoryService
 {
-    private readonly AppDbContext _context;
+   private readonly AppDbContext _context;  
     private readonly IAccountingService _accountingService;
 
     public InventoryService(AppDbContext context, IAccountingService accountingService)

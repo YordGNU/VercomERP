@@ -11,7 +11,7 @@ namespace Vercom.Controllers
 {
     public class TipoAusenciumController : Controller
     {
-        private readonly AppDbContext _context;
+       private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
 
         public TipoAusenciumController(AppDbContext context)
         {

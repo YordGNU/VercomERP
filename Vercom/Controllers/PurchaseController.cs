@@ -10,7 +10,7 @@ namespace Vercom.Controllers;
 [Authorize]
 public class PurchaseController : Controller
 {
-    private readonly AppDbContext _context;
+   private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
     private readonly IPurchaseService _purchaseService;
 
     public PurchaseController(AppDbContext context, IPurchaseService purchaseService)

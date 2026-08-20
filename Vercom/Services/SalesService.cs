@@ -11,7 +11,7 @@ public interface ISalesService
 
 public class SalesService : ISalesService
 {
-    private readonly AppDbContext _context;
+   private readonly AppDbContext _context;   
     private readonly IInventoryService _inventoryService;
     private readonly IContractService _contractService;
     private readonly ITaxService _taxService;

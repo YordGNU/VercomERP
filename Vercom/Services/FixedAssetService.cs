@@ -11,7 +11,7 @@ public interface IFixedAssetService
 
 public class FixedAssetService : IFixedAssetService
 {
-    private readonly AppDbContext _context;
+   private readonly AppDbContext _context;   
     private readonly IAccountingService _accountingService;
 
     public FixedAssetService(AppDbContext context, IAccountingService accountingService)
