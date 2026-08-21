@@ -1,10 +1,31 @@
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
+using Vercom.ViewModels;
 
 namespace Vercom.Services;
 
 public interface ICashBankService
 {
+    // Gestión de Cajas
+    Task<IEnumerable<Caja>> GetCajasAsync();
+    Task<Caja?> GetCajaByIdAsync(Guid id);
+    Task<CajaFormViewModel> GetCajaFormContextAsync(Caja? existing = null);
+    Task<(bool Succeeded, string Message)> CreateCajaAsync(Caja caja);
+    Task<(bool Succeeded, string Message)> UpdateCajaAsync(Caja caja);
+
+    // Gestión de Cuentas Bancarias
+    Task<IEnumerable<CuentaBancarium>> GetBankAccountsAsync();
+    Task<CuentaBancarium?> GetBankAccountByIdAsync(Guid id);
+    Task<BankAccountFormViewModel> GetBankAccountFormContextAsync(CuentaBancarium? existing = null);
+    Task<(bool Succeeded, string Message)> CreateBankAccountAsync(CuentaBancarium account);
+    Task<(bool Succeeded, string Message)> UpdateBankAccountAsync(CuentaBancarium account);
+
+    // Movimientos Bancarios
+    Task<IEnumerable<MovimientoBancario>> GetBankMovementsAsync();
+    Task<(bool Succeeded, string Message)> CreateBankMovementAsync(MovimientoBancario movement);
+
+    // Operaciones
     Task<(bool Succeeded, string Message)> ReconcileBankMovementAsync(Guid movementId, Guid userId);
     Task<(bool Succeeded, string Message)> ValidateCashLimitAsync(Guid cashId, decimal amountToAdd);
     Task<List<MovimientoBancario>> GetPendingReconciliationAsync(Guid bankAccountId);
@@ -13,10 +34,122 @@ public interface ICashBankService
 public class CashBankService : ICashBankService
 {
     private readonly AppDbContext _context;
+    private readonly Security.IEntidadProvider _entidadProvider;
 
-    public CashBankService(AppDbContext context)
+    public CashBankService(AppDbContext context, Security.IEntidadProvider entidadProvider)
     {
         _context = context;
+        _entidadProvider = entidadProvider;
+    }
+
+    public async Task<IEnumerable<Caja>> GetCajasAsync()
+    {
+        return await _context.Cajas.Include(c => c.CuentaContable).OrderBy(c => c.Nombre).ToListAsync();
+    }
+
+    public async Task<Caja?> GetCajaByIdAsync(Guid id)
+    {
+        return await _context.Cajas.Include(c => c.CuentaContable).FirstOrDefaultAsync(m => m.Id == id);
+    }
+
+    public async Task<CajaFormViewModel> GetCajaFormContextAsync(Caja? existing = null)
+    {
+        return new CajaFormViewModel
+        {
+            Caja = existing ?? new Caja { Activa = true },
+            CuentasContables = new SelectList(await _context.CuentaContables.Where(c => c.Activo && c.AceptaMovimiento).ToListAsync(), "Id", "Nombre"),
+            Sucursales = new SelectList(await _context.Sucursals.Where(s => s.Activo).ToListAsync(), "Id", "Nombre")
+        };
+    }
+
+    public async Task<(bool Succeeded, string Message)> CreateCajaAsync(Caja caja)
+    {
+        try
+        {
+            caja.Id = Guid.NewGuid();
+            caja.EntidadId = _entidadProvider.CurrentEntidadId;
+            _context.Cajas.Add(caja);
+            await _context.SaveChangesAsync();
+            return (true, "Caja creada.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<(bool Succeeded, string Message)> UpdateCajaAsync(Caja caja)
+    {
+        try
+        {
+            var existing = await _context.Cajas.FindAsync(caja.Id);
+            if (existing == null) return (false, "No existe.");
+            _context.Entry(existing).CurrentValues.SetValues(caja);
+            existing.EntidadId = _entidadProvider.CurrentEntidadId;
+            await _context.SaveChangesAsync();
+            return (true, "Caja actualizada.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<IEnumerable<CuentaBancarium>> GetBankAccountsAsync()
+    {
+        return await _context.CuentaBancaria.Include(c => c.CuentaContable).OrderBy(c => c.Banco).ToListAsync();
+    }
+
+    public async Task<CuentaBancarium?> GetBankAccountByIdAsync(Guid id)
+    {
+        return await _context.CuentaBancaria.Include(c => c.CuentaContable).FirstOrDefaultAsync(m => m.Id == id);
+    }
+
+    public async Task<BankAccountFormViewModel> GetBankAccountFormContextAsync(CuentaBancarium? existing = null)
+    {
+        return new BankAccountFormViewModel
+        {
+            BankAccount = existing ?? new CuentaBancarium { Activa = true },
+            CuentasContables = new SelectList(await _context.CuentaContables.Where(c => c.Activo && c.AceptaMovimiento).ToListAsync(), "Id", "Nombre")
+        };
+    }
+
+    public async Task<(bool Succeeded, string Message)> CreateBankAccountAsync(CuentaBancarium account)
+    {
+        try
+        {
+            account.Id = Guid.NewGuid();
+            account.EntidadId = _entidadProvider.CurrentEntidadId;
+            _context.CuentaBancaria.Add(account);
+            await _context.SaveChangesAsync();
+            return (true, "Cuenta bancaria registrada.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<(bool Succeeded, string Message)> UpdateBankAccountAsync(CuentaBancarium account)
+    {
+        try
+        {
+            var existing = await _context.CuentaBancaria.FindAsync(account.Id);
+            if (existing == null) return (false, "No existe.");
+            _context.Entry(existing).CurrentValues.SetValues(account);
+            existing.EntidadId = _entidadProvider.CurrentEntidadId;
+            await _context.SaveChangesAsync();
+            return (true, "Cuenta bancaria actualizada.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<IEnumerable<MovimientoBancario>> GetBankMovementsAsync()
+    {
+        return await _context.MovimientoBancarios.Include(m => m.CuentaBancaria).Include(m => m.Asiento).OrderByDescending(m => m.Fecha).ToListAsync();
+    }
+
+    public async Task<(bool Succeeded, string Message)> CreateBankMovementAsync(MovimientoBancario movement)
+    {
+        try
+        {
+            movement.Id = Guid.NewGuid();
+            _context.MovimientoBancarios.Add(movement);
+            await _context.SaveChangesAsync();
+            return (true, "Movimiento registrado.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
     }
 
     public async Task<(bool Succeeded, string Message)> ReconcileBankMovementAsync(Guid movementId, Guid userId)

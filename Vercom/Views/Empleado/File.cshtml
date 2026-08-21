@@ -7,9 +7,14 @@
     <div class="flex-grow-1">
         <h4 class="page-main-title m-0">Expediente Digital: @Model.Nombres @Model.Apellidos</h4>
     </div>
-    <div class="text-end">
+    <div class="text-end d-flex gap-2">
+        <a asp-controller="RegistroSalarioTiempoServicio" asp-action="Report" asp-route-employeeId="@Model.Id" class="btn btn-sm btn-outline-dark"><i class="ti ti-printer me-1"></i> Modelo SC-4-08</a>
         <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Volver al Directorio</a>
         <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">Editar Perfil</a>
+        @if (Model.Estado == "ACTIVO")
+        {
+            <a asp-action="Terminate" asp-route-id="@Model.Id" class="btn btn-sm btn-danger"><i class="ti ti-user-x me-1"></i> DAR DE BAJA</a>
+        }
     </div>
 </div>
 
@@ -74,7 +79,10 @@
             <div class="tab-content bg-white shadow-sm rounded-bottom p-4">
                 <!-- Tab Contratos -->
                 <div class="tab-pane fade show active" id="tab-contracts" role="tabpanel">
-                    <h5 class="mb-3">Historial de Contratación</h5>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Historial de Contratación</h5>
+                        <a asp-action="AddContract" asp-route-id="@Model.Id" class="btn btn-xs btn-primary"><i class="ti ti-plus me-1"></i> Nuevo Contrato</a>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-sm">
                             <thead>
@@ -134,7 +142,10 @@
 
                 <!-- Tab Médicos -->
                 <div class="tab-pane fade" id="tab-medical" role="tabpanel">
-                    <h5 class="mb-3">Certificados de Seguridad Social</h5>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Certificados de Seguridad Social</h5>
+                        <a asp-action="AddMedicalCertificate" asp-route-id="@Model.Id" class="btn btn-xs btn-danger"><i class="ti ti-plus me-1"></i> Registrar Certificado</a>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-sm">
                             <thead>

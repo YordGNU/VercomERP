@@ -7,8 +7,7 @@ public static class SeedData
 {
     public static async Task Initialize(IServiceProvider serviceProvider)
     {
-        using var context = new AppDbContext(
-            serviceProvider.GetRequiredService<DbContextOptions<AppDbContext>>());
+        using var context = new AppDbContext();
 
         var authService = serviceProvider.GetRequiredService<IAuthService>();
 

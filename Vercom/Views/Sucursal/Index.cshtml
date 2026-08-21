@@ -1,6 +1,6 @@
-Ôªø@model IEnumerable<Vercom.Models.Sucursal>
+@model IEnumerable<Vercom.Models.Sucursal>
 @{
-    ViewBag.Title = "Gesti√≥n de Sucursales";
+    ViewBag.Title = "GestiÛn de Sucursales";
 }
 
 <div class="page-title-head d-flex align-items-center">
@@ -42,12 +42,12 @@
 
                         <div class="row text-center g-0 border-top pt-3">
                             <div class="col-6 border-end">
-                                <h5 class="mb-0">@(item.Activo ? "S√ç" : "NO")</h5>
+                                <h5 class="mb-0">@(item.Activo ? "SÕ" : "NO")</h5>
                                 <small class="text-muted">Activa</small>
                             </div>
                             <div class="col-6">
                                 <h5 class="mb-0">@item.Provincia</h5>
-                                <small class="text-muted">Ubicaci√≥n</small>
+                                <small class="text-muted">UbicaciÛn</small>
                             </div>
                         </div>
                     </div>
@@ -62,9 +62,20 @@
                     <i class="ti ti-building-store fs-40"></i>
                 </div>
                 <h3>No hay sucursales registradas</h3>
-                <p class="text-muted">Empiece creando la sucursal principal o un almac√©n de distribuci√≥n.</p>
+                <p class="text-muted">Empiece creando la sucursal principal o un almacÈn de distribuciÛn.</p>
                 <a asp-action="Create" class="btn btn-primary mt-2">Crear mi primera sucursal</a>
             </div>
         }
     </div>
 </div>
+
+
+@section Scripts {
+    <script>
+        .ready(function () {
+            #dataTable.DataTable();
+        });
+    </script>
+}
+
+

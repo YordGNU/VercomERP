@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Vercom.Models.CuentaPorCobrar>
+@model IEnumerable<Vercom.Models.CuentaPorCobrar>
 @{
     ViewBag.Title = "Cuentas por Cobrar (Aging)";
     var today = DateOnly.FromDateTime(DateTime.Now);
@@ -14,10 +14,10 @@
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table id="dataTable" class="table table-hover align-middle w-100">
                     <thead class="table-light">
                         <tr>
-                            <th>F. Emisión</th>
+                            <th>F. Emisi�n</th>
                             <th>F. Vencimiento</th>
                             <th>Cliente</th>
                             <th class="text-end">Monto Original</th>
@@ -59,3 +59,12 @@
         </div>
     </div>
 </div>
+
+
+@section Scripts {
+    <script>
+        .ready(function () {
+            #dataTable.DataTable();
+        });
+    </script>
+}

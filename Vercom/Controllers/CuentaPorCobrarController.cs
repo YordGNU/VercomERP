@@ -1,50 +1,38 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Vercom.Models;
+using Vercom.Services;
+using Vercom.Security;
 
-namespace Vercom.Controllers
+namespace Vercom.Controllers;
+
+[Authorize]
+public class CuentaPorCobrarController : Controller
 {
-    [Authorize]
-    public class CuentaPorCobrarController : Controller
+    private readonly IReceivablesPayablesService _carteraService;
+    private readonly IEntidadProvider _entidadProvider;
+
+    public CuentaPorCobrarController(IReceivablesPayablesService carteraService, IEntidadProvider entidadProvider)
     {
-        private readonly AppDbContext _context;
-        private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+        _carteraService = carteraService;
+        _entidadProvider = entidadProvider;
+    }
 
-        public CuentaPorCobrarController(AppDbContext context)
-        {
-            _context = context;
-        }
+    [Authorize(Policy = "CONTABILIDAD.CXC.VER")]
+    public async Task<IActionResult> Index()
+    {
+        var report = await _carteraService.GetReceivablesAgingAsync(_entidadProvider.CurrentEntidadId);
+        return View(report);
+    }
 
-        // GET: CuentaPorCobrar
-        [Authorize(Policy = "CONTABILIDAD.CXC.VER")]
-        public async Task<IActionResult> Index()
-        {
-            var cxc = await _context.CuentaPorCobrars
-                .Where(c => c.EntidadId == CurrentEntidadId)
-                .OrderBy(c => c.FechaVencimiento)
-                .ToListAsync();
-            return View(cxc);
-        }
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "CONTABILIDAD.PAGO.CREAR")]
+    public async Task<IActionResult> RecordCollection(Guid id, decimal amount, string paymentMethod, string? reference)
+    {
+        var result = await _carteraService.RecordCollectionAsync(id, amount, paymentMethod, reference, _entidadProvider.CurrentUsuarioId);
+        if (result.Succeeded) TempData["Success"] = result.Message;
+        else TempData["Error"] = result.Message;
 
-        // GET: CuentaPorCobrar/Details/5
-        [Authorize(Policy = "CONTABILIDAD.CXC.VER")]
-        public async Task<IActionResult> Details(Guid? id)
-        {
-            if (id == null) return NotFound();
-
-            var cxc = await _context.CuentaPorCobrars               
-                .Include(c => c.AsientoOrigen)
-                .Include(c => c.PagoAplicados)
-                .FirstOrDefaultAsync(m => m.Id == id && m.EntidadId == CurrentEntidadId);
-
-            if (cxc == null) return NotFound();
-
-            return View(cxc);
-        }
+        return RedirectToAction(nameof(Index));
     }
 }

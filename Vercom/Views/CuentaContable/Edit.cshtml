@@ -1,93 +1,74 @@
-﻿@model Vercom.Models.CuentaContable
+﻿@model Vercom.ViewModels.AccountFormViewModel
 @{
-    ViewBag.Title = "Editar Cuenta";
+    ViewBag.Title = Model.Title;
 }
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Actualizar Cuenta Contable</h4>
+        <h4 class="page-main-title m-0">@Model.Title</h4>
     </div>
 </div>
 
 <div class="container-xxl mt-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <form asp-action="Edit" method="post">
-                <input type="hidden" asp-for="Id" />
-                <input type="hidden" asp-for="CreadoEn" />
-
-                <div class="card">
+    <form asp-action="Edit" method="post">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card shadow-sm border-0">
                     <div class="card-body">
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+                        <div asp-validation-summary="All" class="alert alert-danger py-2 small"></div>
+                        <input type="hidden" asp-for="Account.Id" name="Account.Id" />
 
                         <div class="row g-3">
-                            <div class="col-md-4">
-                                <label asp-for="Codigo" class="form-label fw-bold">Código (MFP)</label>
-                                <input asp-for="Codigo" class="form-control font-monospace" required />
-                                <span asp-validation-for="Codigo" class="text-danger small"></span>
+                            <div class="col-md-3">
+                                <label asp-for="Account.Codigo" class="form-label fw-bold">Código de Cuenta</label>
+                                <input asp-for="Account.Codigo" name="Account.Codigo" class="form-control" readonly />
                             </div>
-                            <div class="col-md-8">
-                                <label asp-for="Nombre" class="form-label fw-bold">Nombre de la Cuenta</label>
-                                <input asp-for="Nombre" class="form-control" required />
-                                <span asp-validation-for="Nombre" class="text-danger small"></span>
+                            <div class="col-md-9">
+                                <label asp-for="Account.Nombre" class="form-label fw-bold">Nombre / Descripción</label>
+                                <input asp-for="Account.Nombre" name="Account.Nombre" class="form-control" required />
                             </div>
 
-                            <div class="col-md-12">
-                                <label asp-for="CuentaPadreId" class="form-label fw-bold">Depende de (Cuenta Padre)</label>
-                                <select asp-for="CuentaPadreId" class="form-select" asp-items="ViewBag.CuentaPadreId">
-                                    <option value="">-- Cuenta de Nivel 1 (Raíz) --</option>
+                            <div class="col-md-6">
+                                <label asp-for="Account.CuentaPadreId" class="form-label fw-bold">Cuenta Superior</label>
+                                <select asp-for="Account.CuentaPadreId" name="Account.CuentaPadreId" class="form-select" asp-items="Model.CuentasPadre">
+                                    <option value="">-- Cuenta de Primer Nivel --</option>
                                 </select>
                             </div>
 
-                            <div class="col-md-4">
-                                <label asp-for="Clase" class="form-label fw-bold">Clase</label>
-                                <select asp-for="Clase" class="form-select" asp-items="ViewBag.Clases"></select>
-                            </div>
-                            <div class="col-md-4">
-                                <label asp-for="Naturaleza" class="form-label fw-bold">Naturaleza</label>
-                                <select asp-for="Naturaleza" class="form-select" asp-items="ViewBag.Naturalezas"></select>
-                            </div>
-                            <div class="col-md-4">
-                                <label asp-for="Nivel" class="form-label fw-bold">Nivel</label>
-                                <input asp-for="Nivel" type="number" class="form-control" min="1" max="5" />
+                            <div class="col-md-3">
+                                <label asp-for="Account.Clase" class="form-label fw-bold">Clase</label>
+                                <select asp-for="Account.Clase" name="Account.Clase" class="form-select" asp-items="Model.Clases" required></select>
                             </div>
 
-                            <div class="col-md-12 mt-4">
-                                <div class="row bg-light rounded p-3 g-2">
-                                    <div class="col-md-4">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" asp-for="AceptaMovimiento">
-                                            <label class="form-check-label fw-bold" asp-for="AceptaMovimiento">Acepta Movimiento</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" asp-for="RequiereCentroCosto">
-                                            <label class="form-check-label fw-bold" asp-for="RequiereCentroCosto">Centro Costo Req.</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" asp-for="Activo">
-                                            <label class="form-check-label fw-bold" asp-for="Activo">Estado Activa</label>
-                                        </div>
-                                    </div>
+                            <div class="col-md-3">
+                                <label asp-for="Account.Naturaleza" class="form-label fw-bold">Naturaleza</label>
+                                <select asp-for="Account.Naturaleza" name="Account.Naturaleza" class="form-select" asp-items="Model.Naturalezas" required></select>
+                            </div>
+
+                            <div class="col-md-4 d-flex align-items-end pb-1">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" asp-for="Account.Activo" name="Account.Activo">
+                                    <label class="form-check-label fw-bold">Cuenta Habilitada</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 d-flex align-items-end pb-1">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" asp-for="Account.AceptaMovimiento" name="Account.AceptaMovimiento">
+                                    <label class="form-check-label fw-bold">Acepta Asientos</label>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="card-footer bg-light d-flex justify-content-end gap-2">
-                        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
-                        <button type="submit" class="btn btn-primary px-4">
-                            <i class="ti ti-device-floppy me-1"></i> GUARDAR CAMBIOS
-                        </button>
+
+                        <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                            <a asp-action="Index" class="btn btn-outline-secondary">Descartar</a>
+                            <button type="submit" class="btn btn-primary btn-lg px-5">
+                                <i class="ti ti-device-floppy me-1"></i> GUARDAR CAMBIOS
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </form>
+            </div>
         </div>
-    </div>
+    </form>
 </div>
-
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}

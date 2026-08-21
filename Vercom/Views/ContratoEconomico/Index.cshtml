@@ -1,8 +1,8 @@
-ï»¿@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Authorization
 @inject IAuthorizationService AuthorizationService
 @model IEnumerable<Vercom.Models.ContratoEconomico>
 @{
-    ViewBag.Title = "Contratos EconÃ³micos";
+    ViewBag.Title = "Contratos Económicos";
     var today = DateOnly.FromDateTime(DateTime.Now);
 }
 
@@ -24,10 +24,10 @@
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table id="dataTable" class="table table-hover align-middle w-100">
                     <thead class="table-light">
                         <tr>
-                            <th>NÂº Contrato</th>
+                            <th>Nº Contrato</th>
                             <th>Tercero (Cliente/Proveedor)</th>
                             <th class="text-center">Vigencia</th>
                             <th class="text-end">Monto Total</th>
@@ -72,3 +72,12 @@
         </div>
     </div>
 </div>
+
+
+@section Scripts {
+    <script>
+        .ready(function () {
+            #dataTable.DataTable();
+        });
+    </script>
+}

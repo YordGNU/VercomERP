@@ -5,6 +5,11 @@ namespace Vercom.Services;
 
 public interface IWarehouseService
 {
+    // Lectura
+    Task<IEnumerable<ConteoFisico>> GetCountsAsync();
+    Task<ConteoFisico?> GetCountByIdAsync(Guid id);
+
+    // Operaciones
     Task<(bool Succeeded, string Message, ConteoFisico? Count)> StartPhysicalCountAsync(Guid almacenId, Guid userId);
     Task<(bool Succeeded, string Message)> SubmitCountDetailAsync(Guid conteoId, Guid productoId, decimal cantidadFisica, string? reason);
     Task<(bool Succeeded, string Message)> CloseAndAdjustCountAsync(Guid conteoId, Guid userId);
@@ -19,6 +24,16 @@ public class WarehouseService : IWarehouseService
     {
         _context = context;
         _inventoryService = inventoryService;
+    }
+
+    public async Task<IEnumerable<ConteoFisico>> GetCountsAsync()
+    {
+        return await _context.ConteoFisicos.Include(c => c.Almacen).OrderByDescending(c => c.Fecha).ToListAsync();
+    }
+
+    public async Task<ConteoFisico?> GetCountByIdAsync(Guid id)
+    {
+        return await _context.ConteoFisicos.Include(c => c.Almacen).Include(c => c.ConteoFisicoDetalles).ThenInclude(d => d.Producto).FirstOrDefaultAsync(m => m.Id == id);
     }
 
     public async Task<(bool Succeeded, string Message, ConteoFisico? Count)> StartPhysicalCountAsync(Guid almacenId, Guid userId)

@@ -1,20 +1,20 @@
-﻿@model Vercom.Models.Usuario
+﻿@model Vercom.ViewModels.UserFormViewModel
 @{
-    ViewBag.Title = "Nuevo Usuario";
+    ViewBag.Title = Model.Title;
 }
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Registro de Usuario</h4>
+        <h4 class="page-main-title m-0">@Model.Title</h4>
     </div>
 </div>
 
 <div class="container-xxl mt-4">
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Datos de Acceso y Perfil</h4>
+            <div class="card shadow-sm">
+                <div class="card-header bg-light-subtle">
+                    <h4 class="card-title">Datos de Acceso y Perfil (Resolución 60/2011)</h4>
                 </div>
                 <div class="card-body">
                     <form asp-action="Create" method="post">
@@ -22,52 +22,52 @@
 
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label asp-for="NombreUsuario" class="form-label fw-bold">Nombre de Usuario</label>
-                                <input asp-for="NombreUsuario" class="form-control" placeholder="ej: jsmith" required />
-                                <span asp-validation-for="NombreUsuario" class="text-danger small"></span>
+                                <label asp-for="Usuario.NombreUsuario" class="form-label fw-bold">Nombre de Usuario</label>
+                                <input asp-for="Usuario.NombreUsuario" name="Usuario.NombreUsuario" class="form-control" placeholder="ej: jsmith" required />
+                                <span asp-validation-for="Usuario.NombreUsuario" class="text-danger small"></span>
                             </div>
                             <div class="col-md-6">
-                                <label for="password" class="form-label fw-bold">Contraseña Inicial</label>
+                                <label for="password" class="form-label fw-bold">Contraseña Inicial (RF-01)</label>
                                 <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" required />
-                                <small class="text-muted">Se le obligará a cambiarla al primer ingreso.</small>
+                                <small class="text-muted">Se obligará a cambiarla al primer ingreso.</small>
                             </div>
 
                             <div class="col-md-12">
-                                <label asp-for="NombreCompleto" class="form-label fw-bold">Nombre Completo</label>
-                                <input asp-for="NombreCompleto" class="form-control" placeholder="ej: Juan Pérez" required />
-                                <span asp-validation-for="NombreCompleto" class="text-danger small"></span>
+                                <label asp-for="Usuario.NombreCompleto" class="form-label fw-bold">Nombre Completo</label>
+                                <input asp-for="Usuario.NombreCompleto" name="Usuario.NombreCompleto" class="form-control" placeholder="ej: Juan Pérez" required />
                             </div>
 
                             <div class="col-md-6">
-                                <label asp-for="Email" class="form-label fw-bold">Correo Electrónico</label>
-                                <input asp-for="Email" type="email" class="form-control" placeholder="usuario@empresa.com" />
-                                <span asp-validation-for="Email" class="text-danger small"></span>
+                                <label asp-for="Usuario.Email" class="form-label fw-bold">Correo Electrónico</label>
+                                <input asp-for="Usuario.Email" name="Usuario.Email" type="email" class="form-control" placeholder="usuario@empresa.com" />
                             </div>
 
                             <div class="col-md-6">
-                                <label asp-for="SucursalId" class="form-label fw-bold">Asignar a Sucursal</label>
-                                <select asp-for="SucursalId" class="form-select" asp-items="ViewBag.SucursalId"><option value="">Acceso Global (Todas)</option></select>
+                                <label asp-for="Usuario.SucursalId" class="form-label fw-bold">Unidad / Sucursal</label>
+                                <select asp-for="Usuario.SucursalId" name="Usuario.SucursalId" class="form-select" asp-items="Model.Sucursales">
+                                    <option value="">Acceso Global (Todas)</option>
+                                </select>
                             </div>
 
                             <div class="col-md-6">
-                                <label asp-for="EsEmpleadoId" class="form-label fw-bold">Vincular con Empleado</label>
-                                <select asp-for="EsEmpleadoId" class="form-select" asp-items="ViewBag.EsEmpleadoId">
+                                <label asp-for="Usuario.EsEmpleadoId" class="form-label fw-bold">Vincular con Expediente (RF-20)</label>
+                                <select asp-for="Usuario.EsEmpleadoId" name="Usuario.EsEmpleadoId" class="form-select" asp-items="Model.Empleados">
                                     <option value="">-- No vincular --</option>
                                 </select>
                             </div>
 
                             <div class="col-md-6 d-flex align-items-center mt-4">
                                 <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" asp-for="Activo" checked>
-                                    <label class="form-check-label fw-bold" asp-for="Activo">Usuario Activo</label>
+                                    <input class="form-check-input" type="checkbox" asp-for="Usuario.Activo" name="Usuario.Activo" checked>
+                                    <label class="form-check-label fw-bold" asp-for="Usuario.Activo">Usuario Activo</label>
                                 </div>
                             </div>
                         </div>
 
                         <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
-                            <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="ti ti-device-floppy me-1"></i> GUARDAR USUARIO
+                            <a asp-action="Index" class="btn btn-outline-secondary">Descartar</a>
+                            <button type="submit" class="btn btn-primary btn-lg px-5">
+                                <i class="ti ti-device-floppy me-1"></i> REGISTRAR ACCESO
                             </button>
                         </div>
                     </form>

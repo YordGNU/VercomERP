@@ -1,10 +1,18 @@
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
+using Vercom.ViewModels;
 
 namespace Vercom.Services;
 
 public interface IPurchaseService
 {
+    // Lectura
+    Task<IEnumerable<OrdenCompra>> GetPurchaseOrdersAsync();
+    Task<OrdenCompra?> GetPurchaseOrderByIdAsync(Guid id);
+    Task<PurchaseOrderViewModel> GetPurchaseOrderCreateContextAsync(OrdenCompra? existing = null);
+
+    // Escritura
     Task<(bool Succeeded, string Message, OrdenCompra? Order)> CreatePurchaseOrderAsync(OrdenCompra order);
     Task<(bool Succeeded, string Message)> ApprovePurchaseOrderAsync(Guid orderId, Guid userId);
     Task<(bool Succeeded, string Message)> ReceivePurchaseAsync(Guid orderId, Guid almacenId, Guid userId, string receiptNumber);
@@ -12,15 +20,49 @@ public interface IPurchaseService
 
 public class PurchaseService : IPurchaseService
 {
-   private readonly AppDbContext _context;  
+    private readonly AppDbContext _context;
     private readonly IInventoryService _inventoryService;
     private readonly IContractService _contractService;
+    private readonly Security.IEntidadProvider _entidadProvider;
 
-    public PurchaseService(AppDbContext context, IInventoryService inventoryService, IContractService _contractService)
+    public PurchaseService(AppDbContext context, IInventoryService inventoryService, IContractService _contractService, Security.IEntidadProvider entidadProvider)
     {
         _context = context;
         _inventoryService = inventoryService;
         this._contractService = _contractService;
+        _entidadProvider = entidadProvider;
+    }
+
+    public async Task<IEnumerable<OrdenCompra>> GetPurchaseOrdersAsync()
+    {
+        return await _context.OrdenCompras
+            .Include(o => o.Proveedor)
+            .OrderByDescending(o => o.Fecha)
+            .ToListAsync();
+    }
+
+    public async Task<OrdenCompra?> GetPurchaseOrderByIdAsync(Guid id)
+    {
+        return await _context.OrdenCompras
+            .Include(o => o.Proveedor)
+            .Include(o => o.Contrato)
+            .Include(o => o.AlmacenDestino)
+            .Include(o => o.OrdenCompraDetalles).ThenInclude(d => d.Producto).ThenInclude(p => p.UnidadMedida)
+            .Include(o => o.RecepcionCompras)
+            .FirstOrDefaultAsync(m => m.Id == id);
+    }
+
+    public async Task<PurchaseOrderViewModel> GetPurchaseOrderCreateContextAsync(OrdenCompra? existing = null)
+    {
+        return new PurchaseOrderViewModel
+        {
+            Order = existing ?? new OrdenCompra { Fecha = DateOnly.FromDateTime(DateTime.Now) },
+            Proveedores = new SelectList(await _context.Proveedors.Where(p => p.Activo).ToListAsync(), "Id", "RazonSocial"),
+            Almacenes = new SelectList(await _context.Almacens.Where(a => a.Activo).ToListAsync(), "Id", "Nombre"),
+            Contratos = new SelectList(await _context.ContratoEconomicos.Where(c => c.Estado == "VIGENTE" && c.TerceroTipo == "PROVEEDOR").ToListAsync(), "Id", "NumeroContrato"),
+            ProductosDisponibles = await _context.Productos.Where(p => p.Activo)
+                .Select(p => new { p.Id, p.Nombre, p.Codigo }).ToListAsync()
+        };
     }
 
     public async Task<(bool Succeeded, string Message, OrdenCompra? Order)> CreatePurchaseOrderAsync(OrdenCompra order)

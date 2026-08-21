@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Vercom.Models.CuentaBancarium>
+@model IEnumerable<Vercom.Models.CuentaBancarium>
 @{
     ViewBag.Title = "Cuentas Bancarias";
 }
@@ -9,7 +9,7 @@
     </div>
     <div class="text-end">
         <a asp-action="Create" class="btn btn-primary">
-            <i class="ti ti-plus me-1"></i> Añadir Cuenta
+            <i class="ti ti-plus me-1"></i> A�adir Cuenta
         </a>
     </div>
 </div>
@@ -50,3 +50,14 @@
         }
     </div>
 </div>
+
+
+@section Scripts {
+    <script>
+        .ready(function () {
+            #dataTable.DataTable();
+        });
+    </script>
+}
+
+

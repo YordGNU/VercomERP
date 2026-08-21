@@ -17,7 +17,9 @@
         <ul class="side-nav">
             <li class="side-nav-title">Navegación Principal</li>
 
-            <!-- Dashboard -->
+            <!-- ======================================== -->
+            <!-- DASHBOARD -->
+            <!-- ======================================== -->
             <li class="side-nav-item">
                 <a asp-controller="Dashboard" asp-action="Index" class="side-nav-link">
                     <span class="menu-icon"><i class="ti ti-dashboard"></i></span>
@@ -25,8 +27,13 @@
                 </a>
             </li>
 
-            <!-- Contabilidad -->
-            @if ((await AuthorizationService.AuthorizeAsync(User, "CONTABILIDAD.CUENTA.VER")).Succeeded)
+            <!-- ======================================== -->
+            <!-- CONTABILIDAD (Módulo 1) -->
+            <!-- ======================================== -->
+            @{
+                var puedeVerContabilidad = (await AuthorizationService.AuthorizeAsync(User, "CONTABILIDAD.CUENTA.VER")).Succeeded;
+            }
+            @if (puedeVerContabilidad)
             {
                 <li class="side-nav-item">
                     <a data-bs-toggle="collapse" href="#sidebarContabilidad" class="side-nav-link">
@@ -37,21 +44,38 @@
                     <div class="collapse" id="sidebarContabilidad">
                         <ul class="sub-menu">
                             <li class="side-nav-item"><a asp-controller="CuentaContable" asp-action="Index" class="side-nav-link">Plan de Cuentas</a></li>
+
                             @if ((await AuthorizationService.AuthorizeAsync(User, "CONTABILIDAD.ASIENTO.VER")).Succeeded)
                             {
                                 <li class="side-nav-item"><a asp-controller="AsientoContable" asp-action="Index" class="side-nav-link">Asientos Contables</a></li>
                             }
-                            <li class="side-nav-item"><a asp-controller="PeriodoContable" asp-action="Index" class="side-nav-link">Períodos</a></li>
+
+                            <li class="side-nav-item"><a asp-controller="PeriodoContable" asp-action="Index" class="side-nav-link">Períodos Contables</a></li>
                             <li class="side-nav-item"><a asp-controller="ActivoFijo" asp-action="Index" class="side-nav-link">Activos Fijos</a></li>
                             <li class="side-nav-item"><a asp-controller="CuentaPorCobrar" asp-action="Index" class="side-nav-link">Cuentas por Cobrar</a></li>
                             <li class="side-nav-item"><a asp-controller="CuentaPorPagar" asp-action="Index" class="side-nav-link">Cuentas por Pagar</a></li>
+
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "CONTABILIDAD.DECLARACION.VER")).Succeeded)
+                            {
+                                <li class="side-nav-item"><a asp-controller="DeclaracionJuradum" asp-action="Index" class="side-nav-link">Declaraciones ONAT</a></li>
+                            }
+
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "CONTABILIDAD.PERIODO.CERRAR")).Succeeded)
+                            {
+                                <li class="side-nav-item"><a asp-controller="Closure" asp-action="Yearly" class="side-nav-link text-warning">Cierre Contable</a></li>
+                            }
                         </ul>
                     </div>
                 </li>
             }
 
-            <!-- Inventario -->
-            @if ((await AuthorizationService.AuthorizeAsync(User, "INVENTARIO.EXISTENCIA.VER")).Succeeded)
+            <!-- ======================================== -->
+            <!-- INVENTARIO (Módulo 3) -->
+            <!-- ======================================== -->
+            @{
+                var puedeVerInventario = (await AuthorizationService.AuthorizeAsync(User, "INVENTARIO.EXISTENCIA.VER")).Succeeded;
+            }
+            @if (puedeVerInventario)
             {
                 <li class="side-nav-item">
                     <a data-bs-toggle="collapse" href="#sidebarInventario" class="side-nav-link">
@@ -61,47 +85,73 @@
                     </a>
                     <div class="collapse" id="sidebarInventario">
                         <ul class="sub-menu">
-                            <li class="side-nav-item"><a asp-controller="Inventory" asp-action="Index" class="side-nav-link">Submayor Existencias</a></li>
-                            @if ((await AuthorizationService.AuthorizeAsync(User, "INVENTARIO.MOVIMIENTO.VER")).Succeeded)
-                            {
-                                <li class="side-nav-item"><a asp-controller="Inventory" asp-action="Movements" class="side-nav-link">Bitácora de Movimientos</a></li>
-                            }
                             @if ((await AuthorizationService.AuthorizeAsync(User, "INVENTARIO.PRODUCTO.VER")).Succeeded)
                             {
                                 <li class="side-nav-item"><a asp-controller="Producto" asp-action="Index" class="side-nav-link">Maestro Productos</a></li>
                             }
+                            <li class="side-nav-item"><a asp-controller="Inventory" asp-action="Index" class="side-nav-link">Submayor Existencias</a></li>
+
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "INVENTARIO.MOVIMIENTO.VER")).Succeeded)
+                            {
+                                <li class="side-nav-item"><a asp-controller="Inventory" asp-action="Movements" class="side-nav-link">Bitácora de Movimientos</a></li>
+                            }
+
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "INVENTARIO.CONTEO.VER")).Succeeded)
+                            {
+                                <li class="side-nav-item"><a asp-controller="ConteoFisico" asp-action="Index" class="side-nav-link">Conteo Físico</a></li>
+                            }
+
                             <li class="side-nav-item"><a asp-controller="Inventory" asp-action="LowStock" class="side-nav-link text-danger">Alertas de Stock</a></li>
                         </ul>
                     </div>
                 </li>
             }
 
-            <!-- Comercial -->
-            <li class="side-nav-item">
-                <a data-bs-toggle="collapse" href="#sidebarComercial" class="side-nav-link">
-                    <span class="menu-icon"><i class="ti ti-shopping-cart"></i></span>
-                    <span class="menu-text"> Comercial </span>
-                    <span class="menu-arrow"></span>
-                </a>
-                <div class="collapse" id="sidebarComercial">
-                    <ul class="sub-menu">
-                        @if ((await AuthorizationService.AuthorizeAsync(User, "COMERCIAL.FACTURA_VENTA.VER")).Succeeded)
-                        {
-                            <li class="side-nav-item"><a asp-controller="Sales" asp-action="Index" class="side-nav-link">Ventas y Facturación</a></li>
-                        }
-                        @if ((await AuthorizationService.AuthorizeAsync(User, "COMERCIAL.ORDEN_COMPRA.VER")).Succeeded)
-                        {
-                            <li class="side-nav-item"><a asp-controller="Purchase" asp-action="Index" class="side-nav-link">Órdenes de Compra</a></li>
-                        }
-                        <li class="side-nav-item"><a asp-controller="Cliente" asp-action="Index" class="side-nav-link">Clientes</a></li>
-                        <li class="side-nav-item"><a asp-controller="Proveedor" asp-action="Index" class="side-nav-link">Proveedores</a></li>
-                        <li class="side-nav-item"><a asp-controller="ContratoEconomico" asp-action="Index" class="side-nav-link">Contratos</a></li>
-                    </ul>
-                </div>
-            </li>
+            <!-- ======================================== -->
+            <!-- COMERCIAL (Módulo 5) -->
+            <!-- ======================================== -->
+            @{
+                var puedeVerComercial = (await AuthorizationService.AuthorizeAsync(User, "COMERCIAL.FACTURA_VENTA.VER")).Succeeded
+                                     || (await AuthorizationService.AuthorizeAsync(User, "COMERCIAL.CLIENTE.VER")).Succeeded
+                                     || (await AuthorizationService.AuthorizeAsync(User, "COMERCIAL.PROVEEDOR.VER")).Succeeded;
+            }
+            @if (puedeVerComercial)
+            {
+                <li class="side-nav-item">
+                    <a data-bs-toggle="collapse" href="#sidebarComercial" class="side-nav-link">
+                        <span class="menu-icon"><i class="ti ti-shopping-cart"></i></span>
+                        <span class="menu-text"> Comercial </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarComercial">
+                        <ul class="sub-menu">
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "COMERCIAL.FACTURA_VENTA.VER")).Succeeded)
+                            {
+                                <li class="side-nav-item"><a asp-controller="Sales" asp-action="Index" class="side-nav-link">Ventas y Facturación</a></li>
+                            }
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "COMERCIAL.ORDEN_COMPRA.VER")).Succeeded)
+                            {
+                                <li class="side-nav-item"><a asp-controller="OrdenCompra" asp-action="Index" class="side-nav-link">Órdenes de Compra</a></li>
+                            }
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "COMERCIAL.DEVOLUCION.CREAR")).Succeeded)
+                            {
+                                <li class="side-nav-item"><a asp-controller="DevolucionVentum" asp-action="Index" class="side-nav-link">Devoluciones</a></li>
+                            }
+                            <li class="side-nav-item"><a asp-controller="Cliente" asp-action="Index" class="side-nav-link">Clientes</a></li>
+                            <li class="side-nav-item"><a asp-controller="Proveedor" asp-action="Index" class="side-nav-link">Proveedores</a></li>
+                            <li class="side-nav-item"><a asp-controller="ContratoEconomico" asp-action="Index" class="side-nav-link">Contratos Económicos</a></li>
+                        </ul>
+                    </div>
+                </li>
+            }
 
-            <!-- RRHH -->
-            @if ((await AuthorizationService.AuthorizeAsync(User, "RRHH.EMPLEADO.VER")).Succeeded)
+            <!-- ======================================== -->
+            <!-- RRHH (Módulo 2) -->
+            <!-- ======================================== -->
+            @{
+                var puedeVerRRHH = (await AuthorizationService.AuthorizeAsync(User, "RRHH.EMPLEADO.VER")).Succeeded;
+            }
+            @if (puedeVerRRHH)
             {
                 <li class="side-nav-item">
                     <a data-bs-toggle="collapse" href="#sidebarRRHH" class="side-nav-link">
@@ -111,26 +161,137 @@
                     </a>
                     <div class="collapse" id="sidebarRRHH">
                         <ul class="sub-menu">
-                            <li class="side-nav-item"><a asp-controller="Empleado" asp-action="Index" class="side-nav-link">Expedientes</a></li>
+                            <li class="side-nav-item"><a asp-controller="Empleado" asp-action="Index" class="side-nav-link">Expedientes Empleados</a></li>
+
                             @if ((await AuthorizationService.AuthorizeAsync(User, "RRHH.ASISTENCIA.REGISTRAR")).Succeeded)
                             {
                                 <li class="side-nav-item"><a asp-controller="RegistroAsistencia" asp-action="Console" class="side-nav-link">Consola Asistencia</a></li>
                             }
+
                             @if ((await AuthorizationService.AuthorizeAsync(User, "RRHH.NOMINA.VER")).Succeeded)
                             {
                                 <li class="side-nav-item"><a asp-controller="Nomina" asp-action="Index" class="side-nav-link">Nómina de Salarios</a></li>
                             }
-                            <li class="side-nav-item"><a asp-controller="SaldoVacaciones" asp-action="Index" class="side-nav-link">Control Vacaciones</a></li>
-                            <li class="side-nav-item"><a asp-controller="RegistroSalarioTiempoServicio" asp-action="Index" class="side-nav-link">Modelo SC-4-08</a></li>
+
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "RRHH.VACACIONES.VER")).Succeeded)
+                            {
+                                <li class="side-nav-item"><a asp-controller="Empleado" asp-action="Index" class="side-nav-link">Control Vacaciones</a></li>
+                            }
+
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "RRHH.REPORTE.VER")).Succeeded)
+                            {
+                                <li class="side-nav-item"><a asp-controller="Empleado" asp-action="Index" class="side-nav-link">Modelo SC-4-08</a></li>
+                                <li class="side-nav-item"><a asp-controller="PlantillaAprobadum" asp-action="Index" class="side-nav-link">Plantilla Cargos</a></li>
+                            }
                         </ul>
                     </div>
                 </li>
             }
 
+            <!-- ======================================== -->
+            <!-- PRODUCCIÓN (NUEVO - Módulo 4) -->
+            <!-- ======================================== -->
+            @{
+                var puedeVerProduccion = (await AuthorizationService.AuthorizeAsync(User, "PRODUCCION.FICHA.VER")).Succeeded;
+            }
+            @if (puedeVerProduccion)
+            {
+                <li class="side-nav-item">
+                    <a data-bs-toggle="collapse" href="#sidebarProduccion" class="side-nav-link">
+                        <span class="menu-icon"><i class="ti ti-settings-gear"></i></span>
+                        <span class="menu-text"> Producción </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarProduccion">
+                        <ul class="sub-menu">
+                            <li class="side-nav-item"><a asp-controller="FichaCosto" asp-action="Index" class="side-nav-link">Fichas de Costo</a></li>
+                            <li class="side-nav-item"><a asp-controller="ListaMateriale" asp-action="Index" class="side-nav-link">Lista de Materiales (BOM)</a></li>
+
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "PRODUCCION.ORDEN.VER")).Succeeded)
+                            {
+                                <li class="side-nav-item"><a asp-controller="Production" asp-action="Index" class="side-nav-link">Órdenes de Producción</a></li>
+                            }
+
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "PRODUCCION.PLAN.VER")).Succeeded)
+                            {
+                                <li class="side-nav-item"><a asp-controller="PlanProduccion" asp-action="Index" class="side-nav-link">Planificación de Producción</a></li>
+                            }
+
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "PRODUCCION.MERMA.REGISTRAR")).Succeeded)
+                            {
+                                <li class="side-nav-item"><a asp-controller="Merma" asp-action="Index" class="side-nav-link">Mermas y Desperdicios</a></li>
+                            }
+                        </ul>
+                    </div>
+                </li>
+            }
+
+            <!-- ======================================== -->
+            <!-- POS / INTEGRACIÓN (NUEVO - Módulo 7) -->
+            <!-- ======================================== -->
+            @{
+                var puedeVerPOS = (await AuthorizationService.AuthorizeAsync(User, "INTEGRACION.POS.SESION.VER")).Succeeded;
+            }
+            @if (puedeVerPOS)
+            {
+                <li class="side-nav-item">
+                    <a data-bs-toggle="collapse" href="#sidebarPos" class="side-nav-link">
+                        <span class="menu-icon"><i class="ti ti-device-desktop"></i></span>
+                        <span class="menu-text"> Punto de Venta (POS) </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarPos">
+                        <ul class="sub-menu">
+                            <li class="side-nav-item"><a asp-controller="POS" asp-action="Index" class="side-nav-link text-success">Pantalla de Caja (POS)</a></li>
+
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "INTEGRACION.POS.DISPOSITIVO.VER")).Succeeded)
+                            {
+                                <li class="side-nav-item"><a asp-controller="DispositivoPo" asp-action="Index" class="side-nav-link">Dispositivos POS</a></li>
+                                <li class="side-nav-item"><a asp-controller="SesionCajaPo" asp-action="Index" class="side-nav-link">Sesiones de Caja</a></li>
+                                <li class="side-nav-item"><a asp-controller="PosVentaPendiente" asp-action="Index" class="side-nav-link">Ventas Offline (Pendientes)</a></li>
+                            }
+                        </ul>
+                    </div>
+                </li>
+            }
+
+            <!-- ======================================== -->
+            <!-- REPORTES E INDICADORES (NUEVO - Módulo 6) -->
+            <!-- ======================================== -->
+            @{
+                var puedeVerReportes = (await AuthorizationService.AuthorizeAsync(User, "REPORTES.INDICADOR.VER")).Succeeded;
+            }
+            @if (puedeVerReportes)
+            {
+                <li class="side-nav-item">
+                    <a data-bs-toggle="collapse" href="#sidebarReportes" class="side-nav-link">
+                        <span class="menu-icon"><i class="ti ti-chart-bar"></i></span>
+                        <span class="menu-text"> Reportes </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarReportes">
+                        <ul class="sub-menu">
+                            <li class="side-nav-item"><a asp-controller="Dashboard" asp-action="Index" class="side-nav-link">Dashboard Ejecutivo</a></li>
+                            <li class="side-nav-item"><a asp-controller="Reports" asp-action="Index" class="side-nav-link">Balances y Resultados</a></li>
+
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "SEGURIDAD.AUDITORIA.VER")).Succeeded)
+                            {
+                                <li class="side-nav-item"><a asp-controller="Auditoria" asp-action="Index" class="side-nav-link">Auditoría (Trazas)</a></li>
+                            }
+                        </ul>
+                    </div>
+                </li>
+            }
+
+            <!-- ======================================== -->
+            <!-- SEPARADOR ADMINISTRACIÓN -->
+            <!-- ======================================== -->
             <li class="side-nav-title">Administración</li>
 
-            <!-- Configuración Entidad -->
-            @if (User.IsInRole("ADMINISTRADOR"))
+            <!-- ======================================== -->
+            <!-- CONFIGURACIÓN ENTIDAD / SUCURSALES -->
+            <!-- ======================================== -->
+            @if ((await AuthorizationService.AuthorizeAsync(User, "SEGURIDAD.USUARIO.VER")).Succeeded)
             {
                 <li class="side-nav-item">
                     <a data-bs-toggle="collapse" href="#sidebarEntidad" class="side-nav-link">
@@ -142,6 +303,7 @@
                         <ul class="sub-menu">
                             <li class="side-nav-item"><a asp-controller="Entidad" asp-action="Details" class="side-nav-link">Datos Legales</a></li>
                             <li class="side-nav-item"><a asp-controller="Sucursal" asp-action="Index" class="side-nav-link">Sucursales</a></li>
+
                             @if ((await AuthorizationService.AuthorizeAsync(User, "INVENTARIO.ALMACEN.VER")).Succeeded)
                             {
                                 <li class="side-nav-item"><a asp-controller="Almacen" asp-action="Index" class="side-nav-link">Almacenes</a></li>
@@ -151,31 +313,48 @@
                 </li>
             }
 
-            <!-- Seguridad -->
-            <li class="side-nav-item">
-                <a data-bs-toggle="collapse" href="#sidebarSeguridad" class="side-nav-link">
-                    <span class="menu-icon"><i class="ti ti-shield-lock"></i></span>
-                    <span class="menu-text"> Seguridad </span>
-                    <span class="menu-arrow"></span>
-                </a>
-                <div class="collapse" id="sidebarSeguridad">
-                    <ul class="sub-menu">
-                        @if ((await AuthorizationService.AuthorizeAsync(User, "SEGURIDAD.USUARIO.VER")).Succeeded)
-                        {
-                            <li class="side-nav-item"><a asp-controller="Usuario" asp-action="Index" class="side-nav-link">Usuarios</a></li>
-                        }
-                        @if ((await AuthorizationService.AuthorizeAsync(User, "SEGURIDAD.ROL.VER")).Succeeded)
-                        {
-                            <li class="side-nav-item"><a asp-controller="Rol" asp-action="Index" class="side-nav-link">Roles y Permisos</a></li>
-                        }
-                        @if ((await AuthorizationService.AuthorizeAsync(User, "SEGURIDAD.AUDITORIA.VER")).Succeeded)
-                        {
-                            <li class="side-nav-item"><a asp-controller="Auditoria" asp-action="Index" class="side-nav-link">Bitácora de Auditoría</a></li>
-                        }
-                        <li class="side-nav-item"><a asp-controller="Backup" asp-action="Index" class="side-nav-link">Respaldos</a></li>
-                    </ul>
-                </div>
-            </li>
+            <!-- ======================================== -->
+            <!-- SEGURIDAD (Usuarios, Roles, Auditoría) -->
+            <!-- ======================================== -->
+            @{
+                var puedeVerSeguridad = (await AuthorizationService.AuthorizeAsync(User, "SEGURIDAD.USUARIO.VER")).Succeeded
+                                     || (await AuthorizationService.AuthorizeAsync(User, "SEGURIDAD.ROL.VER")).Succeeded
+                                     || (await AuthorizationService.AuthorizeAsync(User, "SEGURIDAD.AUDITORIA.VER")).Succeeded;
+            }
+            @if (puedeVerSeguridad)
+            {
+                <li class="side-nav-item">
+                    <a data-bs-toggle="collapse" href="#sidebarSeguridad" class="side-nav-link">
+                        <span class="menu-icon"><i class="ti ti-shield-lock"></i></span>
+                        <span class="menu-text"> Seguridad </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarSeguridad">
+                        <ul class="sub-menu">
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "SEGURIDAD.USUARIO.VER")).Succeeded)
+                            {
+                                <li class="side-nav-item"><a asp-controller="Usuario" asp-action="Index" class="side-nav-link">Usuarios</a></li>
+                            }
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "SEGURIDAD.ROL.VER")).Succeeded)
+                            {
+                                <li class="side-nav-item"><a asp-controller="Rol" asp-action="Index" class="side-nav-link">Roles y Permisos</a></li>
+                            }
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "SEGURIDAD.AUDITORIA.VER")).Succeeded)
+                            {
+                                <li class="side-nav-item"><a asp-controller="Auditoria" asp-action="Index" class="side-nav-link">Bitácora de Auditoría</a></li>
+                            }
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "SEGURIDAD.AUDITORIA.VER")).Succeeded)
+                            {
+                                <li class="side-nav-item"><a asp-controller="Backup" asp-action="Index" class="side-nav-link">Respaldos</a></li>
+                            }
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "SEGURIDAD.PARAMETRO.EDITAR")).Succeeded)
+                            {
+                                <li class="side-nav-item"><a asp-controller="ParametroSistema" asp-action="Index" class="side-nav-link">Parámetros Sistema</a></li>
+                            }
+                        </ul>
+                    </div>
+                </li>
+            }
 
         </ul>
     </div>

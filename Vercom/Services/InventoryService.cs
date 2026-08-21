@@ -1,10 +1,58 @@
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
+using Vercom.ViewModels;
 
 namespace Vercom.Services;
 
 public interface IInventoryService
 {
+    // Lectura Stock y Movimientos
+    Task<IEnumerable<Existencium>> GetStocksAsync();
+    Task<IEnumerable<MovimientoInventario>> GetMovementsAsync();
+    Task<MovimientoInventario?> GetMovementByIdAsync(Guid id);
+    Task<InventoryMovementCreateViewModel> GetMovementCreateContextAsync(MovimientoInventario? existingMovement = null);
+
+    // Gestión de Catálogo (Productos)
+    Task<IEnumerable<Producto>> GetCatalogAsync();
+    Task<Producto?> GetProductByIdAsync(Guid id);
+    Task<ProductFormViewModel> GetProductFormContextAsync(Producto? existing = null);
+    Task<(bool Succeeded, string Message)> CreateProductAsync(Producto product);
+    Task<(bool Succeeded, string Message)> UpdateProductAsync(Producto product);
+    Task<(bool Succeeded, string Message)> DeleteProductAsync(Guid id);
+
+    // Gestión de Almacenes
+    Task<IEnumerable<Almacen>> GetWarehousesAsync();
+    Task<Almacen?> GetWarehouseByIdAsync(Guid id);
+    Task<AlmacenFormViewModel> GetWarehouseFormContextAsync(Almacen? existing = null);
+    Task<(bool Succeeded, string Message)> CreateWarehouseAsync(Almacen warehouse);
+    Task<(bool Succeeded, string Message)> UpdateWarehouseAsync(Almacen warehouse);
+
+    // Gestión de Familias
+    Task<IEnumerable<FamiliaProducto>> GetFamiliesAsync();
+    Task<FamiliaProducto?> GetFamilyByIdAsync(Guid id);
+    Task<FamiliaFormViewModel> GetFamilyFormContextAsync(FamiliaProducto? existing = null);
+    Task<(bool Succeeded, string Message)> CreateFamilyAsync(FamiliaProducto family);
+    Task<(bool Succeeded, string Message)> UpdateFamilyAsync(FamiliaProducto family);
+
+    // Gestión de Unidades de Medida
+    Task<IEnumerable<UnidadMedidum>> GetUnitsAsync();
+    Task<UnidadMedidum?> GetUnitByIdAsync(int id);
+    Task<UnidadFormViewModel> GetUnitFormContextAsync(UnidadMedidum? existing = null);
+    Task<(bool Succeeded, string Message)> CreateUnitAsync(UnidadMedidum unit);
+    Task<(bool Succeeded, string Message)> UpdateUnitAsync(UnidadMedidum unit);
+
+    // Gestión de Listas de Precio
+    Task<IEnumerable<ListaPrecio>> GetPriceListsAsync();
+    Task<ListaPrecio?> GetPriceListByIdAsync(Guid id);
+    Task<ListaPrecioFormViewModel> GetPriceListFormContextAsync(ListaPrecio? existing = null);
+    Task<(bool Succeeded, string Message)> CreatePriceListAsync(ListaPrecio priceList);
+    Task<(bool Succeeded, string Message)> UpdatePriceListAsync(ListaPrecio priceList);
+
+    // Tipos de Movimiento
+    Task<IEnumerable<TipoMovimiento>> GetMovementTypesAsync();
+
+    // Escritura Almacén
     Task<(bool Succeeded, string Message, MovimientoInventario? Movement)> ProcessMovementAsync(MovimientoInventario movement);
     Task<decimal> GetStockAsync(Guid almacenId, Guid productoId);
     Task<List<Existencium>> GetLowStockAlertsAsync(Guid entidadId);
@@ -16,11 +64,336 @@ public class InventoryService : IInventoryService
 {
     private readonly AppDbContext _context;
     private readonly IAccountingService _accountingService;
+    private readonly Security.IEntidadProvider _entidadProvider;
 
-    public InventoryService(AppDbContext context, IAccountingService accountingService)
+    public InventoryService(AppDbContext context, IAccountingService accountingService, Security.IEntidadProvider entidadProvider)
     {
         _context = context;
         _accountingService = accountingService;
+        _entidadProvider = entidadProvider;
+    }
+
+    public async Task<IEnumerable<Existencium>> GetStocksAsync()
+    {
+        return await _context.Existencia
+            .Include(e => e.Producto)
+            .Include(e => e.Almacen)
+            .OrderBy(e => e.Almacen.Nombre)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<MovimientoInventario>> GetMovementsAsync()
+    {
+        return await _context.MovimientoInventarios
+            .Include(m => m.TipoMovimiento)
+            .Include(m => m.AlmacenOrigen)
+            .Include(m => m.AlmacenDestino)
+            .OrderByDescending(m => m.Fecha)
+            .ToListAsync();
+    }
+
+    public async Task<MovimientoInventario?> GetMovementByIdAsync(Guid id)
+    {
+        return await _context.MovimientoInventarios
+            .Include(m => m.TipoMovimiento)
+            .Include(m => m.AlmacenOrigen)
+            .Include(m => m.AlmacenDestino)
+            .Include(m => m.MovimientoInventarioDetalles).ThenInclude(d => d.Producto).ThenInclude(p => p.UnidadMedida)
+            .Include(m => m.Asiento)
+            .FirstOrDefaultAsync(m => m.Id == id);
+    }
+
+    public async Task<InventoryMovementCreateViewModel> GetMovementCreateContextAsync(MovimientoInventario? existingMovement = null)
+    {
+        return new InventoryMovementCreateViewModel
+        {
+            Movement = existingMovement ?? new MovimientoInventario { Fecha = DateTimeOffset.Now, Canal = "ERP" },
+            TiposMovimiento = new SelectList(await _context.TipoMovimientos.OrderBy(t => t.Nombre).ToListAsync(), "Id", "Nombre"),
+            Almacenes = new SelectList(await _context.Almacens.Where(a => a.Activo).ToListAsync(), "Id", "Nombre"),
+            ProductosDisponibles = await _context.Productos
+                .Where(p => p.Activo)
+                .OrderBy(p => p.Nombre)
+                .Select(p => new { p.Id, Display = p.Codigo + " - " + p.Nombre })
+                .ToListAsync()
+        };
+    }
+
+    public async Task<IEnumerable<Producto>> GetCatalogAsync()
+    {
+        return await _context.Productos
+            .Include(p => p.Familia)
+            .Include(p => p.UnidadMedida)
+            .OrderBy(p => p.Nombre)
+            .ToListAsync();
+    }
+
+    public async Task<Producto?> GetProductByIdAsync(Guid id)
+    {
+        return await _context.Productos
+            .Include(p => p.Familia)
+            .Include(p => p.UnidadMedida)
+            .FirstOrDefaultAsync(m => m.Id == id);
+    }
+
+    public async Task<ProductFormViewModel> GetProductFormContextAsync(Producto? existing = null)
+    {
+        var entidadId = _entidadProvider.CurrentEntidadId;
+        var cuentas = await _context.CuentaContables
+            .Where(c => c.Activo)
+            .OrderBy(c => c.Codigo)
+            .Select(c => new { c.Id, Display = c.Codigo + " " + c.Nombre })
+            .ToListAsync();
+
+        return new ProductFormViewModel
+        {
+            Producto = existing ?? new Producto { Activo = true, AplicaImpuestoVentas = true, Tipo = "TERMINADO" },
+            Familias = new SelectList(await _context.FamiliaProductos.ToListAsync(), "Id", "Nombre"),
+            UnidadesMedida = new SelectList(await _context.UnidadMedida.ToListAsync(), "Id", "Nombre"),
+            CuentasContables = new SelectList(cuentas, "Id", "Display"),
+            TiposProducto = new SelectList(new[] { "TERMINADO", "INSUMO", "ELABORADO", "SERVICIO" })
+        };
+    }
+
+    public async Task<(bool Succeeded, string Message)> CreateProductAsync(Producto product)
+    {
+        try
+        {
+            product.Id = Guid.NewGuid();
+            product.EntidadId = _entidadProvider.CurrentEntidadId;
+            product.CreadoEn = DateTimeOffset.Now;
+            product.ActualizadoEn = DateTimeOffset.Now;
+            _context.Productos.Add(product);
+            await _context.SaveChangesAsync();
+            return (true, "Producto creado.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<(bool Succeeded, string Message)> UpdateProductAsync(Producto product)
+    {
+        try
+        {
+            var existing = await _context.Productos.FindAsync(product.Id);
+            if (existing == null) return (false, "No existe.");
+
+            _context.Entry(existing).CurrentValues.SetValues(product);
+            existing.EntidadId = _entidadProvider.CurrentEntidadId;
+            existing.ActualizadoEn = DateTimeOffset.Now;
+
+            await _context.SaveChangesAsync();
+            return (true, "Producto actualizado.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<(bool Succeeded, string Message)> DeleteProductAsync(Guid id)
+    {
+        try
+        {
+            var product = await _context.Productos.FindAsync(id);
+            if (product == null) return (false, "No existe.");
+
+            var hasStock = await _context.Existencia.AnyAsync(e => e.ProductoId == id && e.Cantidad > 0);
+            if (hasStock) return (false, "RF-34: No se puede eliminar con existencias activas.");
+
+            _context.Productos.Remove(product);
+            await _context.SaveChangesAsync();
+            return (true, "Producto eliminado.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<IEnumerable<Almacen>> GetWarehousesAsync()
+    {
+        return await _context.Almacens
+            .Include(a => a.Sucursal)
+            .OrderBy(a => a.Nombre)
+            .ToListAsync();
+    }
+
+    public async Task<Almacen?> GetWarehouseByIdAsync(Guid id)
+    {
+        return await _context.Almacens
+            .Include(a => a.Sucursal)
+            .FirstOrDefaultAsync(m => m.Id == id);
+    }
+
+    public async Task<AlmacenFormViewModel> GetWarehouseFormContextAsync(Almacen? existing = null)
+    {
+        return new AlmacenFormViewModel
+        {
+            Almacen = existing ?? new Almacen { Activo = true },
+            Sucursales = new SelectList(await _context.Sucursals.Where(s => s.Activo).ToListAsync(), "Id", "Nombre")
+        };
+    }
+
+    public async Task<(bool Succeeded, string Message)> CreateWarehouseAsync(Almacen warehouse)
+    {
+        try
+        {
+            warehouse.Id = Guid.NewGuid();
+            warehouse.EntidadId = _entidadProvider.CurrentEntidadId;
+            _context.Almacens.Add(warehouse);
+            await _context.SaveChangesAsync();
+            return (true, "Almacén creado.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<(bool Succeeded, string Message)> UpdateWarehouseAsync(Almacen warehouse)
+    {
+        try
+        {
+            var existing = await _context.Almacens.FindAsync(warehouse.Id);
+            if (existing == null) return (false, "No existe.");
+            _context.Entry(existing).CurrentValues.SetValues(warehouse);
+            existing.EntidadId = _entidadProvider.CurrentEntidadId;
+            await _context.SaveChangesAsync();
+            return (true, "Almacén actualizado.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<IEnumerable<FamiliaProducto>> GetFamiliesAsync()
+    {
+        return await _context.FamiliaProductos
+            .OrderBy(f => f.Nombre)
+            .ToListAsync();
+    }
+
+    public async Task<FamiliaProducto?> GetFamilyByIdAsync(Guid id)
+    {
+        return await _context.FamiliaProductos.FindAsync(id);
+    }
+
+    public async Task<FamiliaFormViewModel> GetFamilyFormContextAsync(FamiliaProducto? existing = null)
+    {
+        var familiasPadre = await _context.FamiliaProductos
+            .OrderBy(f => f.Nombre)
+            .ToListAsync();
+
+        return new FamiliaFormViewModel
+        {
+            Familia = existing ?? new FamiliaProducto(),
+            FamiliasPadre = new SelectList(familiasPadre, "Id", "Nombre")
+        };
+    }
+
+    public async Task<(bool Succeeded, string Message)> CreateFamilyAsync(FamiliaProducto family)
+    {
+        try
+        {
+            family.Id = Guid.NewGuid();
+            family.EntidadId = _entidadProvider.CurrentEntidadId;
+            _context.FamiliaProductos.Add(family);
+            await _context.SaveChangesAsync();
+            return (true, "Familia creada.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<(bool Succeeded, string Message)> UpdateFamilyAsync(FamiliaProducto family)
+    {
+        try
+        {
+            var existing = await _context.FamiliaProductos.FindAsync(family.Id);
+            if (existing == null) return (false, "No existe.");
+            _context.Entry(existing).CurrentValues.SetValues(family);
+            existing.EntidadId = _entidadProvider.CurrentEntidadId;
+            await _context.SaveChangesAsync();
+            return (true, "Familia actualizada.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<IEnumerable<UnidadMedidum>> GetUnitsAsync()
+    {
+        return await _context.UnidadMedida.OrderBy(u => u.Nombre).ToListAsync();
+    }
+
+    public async Task<UnidadMedidum?> GetUnitByIdAsync(int id)
+    {
+        return await _context.UnidadMedida.FindAsync(id);
+    }
+
+    public async Task<UnidadFormViewModel> GetUnitFormContextAsync(UnidadMedidum? existing = null)
+    {
+        return new UnidadFormViewModel
+        {
+            Unidad = existing ?? new UnidadMedidum()
+        };
+    }
+
+    public async Task<(bool Succeeded, string Message)> CreateUnitAsync(UnidadMedidum unit)
+    {
+        try
+        {
+            _context.UnidadMedida.Add(unit);
+            await _context.SaveChangesAsync();
+            return (true, "Unidad creada.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<(bool Succeeded, string Message)> UpdateUnitAsync(UnidadMedidum unit)
+    {
+        try
+        {
+            _context.Update(unit);
+            await _context.SaveChangesAsync();
+            return (true, "Unidad actualizada.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<IEnumerable<ListaPrecio>> GetPriceListsAsync()
+    {
+        return await _context.ListaPrecios.OrderBy(l => l.Nombre).ToListAsync();
+    }
+
+    public async Task<ListaPrecio?> GetPriceListByIdAsync(Guid id)
+    {
+        return await _context.ListaPrecios.FindAsync(id);
+    }
+
+    public async Task<ListaPrecioFormViewModel> GetPriceListFormContextAsync(ListaPrecio? existing = null)
+    {
+        return new ListaPrecioFormViewModel
+        {
+            ListaPrecio = existing ?? new ListaPrecio { Activa = true }
+        };
+    }
+
+    public async Task<(bool Succeeded, string Message)> CreatePriceListAsync(ListaPrecio priceList)
+    {
+        try
+        {
+            priceList.Id = Guid.NewGuid();
+            priceList.EntidadId = _entidadProvider.CurrentEntidadId;
+            _context.ListaPrecios.Add(priceList);
+            await _context.SaveChangesAsync();
+            return (true, "Lista de precios creada.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<(bool Succeeded, string Message)> UpdatePriceListAsync(ListaPrecio priceList)
+    {
+        try
+        {
+            var existing = await _context.ListaPrecios.FindAsync(priceList.Id);
+            if (existing == null) return (false, "No existe.");
+            _context.Entry(existing).CurrentValues.SetValues(priceList);
+            existing.EntidadId = _entidadProvider.CurrentEntidadId;
+            await _context.SaveChangesAsync();
+            return (true, "Lista de precios actualizada.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<IEnumerable<TipoMovimiento>> GetMovementTypesAsync()
+    {
+        return await _context.TipoMovimientos.OrderBy(t => t.Nombre).ToListAsync();
     }
 
     public async Task<(bool Succeeded, string Message, MovimientoInventario? Movement)> ProcessMovementAsync(MovimientoInventario movement)

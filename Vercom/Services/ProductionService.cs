@@ -1,10 +1,57 @@
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
+using Vercom.ViewModels;
 
 namespace Vercom.Services;
 
 public interface IProductionService
 {
+    // Lectura Órdenes
+    Task<IEnumerable<OrdenProduccion>> GetOrdersAsync();
+    Task<OrdenProduccion?> GetOrderByIdAsync(Guid id);
+    Task<ProductionOrderViewModel> GetProductionOrderCreateContextAsync(OrdenProduccion? existing = null);
+    Task<IEnumerable<AnalisisDesviacion>> GetDeviationsAsync();
+
+    // Gestión de BOM (Lista de Materiales)
+    Task<IEnumerable<ListaMateriale>> GetBomsAsync();
+    Task<ListaMateriale?> GetBomByIdAsync(Guid id);
+    Task<BomCreateViewModel> GetBomCreateContextAsync(ListaMateriale? existing = null);
+    Task<(bool Succeeded, string Message)> CreateBomAsync(ListaMateriale bom);
+
+    // Gestión de Equipos
+    Task<IEnumerable<Equipo>> GetEquipmentsAsync();
+    Task<Equipo?> GetEquipmentByIdAsync(Guid id);
+    Task<EquipoFormViewModel> GetEquipmentFormContextAsync(Equipo? existing = null);
+    Task<(bool Succeeded, string Message)> CreateEquipmentAsync(Equipo equipment);
+    Task<(bool Succeeded, string Message)> UpdateEquipmentAsync(Equipo equipment);
+
+    // Gestión de Mantenimiento
+    Task<IEnumerable<MantenimientoProgramado>> GetMaintenancesAsync();
+    Task<MantenimientoFormViewModel> GetMaintenanceFormContextAsync(MantenimientoProgramado? existing = null);
+    Task<(bool Succeeded, string Message)> CreateMaintenanceAsync(MantenimientoProgramado maintenance);
+
+    // Gestión de Mermas
+    Task<IEnumerable<Merma>> GetWastesAsync();
+    Task<MermaFormViewModel> GetWasteFormContextAsync(Merma? existing = null);
+    Task<(bool Succeeded, string Message)> CreateWasteAsync(Merma waste);
+
+    // Gestión de Presupuestos
+    Task<IEnumerable<Presupuesto>> GetBudgetsAsync();
+    Task<Presupuesto?> GetBudgetByIdAsync(Guid id);
+    Task<PresupuestoFormViewModel> GetBudgetFormContextAsync(Presupuesto? existing = null);
+    Task<(bool Succeeded, string Message)> CreateBudgetAsync(Presupuesto budget);
+
+    // Planes de Producción
+    Task<IEnumerable<PlanProduccion>> GetProductionPlansAsync();
+    Task<PlanProduccionFormViewModel> GetPlanFormContextAsync(PlanProduccion? existing = null);
+    Task<(bool Succeeded, string Message)> CreatePlanAsync(PlanProduccion plan);
+
+    // Escritura Producción
+    // Gestión de Fichas de Costo (RF-40)
+    Task<IEnumerable<FichaCosto>> GetCostSheetsAsync();
+    Task<FichaCosto?> GetCostSheetByIdAsync(Guid id);
+    Task<CostSheetCreateViewModel> GetCostSheetCreateContextAsync(FichaCosto? existing = null);
     Task<(bool Succeeded, string Message, FichaCosto? CostSheet)> CreateCostSheetAsync(FichaCosto costSheet);
     Task<(bool Succeeded, string Message, OrdenProduccion? Order)> CreateProductionOrderAsync(OrdenProduccion order);
     Task<(bool Succeeded, string Message)> StartProductionAndConsumeAsync(Guid orderId, Guid userId);
@@ -17,12 +64,129 @@ public class ProductionService : IProductionService
     private readonly AppDbContext _context;
     private readonly IInventoryService _inventoryService;
     private readonly IAccountingService _accountingService;
+    private readonly Security.IEntidadProvider _entidadProvider;
 
-    public ProductionService(AppDbContext context, IInventoryService inventoryService, IAccountingService accountingService)
+    public ProductionService(AppDbContext context, IInventoryService inventoryService, IAccountingService accountingService, Security.IEntidadProvider entidadProvider)
     {
         _context = context;
         _inventoryService = inventoryService;
         _accountingService = accountingService;
+        _entidadProvider = entidadProvider;
+    }
+
+    public async Task<IEnumerable<OrdenProduccion>> GetOrdersAsync()
+    {
+        return await _context.OrdenProduccions
+            .Include(o => o.ProductoTerminado)
+            .Include(o => o.FichaCosto)
+            .OrderByDescending(o => o.CreadoEn)
+            .ToListAsync();
+    }
+
+    public async Task<OrdenProduccion?> GetOrderByIdAsync(Guid id)
+    {
+        return await _context.OrdenProduccions
+            .Include(o => o.ProductoTerminado).ThenInclude(p => p.UnidadMedida)
+            .Include(o => o.AlmacenInsumos)
+            .Include(o => o.AlmacenProducto)
+            .Include(o => o.OrdenProduccionConsumos).ThenInclude(c => c.ProductoInsumo).ThenInclude(p => p.UnidadMedida)
+            .Include(o => o.FichaCosto)
+            .Include(o => o.AsientoTerminado)
+            .FirstOrDefaultAsync(o => o.Id == id);
+    }
+
+    public async Task<ProductionOrderViewModel> GetProductionOrderCreateContextAsync(OrdenProduccion? existing = null)
+    {
+        return new ProductionOrderViewModel
+        {
+            Order = existing ?? new OrdenProduccion { FechaInicioPlan = DateOnly.FromDateTime(DateTime.Now) },
+            ProductosElaborados = new SelectList(await _context.Productos
+                .Where(p => p.Activo && (p.Tipo == "ELABORADO" || p.Tipo == "TERMINADO")).ToListAsync(), "Id", "Nombre"),
+            Almacenes = new SelectList(await _context.Almacens.Where(a => a.Activo).ToListAsync(), "Id", "Nombre")
+        };
+    }
+
+    public async Task<IEnumerable<AnalisisDesviacion>> GetDeviationsAsync()
+    {
+        return await _context.AnalisisDesviacions
+            .Include(a => a.OrdenProduccion).ThenInclude(o => o.ProductoTerminado)
+            .OrderByDescending(a => a.AnalizadoEn)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<ListaMateriale>> GetBomsAsync()
+    {
+        return await _context.ListaMateriales
+            .Include(l => l.ProductoTerminado)
+            .OrderBy(l => l.ProductoTerminado.Nombre)
+            .ToListAsync();
+    }
+
+    public async Task<ListaMateriale?> GetBomByIdAsync(Guid id)
+    {
+        return await _context.ListaMateriales
+            .Include(l => l.ProductoTerminado)
+            .Include(l => l.ListaMaterialesDetalles).ThenInclude(d => d.ProductoInsumo).ThenInclude(p => p.UnidadMedida)
+            .FirstOrDefaultAsync(m => m.Id == id);
+    }
+
+    public async Task<BomCreateViewModel> GetBomCreateContextAsync(ListaMateriale? existing = null)
+    {
+        return new BomCreateViewModel
+        {
+            Bom = existing ?? new ListaMateriale { Activa = true },
+            ProductosElaborados = new SelectList(await _context.Productos
+                .Where(p => p.Activo && (p.Tipo == "ELABORADO" || p.Tipo == "TERMINADO")).ToListAsync(), "Id", "Nombre"),
+            InsumosDisponibles = await _context.Productos
+                .Where(p => p.Activo && p.Tipo == "INSUMO")
+                .Select(p => new { p.Id, Display = p.Codigo + " - " + p.Nombre })
+                .ToListAsync()
+        };
+    }
+
+    public async Task<(bool Succeeded, string Message)> CreateBomAsync(ListaMateriale bom)
+    {
+        try
+        {
+            bom.Id = Guid.NewGuid();
+            bom.CreadoEn = DateTimeOffset.Now;
+
+            // RF-41: Inactivar versiones anteriores del mismo producto
+            var previous = await _context.ListaMateriales
+                .Where(l => l.ProductoTerminadoId == bom.ProductoTerminadoId && l.Activa)
+                .ToListAsync();
+            foreach (var p in previous) p.Activa = false;
+
+            _context.ListaMateriales.Add(bom);
+            await _context.SaveChangesAsync();
+            return (true, "BOM registrada y activada.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<IEnumerable<FichaCosto>> GetCostSheetsAsync()
+    {
+        return await _context.FichaCostos
+            .Include(f => f.Producto)
+            .OrderBy(f => f.Producto.Nombre).ThenByDescending(f => f.Version)
+            .ToListAsync();
+    }
+
+    public async Task<FichaCosto?> GetCostSheetByIdAsync(Guid id)
+    {
+        return await _context.FichaCostos
+            .Include(f => f.Producto).ThenInclude(p => p.UnidadMedida)
+            .FirstOrDefaultAsync(m => m.Id == id);
+    }
+
+    public async Task<CostSheetCreateViewModel> GetCostSheetCreateContextAsync(FichaCosto? existing = null)
+    {
+        return new CostSheetCreateViewModel
+        {
+            CostSheet = existing ?? new FichaCosto { VigenteDesde = DateOnly.FromDateTime(DateTime.Now), MargenPorcentaje = 20 },
+            ProductosElaborados = new SelectList(await _context.Productos
+                .Where(p => p.Activo && (p.Tipo == "ELABORADO" || p.Tipo == "TERMINADO")).ToListAsync(), "Id", "Nombre")
+        };
     }
 
     public async Task<(bool Succeeded, string Message, FichaCosto? CostSheet)> CreateCostSheetAsync(FichaCosto costSheet)
@@ -58,6 +222,167 @@ public class ProductionService : IProductionService
         await _context.SaveChangesAsync();
 
         return (true, "Ficha de costo creada y activada.", costSheet);
+    }
+
+    public async Task<IEnumerable<Equipo>> GetEquipmentsAsync()
+    {
+        return await _context.Equipos.Include(e => e.Sucursal).OrderBy(e => e.Nombre).ToListAsync();
+    }
+
+    public async Task<Equipo?> GetEquipmentByIdAsync(Guid id)
+    {
+        return await _context.Equipos.FindAsync(id);
+    }
+
+    public async Task<EquipoFormViewModel> GetEquipmentFormContextAsync(Equipo? existing = null)
+    {
+        return new EquipoFormViewModel
+        {
+            Equipo = existing ?? new Equipo { Estado = "OPERATIVO" },
+            Sucursales = new SelectList(await _context.Sucursals.Where(s => s.Activo).ToListAsync(), "Id", "Nombre"),
+            ActivosFijos = new SelectList(await _context.ActivoFijos.Where(a => a.Estado == "ACTIVO").ToListAsync(), "Id", "CodigoInventario")
+        };
+    }
+
+    public async Task<(bool Succeeded, string Message)> CreateEquipmentAsync(Equipo equipment)
+    {
+        try
+        {
+            equipment.Id = Guid.NewGuid();
+            equipment.EntidadId = _entidadProvider.CurrentEntidadId;
+            _context.Equipos.Add(equipment);
+            await _context.SaveChangesAsync();
+            return (true, "Equipo registrado.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<(bool Succeeded, string Message)> UpdateEquipmentAsync(Equipo equipment)
+    {
+        try
+        {
+            var existing = await _context.Equipos.FindAsync(equipment.Id);
+            if (existing == null) return (false, "No existe.");
+            _context.Entry(existing).CurrentValues.SetValues(equipment);
+            existing.EntidadId = _entidadProvider.CurrentEntidadId;
+            await _context.SaveChangesAsync();
+            return (true, "Equipo actualizado.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<IEnumerable<MantenimientoProgramado>> GetMaintenancesAsync()
+    {
+        return await _context.MantenimientoProgramados.Include(m => m.Equipo).OrderByDescending(m => m.FechaProgramada).ToListAsync();
+    }
+
+    public async Task<MantenimientoFormViewModel> GetMaintenanceFormContextAsync(MantenimientoProgramado? existing = null)
+    {
+        return new MantenimientoFormViewModel
+        {
+            Mantenimiento = existing ?? new MantenimientoProgramado { FechaProgramada = DateOnly.FromDateTime(DateTime.Now.AddDays(7)), Estado = "PROGRAMADO", Tipo = "PREVENTIVO" },
+            Equipos = new SelectList(await GetEquipmentsAsync(), "Id", "Nombre"),
+            Responsables = new SelectList(await _context.Empleados.Where(e => e.Estado == "ACTIVO").ToListAsync(), "Id", "NombreCompleto")
+        };
+    }
+
+    public async Task<(bool Succeeded, string Message)> CreateMaintenanceAsync(MantenimientoProgramado maintenance)
+    {
+        try
+        {
+            maintenance.Id = Guid.NewGuid();
+            _context.MantenimientoProgramados.Add(maintenance);
+            await _context.SaveChangesAsync();
+            return (true, "Mantenimiento programado.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<IEnumerable<Merma>> GetWastesAsync()
+    {
+        return await _context.Mermas.Include(m => m.Producto).Include(m => m.OrdenProduccion).OrderByDescending(m => m.Fecha).ToListAsync();
+    }
+
+    public async Task<MermaFormViewModel> GetWasteFormContextAsync(Merma? existing = null)
+    {
+        return new MermaFormViewModel
+        {
+            Merma = existing ?? new Merma { Fecha = DateOnly.FromDateTime(DateTime.Now) },
+            OrdenesProduccion = new SelectList(await GetOrdersAsync(), "Id", "NumeroOrden"),
+            Productos = new SelectList(await _context.Productos.Where(p => p.Activo).ToListAsync(), "Id", "Nombre")
+        };
+    }
+
+    public async Task<(bool Succeeded, string Message)> CreateWasteAsync(Merma waste)
+    {
+        try
+        {
+            waste.Id = Guid.NewGuid();
+            _context.Mermas.Add(waste);
+            await _context.SaveChangesAsync();
+            return (true, "Merma registrada.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<IEnumerable<Presupuesto>> GetBudgetsAsync()
+    {
+        return await _context.Presupuestos.OrderByDescending(p => p.Anio).ToListAsync();
+    }
+
+    public async Task<Presupuesto?> GetBudgetByIdAsync(Guid id)
+    {
+        return await _context.Presupuestos.FindAsync(id);
+    }
+
+    public async Task<PresupuestoFormViewModel> GetBudgetFormContextAsync(Presupuesto? existing = null)
+    {
+        return new PresupuestoFormViewModel
+        {
+            Presupuesto = existing ?? new Presupuesto { Anio = (short)DateTime.Now.Year, Estado = "BORRADOR" }
+        };
+    }
+
+    public async Task<(bool Succeeded, string Message)> CreateBudgetAsync(Presupuesto budget)
+    {
+        try
+        {
+            budget.Id = Guid.NewGuid();
+            budget.EntidadId = _entidadProvider.CurrentEntidadId;
+            budget.CreadoEn = DateTimeOffset.Now;
+            _context.Presupuestos.Add(budget);
+            await _context.SaveChangesAsync();
+            return (true, "Presupuesto creado.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<IEnumerable<PlanProduccion>> GetProductionPlansAsync()
+    {
+        return await _context.PlanProduccions.Include(p => p.Presupuesto).OrderByDescending(p => p.Anio).ThenByDescending(p => p.Mes).ToListAsync();
+    }
+
+    public async Task<PlanProduccionFormViewModel> GetPlanFormContextAsync(PlanProduccion? existing = null)
+    {
+        return new PlanProduccionFormViewModel
+        {
+            Plan = existing ?? new PlanProduccion { Anio = (short)DateTime.Now.Year, Mes = (short)DateTime.Now.Month, Estado = "BORRADOR" },
+            Presupuestos = new SelectList(await GetBudgetsAsync(), "Id", "Nombre")
+        };
+    }
+
+    public async Task<(bool Succeeded, string Message)> CreatePlanAsync(PlanProduccion plan)
+    {
+        try
+        {
+            plan.Id = Guid.NewGuid();
+            plan.EntidadId = _entidadProvider.CurrentEntidadId;
+            plan.CreadoEn = DateTimeOffset.Now;
+            _context.PlanProduccions.Add(plan);
+            await _context.SaveChangesAsync();
+            return (true, "Plan de producción creado.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
     }
 
     public async Task<(bool Succeeded, string Message, OrdenProduccion? Order)> CreateProductionOrderAsync(OrdenProduccion order)

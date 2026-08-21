@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Authorization
 @inject IAuthorizationService AuthorizationService
 @model IEnumerable<Vercom.Models.Empleado>
 @{
@@ -72,8 +72,19 @@
             <div class="col-12 text-center py-5 text-muted">
                 <i class="ti ti-users-group fs-48 mb-3"></i>
                 <h3>No hay empleados registrados</h3>
-                <p>Comience dando de alta al personal para gestionar la nómina.</p>
+                <p>Comience dando de alta al personal para gestionar la n�mina.</p>
             </div>
         }
     </div>
 </div>
+
+
+@section Scripts {
+    <script>
+        .ready(function () {
+            #dataTable.DataTable();
+        });
+    </script>
+}
+
+

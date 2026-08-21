@@ -1,96 +1,79 @@
-@model IEnumerable<Vercom.Models.Auditorium>
+@model Vercom.ViewModels.AuditIndexViewModel
 @{
-    ViewBag.Title = "Bitácora de Auditoría";
+    ViewBag.Title = Model.Title;
 }
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Trazabilidad de Operaciones (Res. 60/2011)</h4>
+        <h4 class="page-main-title m-0 text-dark"><i class="ti ti-history me-1"></i> @Model.Title</h4>
     </div>
 </div>
 
 <div class="container-xxl mt-4">
-    <!-- Analítica Rápida -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card h-100 shadow-sm border-0">
-                <div class="card-header bg-white"><h5 class="card-title mb-0">Distribución de Acciones</h5></div>
-                <div class="card-body">
-                    <canvas id="auditActionsChart" height="150"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card h-100 shadow-sm border-0">
-                <div class="card-header bg-white"><h5 class="card-title mb-0">Actividad por Módulo</h5></div>
-                <div class="card-body">
-                    <canvas id="auditModulesChart" height="150"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Filtros -->
-    <div class="card mb-4 bg-light-subtle">
-        <div class="card-body py-3">
+    <!-- Filtros Avanzados -->
+    <div class="card mb-4 bg-light shadow-sm">
+        <div class="card-body">
             <form method="get" class="row g-3 align-items-end">
                 <div class="col-md-3">
                     <label class="form-label small fw-bold">Usuario</label>
-                    <input type="text" name="filterUser" class="form-control form-control-sm" placeholder="Buscar usuario..." value="@Context.Request.Query["filterUser"]" />
+                    <input type="text" name="filterUser" value="@Model.FilterUser" class="form-control form-control-sm" placeholder="Buscar usuario...">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small fw-bold">Módulo / Tabla</label>
-                    <input type="text" name="filterTable" class="form-control form-control-sm" placeholder="Ej: comercial.factura_venta" value="@Context.Request.Query["filterTable"]" />
+                    <label class="form-label small fw-bold">Tabla / Objeto</label>
+                    <input type="text" name="filterTable" value="@Model.FilterTable" class="form-control form-control-sm" placeholder="ej: comercial.factura_venta">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small fw-bold">Desde</label>
-                    <input type="date" name="start" class="form-control form-control-sm" value="@Context.Request.Query["start"]" />
+                    <input type="date" name="start" value="@Model.StartDate?.ToString("yyyy-MM-dd")" class="form-control form-control-sm">
                 </div>
-                <div class="col-md-2 d-grid">
-                    <button type="submit" class="btn btn-sm btn-primary">Aplicar Filtros</button>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Hasta</label>
+                    <input type="date" name="end" value="@Model.EndDate?.ToString("yyyy-MM-dd")" class="form-control form-control-sm">
                 </div>
-                <div class="col-md-2 d-grid">
-                    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Limpiar</a>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-sm btn-dark w-100"><i class="ti ti-search me-1"></i> FILTRAR</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Tabla -->
-    <div class="card">
-        <div class="card-body">
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover table-sm align-middle mb-0">
-                    <thead class="table-light">
+                <table class="table table-hover align-middle mb-0" id="auditTable">
+                    <thead class="table-dark">
                         <tr>
-                            <th>Fecha/Hora</th>
+                            <th>Ocurrido En</th>
                             <th>Usuario</th>
-                            <th class="text-center">Acción</th>
-                            <th>Módulo / Tabla</th>
-                            <th class="text-center">Canal</th>
+                            <th>Acción</th>
+                            <th>Ubicación (Tabla)</th>
+                            <th>Reg. ID</th>
+                            <th>Canal</th>
                             <th class="text-end">Detalle</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var item in Model)
+                        @foreach (var log in Model.Logs)
                         {
-                            var badgeColor = item.Accion switch {
-                                "INSERT" => "bg-success",
-                                "UPDATE" => "bg-warning",
-                                "DELETE" => "bg-danger",
-                                _ => "bg-primary"
+                            var actionClass = log.Accion switch {
+                                "INSERT" => "text-success",
+                                "UPDATE" => "text-warning",
+                                "DELETE" => "text-danger",
+                                "LOGIN_FALLIDO" => "text-danger fw-bold",
+                                _ => "text-info"
                             };
 
                             <tr>
-                                <td class="small">@item.OcurridoEn.ToString("dd/MM HH:mm:ss")</td>
-                                <td class="fw-bold">@item.NombreUsuario</td>
-                                <td class="text-center"><span class="badge @badgeColor">@item.Accion</span></td>
-                                <td class="small"><code>@item.EsquemaTabla</code></td>
-                                <td class="text-center"><span class="badge border text-dark">@item.Canal</span></td>
+                                <td class="small font-monospace">@log.OcurridoEn.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                <td><span class="badge bg-light text-dark border">@log.NombreUsuario</span></td>
+                                <td class="fw-bold small @actionClass">@log.Accion</td>
+                                <td class="small">@log.EsquemaTabla</td>
+                                <td class="small text-muted">@log.RegistroId</td>
+                                <td class="text-center">
+                                    <span class="badge @(log.Canal == "POS" ? "bg-info" : "bg-secondary")">@log.Canal</span>
+                                </td>
                                 <td class="text-end">
-                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-xs btn-light">
-                                        <i class="ti ti-zoom-in"></i>
-                                    </a>
+                                    <a asp-action="Details" asp-route-id="@log.Id" class="btn btn-xs btn-outline-dark"><i class="ti ti-eye"></i></a>
                                 </td>
                             </tr>
                         }
@@ -99,37 +82,21 @@
             </div>
         </div>
     </div>
+
+    <div class="alert alert-info mt-4 py-2 small border-0 shadow-sm">
+        <i class="ti ti-info-circle me-1"></i> RF-03: Los registros de auditoría son inalterables y cumplen con la Resolución 60/2011 de la CGR para trazabilidad total.
+    </div>
 </div>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Data para gráficos (Simulada para visualización inmediata)
-        const ctxActions = document.getElementById('auditActionsChart').getContext('2d');
-        new Chart(ctxActions, {
-            type: 'doughnut',
-            data: {
-                labels: ['INSERT', 'UPDATE', 'DELETE', 'LOGIN'],
-                datasets: [{
-                    data: [35, 45, 10, 10],
-                    backgroundColor: ['#22c55e', '#f59e0b', '#ef4444', '#3b82f6']
-                }]
-            },
-            options: { cutout: '70%', plugins: { legend: { position: 'right' } } }
-        });
-
-        const ctxModules = document.getElementById('auditModulesChart').getContext('2d');
-        new Chart(ctxModules, {
-            type: 'bar',
-            data: {
-                labels: ['Ventas', 'Inventario', 'Finanzas', 'RRHH'],
-                datasets: [{
-                    label: 'Operaciones',
-                    data: [120, 80, 45, 30],
-                    backgroundColor: '#6366f1'
-                }]
-            },
-            options: { indexAxis: 'y', plugins: { legend: { display: false } } }
+        $(document).ready(function () {
+            $('#auditTable').DataTable({
+                dom: 'Bfrtip',
+                buttons: ['excel', 'pdf'],
+                language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
+                order: [[0, 'desc']]
+            });
         });
     </script>
 }

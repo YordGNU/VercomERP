@@ -1,164 +1,94 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
+using Vercom.Services;
+using Vercom.ViewModels;
 
-namespace Vercom.Controllers
+namespace Vercom.Controllers;
+
+[Authorize]
+public class CajaController : Controller
 {
-    public class CajaController : Controller
+    private readonly ICashBankService _cashBankService;
+
+    public CajaController(ICashBankService cashBankService)
     {
-       private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+        _cashBankService = cashBankService;
+    }
 
-        public CajaController(AppDbContext context)
+    [Authorize(Policy = "CONTABILIDAD.CUENTA.VER")]
+    public async Task<IActionResult> Index()
+    {
+        var cajas = await _cashBankService.GetCajasAsync();
+        return View(cajas);
+    }
+
+    [Authorize(Policy = "CONTABILIDAD.CUENTA.VER")]
+    public async Task<IActionResult> Details(Guid? id)
+    {
+        if (id == null) return NotFound();
+        var caja = await _cashBankService.GetCajaByIdAsync(id.Value);
+        if (caja == null) return NotFound();
+        return View(caja);
+    }
+
+    [Authorize(Policy = "CONTABILIDAD.CUENTA.CREAR")]
+    public async Task<IActionResult> Create()
+    {
+        var vm = await _cashBankService.GetCajaFormContextAsync();
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "CONTABILIDAD.CUENTA.CREAR")]
+    public async Task<IActionResult> Create(CajaFormViewModel vm)
+    {
+        var caja = vm.Caja;
+        ModelState.Remove("Caja.Entidad");
+        ModelState.Remove("Caja.Sucursal");
+        ModelState.Remove("Caja.CuentaContable");
+
+        if (ModelState.IsValid)
         {
-            _context = context;
+            var result = await _cashBankService.CreateCajaAsync(caja);
+            if (result.Succeeded) return RedirectToAction(nameof(Index));
+            ModelState.AddModelError("", result.Message);
         }
+        var contextVm = await _cashBankService.GetCajaFormContextAsync(caja);
+        return View(contextVm);
+    }
 
-        // GET: Caja
-        public async Task<IActionResult> Index()
+    [Authorize(Policy = "CONTABILIDAD.CUENTA.EDITAR")]
+    public async Task<IActionResult> Edit(Guid? id)
+    {
+        if (id == null) return NotFound();
+        var caja = await _cashBankService.GetCajaByIdAsync(id.Value);
+        if (caja == null) return NotFound();
+
+        var vm = await _cashBankService.GetCajaFormContextAsync(caja);
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "CONTABILIDAD.CUENTA.EDITAR")]
+    public async Task<IActionResult> Edit(Guid id, CajaFormViewModel vm)
+    {
+        var caja = vm.Caja;
+        if (id != caja.Id) return NotFound();
+
+        ModelState.Remove("Caja.Entidad");
+        ModelState.Remove("Caja.Sucursal");
+        ModelState.Remove("Caja.CuentaContable");
+
+        if (ModelState.IsValid)
         {
-            var appDbContext = _context.Cajas.Include(c => c.CuentaContable);
-            return View(await appDbContext.ToListAsync());
+            var result = await _cashBankService.UpdateCajaAsync(caja);
+            if (result.Succeeded) return RedirectToAction(nameof(Index));
+            ModelState.AddModelError("", result.Message);
         }
-
-        // GET: Caja/Details/5
-        public async Task<IActionResult> Details(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var caja = await _context.Cajas
-                .Include(c => c.CuentaContable)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (caja == null)
-            {
-                return NotFound();
-            }
-
-            return View(caja);
-        }
-
-        // GET: Caja/Create
-        public IActionResult Create()
-        {
-            ViewData["CuentaContableId"] = new SelectList(_context.CuentaContables, "Id", "Id");
-            return View();
-        }
-
-        // POST: Caja/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,EntidadId,SucursalId,Nombre,CuentaContableId,LimiteEfectivo,SaldoActual,Activa")] Caja caja)
-        {
-            if (ModelState.IsValid)
-            {
-                caja.Id = Guid.NewGuid();
-                _context.Add(caja);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["CuentaContableId"] = new SelectList(_context.CuentaContables, "Id", "Id", caja.CuentaContableId);
-            return View(caja);
-        }
-
-        // GET: Caja/Edit/5
-        public async Task<IActionResult> Edit(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var caja = await _context.Cajas.FindAsync(id);
-            if (caja == null)
-            {
-                return NotFound();
-            }
-            ViewData["CuentaContableId"] = new SelectList(_context.CuentaContables, "Id", "Id", caja.CuentaContableId);
-            return View(caja);
-        }
-
-        // POST: Caja/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,EntidadId,SucursalId,Nombre,CuentaContableId,LimiteEfectivo,SaldoActual,Activa")] Caja caja)
-        {
-            if (id != caja.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(caja);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!CajaExists(caja.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["CuentaContableId"] = new SelectList(_context.CuentaContables, "Id", "Id", caja.CuentaContableId);
-            return View(caja);
-        }
-
-        // GET: Caja/Delete/5
-        public async Task<IActionResult> Delete(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var caja = await _context.Cajas
-                .Include(c => c.CuentaContable)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (caja == null)
-            {
-                return NotFound();
-            }
-
-            return View(caja);
-        }
-
-        // POST: Caja/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
-        {
-            var caja = await _context.Cajas.FindAsync(id);
-            if (caja != null)
-            {
-                _context.Cajas.Remove(caja);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool CajaExists(Guid id)
-        {
-            return _context.Cajas.Any(e => e.Id == id);
-        }
+        var contextVm = await _cashBankService.GetCajaFormContextAsync(caja);
+        return View(contextVm);
     }
 }

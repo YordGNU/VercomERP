@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Vercom.Models.Merma>
+@model IEnumerable<Vercom.Models.Merma>
 @{
     ViewBag.Title = "Registro de Mermas";
 }
@@ -18,11 +18,11 @@
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table id="dataTable" class="table table-hover align-middle w-100">
                     <thead class="table-light">
                         <tr>
                             <th>Fecha</th>
-                            <th>Orden de Producción</th>
+                            <th>Orden de Producci�n</th>
                             <th>Producto / Insumo</th>
                             <th class="text-end">Cantidad</th>
                             <th>Causa / Motivo</th>
@@ -56,3 +56,12 @@
         </div>
     </div>
 </div>
+
+
+@section Scripts {
+    <script>
+        .ready(function () {
+            #dataTable.DataTable();
+        });
+    </script>
+}

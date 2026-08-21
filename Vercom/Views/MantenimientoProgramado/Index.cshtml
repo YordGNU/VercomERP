@@ -1,11 +1,11 @@
-﻿@model IEnumerable<Vercom.Models.MantenimientoProgramado>
+@model IEnumerable<Vercom.Models.MantenimientoProgramado>
 @{
     ViewBag.Title = "Calendario de Mantenimiento";
 }
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Planificación de Mantenimientos Preventivos</h4>
+        <h4 class="page-main-title m-0">Planificaci�n de Mantenimientos Preventivos</h4>
     </div>
 </div>
 
@@ -13,7 +13,7 @@
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table id="dataTable" class="table table-hover align-middle w-100">
                     <thead class="table-light">
                         <tr>
                             <th>Fecha Programada</th>
@@ -56,3 +56,12 @@
         </div>
     </div>
 </div>
+
+
+@section Scripts {
+    <script>
+        .ready(function () {
+            #dataTable.DataTable();
+        });
+    </script>
+}

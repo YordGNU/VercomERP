@@ -6,13 +6,16 @@ namespace Vercom.Models;
 
 public partial class AppDbContext : DbContext
 {
+    private readonly Security.IEntidadProvider _entidadProvider;
+
     public AppDbContext()
     {
     }
 
-    public AppDbContext(DbContextOptions<AppDbContext> options)
+    public AppDbContext(DbContextOptions<AppDbContext> options, Security.IEntidadProvider entidadProvider)
         : base(options)
     {
+        _entidadProvider = entidadProvider;
     }
 
     public virtual DbSet<ActivoFijo> ActivoFijos { get; set; }
@@ -207,12 +210,27 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<WebhookSuscripcion> WebhookSuscripcions { get; set; }
 
+    public Guid CurrentEntidadId => _entidadProvider?.CurrentEntidadId ?? Guid.Empty;
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseSqlServer("Server=localhost;Database=VercomERP;User Id=sa;Password=sql2025*;Trusted_Connection=True;TrustServerCertificate=True;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Filtro Global Multi-inquilino dinámico (RNF-04)
+        modelBuilder.Entity<FacturaVentum>().HasQueryFilter(x => x.EntidadId == this.CurrentEntidadId);
+        modelBuilder.Entity<Almacen>().HasQueryFilter(x => x.EntidadId == this.CurrentEntidadId);
+        modelBuilder.Entity<Cliente>().HasQueryFilter(x => x.EntidadId == this.CurrentEntidadId);
+        modelBuilder.Entity<Producto>().HasQueryFilter(x => x.EntidadId == this.CurrentEntidadId);
+        modelBuilder.Entity<Existencium>().HasQueryFilter(x => x.Almacen.EntidadId == this.CurrentEntidadId);
+        modelBuilder.Entity<MovimientoInventario>().HasQueryFilter(x => x.EntidadId == this.CurrentEntidadId);
+        modelBuilder.Entity<ContratoEconomico>().HasQueryFilter(x => x.EntidadId == this.CurrentEntidadId);
+        modelBuilder.Entity<Empleado>().HasQueryFilter(x => x.EntidadId == this.CurrentEntidadId);
+        modelBuilder.Entity<PeriodoNomina>().HasQueryFilter(x => x.EntidadId == this.CurrentEntidadId);
+        modelBuilder.Entity<AsientoContable>().HasQueryFilter(x => x.EntidadId == this.CurrentEntidadId);
+        modelBuilder.Entity<PlantillaAprobadum>().HasQueryFilter(x => x.EntidadId == this.CurrentEntidadId);
+
         modelBuilder.Entity<ActivoFijo>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__activo_f__3213E83F600B9AB6");

@@ -1,6 +1,6 @@
-ï»¿@model IEnumerable<Vercom.Models.Usuario>
+@model IEnumerable<Vercom.Models.Usuario>
 @{
-    ViewBag.Title = "GestiÃ³n de Usuarios";
+    ViewBag.Title = "Gestión de Usuarios";
 }
 
 <div class="page-title-head d-flex align-items-center">
@@ -21,7 +21,7 @@
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table id="dataTable" class="table table-hover align-middle w-100">
                     <thead class="table-light">
                         <tr>
                             <th>Usuario</th>
@@ -29,7 +29,7 @@
                             <th>Email</th>
                             <th>Sucursal</th>
                             <th>Estado</th>
-                            <th>Ãšltimo Acceso</th>
+                            <th>Último Acceso</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -79,3 +79,12 @@
         </div>
     </div>
 </div>
+
+
+@section Scripts {
+    <script>
+        .ready(function () {
+            #dataTable.DataTable();
+        });
+    </script>
+}

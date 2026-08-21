@@ -1,4 +1,4 @@
-ï»¿@model IEnumerable<Vercom.Models.RegistroSalarioTiempoServicio>
+@model IEnumerable<Vercom.Models.RegistroSalarioTiempoServicio>
 @{
     ViewBag.Title = "Modelo SC-4-08";
 }
@@ -16,16 +16,16 @@
     <div class="card">
         <div class="card-body">
             <div class="alert alert-info py-2 small mb-4">
-                <i class="ti ti-info-circle me-1"></i> Este registro constituye la base probatoria para la jubilaciÃ³n y seguridad social segÃºn la normativa del MTSS.
+                <i class="ti ti-info-circle me-1"></i> Este registro constituye la base probatoria para la jubilación y seguridad social según la normativa del MTSS.
             </div>
 
             <div class="table-responsive">
-                <table class="table table-bordered table-sm align-middle text-center">
+                <table id="dataTable" class="table table-hover align-middle w-100">
                     <thead class="table-light small">
                         <tr>
                             <th rowspan="2">Empleado</th>
-                            <th rowspan="2">AÃ±o</th>
-                            <th colspan="12">Meses (Salario Devengado / DÃ­as Trabajados)</th>
+                            <th rowspan="2">Año</th>
+                            <th colspan="12">Meses (Salario Devengado / Días Trabajados)</th>
                         </tr>
                         <tr>
                             @for(int i=1; i<=12; i++) { <th>@i</th> }
@@ -58,3 +58,12 @@
         </div>
     </div>
 </div>
+
+
+@section Scripts {
+    <script>
+        .ready(function () {
+            #dataTable.DataTable();
+        });
+    </script>
+}

@@ -1,4 +1,4 @@
-@model Dictionary<string, decimal>
+@model Vercom.ViewModels.DashboardViewModel
 @{
     ViewBag.Title = "Panel de Control";
 }
@@ -9,7 +9,7 @@
     </div>
     <div class="text-end">
         <span class="badge bg-light text-dark py-2 px-3 border">
-            <i class="ti ti-calendar me-1"></i> Periodo Actual: @DateTime.Now.ToString("MMMM yyyy")
+            <i class="ti ti-calendar me-1"></i> Periodo Actual: @Model.PeriodoActual
         </span>
     </div>
 </div>
@@ -22,7 +22,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h3 class="mb-1 text-primary">@Model["Liquidez"]</h3>
+                            <h3 class="mb-1 text-primary">@Model.Liquidez.ToString("N2")</h3>
                             <p class="text-muted mb-0 small text-uppercase fw-bold">Liquidez Corriente</p>
                         </div>
                         <div class="avatar-md bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center">
@@ -37,7 +37,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h3 class="mb-1 text-success">@Model["Rentabilidad"]%</h3>
+                            <h3 class="mb-1 text-success">@Model.Rentabilidad.ToString("N2")%</h3>
                             <p class="text-muted mb-0 small text-uppercase fw-bold">Margen de Utilidad</p>
                         </div>
                         <div class="avatar-md bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center">
@@ -52,7 +52,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h3 class="mb-1 text-info">@Model["Rotacion"]</h3>
+                            <h3 class="mb-1 text-info">@Model.RotacionStock.ToString("N2")</h3>
                             <p class="text-muted mb-0 small text-uppercase fw-bold">Rotación Stock</p>
                         </div>
                         <div class="avatar-md bg-info-subtle text-info rounded-circle d-flex align-items-center justify-content-center">
@@ -67,7 +67,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h3 class="mb-1 text-white">@DateTime.Now.ToString("dd/MM/yyyy")</h3>
+                            <h3 class="mb-1 text-white">@Model.FechaCierreCaja</h3>
                             <p class="text-white-50 mb-0 small text-uppercase fw-bold">Cierre de Caja Hoy</p>
                         </div>
                         <i class="ti ti-device-laptop fs-32 opacity-50"></i>
@@ -111,7 +111,7 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-sm table-hover mb-0">
+                        <table id="dataTable" class="table table-hover align-middle w-100">
                             <thead class="table-light">
                                 <tr>
                                     <th>Producto</th>
@@ -121,9 +121,26 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr class="text-center">
-                                    <td colspan="4" class="py-4 text-muted small">No se detectan faltantes críticos.</td>
-                                </tr>
+                                @if (Model.AlertasStock.Any())
+                                {
+                                    @foreach (var alert in Model.AlertasStock)
+                                    {
+                                        <tr>
+                                            <td class="fw-bold">@alert.Producto.Nombre</td>
+                                            <td class="text-center text-danger">@alert.Cantidad.ToString("N0")</td>
+                                            <td class="text-center">@alert.StockMinimo.ToString("N0")</td>
+                                            <td class="text-end">
+                                                <a asp-controller="Purchase" asp-action="Create" class="btn btn-xs btn-outline-primary">Comprar</a>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr class="text-center">
+                                        <td colspan="4" class="py-4 text-muted small">No se detectan faltantes críticos.</td>
+                                    </tr>
+                                }
                             </tbody>
                         </table>
                     </div>
@@ -156,7 +173,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         const ctxProfit = document.getElementById('profitTrendChart').getContext('2d');
-        const profitData = @Html.Raw(Json.Serialize(ViewBag.TrendRentabilidad));
+        const profitData = @Html.Raw(Json.Serialize(Model.TrendRentabilidad));
 
         new Chart(ctxProfit, {
             type: 'line',
@@ -175,7 +192,7 @@
         });
 
         const ctxLiq = document.getElementById('liquidityTrendChart').getContext('2d');
-        const liqData = @Html.Raw(Json.Serialize(ViewBag.TrendLiquidez));
+        const liqData = @Html.Raw(Json.Serialize(Model.TrendLiquidez));
 
         new Chart(ctxLiq, {
             type: 'bar',

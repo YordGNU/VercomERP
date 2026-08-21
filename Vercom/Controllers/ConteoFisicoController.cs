@@ -1,164 +1,46 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using Vercom.Models;
+using Vercom.Services;
+using Vercom.Security;
 
-namespace Vercom.Controllers
+namespace Vercom.Controllers;
+
+[Authorize]
+public class ConteoFisicoController : Controller
 {
-    public class ConteoFisicoController : Controller
+    private readonly IWarehouseService _warehouseService;
+    private readonly IEntidadProvider _entidadProvider;
+
+    public ConteoFisicoController(IWarehouseService warehouseService, IEntidadProvider entidadProvider)
     {
-       private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+        _warehouseService = warehouseService;
+        _entidadProvider = entidadProvider;
+    }
 
-        public ConteoFisicoController(AppDbContext context)
-        {
-            _context = context;
-        }
+    [Authorize(Policy = "INVENTARIO.CONTEO.VER")]
+    public async Task<IActionResult> Index()
+    {
+        var counts = await _warehouseService.GetCountsAsync();
+        return View(counts);
+    }
 
-        // GET: ConteoFisico
-        public async Task<IActionResult> Index()
-        {
-            var appDbContext = _context.ConteoFisicos.Include(c => c.Almacen);
-            return View(await appDbContext.ToListAsync());
-        }
+    [Authorize(Policy = "INVENTARIO.CONTEO.VER")]
+    public async Task<IActionResult> Details(Guid id)
+    {
+        var count = await _warehouseService.GetCountByIdAsync(id);
+        if (count == null) return NotFound();
+        return View(count);
+    }
 
-        // GET: ConteoFisico/Details/5
-        public async Task<IActionResult> Details(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "INVENTARIO.CONTEO.CREAR")]
+    public async Task<IActionResult> Start(Guid almacenId)
+    {
+        var result = await _warehouseService.StartPhysicalCountAsync(almacenId, _entidadProvider.CurrentUsuarioId);
+        if (result.Succeeded) return RedirectToAction(nameof(Details), new { id = result.Count?.Id });
 
-            var conteoFisico = await _context.ConteoFisicos
-                .Include(c => c.Almacen)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (conteoFisico == null)
-            {
-                return NotFound();
-            }
-
-            return View(conteoFisico);
-        }
-
-        // GET: ConteoFisico/Create
-        public IActionResult Create()
-        {
-            ViewData["AlmacenId"] = new SelectList(_context.Almacens, "Id", "Id");
-            return View();
-        }
-
-        // POST: ConteoFisico/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,AlmacenId,Fecha,Tipo,Estado,ResponsableId,CreadoEn")] ConteoFisico conteoFisico)
-        {
-            if (ModelState.IsValid)
-            {
-                conteoFisico.Id = Guid.NewGuid();
-                _context.Add(conteoFisico);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["AlmacenId"] = new SelectList(_context.Almacens, "Id", "Id", conteoFisico.AlmacenId);
-            return View(conteoFisico);
-        }
-
-        // GET: ConteoFisico/Edit/5
-        public async Task<IActionResult> Edit(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var conteoFisico = await _context.ConteoFisicos.FindAsync(id);
-            if (conteoFisico == null)
-            {
-                return NotFound();
-            }
-            ViewData["AlmacenId"] = new SelectList(_context.Almacens, "Id", "Id", conteoFisico.AlmacenId);
-            return View(conteoFisico);
-        }
-
-        // POST: ConteoFisico/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,AlmacenId,Fecha,Tipo,Estado,ResponsableId,CreadoEn")] ConteoFisico conteoFisico)
-        {
-            if (id != conteoFisico.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(conteoFisico);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ConteoFisicoExists(conteoFisico.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["AlmacenId"] = new SelectList(_context.Almacens, "Id", "Id", conteoFisico.AlmacenId);
-            return View(conteoFisico);
-        }
-
-        // GET: ConteoFisico/Delete/5
-        public async Task<IActionResult> Delete(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var conteoFisico = await _context.ConteoFisicos
-                .Include(c => c.Almacen)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (conteoFisico == null)
-            {
-                return NotFound();
-            }
-
-            return View(conteoFisico);
-        }
-
-        // POST: ConteoFisico/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
-        {
-            var conteoFisico = await _context.ConteoFisicos.FindAsync(id);
-            if (conteoFisico != null)
-            {
-                _context.ConteoFisicos.Remove(conteoFisico);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool ConteoFisicoExists(Guid id)
-        {
-            return _context.ConteoFisicos.Any(e => e.Id == id);
-        }
+        TempData["Error"] = result.Message;
+        return RedirectToAction(nameof(Index));
     }
 }

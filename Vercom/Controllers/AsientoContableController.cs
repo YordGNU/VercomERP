@@ -1,172 +1,134 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
 using Vercom.Services;
+using Vercom.Security;
+using Vercom.ViewModels;
 
-namespace Vercom.Controllers
+namespace Vercom.Controllers;
+
+[Authorize]
+public class AsientoContableController : Controller
 {
-    [Authorize]
-    public class AsientoContableController : Controller
+    private readonly IAccountingService _accountingService;
+    private readonly IEntidadProvider _entidadProvider;
+
+    public AsientoContableController(IAccountingService accountingService, IEntidadProvider entidadProvider)
     {
-        private readonly AppDbContext _context;
-        private readonly IAccountingService _accountingService;
-        private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+        _accountingService = accountingService;
+        _entidadProvider = entidadProvider;
+    }
 
-        public AsientoContableController(AppDbContext context, IAccountingService accountingService)
+    [Authorize(Policy = "CONTABILIDAD.ASIENTO.VER")]
+    public async Task<IActionResult> Index(Guid? periodId)
+    {
+        var vm = await _accountingService.GetAsientoIndexContextAsync(periodId);
+        return View(vm);
+    }
+
+    [Authorize(Policy = "CONTABILIDAD.ASIENTO.VER")]
+    public async Task<IActionResult> Details(Guid? id)
+    {
+        if (id == null) return NotFound();
+
+        var asientoContable = await _accountingService.GetEntryByIdAsync(id.Value);
+        if (asientoContable == null) return NotFound();
+
+        return View(asientoContable);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "CONTABILIDAD.ASIENTO.CREAR")]
+    public async Task<IActionResult> Post(Guid id)
+    {
+        var result = await _accountingService.PostEntryAsync(id);
+        if (result.Succeeded) TempData["Success"] = result.Message;
+        else TempData["Error"] = result.Message;
+
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "CONTABILIDAD.ASIENTO.REVERTIR")]
+    public async Task<IActionResult> Reverse(Guid id, string reason)
+    {
+        if (string.IsNullOrEmpty(reason))
         {
-            _context = context;
-            _accountingService = accountingService;
-        }
-
-        // GET: AsientoContable
-        [Authorize(Policy = "CONTABILIDAD.ASIENTO.VER")]
-        public async Task<IActionResult> Index(Guid? periodId)
-        {
-            if (periodId == null)
-            {
-                var currentPeriod = await _accountingService.GetOrCreateActivePeriodAsync(CurrentEntidadId, DateTime.Now);
-                periodId = currentPeriod?.Id;
-            }
-
-            var entries = await _accountingService.GetEntriesByPeriodAsync(periodId ?? Guid.Empty);
-
-            ViewBag.Periods = new SelectList(_context.PeriodoContables
-                .Where(p => p.EntidadId == CurrentEntidadId)
-                .OrderByDescending(p => p.Anio).ThenByDescending(p => p.Mes), "Id", "Mes", periodId);
-
-            return View(entries);
-        }
-
-        // GET: AsientoContable/Details/5
-        [Authorize(Policy = "CONTABILIDAD.ASIENTO.VER")]
-        public async Task<IActionResult> Details(Guid? id)
-        {
-            if (id == null) return NotFound();
-
-            var asientoContable = await _context.AsientoContables
-                .Include(a => a.AsientoReversion)
-                .Include(a => a.Periodo)
-                .Include(a => a.TipoComprobante)
-                .Include(a => a.AsientoDetalles)
-                    .ThenInclude(d => d.Cuenta)
-                .FirstOrDefaultAsync(m => m.Id == id && m.EntidadId == CurrentEntidadId);
-
-            if (asientoContable == null) return NotFound();
-
-            return View(asientoContable);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Policy = "CONTABILIDAD.ASIENTO.CREAR")]
-        public async Task<IActionResult> Post(Guid id)
-        {
-            var result = await _accountingService.PostEntryAsync(id);
-            if (result.Succeeded) TempData["Success"] = result.Message;
-            else TempData["Error"] = result.Message;
-
+            TempData["Error"] = "Debe proporcionar un motivo para la reversión.";
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Policy = "CONTABILIDAD.ASIENTO.REVERTIR")]
-        public async Task<IActionResult> Reverse(Guid id, string reason)
+        var result = await _accountingService.ReverseEntryAsync(id, reason);
+        if (result.Succeeded) TempData["Success"] = result.Message;
+        else TempData["Error"] = result.Message;
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    [Authorize(Policy = "CONTABILIDAD.ASIENTO.CREAR")]
+    public async Task<IActionResult> Create()
+    {
+        var vm = await _accountingService.GetAsientoCreateContextAsync();
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "CONTABILIDAD.ASIENTO.CREAR")]
+    public async Task<IActionResult> Create(AsientoCreateViewModel vm)
+    {
+        var asientoContable = vm.Entry;
+
+        ModelState.Remove("Entry.Entidad");
+        ModelState.Remove("Entry.Periodo");
+        ModelState.Remove("Entry.TipoComprobante");
+        ModelState.Remove("Entry.EntidadId");
+
+        if (ModelState.IsValid)
         {
-            if (string.IsNullOrEmpty(reason))
+            asientoContable.EntidadId = _entidadProvider.CurrentEntidadId;
+            asientoContable.CreadoPor = _entidadProvider.CurrentUsuarioId;
+
+            var result = await _accountingService.CreateEntryAsync(asientoContable);
+            if (result.Succeeded)
             {
-                TempData["Error"] = "Debe proporcionar un motivo para la reversión.";
-                return RedirectToAction(nameof(Details), new { id });
+                return RedirectToAction(nameof(Details), new { id = result.Entry?.Id });
             }
+            ModelState.AddModelError("", result.Message);
+        }
 
-            var result = await _accountingService.ReverseEntryAsync(id, reason);
-            if (result.Succeeded) TempData["Success"] = result.Message;
-            else TempData["Error"] = result.Message;
+        var contextVm = await _accountingService.GetAsientoCreateContextAsync(asientoContable);
+        return View(contextVm);
+    }
 
+    [Authorize(Policy = "CONTABILIDAD.ASIENTO.CREAR")]
+    public async Task<IActionResult> Delete(Guid? id)
+    {
+        if (id == null) return NotFound();
+
+        var entry = await _accountingService.GetEntryByIdAsync(id.Value);
+        if (entry == null) return NotFound();
+
+        if (entry.Estado == "CONTABILIZADO")
+        {
+            TempData["Error"] = "No se puede eliminar un asiento ya contabilizado.";
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: AsientoContable/Create
-        [Authorize(Policy = "CONTABILIDAD.ASIENTO.CREAR")]
-        public IActionResult Create()
-        {
-            ViewData["TipoComprobanteId"] = new SelectList(_context.TipoComprobantes, "Id", "Nombre");
-            ViewData["Cuentas"] = _context.CuentaContables
-                .Where(c => c.EntidadId == CurrentEntidadId && c.AceptaMovimiento && c.Activo)
-                .OrderBy(c => c.Codigo)
-                .Select(c => new { c.Id, Display = c.Codigo + " " + c.Nombre })
-                .ToList();
+        return View(entry);
+    }
 
-            return View(new AsientoContable { Fecha = DateOnly.FromDateTime(DateTime.Now), Estado = "BORRADOR" });
-        }
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "CONTABILIDAD.ASIENTO.CREAR")]
+    public async Task<IActionResult> DeleteConfirmed(Guid id)
+    {
+        var result = await _accountingService.DeleteDraftEntryAsync(id);
+        if (result.Succeeded) TempData["Success"] = result.Message;
+        else TempData["Error"] = result.Message;
 
-        // POST: AsientoContable/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Policy = "CONTABILIDAD.ASIENTO.CREAR")]
-        public async Task<IActionResult> Create(AsientoContable asientoContable)
-        {
-            if (ModelState.IsValid)
-            {
-                asientoContable.EntidadId = CurrentEntidadId;
-                asientoContable.CreadoPor = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
-
-                var result = await _accountingService.CreateEntryAsync(asientoContable);
-                if (result.Succeeded)
-                {
-                    return RedirectToAction(nameof(Details), new { id = result.Entry?.Id });
-                }
-                ModelState.AddModelError("", result.Message);
-            }
-
-            ViewData["TipoComprobanteId"] = new SelectList(_context.TipoComprobantes, "Id", "Nombre", asientoContable.TipoComprobanteId);
-            return View(asientoContable);
-        }
-
-        // GET: AsientoContable/Delete/5
-        [Authorize(Policy = "CONTABILIDAD.ASIENTO.CREAR")]
-        public async Task<IActionResult> Delete(Guid? id)
-        {
-            if (id == null) return NotFound();
-
-            var asientoContable = await _context.AsientoContables
-                .Include(a => a.Periodo)
-                .Include(a => a.TipoComprobante)
-                .FirstOrDefaultAsync(m => m.Id == id && m.EntidadId == CurrentEntidadId);
-
-            if (asientoContable == null) return NotFound();
-            if (asientoContable.Estado == "CONTABILIZADO")
-            {
-                TempData["Error"] = "No se puede eliminar un asiento ya contabilizado.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            return View(asientoContable);
-        }
-
-        // POST: AsientoContable/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        [Authorize(Policy = "CONTABILIDAD.ASIENTO.CREAR")]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
-        {
-            var asientoContable = await _context.AsientoContables
-                .FirstOrDefaultAsync(a => a.Id == id && a.EntidadId == CurrentEntidadId);
-
-            if (asientoContable != null && asientoContable.Estado != "CONTABILIZADO")
-            {
-                _context.AsientoContables.Remove(asientoContable);
-                await _context.SaveChangesAsync();
-            }
-
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool AsientoContableExists(Guid id)
-        {
-            return _context.AsientoContables.Any(e => e.Id == id && e.EntidadId == CurrentEntidadId);
-        }
+        return RedirectToAction(nameof(Index));
     }
 }

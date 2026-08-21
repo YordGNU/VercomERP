@@ -1,6 +1,6 @@
-ï»¿@model IEnumerable<Vercom.Models.Caja>
+@model IEnumerable<Vercom.Models.Caja>
 @{
-    ViewBag.Title = "GestiÃ³n de Arcas";
+    ViewBag.Title = "Gestión de Arcas";
 }
 
 <div class="page-title-head d-flex align-items-center">
@@ -33,7 +33,7 @@
 
                         <div class="small text-muted">
                             <p class="mb-1"><strong>Cuenta:</strong> @item.CuentaContable.Codigo - @item.CuentaContable.Nombre</p>
-                            <p class="mb-0"><strong>LÃ­mite:</strong> @(item.LimiteEfectivo?.ToString("C") ?? "Sin lÃ­mite")</p>
+                            <p class="mb-0"><strong>Límite:</strong> @(item.LimiteEfectivo?.ToString("C") ?? "Sin límite")</p>
                         </div>
                     </div>
                 </div>
@@ -44,3 +44,14 @@
         }
     </div>
 </div>
+
+
+@section Scripts {
+    <script>
+        .ready(function () {
+            #dataTable.DataTable();
+        });
+    </script>
+}
+
+

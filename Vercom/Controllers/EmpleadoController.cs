@@ -1,127 +1,201 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
 using Vercom.Services;
+using Vercom.Security;
+using Vercom.ViewModels;
 
-namespace Vercom.Controllers
+namespace Vercom.Controllers;
+
+[Authorize]
+public class EmpleadoController : Controller
 {
-    [Authorize]
-    public class EmpleadoController : Controller
+    private readonly IHRService _hrService;
+
+    public EmpleadoController(IHRService hrService)
     {
-        private readonly AppDbContext _context;
-        private readonly IHRService _hrService;
+        _hrService = hrService;
+    }
 
-        public EmpleadoController(AppDbContext context, IHRService hrService)
+    [Authorize(Policy = "RRHH.EMPLEADO.VER")]
+    public async Task<IActionResult> Index()
+    {
+        var empleados = await _hrService.GetEmployeesAsync();
+        return View(empleados);
+    }
+
+    [Authorize(Policy = "RRHH.EMPLEADO.VER")]
+    public async Task<IActionResult> File(Guid? id)
+    {
+        if (id == null) return NotFound();
+        var empleado = await _hrService.GetEmployeeByIdAsync(id.Value);
+        if (empleado == null) return NotFound();
+
+        ViewBag.AccumulatedVacations = await _hrService.GetAccumulatedVacationsAsync(empleado.Id);
+        return View(empleado);
+    }
+
+    [Authorize(Policy = "RRHH.EMPLEADO.CREAR")]
+    public async Task<IActionResult> Create()
+    {
+        var vm = await _hrService.GetEmployeeCreateContextAsync();
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "RRHH.EMPLEADO.CREAR")]
+    public async Task<IActionResult> Create(EmployeeCreateViewModel vm)
+    {
+        var empleado = vm.Empleado;
+
+        // Limpiar validaciones de objetos de navegación
+        ModelState.Remove("Empleado.Cargo");
+        ModelState.Remove("Empleado.Entidad");
+        ModelState.Remove("Empleado.Sucursal");
+
+        // Ignorar campos que se asignan en el servidor
+        ModelState.Remove("Empleado.Id");
+        ModelState.Remove("Empleado.EntidadId");
+        ModelState.Remove("Empleado.CreadoEn");
+
+        if (ModelState.IsValid)
         {
-            _context = context;
-            _hrService = hrService;
-        }
-
-        private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
-
-        // GET: Empleado
-        [Authorize(Policy = "RRHH.EMPLEADO.VER")]
-        public async Task<IActionResult> Index()
-        {
-            var empleados = await _context.Empleados
-                .Include(e => e.Cargo)
-                .Where(e => e.EntidadId == CurrentEntidadId)
-                .OrderBy(e => e.Apellidos)
-                .ToListAsync();
-            return View(empleados);
-        }
-
-        // GET: Empleado/File/5 (Expediente Digital)
-        [Authorize(Policy = "RRHH.EMPLEADO.VER")]
-        public async Task<IActionResult> File(Guid? id)
-        {
-            if (id == null) return NotFound();
-
-            var empleado = await _context.Empleados
-                .Include(e => e.Cargo)
-                .Include(e => e.ContratoLaborals)
-                .Include(e => e.RegistroAsistencia).ThenInclude(a => a.TipoAusencia)
-                .Include(e => e.SaldoVacaciones)
-                .Include(e => e.CertificadoMedicos)
-                .FirstOrDefaultAsync(m => m.Id == id && m.EntidadId == CurrentEntidadId);
-
-            if (empleado == null) return NotFound();
-
-            ViewBag.AccumulatedVacations = await _hrService.GetAccumulatedVacationsAsync(empleado.Id);
-            return View(empleado);
-        }
-
-        // GET: Empleado/Create
-        [Authorize(Policy = "RRHH.EMPLEADO.CREAR")]
-        public IActionResult Create()
-        {
-            ViewData["CargoId"] = new SelectList(_context.Cargos.Where(c => c.EntidadId == CurrentEntidadId), "Id", "Nombre");
-            ViewData["SucursalId"] = new SelectList(_context.Sucursals.Where(s => s.EntidadId == CurrentEntidadId), "Id", "Nombre");
-            return View(new Empleado { Estado = "ACTIVO", FechaIngreso = DateOnly.FromDateTime(DateTime.Now) });
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Policy = "RRHH.EMPLEADO.CREAR")]
-        public async Task<IActionResult> Create(Empleado empleado)
-        {
-            if (ModelState.IsValid)
+            var result = await _hrService.CreateEmployeeAsync(empleado);
+            if (result.Succeeded)
             {
-                empleado.Id = Guid.NewGuid();
-                empleado.EntidadId = CurrentEntidadId;
-                empleado.CreadoEn = DateTimeOffset.Now;
-                _context.Add(empleado);
-                await _context.SaveChangesAsync();
+                TempData["Success"] = result.Message;
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CargoId"] = new SelectList(_context.Cargos.Where(c => c.EntidadId == CurrentEntidadId), "Id", "Nombre", empleado.CargoId);
-            return View(empleado);
+            ModelState.AddModelError("", result.Message);
+        }
+        else
+        {
+            var errors = string.Join(" | ", ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage));
+            ModelState.AddModelError("", $"Verifique los datos: {errors}");
         }
 
-        // GET: Empleado/Edit/5
-        [Authorize(Policy = "RRHH.EMPLEADO.EDITAR")]
-        public async Task<IActionResult> Edit(Guid? id)
+        // Recargar listas para la vista en caso de error
+        var contextVm = await _hrService.GetEmployeeCreateContextAsync(empleado);
+        return View(contextVm);
+    }
+
+    [Authorize(Policy = "RRHH.EMPLEADO.EDITAR")]
+    public async Task<IActionResult> Edit(Guid? id)
+    {
+        if (id == null) return NotFound();
+        var empleado = await _hrService.GetEmployeeByIdAsync(id.Value);
+        if (empleado == null) return NotFound();
+
+        var vm = await _hrService.GetEmployeeCreateContextAsync(empleado);
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "RRHH.EMPLEADO.EDITAR")]
+    public async Task<IActionResult> Edit(Guid id, EmployeeCreateViewModel vm)
+    {
+        var empleado = vm.Empleado;
+        if (id != empleado.Id) return NotFound();
+
+        ModelState.Remove("Empleado.Cargo");
+        ModelState.Remove("Empleado.Entidad");
+        ModelState.Remove("Empleado.Sucursal");
+        ModelState.Remove("Empleado.EntidadId");
+
+        if (ModelState.IsValid)
         {
-            if (id == null) return NotFound();
-
-            var empleado = await _context.Empleados.FirstOrDefaultAsync(e => e.Id == id && e.EntidadId == CurrentEntidadId);
-            if (empleado == null) return NotFound();
-
-            ViewData["CargoId"] = new SelectList(_context.Cargos.Where(c => c.EntidadId == CurrentEntidadId), "Id", "Nombre", empleado.CargoId);
-            ViewData["SucursalId"] = new SelectList(_context.Sucursals.Where(s => s.EntidadId == CurrentEntidadId), "Id", "Nombre", empleado.SucursalId);
-            return View(empleado);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Policy = "RRHH.EMPLEADO.EDITAR")]
-        public async Task<IActionResult> Edit(Guid id, Empleado empleado)
-        {
-            if (id != empleado.Id) return NotFound();
-
-            if (ModelState.IsValid)
+            var result = await _hrService.UpdateEmployeeAsync(empleado);
+            if (result.Succeeded)
             {
-                try
-                {
-                    empleado.EntidadId = CurrentEntidadId;
-                    _context.Update(empleado);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!EmpleadoExists(empleado.Id)) return NotFound();
-                    else throw;
-                }
-                return RedirectToAction(nameof(Index));
+                TempData["Success"] = result.Message;
+                return RedirectToAction(nameof(File), new { id = empleado.Id });
             }
-            return View(empleado);
+            ModelState.AddModelError("", result.Message);
         }
 
-        private bool EmpleadoExists(Guid id)
+        var contextVm = await _hrService.GetEmployeeCreateContextAsync(empleado);
+        return View(contextVm);
+    }
+
+    // GESTIÓN DE CONTRATOS
+    [Authorize(Policy = "RRHH.EMPLEADO.EDITAR")]
+    public async Task<IActionResult> AddContract(Guid id)
+    {
+        var vm = await _hrService.GetContractCreateContextAsync(id);
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "RRHH.EMPLEADO.EDITAR")]
+    public async Task<IActionResult> AddContract(ContratoLaboral contrato)
+    {
+        if (ModelState.IsValid)
         {
-            return _context.Empleados.Any(e => e.Id == id && e.EntidadId == CurrentEntidadId);
+            var result = await _hrService.AddContractAsync(contrato);
+            if (result.Succeeded)
+            {
+                TempData["Success"] = result.Message;
+                return RedirectToAction(nameof(File), new { id = contrato.EmpleadoId });
+            }
+            ModelState.AddModelError("", result.Message);
         }
+        var vm = await _hrService.GetContractCreateContextAsync(contrato.EmpleadoId);
+        return View(vm);
+    }
+
+    // GESTIÓN DE CERTIFICADOS MÉDICOS
+    [Authorize(Policy = "RRHH.EMPLEADO.EDITAR")]
+    public async Task<IActionResult> AddMedicalCertificate(Guid id)
+    {
+        var vm = await _hrService.GetMedicalCertificateCreateContextAsync(id);
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "RRHH.EMPLEADO.EDITAR")]
+    public async Task<IActionResult> AddMedicalCertificate(CertificadoMedico certificado)
+    {
+        if (ModelState.IsValid)
+        {
+            var result = await _hrService.AddMedicalCertificateAsync(certificado);
+            if (result.Succeeded)
+            {
+                TempData["Success"] = result.Message;
+                return RedirectToAction(nameof(File), new { id = certificado.EmpleadoId });
+            }
+            ModelState.AddModelError("", result.Message);
+        }
+        var vm = await _hrService.GetMedicalCertificateCreateContextAsync(certificado.EmpleadoId);
+        return View(vm);
+    }
+
+    // BAJA LABORAL (RF-21)
+    [Authorize(Policy = "RRHH.EMPLEADO.ELIMINAR")]
+    public async Task<IActionResult> Terminate(Guid id)
+    {
+        var vm = await _hrService.GetTerminationContextAsync(id);
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "RRHH.EMPLEADO.ELIMINAR")]
+    public async Task<IActionResult> Terminate(Guid EmpleadoId, DateOnly FechaBaja, string MotivoBaja)
+    {
+        var result = await _hrService.TerminateEmployeeAsync(EmpleadoId, FechaBaja, MotivoBaja);
+        if (result.Succeeded)
+        {
+            TempData["Success"] = result.Message;
+            return RedirectToAction(nameof(Index));
+        }
+
+        TempData["Error"] = result.Message;
+        return RedirectToAction(nameof(Terminate), new { id = EmpleadoId });
     }
 }

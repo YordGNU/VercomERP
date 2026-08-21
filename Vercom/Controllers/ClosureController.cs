@@ -1,51 +1,38 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
-using Vercom.Models;
 using Vercom.Services;
+using Vercom.Security;
 
 namespace Vercom.Controllers;
 
 [Authorize]
 public class ClosureController : Controller
 {
-    private readonly AppDbContext _context;
     private readonly IClosureService _closureService;
-    private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+    private readonly IIntelligenceService _intelligenceService;
+    private readonly IEntidadProvider _entidadProvider;
 
-    public ClosureController(AppDbContext context, IClosureService closureService)
+    public ClosureController(IClosureService closureService, IIntelligenceService intelligenceService, IEntidadProvider entidadProvider)
     {
-        _context = context;
         _closureService = closureService;
+        _intelligenceService = intelligenceService;
+        _entidadProvider = entidadProvider;
     }
 
-    [Authorize(Policy = "ACC_CLOSE_PERIOD")]
+    [Authorize(Policy = "CONTABILIDAD.PERIODO.CERRAR")]
     public async Task<IActionResult> Yearly()
     {
         var year = (short)DateTime.Now.Year;
-        // Simular cálculo de resultados
-        var ingresos = await _context.AsientoDetalles
-            .Where(d => d.Asiento.EntidadId == CurrentEntidadId && d.Asiento.Periodo.Anio == year && d.Cuenta.Clase == "INGRESOS")
-            .SumAsync(d => d.Haber - d.Debe);
-
-        var gastos = await _context.AsientoDetalles
-            .Where(d => d.Asiento.EntidadId == CurrentEntidadId && d.Asiento.Periodo.Anio == year && d.Cuenta.Clase == "GASTOS")
-            .SumAsync(d => d.Debe - d.Haber);
-
-        ViewBag.Year = year;
-        ViewBag.Profit = ingresos - gastos;
-
-        return View();
+        var vm = await _intelligenceService.GetYearlyClosureContextAsync(_entidadProvider.CurrentEntidadId, year);
+        return View(vm);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Policy = "ACC_CLOSE_PERIOD")]
+    [Authorize(Policy = "CONTABILIDAD.PERIODO.CERRAR")]
     public async Task<IActionResult> ExecuteYearly(short year)
     {
-        var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
-        var result = await _closureService.CloseFiscalYearAsync(CurrentEntidadId, year, userId);
+        var result = await _closureService.CloseFiscalYearAsync(_entidadProvider.CurrentEntidadId, year, _entidadProvider.CurrentUsuarioId);
 
         if (result.Succeeded) TempData["Success"] = result.Message;
         else TempData["Error"] = result.Message;

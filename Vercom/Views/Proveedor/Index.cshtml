@@ -1,11 +1,11 @@
-﻿@model IEnumerable<Vercom.Models.Proveedor>
+@model IEnumerable<Vercom.Models.Proveedor>
 @{
     ViewBag.Title = "Registro de Proveedores";
 }
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Gestión de Abastecimiento: Proveedores</h4>
+        <h4 class="page-main-title m-0">Gesti�n de Abastecimiento: Proveedores</h4>
     </div>
     <div class="text-end">
         <a asp-action="Create" class="btn btn-primary">
@@ -56,3 +56,14 @@
         }
     </div>
 </div>
+
+
+@section Scripts {
+    <script>
+        .ready(function () {
+            #dataTable.DataTable();
+        });
+    </script>
+}
+
+

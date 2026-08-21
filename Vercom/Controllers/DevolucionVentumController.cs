@@ -1,164 +1,49 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
+using Vercom.Services;
+using Vercom.ViewModels;
 
-namespace Vercom.Controllers
+namespace Vercom.Controllers;
+
+[Authorize]
+public class DevolucionVentumController : Controller
 {
-    public class DevolucionVentumController : Controller
+    private readonly ICommercialService _commercialService;
+
+    public DevolucionVentumController(ICommercialService commercialService)
     {
-       private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+        _commercialService = commercialService;
+    }
 
-        public DevolucionVentumController(AppDbContext context)
+    [Authorize(Policy = "COMERCIAL.FACTURA_VENTA.VER")]
+    public async Task<IActionResult> Index()
+    {
+        var items = await _commercialService.GetReturnsAsync();
+        return View(items);
+    }
+
+    [Authorize(Policy = "COMERCIAL.FACTURA_VENTA.CREAR")]
+    public async Task<IActionResult> Create(Guid? invoiceId)
+    {
+        var vm = await _commercialService.GetReturnFormContextAsync(invoiceId);
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "COMERCIAL.FACTURA_VENTA.CREAR")]
+    public async Task<IActionResult> Create(SalesReturnFormViewModel vm)
+    {
+        var salesReturn = vm.Return;
+        ModelState.Remove("Return.Factura");
+
+        if (ModelState.IsValid)
         {
-            _context = context;
+            var result = await _commercialService.CreateReturnAsync(salesReturn);
+            if (result.Succeeded) return RedirectToAction(nameof(Index));
+            ModelState.AddModelError("", result.Message);
         }
-
-        // GET: DevolucionVentum
-        public async Task<IActionResult> Index()
-        {
-            var appDbContext = _context.DevolucionVenta.Include(d => d.Factura);
-            return View(await appDbContext.ToListAsync());
-        }
-
-        // GET: DevolucionVentum/Details/5
-        public async Task<IActionResult> Details(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var devolucionVentum = await _context.DevolucionVenta
-                .Include(d => d.Factura)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (devolucionVentum == null)
-            {
-                return NotFound();
-            }
-
-            return View(devolucionVentum);
-        }
-
-        // GET: DevolucionVentum/Create
-        public IActionResult Create()
-        {
-            ViewData["FacturaId"] = new SelectList(_context.FacturaVenta, "Id", "Id");
-            return View();
-        }
-
-        // POST: DevolucionVentum/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,FacturaId,Fecha,Motivo,TotalDevuelto,MovimientoInventarioId,AsientoId,AutorizadoPor")] DevolucionVentum devolucionVentum)
-        {
-            if (ModelState.IsValid)
-            {
-                devolucionVentum.Id = Guid.NewGuid();
-                _context.Add(devolucionVentum);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["FacturaId"] = new SelectList(_context.FacturaVenta, "Id", "Id", devolucionVentum.FacturaId);
-            return View(devolucionVentum);
-        }
-
-        // GET: DevolucionVentum/Edit/5
-        public async Task<IActionResult> Edit(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var devolucionVentum = await _context.DevolucionVenta.FindAsync(id);
-            if (devolucionVentum == null)
-            {
-                return NotFound();
-            }
-            ViewData["FacturaId"] = new SelectList(_context.FacturaVenta, "Id", "Id", devolucionVentum.FacturaId);
-            return View(devolucionVentum);
-        }
-
-        // POST: DevolucionVentum/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,FacturaId,Fecha,Motivo,TotalDevuelto,MovimientoInventarioId,AsientoId,AutorizadoPor")] DevolucionVentum devolucionVentum)
-        {
-            if (id != devolucionVentum.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(devolucionVentum);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!DevolucionVentumExists(devolucionVentum.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["FacturaId"] = new SelectList(_context.FacturaVenta, "Id", "Id", devolucionVentum.FacturaId);
-            return View(devolucionVentum);
-        }
-
-        // GET: DevolucionVentum/Delete/5
-        public async Task<IActionResult> Delete(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var devolucionVentum = await _context.DevolucionVenta
-                .Include(d => d.Factura)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (devolucionVentum == null)
-            {
-                return NotFound();
-            }
-
-            return View(devolucionVentum);
-        }
-
-        // POST: DevolucionVentum/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
-        {
-            var devolucionVentum = await _context.DevolucionVenta.FindAsync(id);
-            if (devolucionVentum != null)
-            {
-                _context.DevolucionVenta.Remove(devolucionVentum);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool DevolucionVentumExists(Guid id)
-        {
-            return _context.DevolucionVenta.Any(e => e.Id == id);
-        }
+        return View(vm);
     }
 }

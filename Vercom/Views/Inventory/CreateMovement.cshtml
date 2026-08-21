@@ -1,7 +1,6 @@
-@model Vercom.Models.MovimientoInventario
+@model Vercom.ViewModels.InventoryMovementCreateViewModel
 @{
-    ViewBag.Title = "Nueva Operación de Almacén";
-    var productos = ViewBag.Productos as IEnumerable<dynamic>;
+    ViewBag.Title = Model.Title;
 }
 
 <div class="page-title-head d-flex align-items-center">
@@ -20,16 +19,16 @@
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
                         <div class="row g-3">
                             <div class="col-md-3">
-                                <label asp-for="TipoMovimientoId" class="form-label fw-bold">Tipo de Operación</label>
-                                <select asp-for="TipoMovimientoId" class="form-select" asp-items="ViewBag.TipoMovimientoId" required></select>
+                                <label asp-for="Movement.TipoMovimientoId" class="form-label fw-bold">Tipo de Operación</label>
+                                <select asp-for="Movement.TipoMovimientoId" class="form-select" asp-items="Model.TiposMovimiento" required></select>
                             </div>
                             <div class="col-md-3">
-                                <label asp-for="NumeroDocumento" class="form-label fw-bold">Nº de Vale / Informe</label>
-                                <input asp-for="NumeroDocumento" class="form-control" placeholder="Ej: REC-2026-001" required />
+                                <label asp-for="Movement.NumeroDocumento" class="form-label fw-bold">Nº de Vale / Informe</label>
+                                <input asp-for="Movement.NumeroDocumento" class="form-control" placeholder="Ej: REC-2026-001" required />
                             </div>
                             <div class="col-md-3">
-                                <label asp-for="Fecha" class="form-label fw-bold">Fecha Operación</label>
-                                <input asp-for="Fecha" type="datetime-local" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required />
+                                <label asp-for="Movement.Fecha" class="form-label fw-bold">Fecha Operación</label>
+                                <input asp-for="Movement.Fecha" type="datetime-local" class="form-control" required />
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label fw-bold">Responsable</label>
@@ -37,21 +36,21 @@
                             </div>
 
                             <div class="col-md-6" id="divOrigen">
-                                <label asp-for="AlmacenOrigenId" class="form-label fw-bold">Almacén de Salida (Origen)</label>
-                                <select asp-for="AlmacenOrigenId" class="form-select" asp-items="ViewBag.Almacenes">
+                                <label asp-for="Movement.AlmacenOrigenId" class="form-label fw-bold">Almacén de Salida (Origen)</label>
+                                <select asp-for="Movement.AlmacenOrigenId" class="form-select" asp-items="Model.Almacenes">
                                     <option value="">-- No aplica --</option>
                                 </select>
                             </div>
                             <div class="col-md-6" id="divDestino">
-                                <label asp-for="AlmacenDestinoId" class="form-label fw-bold">Almacén de Entrada (Destino)</label>
-                                <select asp-for="AlmacenDestinoId" class="form-select" asp-items="ViewBag.Almacenes">
+                                <label asp-for="Movement.AlmacenDestinoId" class="form-label fw-bold">Almacén de Entrada (Destino)</label>
+                                <select asp-for="Movement.AlmacenDestinoId" class="form-select" asp-items="Model.Almacenes">
                                     <option value="">-- No aplica --</option>
                                 </select>
                             </div>
 
                             <div class="col-12">
-                                <label asp-for="Observaciones" class="form-label fw-bold">Observaciones / Justificación</label>
-                                <textarea asp-for="Observaciones" class="form-control" rows="2" placeholder="Describa el motivo del movimiento..."></textarea>
+                                <label asp-for="Movement.Observaciones" class="form-label fw-bold">Observaciones / Justificación</label>
+                                <textarea asp-for="Movement.Observaciones" class="form-control" rows="2" placeholder="Describa el motivo del movimiento..."></textarea>
                             </div>
                         </div>
                     </div>
@@ -98,25 +97,24 @@
 @section Scripts {
     <script>
         let rowCount = 0;
-        const productosOptions = `@Html.Raw(Json.Serialize(productos))`;
-        const parsedProductos = JSON.parse(productosOptions);
+        const parsedProductos = @Html.Raw(Json.Serialize(Model.ProductosDisponibles));
 
         function addRow() {
             const tbody = document.querySelector("#detailsTable tbody");
             const row = document.createElement("tr");
             row.innerHTML = `
                 <td>
-                    <select name="MovimientoInventarioDetalles[${rowCount}].ProductoId" class="form-select select2" required>
+                    <select name="Movement.MovimientoInventarioDetalles[${rowCount}].ProductoId" class="form-select select2" required>
                         <option value="">-- Seleccione Articulo --</option>
                         ${parsedProductos.map(p => `<option value="${p.id}">${p.display}</option>`).join('')}
                     </select>
                 </td>
-                <td><input name="MovimientoInventarioDetalles[${rowCount}].Cantidad" type="number" step="0.0001" class="form-control text-end" value="1.0000" required /></td>
-                <td><input name="MovimientoInventarioDetalles[${rowCount}].CostoUnitario" type="number" step="0.01" class="form-control text-end" placeholder="Opcional" /></td>
+                <td><input name="Movement.MovimientoInventarioDetalles[${rowCount}].Cantidad" type="number" step="0.0001" class="form-control text-end" value="1.0000" required /></td>
+                <td><input name="Movement.MovimientoInventarioDetalles[${rowCount}].CostoUnitario" type="number" step="0.01" class="form-control text-end" placeholder="Opcional" /></td>
                 <td>
                     <div class="input-group input-group-sm">
-                        <input name="MovimientoInventarioDetalles[${rowCount}].Lote" class="form-control" placeholder="Lote" />
-                        <input name="MovimientoInventarioDetalles[${rowCount}].FechaVencimiento" type="date" class="form-control" />
+                        <input name="Movement.MovimientoInventarioDetalles[${rowCount}].Lote" class="form-control" placeholder="Lote" />
+                        <input name="Movement.MovimientoInventarioDetalles[${rowCount}].FechaVencimiento" type="date" class="form-control" />
                     </div>
                 </td>
                 <td class="text-center">
@@ -129,9 +127,10 @@
             rowCount++;
         }
 
-        // Al iniciar, añadir una fila
         document.addEventListener('DOMContentLoaded', () => {
-            addRow();
+            if (document.querySelectorAll("#detailsTable tbody tr").length === 0) {
+                addRow();
+            }
         });
     </script>
 }

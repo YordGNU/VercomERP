@@ -8,7 +8,7 @@ namespace Vercom.Models;
 /// </summary>
 public partial class Consecutivo
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
     public Guid EntidadId { get; set; }
 

@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Vercom.Models.CentroCosto>
+@model IEnumerable<Vercom.Models.CentroCosto>
 
 @{
     ViewData["Title"] = "Index";
@@ -6,7 +6,7 @@
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Gestión de CentroCosto</h4>
+        <h4 class="page-main-title m-0">Gesti�n de CentroCosto</h4>
     </div>
     <div class="text-end">
         <ol class="breadcrumb m-0 py-0">
@@ -31,7 +31,7 @@
 <p>
     <a asp-action="Create">Create New</a>
 </p>
-<div class="table-responsive"><table class="table data-table">
+<div class="table-responsive"><table id="dataTable" class="table table-hover align-middle w-100">
     <thead>
         <tr>
             <th>
@@ -84,3 +84,12 @@
         </div>
     </div>
 </div>
+
+
+@section Scripts {
+    <script>
+        .ready(function () {
+            #dataTable.DataTable();
+        });
+    </script>
+}

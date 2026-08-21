@@ -1,24 +1,121 @@
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
+using Vercom.ViewModels;
 
 namespace Vercom.Services;
 
 public interface IFixedAssetService
 {
+    // Lectura
+    Task<IEnumerable<ActivoFijo>> GetAssetsAsync();
+    Task<ActivoFijo?> GetAssetByIdAsync(Guid id);
+    Task<AssetFormViewModel> GetAssetFormContextAsync(ActivoFijo? existing = null);
+
+    // Escritura
+    Task<(bool Succeeded, string Message)> CreateAssetAsync(ActivoFijo asset);
+    Task<(bool Succeeded, string Message)> UpdateAssetAsync(ActivoFijo asset);
     Task<(bool Succeeded, string Message)> GenerateMonthlyDepreciationAsync(Guid entidadId, Guid periodId);
     Task<List<ActivoFijo>> GetActiveAssetsAsync(Guid entidadId);
     Task<(bool Succeeded, string Message)> RetireAssetAsync(Guid assetId, string reason, Guid userId);
+    Task<(bool Succeeded, string Message)> DeleteAssetAsync(Guid id);
 }
 
 public class FixedAssetService : IFixedAssetService
 {
     private readonly AppDbContext _context;
     private readonly IAccountingService _accountingService;
+    private readonly Security.IEntidadProvider _entidadProvider;
 
-    public FixedAssetService(AppDbContext context, IAccountingService accountingService)
+    public FixedAssetService(AppDbContext context, IAccountingService accountingService, Security.IEntidadProvider entidadProvider)
     {
         _context = context;
         _accountingService = accountingService;
+        _entidadProvider = entidadProvider;
+    }
+
+    public async Task<IEnumerable<ActivoFijo>> GetAssetsAsync()
+    {
+        return await _context.ActivoFijos
+            .Include(a => a.CuentaActivo)
+            .Include(a => a.CuentaDepreciacion)
+            .Include(a => a.CuentaGastoDep)
+            .OrderByDescending(a => a.FechaAdquisicion)
+            .ToListAsync();
+    }
+
+    public async Task<ActivoFijo?> GetAssetByIdAsync(Guid id)
+    {
+        return await _context.ActivoFijos
+            .Include(a => a.CuentaActivo)
+            .Include(a => a.CuentaDepreciacion)
+            .Include(a => a.CuentaGastoDep)
+            .FirstOrDefaultAsync(m => m.Id == id);
+    }
+
+    public async Task<AssetFormViewModel> GetAssetFormContextAsync(ActivoFijo? existing = null)
+    {
+        var entidadId = _entidadProvider.CurrentEntidadId;
+        var cuentas = await _context.CuentaContables
+            .Where(c => c.Activo && c.AceptaMovimiento)
+            .OrderBy(c => c.Codigo)
+            .Select(c => new { c.Id, Display = c.Codigo + " " + c.Nombre })
+            .ToListAsync();
+
+        return new AssetFormViewModel
+        {
+            Asset = existing ?? new ActivoFijo { Estado = "ACTIVO", MetodoDepreciacion = "LINEA_RECTA", FechaAdquisicion = DateOnly.FromDateTime(DateTime.Now) },
+            CuentasActivo = new SelectList(cuentas, "Id", "Display"),
+            CuentasDepreciacion = new SelectList(cuentas, "Id", "Display"),
+            CuentasGasto = new SelectList(cuentas, "Id", "Display"),
+            Sucursales = new SelectList(await _context.Sucursals.Where(s => s.Activo).ToListAsync(), "Id", "Nombre")
+        };
+    }
+
+    public async Task<(bool Succeeded, string Message)> CreateAssetAsync(ActivoFijo asset)
+    {
+        try
+        {
+            asset.Id = Guid.NewGuid();
+            asset.EntidadId = _entidadProvider.CurrentEntidadId;
+            _context.ActivoFijos.Add(asset);
+            await _context.SaveChangesAsync();
+            return (true, "Activo fijo registrado correctamente.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<(bool Succeeded, string Message)> UpdateAssetAsync(ActivoFijo asset)
+    {
+        try
+        {
+            var existing = await _context.ActivoFijos.FindAsync(asset.Id);
+            if (existing == null) return (false, "No existe.");
+
+            _context.Entry(existing).CurrentValues.SetValues(asset);
+            existing.EntidadId = _entidadProvider.CurrentEntidadId;
+
+            await _context.SaveChangesAsync();
+            return (true, "Activo actualizado.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<(bool Succeeded, string Message)> DeleteAssetAsync(Guid id)
+    {
+        try
+        {
+            var asset = await _context.ActivoFijos.FindAsync(id);
+            if (asset == null) return (false, "No existe.");
+
+            var hasDep = await _context.ActivoFijoDepreciacions.AnyAsync(d => d.ActivoFijoId == id);
+            if (hasDep) return (false, "No se puede eliminar un activo que ya tiene historial de depreciación.");
+
+            _context.ActivoFijos.Remove(asset);
+            await _context.SaveChangesAsync();
+            return (true, "Activo eliminado.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
     }
 
     public async Task<(bool Succeeded, string Message)> GenerateMonthlyDepreciationAsync(Guid entidadId, Guid periodId)

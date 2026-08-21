@@ -1,179 +1,130 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
+using Vercom.Services;
+using Vercom.ViewModels;
 
-namespace Vercom.Controllers
+namespace Vercom.Controllers;
+
+[Authorize]
+public class ActivoFijoController : Controller
 {
-    public class ActivoFijoController : Controller
+    private readonly IFixedAssetService _assetService;
+
+    public ActivoFijoController(IFixedAssetService assetService)
     {
-      private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());  
+        _assetService = assetService;
+    }
 
-        public ActivoFijoController(AppDbContext context)
+    [Authorize(Policy = "CONTABILIDAD.ACTIVO_FIJO.VER")]
+    public async Task<IActionResult> Index()
+    {
+        var assets = await _assetService.GetAssetsAsync();
+        return View(assets);
+    }
+
+    [Authorize(Policy = "CONTABILIDAD.ACTIVO_FIJO.VER")]
+    public async Task<IActionResult> Details(Guid? id)
+    {
+        if (id == null) return NotFound();
+        var asset = await _assetService.GetAssetByIdAsync(id.Value);
+        if (asset == null) return NotFound();
+        return View(asset);
+    }
+
+    [Authorize(Policy = "CONTABILIDAD.ACTIVO_FIJO.CREAR")]
+    public async Task<IActionResult> Create()
+    {
+        var vm = await _assetService.GetAssetFormContextAsync();
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "CONTABILIDAD.ACTIVO_FIJO.CREAR")]
+    public async Task<IActionResult> Create(AssetFormViewModel vm)
+    {
+        var asset = vm.Asset;
+
+        ModelState.Remove("Asset.Entidad");
+        ModelState.Remove("Asset.Sucursal");
+        ModelState.Remove("Asset.CuentaActivo");
+        ModelState.Remove("Asset.CuentaDepreciacion");
+        ModelState.Remove("Asset.CuentaGastoDep");
+
+        if (ModelState.IsValid)
         {
-            _context = context;
-        }
-
-
-
-        // GET: ActivoFijo
-        public async Task<IActionResult> Index()
-        {         
-            var appDbContext = _context.ActivoFijos.Include(a => a.CuentaActivo).Include(a => a.CuentaDepreciacion).Include(a => a.CuentaGastoDep);          
-            return View(await appDbContext.ToListAsync());
-        }
-
-        // GET: ActivoFijo/Details/5
-        public async Task<IActionResult> Details(Guid? id)
-        {
-            if (id == null)
+            var result = await _assetService.CreateAssetAsync(asset);
+            if (result.Succeeded)
             {
-                return NotFound();
-            }
-
-            var activoFijo = await _context.ActivoFijos
-                .Include(a => a.CuentaActivo)
-                .Include(a => a.CuentaDepreciacion)
-                .Include(a => a.CuentaGastoDep)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (activoFijo == null)
-            {
-                return NotFound();
-            }
-
-            return View(activoFijo);
-        }
-
-        // GET: ActivoFijo/Create
-        public IActionResult Create()
-        {
-            ViewData["CuentaActivoId"] = new SelectList(_context.CuentaContables, "Id", "Id");
-            ViewData["CuentaDepreciacionId"] = new SelectList(_context.CuentaContables, "Id", "Id");
-            ViewData["CuentaGastoDepId"] = new SelectList(_context.CuentaContables, "Id", "Id");
-            ViewData["SucursalId"] = new SelectList(_context.Sucursals.Where(s => s.EntidadId == CurrentEntidadId), "Id", "Nombre");
-            return View();
-        }
-
-        // POST: ActivoFijo/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,EntidadId,SucursalId,CodigoInventario,Descripcion,CuentaActivoId,CuentaDepreciacionId,CuentaGastoDepId,FechaAdquisicion,ValorAdquisicion,ValorResidual,VidaUtilMeses,TasaDepreciacionAnual,MetodoDepreciacion,DepreciacionAcumulada,Estado,FechaBaja,MotivoBaja")] ActivoFijo activoFijo)
-        {
-            if (ModelState.IsValid)
-            {
-                activoFijo.Id = Guid.NewGuid();
-                _context.Add(activoFijo);
-                await _context.SaveChangesAsync();
+                TempData["Success"] = result.Message;
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CuentaActivoId"] = new SelectList(_context.CuentaContables, "Id", "Id", activoFijo.CuentaActivoId);
-            ViewData["CuentaDepreciacionId"] = new SelectList(_context.CuentaContables, "Id", "Id", activoFijo.CuentaDepreciacionId);
-            ViewData["CuentaGastoDepId"] = new SelectList(_context.CuentaContables, "Id", "Id", activoFijo.CuentaGastoDepId);
-            return View(activoFijo);
+            ModelState.AddModelError("", result.Message);
         }
 
-        // GET: ActivoFijo/Edit/5
-        public async Task<IActionResult> Edit(Guid? id)
+        var contextVm = await _assetService.GetAssetFormContextAsync(asset);
+        return View(contextVm);
+    }
+
+    [Authorize(Policy = "CONTABILIDAD.ACTIVO_FIJO.EDITAR")]
+    public async Task<IActionResult> Edit(Guid? id)
+    {
+        if (id == null) return NotFound();
+        var asset = await _assetService.GetAssetByIdAsync(id.Value);
+        if (asset == null) return NotFound();
+
+        var vm = await _assetService.GetAssetFormContextAsync(asset);
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "CONTABILIDAD.ACTIVO_FIJO.EDITAR")]
+    public async Task<IActionResult> Edit(Guid id, AssetFormViewModel vm)
+    {
+        var asset = vm.Asset;
+        if (id != asset.Id) return NotFound();
+
+        ModelState.Remove("Asset.Entidad");
+        ModelState.Remove("Asset.Sucursal");
+        ModelState.Remove("Asset.CuentaActivo");
+        ModelState.Remove("Asset.CuentaDepreciacion");
+        ModelState.Remove("Asset.CuentaGastoDep");
+
+        if (ModelState.IsValid)
         {
-            if (id == null)
+            var result = await _assetService.UpdateAssetAsync(asset);
+            if (result.Succeeded)
             {
-                return NotFound();
-            }
-
-            var activoFijo = await _context.ActivoFijos.FindAsync(id);
-            if (activoFijo == null)
-            {
-                return NotFound();
-            }
-            ViewData["CuentaActivoId"] = new SelectList(_context.CuentaContables, "Id", "Id", activoFijo.CuentaActivoId);
-            ViewData["CuentaDepreciacionId"] = new SelectList(_context.CuentaContables, "Id", "Id", activoFijo.CuentaDepreciacionId);
-            ViewData["CuentaGastoDepId"] = new SelectList(_context.CuentaContables, "Id", "Id", activoFijo.CuentaGastoDepId);
-            return View(activoFijo);
-        }
-
-        // POST: ActivoFijo/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,EntidadId,SucursalId,CodigoInventario,Descripcion,CuentaActivoId,CuentaDepreciacionId,CuentaGastoDepId,FechaAdquisicion,ValorAdquisicion,ValorResidual,VidaUtilMeses,TasaDepreciacionAnual,MetodoDepreciacion,DepreciacionAcumulada,Estado,FechaBaja,MotivoBaja")] ActivoFijo activoFijo)
-        {
-            if (id != activoFijo.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(activoFijo);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ActivoFijoExists(activoFijo.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+                TempData["Success"] = result.Message;
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CuentaActivoId"] = new SelectList(_context.CuentaContables, "Id", "Id", activoFijo.CuentaActivoId);
-            ViewData["CuentaDepreciacionId"] = new SelectList(_context.CuentaContables, "Id", "Id", activoFijo.CuentaDepreciacionId);
-            ViewData["CuentaGastoDepId"] = new SelectList(_context.CuentaContables, "Id", "Id", activoFijo.CuentaGastoDepId);
-            return View(activoFijo);
+            ModelState.AddModelError("", result.Message);
         }
 
-        // GET: ActivoFijo/Delete/5
-        public async Task<IActionResult> Delete(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
+        var contextVm = await _assetService.GetAssetFormContextAsync(asset);
+        return View(contextVm);
+    }
 
-            var activoFijo = await _context.ActivoFijos
-                .Include(a => a.CuentaActivo)
-                .Include(a => a.CuentaDepreciacion)
-                .Include(a => a.CuentaGastoDep)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (activoFijo == null)
-            {
-                return NotFound();
-            }
+    [Authorize(Policy = "CONTABILIDAD.ACTIVO_FIJO.ELIMINAR")]
+    public async Task<IActionResult> Delete(Guid? id)
+    {
+        if (id == null) return NotFound();
+        var asset = await _assetService.GetAssetByIdAsync(id.Value);
+        if (asset == null) return NotFound();
+        return View(asset);
+    }
 
-            return View(activoFijo);
-        }
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "CONTABILIDAD.ACTIVO_FIJO.ELIMINAR")]
+    public async Task<IActionResult> DeleteConfirmed(Guid id)
+    {
+        var result = await _assetService.DeleteAssetAsync(id);
+        if (result.Succeeded) TempData["Success"] = result.Message;
+        else TempData["Error"] = result.Message;
 
-        // POST: ActivoFijo/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
-        {
-            var activoFijo = await _context.ActivoFijos.FindAsync(id);
-            if (activoFijo != null)
-            {
-                _context.ActivoFijos.Remove(activoFijo);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool ActivoFijoExists(Guid id)
-        {
-            return _context.ActivoFijos.Any(e => e.Id == id);
-        }
+        return RedirectToAction(nameof(Index));
     }
 }

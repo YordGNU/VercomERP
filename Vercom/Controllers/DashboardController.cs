@@ -1,32 +1,25 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vercom.Services;
+using Vercom.Security;
 
 namespace Vercom.Controllers;
 
 [Authorize]
 public class DashboardController : Controller
 {
-    private readonly IBIService _biService;
-    private readonly IAccountingService _accountingService;
+    private readonly IIntelligenceService _intelligenceService;
+    private readonly IEntidadProvider _entidadProvider;
 
-    public DashboardController(IBIService biService, IAccountingService accountingService)
+    public DashboardController(IIntelligenceService intelligenceService, IEntidadProvider entidadProvider)
     {
-        _biService = biService;
-        _accountingService = accountingService;
+        _intelligenceService = intelligenceService;
+        _entidadProvider = entidadProvider;
     }
 
     public async Task<IActionResult> Index()
     {
-        var entidadId = Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
-        var period = await _accountingService.GetOrCreateActivePeriodAsync(entidadId, DateTime.Now);
-
-        var stats = await _biService.GetDashboardStatsAsync(entidadId, period?.Id ?? Guid.Empty);
-
-        // Cargar tendencias para gráficos (últimos 6 meses)
-        ViewBag.TrendRentabilidad = await _biService.GetTrendDataAsync(entidadId, "RENTABILIDAD", 6);
-        ViewBag.TrendLiquidez = await _biService.GetTrendDataAsync(entidadId, "LIQUIDEZ", 6);
-
-        return View(stats);
+        var vm = await _intelligenceService.GetDashboardContextAsync(_entidadProvider.CurrentEntidadId);
+        return View(vm);
     }
 }

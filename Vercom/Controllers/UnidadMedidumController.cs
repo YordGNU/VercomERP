@@ -1,156 +1,70 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
+using Vercom.Services;
+using Vercom.ViewModels;
 
-namespace Vercom.Controllers
+namespace Vercom.Controllers;
+
+[Authorize]
+public class UnidadMedidumController : Controller
 {
-    public class UnidadMedidumController : Controller
+    private readonly IInventoryService _inventoryService;
+
+    public UnidadMedidumController(IInventoryService inventoryService)
     {
-       private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+        _inventoryService = inventoryService;
+    }
 
-        public UnidadMedidumController(AppDbContext context)
+    public async Task<IActionResult> Index()
+    {
+        var units = await _inventoryService.GetUnitsAsync();
+        return View(units);
+    }
+
+    public async Task<IActionResult> Create()
+    {
+        var vm = await _inventoryService.GetUnitFormContextAsync();
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(UnidadFormViewModel vm)
+    {
+        var unit = vm.Unidad;
+        if (ModelState.IsValid)
         {
-            _context = context;
+            var result = await _inventoryService.CreateUnitAsync(unit);
+            if (result.Succeeded) return RedirectToAction(nameof(Index));
+            ModelState.AddModelError("", result.Message);
         }
+        return View(vm);
+    }
 
-        // GET: UnidadMedidum
-        public async Task<IActionResult> Index()
+    public async Task<IActionResult> Edit(int? id)
+    {
+        if (id == null) return NotFound();
+        var unit = await _inventoryService.GetUnitByIdAsync(id.Value);
+        if (unit == null) return NotFound();
+
+        var vm = await _inventoryService.GetUnitFormContextAsync(unit);
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, UnidadFormViewModel vm)
+    {
+        var unit = vm.Unidad;
+        if (id != unit.Id) return NotFound();
+
+        if (ModelState.IsValid)
         {
-            return View(await _context.UnidadMedida.ToListAsync());
+            var result = await _inventoryService.UpdateUnitAsync(unit);
+            if (result.Succeeded) return RedirectToAction(nameof(Index));
+            ModelState.AddModelError("", result.Message);
         }
-
-        // GET: UnidadMedidum/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var unidadMedidum = await _context.UnidadMedida
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (unidadMedidum == null)
-            {
-                return NotFound();
-            }
-
-            return View(unidadMedidum);
-        }
-
-        // GET: UnidadMedidum/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: UnidadMedidum/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Codigo,Nombre,EsFraccionable")] UnidadMedidum unidadMedidum)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(unidadMedidum);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(unidadMedidum);
-        }
-
-        // GET: UnidadMedidum/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var unidadMedidum = await _context.UnidadMedida.FindAsync(id);
-            if (unidadMedidum == null)
-            {
-                return NotFound();
-            }
-            return View(unidadMedidum);
-        }
-
-        // POST: UnidadMedidum/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Codigo,Nombre,EsFraccionable")] UnidadMedidum unidadMedidum)
-        {
-            if (id != unidadMedidum.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(unidadMedidum);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!UnidadMedidumExists(unidadMedidum.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(unidadMedidum);
-        }
-
-        // GET: UnidadMedidum/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var unidadMedidum = await _context.UnidadMedida
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (unidadMedidum == null)
-            {
-                return NotFound();
-            }
-
-            return View(unidadMedidum);
-        }
-
-        // POST: UnidadMedidum/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var unidadMedidum = await _context.UnidadMedida.FindAsync(id);
-            if (unidadMedidum != null)
-            {
-                _context.UnidadMedida.Remove(unidadMedidum);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool UnidadMedidumExists(int id)
-        {
-            return _context.UnidadMedida.Any(e => e.Id == id);
-        }
+        return View(vm);
     }
 }

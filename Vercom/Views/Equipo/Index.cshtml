@@ -1,4 +1,4 @@
-ï»¿@model IEnumerable<Vercom.Models.Equipo>
+@model IEnumerable<Vercom.Models.Equipo>
 @{
     ViewBag.Title = "Equipos de Planta";
 }
@@ -9,7 +9,7 @@
     </div>
     <div class="text-end">
         <a asp-action="Create" class="btn btn-primary">
-            <i class="ti ti-plus me-1"></i> AÃ±adir Equipo
+            <i class="ti ti-plus me-1"></i> Añadir Equipo
         </a>
     </div>
 </div>
@@ -32,8 +32,8 @@
                         </div>
 
                         <div class="bg-light rounded p-2 mb-3 small">
-                            <p class="mb-1"><i class="ti ti-calendar-check me-1"></i> Ãšltima RevisiÃ³n: @(item.FechaUltimaRevision?.ToString("dd/MM/yyyy") ?? "N/A")</p>
-                            <p class="mb-0"><i class="ti ti-refresh me-1"></i> Frecuencia: Cada @item.FrecuenciaMantenimientoDias dÃ­as</p>
+                            <p class="mb-1"><i class="ti ti-calendar-check me-1"></i> Última Revisión: @(item.FechaUltimaRevision?.ToString("dd/MM/yyyy") ?? "N/A")</p>
+                            <p class="mb-0"><i class="ti ti-refresh me-1"></i> Frecuencia: Cada @item.FrecuenciaMantenimientoDias días</p>
                         </div>
 
                         <div class="d-grid gap-2">
@@ -45,3 +45,14 @@
         }
     </div>
 </div>
+
+
+@section Scripts {
+    <script>
+        .ready(function () {
+            #dataTable.DataTable();
+        });
+    </script>
+}
+
+

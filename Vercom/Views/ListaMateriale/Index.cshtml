@@ -1,4 +1,4 @@
-锘緻model IEnumerable<Vercom.Models.ListaMateriale>
+@model IEnumerable<Vercom.Models.ListaMateriale>
 @{
     ViewBag.Title = "Lista de Materiales (BOM)";
 }
@@ -9,7 +9,7 @@
     </div>
     <div class="text-end">
         <a asp-action="Create" class="btn btn-primary">
-            <i class="ti ti-binary me-1"></i> Nueva Definici贸n de Insumos
+            <i class="ti ti-binary me-1"></i> Nueva Definici髇 de Insumos
         </a>
     </div>
 </div>
@@ -24,7 +24,7 @@
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
                                 <h4 class="card-title mb-1">@item.ProductoTerminado.Nombre</h4>
-                                <span class="badge @(item.Activa ? "bg-success" : "bg-light text-dark")">@(item.Activa ? "ACTIVA" : "HIST脫RICA")</span>
+                                <span class="badge @(item.Activa ? "bg-success" : "bg-light text-dark")">@(item.Activa ? "ACTIVA" : "HIST覴ICA")</span>
                             </div>
                             <div class="avatar-sm bg-light text-primary rounded d-flex align-items-center justify-content-center">
                                 <i class="ti ti-manual-gearbox fs-20"></i>
@@ -32,14 +32,14 @@
                         </div>
 
                         <p class="small text-muted mb-4">
-                            Versi贸n: <strong>v.@item.Version</strong><br>
+                            Versi髇: <strong>v.@item.Version</strong><br>
                             Definida el: @item.CreadoEn.ToString("dd/MM/yyyy")
                         </p>
 
                         <div class="d-grid gap-2">
-                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Ver Explosi贸n de Materiales</a>
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Ver Explosi髇 de Materiales</a>
                             @if(item.Activa) {
-                                <a asp-controller="Production" asp-action="CreateOrder" asp-route-productId="@item.ProductoTerminadoId" class="btn btn-sm btn-light text-primary">Generar Orden de Producci贸n</a>
+                                <a asp-controller="Production" asp-action="CreateOrder" asp-route-productId="@item.ProductoTerminadoId" class="btn btn-sm btn-light text-primary">Generar Orden de Producci髇</a>
                             }
                         </div>
                     </div>
@@ -50,8 +50,19 @@
         @if (!Model.Any())
         {
             <div class="col-12 text-center py-5 text-muted small">
-                No hay listas de materiales definidas. Empiece definiendo la composici贸n de sus productos elaborados.
+                No hay listas de materiales definidas. Empiece definiendo la composici髇 de sus productos elaborados.
             </div>
         }
     </div>
 </div>
+
+
+@section Scripts {
+    <script>
+        .ready(function () {
+            #dataTable.DataTable();
+        });
+    </script>
+}
+
+

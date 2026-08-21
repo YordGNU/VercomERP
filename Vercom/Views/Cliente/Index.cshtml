@@ -1,11 +1,11 @@
-ï»¿@model IEnumerable<Vercom.Models.Cliente>
+@model IEnumerable<Vercom.Models.Cliente>
 @{
     ViewBag.Title = "Cartera de Clientes";
 }
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">GestiÃ³n Comercial: Clientes</h4>
+        <h4 class="page-main-title m-0">Gestión Comercial: Clientes</h4>
     </div>
     <div class="text-end">
         <a asp-action="Create" class="btn btn-primary">
@@ -18,14 +18,14 @@
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table id="dataTable" class="table table-hover align-middle w-100">
                     <thead class="table-light">
                         <tr>
-                            <th>Nombre / RazÃ³n Social</th>
+                            <th>Nombre / Razón Social</th>
                             <th>NIT / CI</th>
                             <th>Segmento</th>
-                            <th>TelÃ©fono</th>
-                            <th class="text-end">LÃ­mite CrÃ©dito</th>
+                            <th>Teléfono</th>
+                            <th class="text-end">Límite Crédito</th>
                             <th class="text-center">Estado</th>
                             <th class="text-end">Acciones</th>
                         </tr>
@@ -56,3 +56,12 @@
         </div>
     </div>
 </div>
+
+
+@section Scripts {
+    <script>
+        .ready(function () {
+            #dataTable.DataTable();
+        });
+    </script>
+}

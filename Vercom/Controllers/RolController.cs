@@ -1,109 +1,64 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using Vercom.Models;
+using Vercom.Services;
 
-namespace Vercom.Controllers
+namespace Vercom.Controllers;
+
+[Authorize(Policy = "SEGURIDAD.ROL.VER")]
+public class RolController : Controller
 {
-    [Authorize(Policy = "SEGURIDAD.ROL.VER")]
-    public class RolController : Controller
+    private readonly IAuthService _authService;
+
+    public RolController(IAuthService authService)
     {
-        private readonly AppDbContext _context;
+        _authService = authService;
+    }
 
-        public RolController(AppDbContext context)
+    public async Task<IActionResult> Index()
+    {
+        var roles = await _authService.GetRolesAsync();
+        return View(roles);
+    }
+
+    public async Task<IActionResult> Details(int? id)
+    {
+        if (id == null) return NotFound();
+
+        var rol = await _authService.GetRolByIdAsync(id.Value);
+        if (rol == null) return NotFound();
+
+        return View(rol);
+    }
+
+    [HttpGet]
+    [Authorize(Policy = "SEGURIDAD.ROL.ASIGNAR")]
+    public async Task<IActionResult> ManagePermissions(int id)
+    {
+        try
         {
-            _context = context;
+            var vm = await _authService.GetRolPermissionsContextAsync(id);
+            return View(vm);
         }
-
-        // GET: Rol
-        public async Task<IActionResult> Index()
+        catch
         {
-            return View(await _context.Rols.ToListAsync());
+            return NotFound();
         }
+    }
 
-        // GET: Rol/Details/5
-        public async Task<IActionResult> Details(int? id)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "SEGURIDAD.ROL.ASIGNAR")]
+    public async Task<IActionResult> ManagePermissions(int id, int[] selectedPermissions)
+    {
+        var result = await _authService.UpdateRolPermissionsAsync(id, selectedPermissions);
+        if (result.Succeeded)
         {
-            if (id == null) return NotFound();
-
-            var rol = await _context.Rols
-                .Include(r => r.Permisos)
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (rol == null) return NotFound();
-
-            return View(rol);
-        }
-
-        // GET: Rol/Create
-        [Authorize(Policy = "SEGURIDAD.ROL.ASIGNAR")]
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Policy = "SEGURIDAD.ROL.ASIGNAR")]
-        public async Task<IActionResult> Create([Bind("Codigo,Nombre,Descripcion")] Rol rol)
-        {
-            if (ModelState.IsValid)
-            {
-                rol.CreadoEn = DateTime.Now;
-                rol.EsSistema = false;
-                _context.Add(rol);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(rol);
-        }
-
-        [HttpGet]
-        [Authorize(Policy = "SEGURIDAD.ROL.ASIGNAR")]
-        public async Task<IActionResult> ManagePermissions(int id)
-        {
-            var rol = await _context.Rols.Include(r => r.Permisos).FirstOrDefaultAsync(r => r.Id == id);
-            if (rol == null) return NotFound();
-
-            var allPermissions = await _context.Permisos.ToListAsync();
-            ViewBag.AllPermissions = allPermissions;
-
-            return View(rol);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Policy = "SEGURIDAD.ROL.ASIGNAR")]
-        public async Task<IActionResult> ManagePermissions(int id, int[] selectedPermissions)
-        {
-            var rol = await _context.Rols.Include(r => r.Permisos).FirstOrDefaultAsync(r => r.Id == id);
-            if (rol == null) return NotFound();
-
-            if (rol.EsSistema && rol.Codigo == "ADMINISTRADOR")
-            {
-                return BadRequest("No se pueden modificar los permisos del rol Administrador de Sistema.");
-            }
-
-            rol.Permisos.Clear();
-            foreach (var pId in selectedPermissions)
-            {
-                var permission = await _context.Permisos.FindAsync(pId);
-                if (permission != null) rol.Permisos.Add(permission);
-            }
-
-            await _context.SaveChangesAsync();
-            TempData["Success"] = "Permisos actualizados correctamente.";
+            TempData["Success"] = result.Message;
             return RedirectToAction(nameof(Index));
         }
 
-        private bool RolExists(int id)
-        {
-            return _context.Rols.Any(e => e.Id == id);
-        }
+        ModelState.AddModelError("", result.Message);
+        var vm = await _authService.GetRolPermissionsContextAsync(id);
+        return View(vm);
     }
 }

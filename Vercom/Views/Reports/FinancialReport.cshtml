@@ -1,0 +1,99 @@
+@model Vercom.ViewModels.FinancialReportViewModel
+@{
+    ViewBag.Title = Model.ReportName;
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">@Model.ReportName</h4>
+    </div>
+    <div class="text-end">
+        <span class="badge bg-light text-dark py-2 px-3 border me-2">
+            <i class="ti ti-calendar me-1"></i> Periodo: @Model.PeriodName
+        </span>
+        <button class="btn btn-sm btn-outline-dark" onclick="window.print()"><i class="ti ti-printer me-1"></i> Imprimir Reporte</button>
+    </div>
+</div>
+
+<div class="container-xxl mt-4">
+    <div class="card shadow-none border">
+        <div class="card-header bg-white border-bottom text-center">
+            <h5 class="fw-bold mb-0">SOCIEDAD MERCANTIL TIERRA PROMETIDA S.U.R.L.</h5>
+            <p class="small text-muted mb-0">@Model.ReportName AL CIERRE DE @Model.PeriodName</p>
+        </div>
+        <div class="card-body">
+            @if (Model.Balance != null)
+            {
+                <div class="row">
+                    <!-- Activos -->
+                    <div class="col-md-6 border-end">
+                        <h6 class="fw-bold text-uppercase border-bottom pb-2 mb-3">ACTIVOS</h6>
+                        @foreach (var acc in Model.Balance.Activos)
+                        {
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="small">@acc.Codigo - @acc.Nombre</span>
+                                <span class="fw-bold">@acc.Saldo.ToString("N2")</span>
+                            </div>
+                        }
+                        <div class="d-flex justify-content-between mt-3 pt-2 border-top fw-bold text-primary">
+                            <span>TOTAL ACTIVOS:</span>
+                            <span>@Model.Balance.TotalActivos.ToString("C")</span>
+                        </div>
+                    </div>
+
+                    <!-- Pasivos + Patrimonio -->
+                    <div class="col-md-6">
+                        <h6 class="fw-bold text-uppercase border-bottom pb-2 mb-3">PASIVOS</h6>
+                        @foreach (var acc in Model.Balance.Pasivos)
+                        {
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="small">@acc.Codigo - @acc.Nombre</span>
+                                <span class="fw-bold">@acc.Saldo.ToString("N2")</span>
+                            </div>
+                        }
+                        <div class="d-flex justify-content-between mt-2 mb-4 pt-1 border-top fw-bold text-danger">
+                            <span>TOTAL PASIVOS:</span>
+                            <span>@Model.Balance.TotalPasivos.ToString("C")</span>
+                        </div>
+
+                        <h6 class="fw-bold text-uppercase border-bottom pb-2 mb-3">PATRIMONIO</h6>
+                        @foreach (var acc in Model.Balance.Patrimonio)
+                        {
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="small">@acc.Codigo - @acc.Nombre</span>
+                                <span class="fw-bold">@acc.Saldo.ToString("N2")</span>
+                            </div>
+                        }
+                        <div class="d-flex justify-content-between mt-3 pt-2 border-top fw-bold text-success">
+                            <span>TOTAL PASIVO + PATRIMONIO:</span>
+                            <span>@((Model.Balance.TotalPasivos + Model.Balance.TotalPatrimonio).ToString("C"))</span>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (Model.Resultados != null)
+            {
+                <h6 class="fw-bold text-uppercase border-bottom pb-2 mb-3">DETALLE DE INGRESOS Y GASTOS</h6>
+                @foreach (var acc in Model.Resultados.OrderBy(a => a.Codigo))
+                {
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>@acc.Codigo - @acc.Nombre</span>
+                        <span class="fw-bold @(acc.Saldo < 0 ? "text-danger" : "")">@acc.Saldo.ToString("N2")</span>
+                    </div>
+                }
+                <hr>
+                <div class="d-flex justify-content-between fw-bold fs-18">
+                    <span>UTILIDAD / PÉRDIDA DEL PERIODO:</span>
+                    <span class="text-primary">@Model.Resultados.Sum(r => r.Saldo).ToString("C")</span>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+@functions {
+    private void Write(object codigo)
+    {
+        throw new NotImplementedException();
+    }
+}

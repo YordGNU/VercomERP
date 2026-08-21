@@ -1,4 +1,4 @@
-ï»¿@model IEnumerable<Vercom.Models.DeclaracionJuradum>
+@model IEnumerable<Vercom.Models.DeclaracionJuradum>
 @{
     ViewBag.Title = "Obligaciones Fiscales ONAT";
 }
@@ -18,11 +18,11 @@
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table id="dataTable" class="table table-hover align-middle w-100">
                     <thead class="table-light">
                         <tr>
-                            <th>F. PresentaciÃ³n</th>
-                            <th>ObligaciÃ³n</th>
+                            <th>F. Presentación</th>
+                            <th>Obligación</th>
                             <th>Periodo</th>
                             <th class="text-end">Base Imponible</th>
                             <th class="text-end">Impuesto Calc.</th>
@@ -54,7 +54,7 @@
                         }
                         @if (!Model.Any()) {
                             <tr>
-                                <td colspan="7" class="text-center py-4 text-muted small">No se han generado declaraciones todavÃ­a.</td>
+                                <td colspan="7" class="text-center py-4 text-muted small">No se han generado declaraciones todavía.</td>
                             </tr>
                         }
                     </tbody>
@@ -63,3 +63,12 @@
         </div>
     </div>
 </div>
+
+
+@section Scripts {
+    <script>
+        .ready(function () {
+            #dataTable.DataTable();
+        });
+    </script>
+}

@@ -1,10 +1,18 @@
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
+using Vercom.ViewModels;
 
 namespace Vercom.Services;
 
 public interface ISalesService
 {
+    // Lectura
+    Task<IEnumerable<FacturaVentum>> GetInvoicesAsync();
+    Task<FacturaVentum?> GetInvoiceByIdAsync(Guid id);
+    Task<SalesCreateViewModel> GetSalesCreateContextAsync(FacturaVentum? existingInvoice = null);
+
+    // Escritura
     Task<(bool Succeeded, string Message, FacturaVentum? Invoice)> CreateInvoiceAsync(FacturaVentum invoice);
     Task<(bool Succeeded, string Message)> CancelInvoiceAsync(Guid invoiceId, string reason);
 }
@@ -16,14 +24,61 @@ public class SalesService : ISalesService
     private readonly IContractService _contractService;
     private readonly ITaxService _taxService;
     private readonly IConsecutivoService _consecutivoService;
+    private readonly Security.IEntidadProvider _entidadProvider;
 
-    public SalesService(AppDbContext context, IInventoryService inventoryService, IContractService contractService, ITaxService taxService, IConsecutivoService consecutivoService)
+    public SalesService(AppDbContext context, IInventoryService inventoryService, IContractService contractService,
+        ITaxService taxService, IConsecutivoService consecutivoService, Security.IEntidadProvider entidadProvider)
     {
         _context = context;
         _inventoryService = inventoryService;
         _contractService = contractService;
         _taxService = taxService;
         _consecutivoService = consecutivoService;
+        _entidadProvider = entidadProvider;
+    }
+
+    public async Task<IEnumerable<FacturaVentum>> GetInvoicesAsync()
+    {
+        return await _context.FacturaVenta
+            .Include(f => f.Cliente)
+            .OrderByDescending(f => f.Fecha)
+            .ToListAsync();
+    }
+
+    public async Task<FacturaVentum?> GetInvoiceByIdAsync(Guid id)
+    {
+        return await _context.FacturaVenta
+            .Include(f => f.Cliente)
+            .Include(f => f.Contrato)
+            .Include(f => f.FacturaVentaDetalles).ThenInclude(d => d.Producto).ThenInclude(p => p.UnidadMedida)
+            .Include(f => f.FormaPagoVenta)
+            .Include(f => f.Asiento)
+            .FirstOrDefaultAsync(m => m.Id == id);
+    }
+
+    public async Task<SalesCreateViewModel> GetSalesCreateContextAsync(FacturaVentum? existingInvoice = null)
+    {
+        var entidadId = _entidadProvider.CurrentEntidadId;
+
+        var vm = new SalesCreateViewModel
+        {
+            Invoice = existingInvoice ?? new FacturaVentum
+            {
+                Serie = "A",
+                Fecha = DateTimeOffset.Now,
+                TipoVenta = "MINORISTA",
+                CanalVenta = "ERP"
+            },
+            Clientes = new SelectList(await _context.Clientes.Where(c => c.Activo).ToListAsync(), "Id", "NombreRazonSocial"),
+            Almacenes = new SelectList(await _context.Almacens.Where(a => a.Activo && a.EsPuntoVenta).ToListAsync(), "Id", "Nombre"),
+            Contratos = new SelectList(await _context.ContratoEconomicos.Where(c => c.Estado == "VIGENTE" && c.TerceroTipo == "CLIENTE").ToListAsync(), "Id", "NumeroContrato"),
+            ProductosDisponibles = await _context.Productos
+                .Where(p => p.Activo && (p.Tipo == "TERMINADO" || p.Tipo == "ELABORADO"))
+                .Select(p => new { p.Id, p.Nombre, p.PrecioVentaActual, p.Codigo })
+                .ToListAsync()
+        };
+
+        return vm;
     }
 
     public async Task<(bool Succeeded, string Message, FacturaVentum? Invoice)> CreateInvoiceAsync(FacturaVentum invoice)

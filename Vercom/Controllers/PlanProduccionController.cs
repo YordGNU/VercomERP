@@ -1,157 +1,51 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
+using Vercom.Services;
+using Vercom.ViewModels;
 
-namespace Vercom.Controllers
+namespace Vercom.Controllers;
+
+[Authorize]
+public class PlanProduccionController : Controller
 {
-    public class PlanProduccionController : Controller
+    private readonly IProductionService _productionService;
+
+    public PlanProduccionController(IProductionService productionService)
     {
-       private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+        _productionService = productionService;
+    }
 
-        public PlanProduccionController(AppDbContext context)
+    [Authorize(Policy = "PRODUCCION.FICHA.VER")]
+    public async Task<IActionResult> Index()
+    {
+        var items = await _productionService.GetProductionPlansAsync();
+        return View(items);
+    }
+
+    [Authorize(Policy = "PRODUCCION.FICHA.CREAR")]
+    public async Task<IActionResult> Create()
+    {
+        var vm = await _productionService.GetPlanFormContextAsync();
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "PRODUCCION.FICHA.CREAR")]
+    public async Task<IActionResult> Create(PlanProduccionFormViewModel vm)
+    {
+        var plan = vm.Plan;
+        ModelState.Remove("Plan.Entidad");
+        ModelState.Remove("Plan.Presupuesto");
+
+        if (ModelState.IsValid)
         {
-            _context = context;
+            var result = await _productionService.CreatePlanAsync(plan);
+            if (result.Succeeded) return RedirectToAction(nameof(Index));
+            ModelState.AddModelError("", result.Message);
         }
-
-        // GET: PlanProduccion
-        public async Task<IActionResult> Index()
-        {
-            return View(await _context.PlanProduccions.ToListAsync());
-        }
-
-        // GET: PlanProduccion/Details/5
-        public async Task<IActionResult> Details(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var planProduccion = await _context.PlanProduccions
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (planProduccion == null)
-            {
-                return NotFound();
-            }
-
-            return View(planProduccion);
-        }
-
-        // GET: PlanProduccion/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: PlanProduccion/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,EntidadId,Anio,Mes,PresupuestoId,Estado,CreadoEn")] PlanProduccion planProduccion)
-        {
-            if (ModelState.IsValid)
-            {
-                planProduccion.Id = Guid.NewGuid();
-                _context.Add(planProduccion);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(planProduccion);
-        }
-
-        // GET: PlanProduccion/Edit/5
-        public async Task<IActionResult> Edit(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var planProduccion = await _context.PlanProduccions.FindAsync(id);
-            if (planProduccion == null)
-            {
-                return NotFound();
-            }
-            return View(planProduccion);
-        }
-
-        // POST: PlanProduccion/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,EntidadId,Anio,Mes,PresupuestoId,Estado,CreadoEn")] PlanProduccion planProduccion)
-        {
-            if (id != planProduccion.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(planProduccion);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!PlanProduccionExists(planProduccion.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(planProduccion);
-        }
-
-        // GET: PlanProduccion/Delete/5
-        public async Task<IActionResult> Delete(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var planProduccion = await _context.PlanProduccions
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (planProduccion == null)
-            {
-                return NotFound();
-            }
-
-            return View(planProduccion);
-        }
-
-        // POST: PlanProduccion/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
-        {
-            var planProduccion = await _context.PlanProduccions.FindAsync(id);
-            if (planProduccion != null)
-            {
-                _context.PlanProduccions.Remove(planProduccion);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool PlanProduccionExists(Guid id)
-        {
-            return _context.PlanProduccions.Any(e => e.Id == id);
-        }
+        var contextVm = await _productionService.GetPlanFormContextAsync(plan);
+        return View(contextVm);
     }
 }

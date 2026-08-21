@@ -1,7 +1,6 @@
-@model Vercom.Models.FacturaVentum
+@model Vercom.ViewModels.SalesCreateViewModel
 @{
-    ViewBag.Title = "Nueva Emisión Fiscal";
-    var productos = ViewBag.Productos as IEnumerable<dynamic>;
+    ViewBag.Title = Model.Title;
 }
 
 <div class="page-title-head d-flex align-items-center">
@@ -18,34 +17,34 @@
                 <div class="card mb-4">
                     <div class="card-header bg-light-subtle"><h4 class="card-title">Información del Cliente y Despacho</h4></div>
                     <div class="card-body">
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+                        <div asp-validation-summary="All" class="alert alert-danger py-2 small"></div>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label asp-for="ClienteId" class="form-label fw-bold">Cliente</label>
-                                <select asp-for="ClienteId" class="form-select select2" asp-items="ViewBag.ClienteId" required>
+                                <label asp-for="Invoice.ClienteId" class="form-label fw-bold">Cliente</label>
+                                <select asp-for="Invoice.ClienteId" class="form-select select2" asp-items="Model.Clientes" required>
                                     <option value="">-- Seleccione Cliente --</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label asp-for="ContratoId" class="form-label fw-bold">Contrato Económico (Solo Mayoristas)</label>
-                                <select asp-for="ContratoId" class="form-select" asp-items="ViewBag.ContratoId">
+                                <label asp-for="Invoice.ContratoId" class="form-label fw-bold">Contrato Económico (Solo Mayoristas)</label>
+                                <select asp-for="Invoice.ContratoId" class="form-select" asp-items="Model.Contratos">
                                     <option value="">-- Sin Contrato (Venta Minorista) --</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label asp-for="AlmacenId" class="form-label fw-bold">Punto de Venta (Salida)</label>
-                                <select asp-for="AlmacenId" class="form-select" asp-items="ViewBag.AlmacenId" required></select>
+                                <label asp-for="Invoice.AlmacenId" class="form-label fw-bold">Punto de Venta (Salida)</label>
+                                <select asp-for="Invoice.AlmacenId" class="form-select" asp-items="Model.Almacenes" required></select>
                             </div>
                             <div class="col-md-4">
-                                <label asp-for="TipoVenta" class="form-label fw-bold">Tipo de Operación</label>
-                                <select asp-for="TipoVenta" class="form-select" id="tipoVenta">
+                                <label asp-for="Invoice.TipoVenta" class="form-label fw-bold">Tipo de Operación</label>
+                                <select asp-for="Invoice.TipoVenta" class="form-select" id="tipoVenta">
                                     <option value="MINORISTA">Minorista (Final)</option>
                                     <option value="MAYORISTA">Mayorista (B2B)</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label asp-for="Serie" class="form-label fw-bold">Serie Fiscal</label>
-                                <input asp-for="Serie" class="form-control" value="A" required />
+                                <label asp-for="Invoice.Serie" class="form-label fw-bold">Serie Fiscal</label>
+                                <input asp-for="Invoice.Serie" class="form-control" required />
                             </div>
                         </div>
                     </div>
@@ -89,7 +88,7 @@
                         </div>
                         <div class="d-flex justify-content-between mb-2 text-danger">
                             <span class="small">Descuento:</span>
-                            <input asp-for="DescuentoTotal" class="form-control form-control-sm text-end w-50" value="0.00" onchange="calculateTotals()" />
+                            <input asp-for="Invoice.DescuentoTotal" name="Invoice.DescuentoTotal" class="form-control form-control-sm text-end w-50" onchange="calculateTotals()" />
                         </div>
                         <div class="d-flex justify-content-between mb-2">
                             <span class="text-muted">Impuesto sobre Ventas (10%):</span>
@@ -105,8 +104,8 @@
                             <h6 class="fw-bold small text-uppercase mb-3">Medio de Pago</h6>
                             <div class="mb-3">
                                 <label class="form-label small">Importe en Efectivo / Transferencia</label>
-                                <input type="number" name="FormaPagoVenta[0].Monto" id="pagoMonto" class="form-control fw-bold text-end" value="0.00" />
-                                <input type="hidden" name="FormaPagoVenta[0].FormaPago" value="EFECTIVO" />
+                                <input type="number" name="Invoice.FormaPagoVenta[0].Monto" id="pagoMonto" class="form-control fw-bold text-end" value="0.00" />
+                                <input type="hidden" name="Invoice.FormaPagoVenta[0].FormaPago" value="EFECTIVO" />
                             </div>
                             <div class="alert alert-warning py-2 small" id="alertCredito" style="display:none;">
                                 <i class="ti ti-credit-card me-1"></i> Se generará una cuenta por cobrar por la diferencia.
@@ -129,21 +128,20 @@
 @section Scripts {
     <script>
         let rowCount = 0;
-        const productosOptions = `@Html.Raw(Json.Serialize(productos))`;
-        const parsedProductos = JSON.parse(productosOptions);
+        const parsedProductos = @Html.Raw(Json.Serialize(Model.ProductosDisponibles));
 
         function addRow() {
             const tbody = document.querySelector("#detailsTable tbody");
             const row = document.createElement("tr");
             row.innerHTML = `
                 <td>
-                    <select name="FacturaVentaDetalles[${rowCount}].ProductoId" class="form-select prod-select" onchange="updatePrice(this, ${rowCount})" required>
+                    <select name="Invoice.FacturaVentaDetalles[${rowCount}].ProductoId" class="form-select prod-select" onchange="updatePrice(this, ${rowCount})" required>
                         <option value="">-- Seleccione --</option>
                         ${parsedProductos.map(p => `<option value="${p.id}" data-price="${p.precioVentaActual}">${p.codigo} - ${p.nombre}</option>`).join('')}
                     </select>
                 </td>
-                <td><input name="FacturaVentaDetalles[${rowCount}].Cantidad" type="number" step="0.01" class="form-control text-end input-qty" value="1.00" onchange="calculateTotals()" required /></td>
-                <td><input name="FacturaVentaDetalles[${rowCount}].PrecioUnitario" type="number" step="0.01" class="form-control text-end input-price" value="0.00" onchange="calculateTotals()" required /></td>
+                <td><input name="Invoice.FacturaVentaDetalles[${rowCount}].Cantidad" type="number" step="0.01" class="form-control text-end input-qty" value="1.00" onchange="calculateTotals()" required /></td>
+                <td><input name="Invoice.FacturaVentaDetalles[${rowCount}].PrecioUnitario" type="number" step="0.01" class="form-control text-end input-price" value="0.00" onchange="calculateTotals()" required /></td>
                 <td class="text-end fw-bold label-line-total">0.00</td>
                 <td class="text-center">
                     <button type="button" class="btn btn-sm btn-link text-danger" onclick="this.closest('tr').remove(); calculateTotals();">

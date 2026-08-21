@@ -1,36 +1,37 @@
-@model Vercom.Models.PeriodoNomina
+@model Vercom.ViewModels.PayrollDetailsViewModel
 @{
-    ViewBag.Title = "Detalle de Nómina";
+    ViewBag.Title = Model.Title;
     var meses = new[] { "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
 }
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Nómina @meses[Model.Mes] @Model.Anio</h4>
+        <h4 class="page-main-title m-0">Nómina @meses[Model.Periodo.Mes] @Model.Periodo.Anio</h4>
     </div>
     <div class="text-end d-flex gap-2">
-        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Volver al Listado</a>
-        @if (Model.Estado == "PRENOMINA")
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Volver</a>
+        @if (Model.Periodo.Estado == "PRENOMINA")
         {
             <form asp-action="Approve" method="post">
-                <input type="hidden" name="id" value="@Model.Id" />
-                <button type="submit" class="btn btn-sm btn-success"><i class="ti ti-check me-1"></i> APROBAR Y CONTABILIZAR</button>
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Periodo.Id" />
+                <button type="submit" class="btn btn-sm btn-success"><i class="ti ti-check me-1"></i> APROBAR Y CONTABILIZAR (RF-24)</button>
             </form>
         }
-        @if (Model.AsientoId.HasValue)
+        @if (Model.Periodo.AsientoId.HasValue)
         {
-            <a asp-controller="AsientoContable" asp-action="Details" asp-route-id="@Model.AsientoId" class="btn btn-sm btn-info">
-                <i class="ti ti-calculator me-1"></i> Ver Asiento
+            <a asp-controller="AsientoContable" asp-action="Details" asp-route-id="@Model.Periodo.AsientoId" class="btn btn-sm btn-info">
+                <i class="ti ti-calculator me-1"></i> Ver Asiento Automático
             </a>
         }
     </div>
 </div>
 
 <div class="container-xxl mt-4">
-    <div class="card">
+    <div class="card shadow-sm border-0">
         <div class="card-header bg-light-subtle d-flex justify-content-between align-items-center">
-            <h4 class="card-title">Resumen de Pagos por Empleado</h4>
-            <span class="badge @(Model.Estado == "APROBADA" ? "bg-success" : "bg-warning")">ESTADO: @Model.Estado</span>
+            <h4 class="card-title mb-0">Resumen de Pagos por Trabajador (Bancarización)</h4>
+            <span class="badge @(Model.Periodo.Estado == "APROBADA" ? "bg-success" : "bg-warning")">ESTADO: @Model.Periodo.Estado</span>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -38,18 +39,18 @@
                     <thead class="table-light">
                         <tr>
                             <th>Empleado</th>
-                            <th class="text-center">Días</th>
-                            <th class="text-center">Extras</th>
-                            <th class="text-end">Devengado</th>
-                            <th class="text-end">Retención (5%)</th>
-                            <th class="text-end">Neto a Cobrar</th>
+                            <th class="text-center">Días Asis.</th>
+                            <th class="text-center">Extras (h)</th>
+                            <th class="text-end">Bruto / Devengado</th>
+                            <th class="text-end">Retención SS</th>
+                            <th class="text-end">NETO A PAGAR</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var det in Model.NominaDetalles)
+                        @foreach (var det in Model.Detalles)
                         {
                             <tr>
-                                <td class="fw-bold">@det.Empleado.Nombres @det.Empleado.Apellidos</td>
+                                <td class="fw-bold">@det.Empleado.Apellidos, @det.Empleado.Nombres</td>
                                 <td class="text-center">@det.DiasTrabajados.ToString("N1")</td>
                                 <td class="text-center">@det.HorasExtra.ToString("N1")</td>
                                 <td class="text-end">@det.SalarioDevengado.ToString("C")</td>
@@ -58,17 +59,21 @@
                             </tr>
                         }
                     </tbody>
-                    <tfoot class="table-light fw-bold fs-15">
+                    <tfoot class="table-dark fw-bold fs-15">
                         <tr>
-                            <td>TOTALES:</td>
+                            <td>TOTALES DE NÓMINA:</td>
                             <td colspan="2"></td>
-                            <td class="text-end">@Model.NominaDetalles.Sum(d => d.SalarioDevengado).ToString("C")</td>
-                            <td class="text-end text-danger">- @Model.NominaDetalles.Sum(d => d.TotalDeducciones).ToString("C")</td>
-                            <td class="text-end text-primary">@Model.NominaDetalles.Sum(d => d.SalarioNeto).ToString("C")</td>
+                            <td class="text-end">@Model.Detalles.Sum(d => d.SalarioDevengado).ToString("C")</td>
+                            <td class="text-end text-white-50">- @Model.Detalles.Sum(d => d.TotalDeducciones).ToString("C")</td>
+                            <td class="text-end text-warning">@Model.Detalles.Sum(d => d.SalarioNeto).ToString("C")</td>
                         </tr>
                     </tfoot>
                 </table>
             </div>
         </div>
+    </div>
+
+    <div class="alert alert-warning mt-4 py-2 small shadow-sm border-0">
+        <i class="ti ti-alert-circle me-1"></i> RNF-22: Una vez aprobada, el historial salarial es inalterable con fines probatorios laborales.
     </div>
 </div>

@@ -1,157 +1,65 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
+using Vercom.Services;
 
-namespace Vercom.Controllers
+namespace Vercom.Controllers;
+
+[Authorize]
+public class CargoController : Controller
 {
-    public class CargoController : Controller
+    private readonly IHRService _hrService;
+
+    public CargoController(IHRService hrService)
     {
-       private readonly AppDbContext _context;   private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+        _hrService = hrService;
+    }
 
-        public CargoController(AppDbContext context)
+    [Authorize(Policy = "RRHH.CARGO.VER")]
+    public async Task<IActionResult> Index()
+    {
+        var cargos = await _hrService.GetCargosAsync();
+        return View(cargos);
+    }
+
+    [Authorize(Policy = "RRHH.CARGO.CREAR")]
+    public IActionResult Create() => View(new Cargo());
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "RRHH.CARGO.CREAR")]
+    public async Task<IActionResult> Create(Cargo cargo)
+    {
+        if (ModelState.IsValid)
         {
-            _context = context;
+            var result = await _hrService.CreateCargoAsync(cargo);
+            if (result.Succeeded) return RedirectToAction(nameof(Index));
+            ModelState.AddModelError("", result.Message);
         }
+        return View(cargo);
+    }
 
-        // GET: Cargo
-        public async Task<IActionResult> Index()
+    [Authorize(Policy = "RRHH.CARGO.EDITAR")]
+    public async Task<IActionResult> Edit(Guid? id)
+    {
+        if (id == null) return NotFound();
+        var cargo = (await _hrService.GetCargosAsync()).FirstOrDefault(c => c.Id == id);
+        if (cargo == null) return NotFound();
+        return View(cargo);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "RRHH.CARGO.EDITAR")]
+    public async Task<IActionResult> Edit(Guid id, Cargo cargo)
+    {
+        if (id != cargo.Id) return NotFound();
+        if (ModelState.IsValid)
         {
-            return View(await _context.Cargos.ToListAsync());
+            var result = await _hrService.UpdateCargoAsync(cargo);
+            if (result.Succeeded) return RedirectToAction(nameof(Index));
+            ModelState.AddModelError("", result.Message);
         }
-
-        // GET: Cargo/Details/5
-        public async Task<IActionResult> Details(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var cargo = await _context.Cargos
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (cargo == null)
-            {
-                return NotFound();
-            }
-
-            return View(cargo);
-        }
-
-        // GET: Cargo/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: Cargo/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,EntidadId,Codigo,Nombre,SalarioEscalaMin,SalarioEscalaMax")] Cargo cargo)
-        {
-            if (ModelState.IsValid)
-            {
-                cargo.Id = Guid.NewGuid();
-                _context.Add(cargo);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(cargo);
-        }
-
-        // GET: Cargo/Edit/5
-        public async Task<IActionResult> Edit(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var cargo = await _context.Cargos.FindAsync(id);
-            if (cargo == null)
-            {
-                return NotFound();
-            }
-            return View(cargo);
-        }
-
-        // POST: Cargo/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,EntidadId,Codigo,Nombre,SalarioEscalaMin,SalarioEscalaMax")] Cargo cargo)
-        {
-            if (id != cargo.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(cargo);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!CargoExists(cargo.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(cargo);
-        }
-
-        // GET: Cargo/Delete/5
-        public async Task<IActionResult> Delete(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var cargo = await _context.Cargos
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (cargo == null)
-            {
-                return NotFound();
-            }
-
-            return View(cargo);
-        }
-
-        // POST: Cargo/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
-        {
-            var cargo = await _context.Cargos.FindAsync(id);
-            if (cargo != null)
-            {
-                _context.Cargos.Remove(cargo);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool CargoExists(Guid id)
-        {
-            return _context.Cargos.Any(e => e.Id == id);
-        }
+        return View(cargo);
     }
 }

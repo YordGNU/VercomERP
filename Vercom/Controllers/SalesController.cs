@@ -1,34 +1,28 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 using Vercom.Models;
 using Vercom.Services;
+using Vercom.Security;
+using Vercom.ViewModels;
 
 namespace Vercom.Controllers;
 
 [Authorize]
 public class SalesController : Controller
 {
-    private readonly AppDbContext _context;
     private readonly ISalesService _salesService;
-    private Guid CurrentEntidadId => Guid.Parse(User.FindFirst("EntidadId")?.Value ?? Guid.Empty.ToString());
+    private readonly IEntidadProvider _entidadProvider;
 
-    public SalesController(AppDbContext context, ISalesService salesService)
+    public SalesController(ISalesService salesService, IEntidadProvider entidadProvider)
     {
-        _context = context;
         _salesService = salesService;
+        _entidadProvider = entidadProvider;
     }
 
     [Authorize(Policy = "COMERCIAL.FACTURA_VENTA.VER")]
     public async Task<IActionResult> Index()
     {
-        var invoices = await _context.FacturaVenta
-            .Include(f => f.Cliente)
-            .Where(f => f.EntidadId == CurrentEntidadId)
-            .OrderByDescending(f => f.Fecha)
-            .ToListAsync();
+        var invoices = await _salesService.GetInvoicesAsync();
         return View(invoices);
     }
 
@@ -37,14 +31,7 @@ public class SalesController : Controller
     {
         if (id == null) return NotFound();
 
-        var invoice = await _context.FacturaVenta
-            .Include(f => f.Cliente)
-            .Include(f => f.Contrato)
-            .Include(f => f.FacturaVentaDetalles).ThenInclude(d => d.Producto).ThenInclude(p => p.UnidadMedida)
-            .Include(f => f.FormaPagoVenta)
-            .Include(f => f.Asiento)
-            .FirstOrDefaultAsync(m => m.Id == id && m.EntidadId == CurrentEntidadId);
-
+        var invoice = await _salesService.GetInvoiceByIdAsync(id.Value);
         if (invoice == null) return NotFound();
 
         return View(invoice);
@@ -52,35 +39,33 @@ public class SalesController : Controller
 
     [HttpGet]
     [Authorize(Policy = "COMERCIAL.FACTURA_VENTA.CREAR")]
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
-        ViewData["ClienteId"] = new SelectList(_context.Clientes.Where(c => c.EntidadId == CurrentEntidadId && c.Activo), "Id", "NombreRazonSocial");
-        ViewData["AlmacenId"] = new SelectList(_context.Almacens.Where(a => a.EntidadId == CurrentEntidadId && a.Activo && a.EsPuntoVenta), "Id", "Nombre");
-        ViewData["ContratoId"] = new SelectList(_context.ContratoEconomicos.Where(c => c.EntidadId == CurrentEntidadId && c.Estado == "VIGENTE" && c.TerceroTipo == "CLIENTE"), "Id", "NumeroContrato");
-
-        ViewBag.Productos = _context.Productos
-            .Where(p => p.EntidadId == CurrentEntidadId && p.Activo && (p.Tipo == "TERMINADO" || p.Tipo == "ELABORADO"))
-            .Select(p => new { p.Id, p.Nombre, p.PrecioVentaActual, p.Codigo })
-            .ToList();
-
-        return View(new FacturaVentum {
-            Serie = "A",
-            Fecha = DateTimeOffset.Now,
-            TipoVenta = "MINORISTA",
-            CanalVenta = "ERP"
-        });
+        var vm = await _salesService.GetSalesCreateContextAsync();
+        return View(vm);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Policy = "COMERCIAL.FACTURA_VENTA.CREAR")]
-    public async Task<IActionResult> Create(FacturaVentum invoice)
+    public async Task<IActionResult> Create(SalesCreateViewModel vm)
     {
+        var invoice = vm.Invoice;
+
+        // Limpiar validaciones
+        ModelState.Remove("Invoice.Almacen");
+        ModelState.Remove("Invoice.Cliente");
+        ModelState.Remove("Invoice.Entidad");
+        ModelState.Remove("Invoice.Sucursal");
+        ModelState.Remove("Invoice.NumeroFactura");
+        ModelState.Remove("Invoice.EntidadId");
+
         if (ModelState.IsValid)
         {
-            invoice.EntidadId = CurrentEntidadId;
-            invoice.CreadoPor = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            invoice.EntidadId = _entidadProvider.CurrentEntidadId;
+            invoice.CreadoPor = _entidadProvider.CurrentUsuarioId;
             invoice.CanalVenta = "ERP";
+            invoice.Moneda = "CUP";
 
             var result = await _salesService.CreateInvoiceAsync(invoice);
             if (result.Succeeded)
@@ -90,12 +75,14 @@ public class SalesController : Controller
             }
             ModelState.AddModelError("", result.Message);
         }
+        else
+        {
+            var errors = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+            ModelState.AddModelError("", $"Verifique los datos: {errors}");
+        }
 
-        // Si hay error, recargar ViewBags
-        ViewData["ClienteId"] = new SelectList(_context.Clientes.Where(c => c.EntidadId == CurrentEntidadId), "Id", "NombreRazonSocial", invoice.ClienteId);
-        ViewData["AlmacenId"] = new SelectList(_context.Almacens.Where(a => a.EntidadId == CurrentEntidadId && a.EsPuntoVenta), "Id", "Nombre", invoice.AlmacenId);
-        ViewData["ContratoId"] = new SelectList(_context.ContratoEconomicos.Where(c => c.EntidadId == CurrentEntidadId), "Id", "NumeroContrato", invoice.ContratoId);
-        return View(invoice);
+        var contextVm = await _salesService.GetSalesCreateContextAsync(invoice);
+        return View(contextVm);
     }
 
     [HttpPost]

@@ -1,8 +1,8 @@
-Ôªø@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Authorization
 @inject IAuthorizationService AuthorizationService
 @model IEnumerable<Vercom.Models.Producto>
 @{
-    ViewBag.Title = "Cat√°logo de Productos";
+    ViewBag.Title = "Cat·logo de Productos";
 }
 
 <div class="page-title-head d-flex align-items-center">
@@ -28,7 +28,7 @@
                 </div>
                 <div class="col-auto">
                     <div class="input-group input-group-sm">
-                        <input type="text" class="form-control" placeholder="Buscar por nombre o c√≥digo...">
+                        <input type="text" class="form-control" placeholder="Buscar por nombre o cÛdigo...">
                         <button class="btn btn-outline-secondary" type="button"><i class="ti ti-search"></i></button>
                     </div>
                 </div>
@@ -36,11 +36,11 @@
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table id="dataTable" class="table table-hover align-middle w-100">
                     <thead class="table-light">
                         <tr>
-                            <th width="100">C√≥digo</th>
-                            <th>Producto / Descripci√≥n</th>
+                            <th width="100">CÛdigo</th>
+                            <th>Producto / DescripciÛn</th>
                             <th>Familia</th>
                             <th>U.M.</th>
                             <th class="text-end">Precio Venta</th>
@@ -72,8 +72,8 @@
                                     <small class="badge bg-info-subtle text-info">@item.Tipo</small>
                                 </td>
                                 <td class="text-center">
-                                    @if (item.Activo) { <span class="text-success">‚óè Activo</span> }
-                                    else { <span class="text-danger">‚óè Inactivo</span> }
+                                    @if (item.Activo) { <span class="text-success">? Activo</span> }
+                                    else { <span class="text-danger">? Inactivo</span> }
                                 </td>
                                 <td class="text-end">
                                     <div class="d-flex justify-content-end gap-1">
@@ -90,3 +90,12 @@
         </div>
     </div>
 </div>
+
+
+@section Scripts {
+    <script>
+        .ready(function () {
+            #dataTable.DataTable();
+        });
+    </script>
+}

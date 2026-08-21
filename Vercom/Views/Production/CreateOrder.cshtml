@@ -1,0 +1,64 @@
+@model Vercom.ViewModels.ProductionOrderViewModel
+@{
+    ViewBag.Title = Model.Title;
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">@Model.Title</h4>
+    </div>
+</div>
+
+<div class="container-xxl mt-4">
+    <form asp-action="CreateOrder" method="post">
+        <div class="row">
+            <div class="col-lg-12 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light-subtle">
+                        <h4 class="card-title">Planificación de Lote de Producción (RF-44)</h4>
+                    </div>
+                    <div class="card-body">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="Order.ProductoTerminadoId" class="form-label fw-bold">Producto a Elaborar</label>
+                                <select asp-for="Order.ProductoTerminadoId" name="Order.ProductoTerminadoId" class="form-select" asp-items="Model.ProductosElaborados" required>
+                                    <option value="">-- Seleccione Producto --</option>
+                                </select>
+                                <small class="text-muted">Debe tener una BOM activa vinculada.</small>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label asp-for="Order.CantidadPlanificada" class="form-label fw-bold">Cantidad a Producir</label>
+                                <input asp-for="Order.CantidadPlanificada" name="Order.CantidadPlanificada" type="number" step="0.0001" class="form-control" required />
+                            </div>
+
+                            <div class="col-md-3">
+                                <label asp-for="Order.FechaInicioPlan" class="form-label fw-bold">Fecha Planificada</label>
+                                <input asp-for="Order.FechaInicioPlan" name="Order.FechaInicioPlan" type="date" class="form-control" required />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Order.AlmacenInsumosId" class="form-label fw-bold">Almacén de Insumos (Salida)</label>
+                                <select asp-for="Order.AlmacenInsumosId" name="Order.AlmacenInsumosId" class="form-select" asp-items="Model.Almacenes" required></select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Order.AlmacenProductoId" class="form-label fw-bold">Almacén de Destino (Entrada PT)</label>
+                                <select asp-for="Order.AlmacenProductoId" name="Order.AlmacenProductoId" class="form-select" asp-items="Model.Almacenes" required></select>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                            <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary btn-lg px-5">
+                                <i class="ti ti-calendar-plus me-1"></i> PLANIFICAR ORDEN
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Authorization
 @model IEnumerable<Vercom.Models.CuentaContable>
 @inject IAuthorizationService AuthorizationService
 @{
@@ -30,10 +30,10 @@
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table id="dataTable" class="table table-hover align-middle w-100">
                     <thead class="table-light">
                         <tr>
-                            <th width="120">Código</th>
+                            <th width="120">C�digo</th>
                             <th>Nombre de la Cuenta</th>
                             <th>Clase</th>
                             <th>Naturaleza</th>
@@ -65,14 +65,14 @@
                                     @if (item.AceptaMovimiento) { <i class="ti ti-check text-success fs-18"></i> }
                                 </td>
                                 <td class="text-center">
-                                    @if (item.Activo) { <span class="text-success">●</span> }
-                                    else { <span class="text-danger">●</span> }
+                                    @if (item.Activo) { <span class="text-success">?</span> }
+                                    else { <span class="text-danger">?</span> }
                                 </td>
                                 <td class="text-end">
                                     <div class="d-flex justify-content-end gap-1">
                                         <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-xs btn-light"><i class="ti ti-edit"></i></a>
                                         @if (!item.AceptaMovimiento) {
-                                            <a asp-action="Create" asp-route-padreId="@item.Id" class="btn btn-xs btn-light text-primary" title="Añadir Subcuenta"><i class="ti ti-plus"></i></a>
+                                            <a asp-action="Create" asp-route-padreId="@item.Id" class="btn btn-xs btn-light text-primary" title="A�adir Subcuenta"><i class="ti ti-plus"></i></a>
                                         }
                                         <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-xs btn-light text-danger"><i class="ti ti-trash"></i></a>
                                     </div>
@@ -85,3 +85,12 @@
         </div>
     </div>
 </div>
+
+
+@section Scripts {
+    <script>
+        .ready(function () {
+            #dataTable.DataTable();
+        });
+    </script>
+}

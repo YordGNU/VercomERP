@@ -1,11 +1,11 @@
-ï»¿@model IEnumerable<Vercom.Models.Entidad>
+@model IEnumerable<Vercom.Models.Entidad>
 @{
     ViewBag.Title = "Consola de Entidades";
 }
 
 <div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">AdministraciÃ³n Global (Multi-entidad)</h4>
+        <h4 class="page-main-title m-0">Administración Global (Multi-entidad)</h4>
     </div>
     <div class="text-end">
         <a asp-action="Create" class="btn btn-primary">
@@ -18,10 +18,10 @@
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table id="dataTable" class="table table-hover align-middle w-100">
                     <thead class="table-light">
                         <tr>
-                            <th>RazÃ³n Social / Empresa</th>
+                            <th>Razón Social / Empresa</th>
                             <th>NIT</th>
                             <th>Provincia</th>
                             <th>Moneda</th>
@@ -54,3 +54,12 @@
         </div>
     </div>
 </div>
+
+
+@section Scripts {
+    <script>
+        .ready(function () {
+            #dataTable.DataTable();
+        });
+    </script>
+}

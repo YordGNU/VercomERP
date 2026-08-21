@@ -1,0 +1,76 @@
+@model Vercom.ViewModels.EmployeeContractViewModel
+@{
+    ViewBag.Title = Model.Title;
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">@Model.Title</h4>
+    </div>
+</div>
+
+<div class="container-xxl mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light-subtle">
+                    <h5 class="card-title mb-0">Empleado: <span class="text-primary">@Model.NombreEmpleado</span></h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="AddContract" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+                        <input type="hidden" asp-for="Contrato.EmpleadoId" name="Contrato.EmpleadoId" />
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="Contrato.FechaInicio" class="form-label fw-bold">Fecha de Inicio</label>
+                                <input asp-for="Contrato.FechaInicio" name="Contrato.FechaInicio" type="date" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Contrato.FechaFin" class="form-label fw-bold">Fecha de Término</label>
+                                <input asp-for="Contrato.FechaFin" name="Contrato.FechaFin" type="date" class="form-control" />
+                                <small class="text-muted">Deje en blanco para contratos indeterminados.</small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Contrato.TipoContrato" class="form-label fw-bold">Modalidad de Contrato</label>
+                                <select asp-for="Contrato.TipoContrato" name="Contrato.TipoContrato" class="form-select" asp-items="Model.TiposContrato" required></select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Contrato.CargoId" class="form-label fw-bold">Cargo / Ocupación</label>
+                                <select asp-for="Contrato.CargoId" name="Contrato.CargoId" class="form-select" asp-items="Model.Cargos" required></select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Contrato.SalarioPactado" class="form-label fw-bold">Salario Mensual Pactado ($)</label>
+                                <input asp-for="Contrato.SalarioPactado" name="Contrato.SalarioPactado" type="number" step="0.01" class="form-control text-end" required />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Contrato.JornadaHorasSemana" class="form-label fw-bold">Jornada Semanal (Horas)</label>
+                                <input asp-for="Contrato.JornadaHorasSemana" name="Contrato.JornadaHorasSemana" type="number" class="form-control" value="44" required />
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Contrato.DocumentoUrl" class="form-label fw-bold">Referencia a Documento Físico</label>
+                                <input asp-for="Contrato.DocumentoUrl" name="Contrato.DocumentoUrl" class="form-control" placeholder="Ej: Carpeta 4, Expediente #12" />
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                            <a asp-action="File" asp-route-id="@Model.Contrato.EmpleadoId" class="btn btn-outline-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary px-5">
+                                <i class="ti ti-device-floppy me-1"></i> ACTIVAR NUEVO CONTRATO
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="alert alert-warning mt-4 py-2 small border-0 shadow-sm">
+                <i class="ti ti-info-circle me-1"></i> RF-20: Al activar este contrato, el anterior pasará automáticamente al historial como HISTÓRICO.
+            </div>
+        </div>
+    </div>
+</div>
