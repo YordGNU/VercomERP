@@ -6,16 +6,13 @@ namespace Vercom.Models;
 
 public partial class AppDbContext : DbContext
 {
-    private readonly Security.IEntidadProvider _entidadProvider;
-
     public AppDbContext()
     {
     }
 
-    public AppDbContext(DbContextOptions<AppDbContext> options, Security.IEntidadProvider entidadProvider)
+    public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
     {
-        _entidadProvider = entidadProvider;
     }
 
     public virtual DbSet<ActivoFijo> ActivoFijos { get; set; }
@@ -210,27 +207,12 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<WebhookSuscripcion> WebhookSuscripcions { get; set; }
 
-    public Guid CurrentEntidadId => _entidadProvider?.CurrentEntidadId ?? Guid.Empty;
-
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseSqlServer("Server=localhost;Database=VercomERP;User Id=sa;Password=sql2025*;Trusted_Connection=True;TrustServerCertificate=True;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Filtro Global Multi-inquilino dinámico (RNF-04)
-        modelBuilder.Entity<FacturaVentum>().HasQueryFilter(x => x.EntidadId == this.CurrentEntidadId);
-        modelBuilder.Entity<Almacen>().HasQueryFilter(x => x.EntidadId == this.CurrentEntidadId);
-        modelBuilder.Entity<Cliente>().HasQueryFilter(x => x.EntidadId == this.CurrentEntidadId);
-        modelBuilder.Entity<Producto>().HasQueryFilter(x => x.EntidadId == this.CurrentEntidadId);
-        modelBuilder.Entity<Existencium>().HasQueryFilter(x => x.Almacen.EntidadId == this.CurrentEntidadId);
-        modelBuilder.Entity<MovimientoInventario>().HasQueryFilter(x => x.EntidadId == this.CurrentEntidadId);
-        modelBuilder.Entity<ContratoEconomico>().HasQueryFilter(x => x.EntidadId == this.CurrentEntidadId);
-        modelBuilder.Entity<Empleado>().HasQueryFilter(x => x.EntidadId == this.CurrentEntidadId);
-        modelBuilder.Entity<PeriodoNomina>().HasQueryFilter(x => x.EntidadId == this.CurrentEntidadId);
-        modelBuilder.Entity<AsientoContable>().HasQueryFilter(x => x.EntidadId == this.CurrentEntidadId);
-        modelBuilder.Entity<PlantillaAprobadum>().HasQueryFilter(x => x.EntidadId == this.CurrentEntidadId);
-
         modelBuilder.Entity<ActivoFijo>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__activo_f__3213E83F600B9AB6");
@@ -955,10 +937,12 @@ public partial class AppDbContext : DbContext
             entity.HasIndex(e => e.Codigo, "UQ__concepto__40F9A206E4F05171").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Activo).HasColumnName("activo");
             entity.Property(e => e.Codigo)
                 .HasMaxLength(30)
                 .HasColumnName("codigo");
             entity.Property(e => e.CuentaContableId).HasColumnName("cuenta_contable_id");
+            entity.Property(e => e.EntidadId).HasColumnName("entidad_id");
             entity.Property(e => e.Formula).HasColumnName("formula");
             entity.Property(e => e.Nombre)
                 .HasMaxLength(100)
@@ -970,6 +954,11 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.CuentaContable).WithMany(p => p.ConceptoNominas)
                 .HasForeignKey(d => d.CuentaContableId)
                 .HasConstraintName("FK__concepto___cuent__65F62111");
+
+            entity.HasOne(d => d.Entidad).WithMany(p => p.ConceptoNominas)
+                .HasForeignKey(d => d.EntidadId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__concepto___entidad_95020317");
         });
 
         modelBuilder.Entity<Consecutivo>(entity =>
@@ -1189,6 +1178,9 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("banco");
             entity.Property(e => e.CuentaContableId).HasColumnName("cuenta_contable_id");
             entity.Property(e => e.EntidadId).HasColumnName("entidad_id");
+            entity.Property(e => e.Moneda)
+                .HasMaxLength(20)
+                .HasColumnName("moneda");
             entity.Property(e => e.NumeroCuenta)
                 .HasMaxLength(40)
                 .HasColumnName("numero_cuenta");
@@ -1310,6 +1302,11 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.AsientoOrigenId)
                 .HasConstraintName("FK__cuenta_po__asien__59C55456");
 
+            entity.HasOne(d => d.Cliente).WithMany(p => p.CuentaPorCobrars)
+                .HasForeignKey(d => d.ClienteId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__cuenta_po__asien__59785AS3");
+
             entity.HasOne(d => d.Entidad).WithMany(p => p.CuentaPorCobrars)
                 .HasForeignKey(d => d.EntidadId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -1364,6 +1361,11 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.EntidadId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__cuenta_po__entid__6166761E");
+
+            entity.HasOne(d => d.Proveedor).WithMany(p => p.CuentaPorPagars)
+                .HasForeignKey(d => d.ProveedorId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__cuenta_po__asien__625F763W");
         });
 
         modelBuilder.Entity<DeclaracionJuradum>(entity =>

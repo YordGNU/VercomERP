@@ -3,91 +3,97 @@
     ViewBag.Title = Model.Title;
 }
 
-<div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Emisión de Documento Primario</h4>
+        <h4 class="page-main-title m-0 fw-bold">Emisión de Documento Primario de Almacén</h4>
+        <p class="text-muted small mb-0">Registro oficial de vales de recepción, entrega o transferencias (RF-30).</p>
     </div>
 </div>
 
-<div class="container-xxl mt-4">
+<div class="container-xxl">
     <form asp-action="CreateMovement" method="post" id="movementForm">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="All" class="alert alert-danger py-2 small border-0 mb-4 shadow-sm"></div>
+
         <div class="row">
-            <!-- Datos de Cabecera -->
-            <div class="col-lg-12 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
-                        <div class="row g-3">
+            <!-- Columna Izquierda: Datos del Documento -->
+            <div class="col-lg-12">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="m-0 fw-bold"><i class="ti ti-file-certificate me-2 text-primary"></i>Datos de la Operación</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-4">
                             <div class="col-md-3">
-                                <label asp-for="Movement.TipoMovimientoId" class="form-label fw-bold">Tipo de Operación</label>
-                                <select asp-for="Movement.TipoMovimientoId" class="form-select" asp-items="Model.TiposMovimiento" required></select>
+                                <label class="form-label">Tipo de Movimiento</label>
+                                <select asp-for="Movement.TipoMovimientoId" name="Movement.TipoMovimientoId" class="form-control form-select w-100" asp-items="Model.TiposMovimiento" required></select>
                             </div>
                             <div class="col-md-3">
-                                <label asp-for="Movement.NumeroDocumento" class="form-label fw-bold">Nº de Vale / Informe</label>
-                                <input asp-for="Movement.NumeroDocumento" class="form-control" placeholder="Ej: REC-2026-001" required />
+                                <label class="form-label">Nº de Documento (Vale)</label>
+                                <input asp-for="Movement.NumeroDocumento" name="Movement.NumeroDocumento" class="form-control w-100 fw-bold text-primary text-center" placeholder="REC-0001" required />
                             </div>
                             <div class="col-md-3">
-                                <label asp-for="Movement.Fecha" class="form-label fw-bold">Fecha Operación</label>
-                                <input asp-for="Movement.Fecha" type="datetime-local" class="form-control" required />
+                                <label class="form-label">Fecha de Ejecución</label>
+                                <input asp-for="Movement.Fecha" name="Movement.Fecha" type="datetime-local" class="form-control w-100" required />
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label fw-bold">Responsable</label>
-                                <input type="text" class="form-control" value="@User.Identity.Name" readonly />
+                                <label class="form-label">Ejecutante</label>
+                                <input type="text" class="form-control w-100 bg-light-subtle" value="@User.Identity.Name" readonly />
                             </div>
 
                             <div class="col-md-6" id="divOrigen">
-                                <label asp-for="Movement.AlmacenOrigenId" class="form-label fw-bold">Almacén de Salida (Origen)</label>
-                                <select asp-for="Movement.AlmacenOrigenId" class="form-select" asp-items="Model.Almacenes">
-                                    <option value="">-- No aplica --</option>
+                                <label class="form-label">Almacén de Origen (Salida)</label>
+                                <select asp-for="Movement.AlmacenOrigenId" name="Movement.AlmacenOrigenId" class="form-control form-select w-100" asp-items="Model.Almacenes">
+                                    <option value="">-- Procedencia Externa --</option>
                                 </select>
                             </div>
                             <div class="col-md-6" id="divDestino">
-                                <label asp-for="Movement.AlmacenDestinoId" class="form-label fw-bold">Almacén de Entrada (Destino)</label>
-                                <select asp-for="Movement.AlmacenDestinoId" class="form-select" asp-items="Model.Almacenes">
-                                    <option value="">-- No aplica --</option>
+                                <label class="form-label">Almacén de Destino (Entrada)</label>
+                                <select asp-for="Movement.AlmacenDestinoId" name="Movement.AlmacenDestinoId" class="form-control form-select w-100" asp-items="Model.Almacenes">
+                                    <option value="">-- Salida Definitiva --</option>
                                 </select>
                             </div>
 
                             <div class="col-12">
-                                <label asp-for="Movement.Observaciones" class="form-label fw-bold">Observaciones / Justificación</label>
-                                <textarea asp-for="Movement.Observaciones" class="form-control" rows="2" placeholder="Describa el motivo del movimiento..."></textarea>
+                                <label class="form-label">Observaciones / Justificación de la Operación</label>
+                                <textarea asp-for="Movement.Observaciones" name="Movement.Observaciones" class="form-control w-100" rows="2" placeholder="Describa el motivo..."></textarea>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Tabla de Productos -->
-            <div class="col-lg-12">
                 <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h4 class="card-title mb-0">Listado de Artículos</h4>
-                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addRow()">
-                            <i class="ti ti-plus me-1"></i> Añadir Producto
+                    <div class="card-header">
+                        <h5 class="m-0 fw-bold"><i class="ti ti-list-check me-2 text-primary"></i>Artículos y Cantidades</h5>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="addRow()">
+                            <i class="ti ti-plus"></i> AÑADIR PARTIDA
                         </button>
                     </div>
                     <div class="card-body p-0">
-                        <table class="table mb-0" id="detailsTable">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="40%">Producto</th>
-                                    <th width="15%">Cantidad</th>
-                                    <th width="15%">Costo Unitario ($)</th>
-                                    <th>Lote / Vencimiento</th>
-                                    <th width="50"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Dinámico -->
-                            </tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table mb-0" id="detailsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Producto / Insumo</th>
+                                        <th width="160" class="text-end">Cantidad</th>
+                                        <th width="160" class="text-end">Costo Unitario ($)</th>
+                                        <th width="250">Lote / Vencimiento</th>
+                                        <th width="60"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- JS -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <div class="card-footer d-flex justify-content-end gap-2">
-                        <a asp-action="Movements" class="btn btn-outline-secondary">Cancelar</a>
-                        <button type="submit" class="btn btn-primary btn-lg px-5" id="btnSubmit">
-                            <i class="ti ti-device-floppy me-1"></i> REGISTRAR MOVIMIENTO
-                        </button>
-                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-3 mt-4 mb-5">
+                    <a asp-action="Movements" class="btn btn-sm btn-outline px-5">DESCARTAR</a>
+                    <button type="submit" class="btn btn-sm btn-primary px-5 py-3 shadow">
+                        <i class="ti ti-device-floppy"></i> REGISTRAR DOCUMENTO
+                    </button>
                 </div>
             </div>
         </div>
@@ -104,22 +110,22 @@
             const row = document.createElement("tr");
             row.innerHTML = `
                 <td>
-                    <select name="Movement.MovimientoInventarioDetalles[${rowCount}].ProductoId" class="form-select select2" required>
-                        <option value="">-- Seleccione Articulo --</option>
+                    <select name="Movement.MovimientoInventarioDetalles[${rowCount}].ProductoId" class="form-control form-select w-100 select2" required>
+                        <option value="">-- Buscar Artículo --</option>
                         ${parsedProductos.map(p => `<option value="${p.id}">${p.display}</option>`).join('')}
                     </select>
                 </td>
-                <td><input name="Movement.MovimientoInventarioDetalles[${rowCount}].Cantidad" type="number" step="0.0001" class="form-control text-end" value="1.0000" required /></td>
-                <td><input name="Movement.MovimientoInventarioDetalles[${rowCount}].CostoUnitario" type="number" step="0.01" class="form-control text-end" placeholder="Opcional" /></td>
+                <td><input name="Movement.MovimientoInventarioDetalles[${rowCount}].Cantidad" type="number" step="0.0001" class="form-control text-numeric w-100" value="1.0000" required /></td>
+                <td><input name="Movement.MovimientoInventarioDetalles[${rowCount}].CostoUnitario" type="number" step="0.01" class="form-control text-numeric w-100" placeholder="0.00" /></td>
                 <td>
-                    <div class="input-group input-group-sm">
-                        <input name="Movement.MovimientoInventarioDetalles[${rowCount}].Lote" class="form-control" placeholder="Lote" />
-                        <input name="Movement.MovimientoInventarioDetalles[${rowCount}].FechaVencimiento" type="date" class="form-control" />
+                    <div class="input-group">
+                        <input name="Movement.MovimientoInventarioDetalles[${rowCount}].Lote" class="form-control w-50" placeholder="Lote" />
+                        <input name="Movement.MovimientoInventarioDetalles[${rowCount}].FechaVencimiento" type="date" class="form-control w-50" />
                     </div>
                 </td>
                 <td class="text-center">
-                    <button type="button" class="btn btn-sm btn-link text-danger" onclick="this.closest('tr').remove();">
-                        <i class="ti ti-trash"></i>
+                    <button type="button" class="btn btn-sm text-danger border-0 bg-transparent" onclick="this.closest('tr').remove();">
+                        <i class="ti ti-trash fs-18"></i>
                     </button>
                 </td>
             `;

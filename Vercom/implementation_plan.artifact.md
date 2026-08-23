@@ -1,55 +1,51 @@
-# Plan Maestro de Refactorización y Auditoría Final (ERP Completo)
+# Plan: Modernización y Estandarización de Vistas (Index & Create)
 
-Este plan aborda la refactorización de **TODOS** los controladores restantes en el sistema para asegurar que operen 100% bajo el patrón de **Servicios + ViewModels**, eliminando cualquier acceso directo al `AppDbContext` desde la capa de UI.
-
-## Objetivo
-Garantizar la consistencia arquitectónica en todos los módulos (0-7), estabilizar el Model Binding en los formularios y eliminar definitivamente el código scaffolded redundante.
+Este plan tiene como objetivo elevar la calidad de la interfaz de usuario del ERP Vercom Elite, asegurando que todos los listados (`Index`) y formularios (`Create`) sigan un patrón de diseño profesional, coherente y altamente funcional basado en el framework **Tabler**.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Consolidación de Servicios:** Se crearán métodos CRUD genéricos y especializados en los servicios existentes (`IInventoryService`, `IHRService`, `IAccountingService`, `IPurchaseService`) para absorber la lógica de los controladores de catálogos.
+> **Consistencia de DataTables:** Se estandarizará el uso de DataTables en todos los `Index` con soporte para idioma español y ordenamiento por defecto. ¿Desea que se habiliten botones de exportación (PDF/Excel) en todos los listados?
 
-> [!WARNING]
-> **Aislamiento Multi-inquilino:** Se verificará que el Filtro Global Dinámico de `AppDbContext` cubra el 100% de las entidades, incluyendo las de configuración técnica (Consecutivos, Parámetros).
+> [!TIP]
+> **UX de Formularios:** Los formularios de creación se organizarán en secciones lógicas usando "Cards" y cuadrículas responsivas para mejorar la velocidad de entrada de datos, vital para un sistema POS/ERP.
 
-## Propuesta de Cambios por Módulo
+## Estrategia de Mejora
 
-### 1. Módulo de Inventario y Almacén [REMAINING]
-*   **Servicio:** Expandir `IInventoryService` para gestionar Almacenes, Familias, Unidades de Medida y Listas de Precio.
-*   **Controllers:** Refactorizar `AlmacenController`, `FamiliaProductoController`, `UnidadMedidumController`, `TipoMovimientoController`, `ListaPrecioController`.
-*   **ViewModels:** Crear modelos para cada formulario de configuración.
+### 1. Vistas de Listado (Index)
+- **Cabeceras Dinámicas:** Inclusión de títulos claros, descripciones breves y breadcrumbs.
+- **Acciones Prominentes:** Botones de "Crear Nuevo" destacados en la esquina superior derecha.
+- **DataTables Profesional:**
+  - Inicialización corregida (jQuery `$(document).ready`).
+  - Localización al español.
+  - Diseño `table-hover` y `align-middle`.
+- **Badges de Estado:** Uso de colores "soft" (badge-soft-success, etc.) para mayor legibilidad.
 
-### 2. Módulo Comercial [REMAINING]
-*   **Servicio:** Crear `ICommercialService` (o expandir `IPurchaseService`/`ISalesService`) para gestionar Clientes, Proveedores y Contratos Económicos.
-*   **Controllers:** Refactorizar `ClienteController`, `ProveedorController`, `ContratoEconomicoController`.
+### 2. Vistas de Creación (Create)
+- **Agrupación Lógica:** Uso de tarjetas (`card`) para separar datos personales, técnicos y contables.
+- **Layout Responsivo:** Implementación de `row g-3` y columnas balanceadas.
+- **Limpieza de Inputs:** Ocultar campos técnicos (`EntidadId`, `SucursalId`) que el sistema gestiona internamente.
+- **Validación en Tiempo Real:** Integración consistente de `_ValidationScriptsPartial`.
+- **Barra de Acciones:** Botones "Guardar" y "Cancelar" estandarizados al final del formulario.
 
-### 3. Módulo Contabilidad y Finanzas [REMAINING]
-*   **Servicio:** Expandir `ICashBankService` y `IAccountingService` para gestionar Cajas, Cuentas Bancarias, Centros de Costo y Tipos de Comprobante.
-*   **Controllers:** Refactorizar `CajaController`, `CuentaBancariumController`, `CentroCostoController`, `TipoComprobanteController`.
+## Módulos Prioritarios
 
-### 4. Módulo de Producción y Mantenimiento [REMAINING]
-*   **Servicio:** Expandir `IProductionService` para gestionar Equipos y Mantenimiento Programado.
-*   **Controllers:** Refactorizar `EquipoController`, `MantenimientoProgramadoController`, `MermaController`.
+Se aplicarán las mejoras de forma iterativa por módulos:
 
-### 5. Núcleo y Configuración Técnica [REMAINING]
-*   **Servicio:** Expandir `IAdminService` para gestionar Consecutivos y Parámetros del Sistema.
-*   **Controllers:** Refactorizar `ConsecutivoController`, `ParametroSistemaController`.
+### [Módulo 1] Contabilidad y Finanzas
+- `ActivoFijo`, `CuentaContable`, `CentroCosto`, `AsientoContable`.
 
-## Fase de Limpieza Definitiva [DELETE]
-Se eliminarán los controladores de integración que no tengan una UI definida o que hayan sido absorbidos por servicios de fondo:
-*   `ApiLogController.cs`, `ApiTokenController.cs`, `ApiRateLimitController.cs`.
-*   Cualquier controlador de "Detalle" remanente.
+### [Módulo 2] Recursos Humanos
+- `Empleado`, `Cargo`, `ConceptoNomina`.
+
+### [Módulo 3] Comercial y Abastecimiento
+- `Cliente`, `Proveedor`, `ContratoEconomico`, `Purchase`.
+
+### [Módulo 4] Inventario y Producción
+- `Producto`, `Almacen`, `ListaMateriale`.
 
 ## Plan de Verificación
 
-### Auditoría de Código
-*   Ejecutar búsqueda global de `_context` en la carpeta `Controllers`. El resultado debe ser 0 coincidencias al finalizar.
-*   Verificar que todos los métodos `POST` utilicen `Bind(Prefix = "...")` o ViewModels directos para evitar el fallo de Model Binding.
-
-### Manual
-*   Navegación completa por el menú lateral (`_SideNav.cshtml`) para asegurar que no existan enlaces a controladores eliminados.
-
-## Open Questions
-1.  **Módulo POS:** ¿Los controladores `SesionCajaPo`, `DispositivoPo` y `PosVentaPendiente` se refactorizan ahora o se reservan para la fase de Integración POS Avanzada?
-2.  **Reportes Dinámicos:** ¿Desea que el `ReportsController` centralice también las descargas de los "Paquetes Informativos"?
+1.  **Integridad Visual:** Verificar que todas las páginas se vean uniformes y profesionales.
+2.  **Funcionalidad de Tablas:** Comprobar que el buscador y el ordenamiento de DataTables funcionen en cada listado.
+3.  **Flujo de Datos:** Asegurar que los formularios sigan enviando los datos correctamente a los controladores tras el cambio de layout.

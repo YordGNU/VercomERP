@@ -1,0 +1,145 @@
+@model Vercom.Models.Proveedor
+@{
+    ViewBag.Title = "Ficha del Proveedor";
+}
+
+<div class="page-title-head d-flex align-items-center mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">@Model.RazonSocial</h4>
+        <p class="text-muted small mb-0">NIT: <span class="fw-bold">@(Model.Nit ?? "N/A")</span> | Tipo: @Model.TipoPersona</p>
+    </div>
+    <div class="text-end d-flex gap-2">
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+            <i class="ti ti-arrow-left me-1"></i> VOLVER
+        </a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
+            <i class="ti ti-edit me-1"></i> EDITAR
+        </a>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-building me-2 text-primary"></i>Información Corporativa</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-9">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Razón Social</label>
+                            <span class="fs-16 fw-bold">@Model.RazonSocial</span>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Estado</label>
+                            <span class="badge @(Model.Activo ? "bg-success" : "bg-danger")">@(Model.Activo ? "ACTIVO" : "INACTIVO")</span>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Dirección Fiscal</label>
+                            <span>@(Model.Direccion ?? "No especificada")</span>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Teléfono de Contacto</label>
+                            <span>@(Model.Telefono ?? "N/A")</span>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Email de Pedidos</label>
+                            <a href="mailto:@Model.Email">@(Model.Email ?? "N/A")</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-history me-2 text-primary"></i>Últimas Órdenes de Compra</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Nº Orden</th>
+                                    <th>Fecha</th>
+                                    <th class="text-end">Monto Total</th>
+                                    <th class="text-center">Estado</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.OrdenCompras.Any())
+                                {
+                                    foreach (var o in Model.OrdenCompras.OrderByDescending(x => x.Fecha).Take(5))
+                                    {
+                                        <tr>
+                                            <td class="fw-bold">@o.NumeroOrden</td>
+                                            <td class="small">@o.Fecha.ToString("dd/MM/yy")</td>
+                                            <td class="text-end fw-bold">@o.Total.ToString("C")</td>
+                                            <td class="text-center">
+                                                <span class="badge @(o.Estado == "RECIBIDA" ? "bg-success" : "bg-warning")">@o.Estado</span>
+                                            </td>
+                                            <td class="text-end">
+                                                <a asp-controller="Purchase" asp-action="Details" asp-route-id="@o.Id" class="btn btn-sm btn-outline-secondary py-0 px-2">Ver</a>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr><td colspan="5" class="text-center py-3 text-muted">No se registran compras previas.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-credit-card me-2 text-primary"></i>Datos de Pago</h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <label class="text-muted tiny text-uppercase d-block mb-1">Cuenta Bancaria</label>
+                            <span class="fw-bold font-monospace">@(Model.CuentaBancaria ?? "NO REGISTRADA")</span>
+                        </li>
+                        <li class="list-group-item">
+                            <label class="text-muted tiny text-uppercase d-block mb-1">Cuenta Contable (CxP)</label>
+                            @if (Model.CuentaContable != null)
+                            {
+                                <a asp-controller="CuentaContable" asp-action="Details" asp-route-id="@Model.CuentaContableId" class="small fw-bold">
+                                    @Model.CuentaContable.Codigo - @Model.CuentaContable.Nombre
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning-subtle text-warning small text-uppercase">Sin vinculación</span>
+                            }
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card bg-red-lt">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-red text-white rounded p-2 me-3">
+                            <i class="ti ti-receipt-off fs-24"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small fw-bold">Deuda con Proveedor</div>
+                            <div class="fs-24 fw-bold">0.00 CUP</div>
+                        </div>
+                    </div>
+                    <a asp-controller="CuentaPorPagar" asp-action="Index" asp-route-proveedorId="@Model.Id" class="btn btn-sm btn-danger w-100">
+                        GESTIONAR PAGOS
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

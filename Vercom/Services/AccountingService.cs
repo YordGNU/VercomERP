@@ -135,7 +135,7 @@ public class AccountingService : IAccountingService
         {
             Account = existing ?? new CuentaContable { Activo = true, Moneda = "CUP", Nivel = 1 },
             CuentasPadre = new SelectList(cuentasPadre, "Id", "Display"),
-            Clases = new SelectList(new[] { "ACTIVO", "PASIVO", "PATRIMONIO", "INGRESOS", "GASTOS" }),
+            Clases = new SelectList(new[] { "ACTIVO", "PASIVO", "PATRIMONIO", "INGRESO", "GASTO", "ORDEN" }),
             Naturalezas = new SelectList(new[] { "DEUDORA", "ACREEDORA" })
         };
     }
@@ -254,8 +254,7 @@ public class AccountingService : IAccountingService
 
         // 2. Validar Periodo
         var period = await GetOrCreateActivePeriodAsync(entry.EntidadId, entry.Fecha.ToDateTime(TimeOnly.MinValue));
-        if (period == null || period.Estado != "ABIERTO")
-            return (false, "El periodo contable para esta fecha no existe o está cerrado.", null);
+        if (period == null || period.Estado != "ABIERTO") return (false, "El periodo contable para esta fecha no existe o está cerrado.", null);
 
         entry.PeriodoId = period.Id;
         entry.TotalDebe = totalDebe;
@@ -276,7 +275,6 @@ public class AccountingService : IAccountingService
 
         _context.AsientoContables.Add(entry);
         await _context.SaveChangesAsync();
-
         return (true, "Asiento creado exitosamente.", entry);
     }
 

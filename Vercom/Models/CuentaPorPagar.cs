@@ -30,13 +30,14 @@ public partial class CuentaPorPagar
     public string Estado { get; set; } = null!;
 
     public DateTimeOffset CreadoEn { get; set; }
-    public virtual Proveedor Proveedor { get; set; }
 
     public virtual AsientoContable? AsientoOrigen { get; set; }
 
     public virtual Entidad Entidad { get; set; } = null!;
 
     public virtual ICollection<PagoAplicado> PagoAplicados { get; set; } = new List<PagoAplicado>();
+
+    public virtual Proveedor Proveedor { get; set; } = null!;
 
     public virtual ICollection<RecepcionCompra> RecepcionCompras { get; set; } = new List<RecepcionCompra>();
 }

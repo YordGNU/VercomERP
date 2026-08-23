@@ -33,6 +33,8 @@ public partial class Proveedor
 
     public virtual CuentaContable? CuentaContable { get; set; }
 
+    public virtual ICollection<CuentaPorPagar> CuentaPorPagars { get; set; } = new List<CuentaPorPagar>();
+
     public virtual Entidad Entidad { get; set; } = null!;
 
     public virtual ICollection<OrdenCompra> OrdenCompras { get; set; } = new List<OrdenCompra>();

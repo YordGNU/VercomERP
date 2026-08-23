@@ -55,6 +55,8 @@ public partial class Entidad
 
     public virtual ICollection<Cliente> Clientes { get; set; } = new List<Cliente>();
 
+    public virtual ICollection<ConceptoNomina> ConceptoNominas { get; set; } = new List<ConceptoNomina>();
+
     public virtual ICollection<Consecutivo> Consecutivos { get; set; } = new List<Consecutivo>();
 
     public virtual ICollection<ContratoEconomico> ContratoEconomicos { get; set; } = new List<ContratoEconomico>();

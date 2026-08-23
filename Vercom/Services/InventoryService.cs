@@ -150,7 +150,7 @@ public class InventoryService : IInventoryService
             Familias = new SelectList(await _context.FamiliaProductos.ToListAsync(), "Id", "Nombre"),
             UnidadesMedida = new SelectList(await _context.UnidadMedida.ToListAsync(), "Id", "Nombre"),
             CuentasContables = new SelectList(cuentas, "Id", "Display"),
-            TiposProducto = new SelectList(new[] { "TERMINADO", "INSUMO", "ELABORADO", "SERVICIO" })
+            TiposProducto = new SelectList(new[] { "MATERIA_PRIMA", "EN_PROCESO", "TERMINADO", "SERVICIO", "MERCANCIA" })
         };
     }
 

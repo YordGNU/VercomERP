@@ -1,95 +1,73 @@
 @model IEnumerable<Vercom.Models.CentroCosto>
-
 @{
-    ViewData["Title"] = "Index";
+    ViewBag.Title = "Centros de Costo";
 }
 
-<div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Gesti髇 de CentroCosto</h4>
+        <h4 class="page-main-title m-0 fw-bold">Gesti贸n de Centros de Costo</h4>
+        <p class="text-muted small mb-0">Nomenclador para la imputaci贸n anal铆tica de gastos y recursos por unidad.</p>
     </div>
     <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">CentroCosto</a></li>
-            <li class="breadcrumb-item active">Listado</li>
-        </ol>
+        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
+            <i class="ti ti-plus"></i> NUEVO CENTRO DE COSTO
+        </a>
     </div>
 </div>
 
 <div class="container-xxl">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Listado de CentroCosto</h4>
-                </div>
-                <div class="card-body">
-
-
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<div class="table-responsive"><table id="dataTable" class="table table-hover align-middle w-100">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.EntidadId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Codigo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Nombre)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.SucursalId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Activo)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.EntidadId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Codigo)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Nombre)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.SucursalId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Activo)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table></div>
-                </div>
+    <div class="card">
+        <div class="card-header">
+            <h5 class="m-0 fw-bold"><i class="ti ti-chart-dots me-2 text-primary"></i>Configuraci贸n de Unidades de Costo</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table id="costCenterTable" class="table">
+                    <thead>
+                        <tr>
+                            <th width="150">C贸digo</th>
+                            <th>Nombre del Centro de Costo</th>
+                            <th width="200">Sucursal / Unidad</th>
+                            <th width="120" class="text-center">Estado</th>
+                            <th width="100" class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="text-numeric fw-bold text-primary">@item.Codigo</td>
+                                <td class="fw-semibold">@item.Nombre</td>
+                                <td><i class="ti ti-building-community me-1 text-muted"></i> @(item.Sucursal?.Nombre ?? "Central")</td>
+                                <td class="text-center">
+                                    @if (item.Activo) { <span class="badge badge-soft-success">ACTIVO</span> }
+                                    else { <span class="badge badge-soft-danger">INACTIVO</span> }
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline py-1 px-2" title="Detalles">
+                                            <i class="ti ti-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline py-1 px-2" title="Editar">
+                                            <i class="ti ti-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
 
-
 @section Scripts {
     <script>
-        .ready(function () {
-            #dataTable.DataTable();
+        $(document).ready(function () {
+            $('#costCenterTable').DataTable({
+                         language: { url: '/js/i18n/es-ES.json' }
+            });
         });
     </script>
 }

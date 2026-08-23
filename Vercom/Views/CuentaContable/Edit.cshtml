@@ -44,6 +44,10 @@
                                 <label asp-for="Account.Naturaleza" class="form-label fw-bold">Naturaleza</label>
                                 <select asp-for="Account.Naturaleza" name="Account.Naturaleza" class="form-select" asp-items="Model.Naturalezas" required></select>
                             </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Moneda</label>
+                                <input asp-for="Account.Moneda" name="Account.Moneda" class="form-control w-100 bg-light" readonly />
+                            </div>
 
                             <div class="col-md-4 d-flex align-items-end pb-1">
                                 <div class="form-check form-switch">

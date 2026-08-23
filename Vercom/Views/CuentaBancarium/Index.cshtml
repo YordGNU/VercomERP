@@ -3,61 +3,68 @@
     ViewBag.Title = "Cuentas Bancarias";
 }
 
-<div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Saldos en Bancos</h4>
+        <h4 class="page-main-title m-0 fw-bold">Saldos y Disponibilidad Bancaria</h4>
+        <p class="text-muted small mb-0">Control de cuentas en instituciones financieras para cobros y pagos corporativos.</p>
     </div>
     <div class="text-end">
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="ti ti-plus me-1"></i> Añadir Cuenta
+        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
+            <i class="ti ti-plus"></i> AÃ‘ADIR CUENTA BANCARIA
         </a>
     </div>
 </div>
 
-<div class="container-xxl mt-4">
+<div class="container-xxl">
     <div class="row">
         @foreach (var item in Model)
         {
-            <div class="col-md-6 mb-4">
-                <div class="card h-100 border-start border-info border-3">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between mb-3">
+            <div class="col-xl-6 col-md-12 mb-4">
+                <div class="card border-start border-info border-4 h-100 transition-all hover-shadow">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-4">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-md bg-info-subtle text-info rounded-3 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                    <i class="ti ti-building-bank fs-24"></i>
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold mb-0 text-dark">@item.Banco</h5>
+                                    <span class="text-numeric text-primary fw-semibold small">@item.NumeroCuenta</span>
+                                </div>
+                            </div>
+                            <span class="badge badge-soft-info">@item.TipoCuenta</span>
+                        </div>
+
+                        <div class="d-flex align-items-center justify-content-between py-3 px-4 bg-light-subtle border rounded-3 mb-4">
                             <div>
-                                <h4 class="card-title mb-1">@item.Banco</h4>
-                                <code class="text-primary fs-15">@item.NumeroCuenta</code>
+                                <p class="small text-muted text-uppercase mb-0 fw-bold">Saldo en @item.TipoCuenta</p>
+                                <h3 class="fw-bold text-dark mb-0 text-numeric">@item.SaldoActual.ToString("N2")</h3>
                             </div>
-                            <span class="badge bg-info-subtle text-info">@item.TipoCuenta</span>
-                        </div>
-
-                        <div class="d-flex align-items-center justify-content-between py-2 px-3 bg-light rounded">
-                            <h3 class="fw-bold mb-0">@item.SaldoActual.ToString("C")</h3>
-                            <div class="text-end small">
-                                <span class="text-muted d-block">Saldo Contable</span>
-                                <span class="text-success"><i class="ti ti-check me-1"></i>Conciliado</span>
+                            <div class="text-end">
+                                <span class="badge badge-soft-success py-1 px-3 border-0"><i class="ti ti-circle-check-filled me-1"></i> CONCILIADO</span>
+                                <small class="text-muted d-block mt-1 tiny">Act. @DateTime.Now.ToString("dd/MM")</small>
                             </div>
                         </div>
 
-                        <div class="mt-3 d-flex gap-2">
-                            <a asp-controller="MovimientoBancario" asp-action="Index" asp-route-cuentaId="@item.Id" class="btn btn-sm btn-outline-secondary w-100">Ver Movimientos</a>
-                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-light btn-icon"><i class="ti ti-settings"></i></a>
+                        <div class="d-flex gap-3 mt-auto">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary flex-grow-1">
+                                <i class="ti ti-eye me-1"></i> DETALLES
+                            </a>
+                            <a asp-controller="MovimientoBancario" asp-action="Index" asp-route-cuentaId="@item.Id" class="btn btn-sm btn-outline" title="Movimientos">
+                                <i class="ti ti-receipt-2"></i>
+                            </a>
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline" title="Configurar">
+                                <i class="ti ti-settings"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
         }
-        @if (!Model.Any()) {
-            <div class="col-12 text-center py-5 text-muted small">No hay cuentas bancarias registradas.</div>
-        }
     </div>
 </div>
 
-
-@section Scripts {
-    <script>
-        .ready(function () {
-            #dataTable.DataTable();
-        });
-    </script>
-}
-
-
+<style>
+    .hover-shadow:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important; }
+    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
+</style>

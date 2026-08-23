@@ -1,0 +1,127 @@
+@model Vercom.Models.ContratoEconomico
+@{
+    ViewBag.Title = "Detalle de Contrato Económico";
+}
+
+<div class="page-title-head d-flex align-items-center mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Contrato #@Model.NumeroContrato</h4>
+        <p class="text-muted small mb-0">Objeto: @Model.Objeto</p>
+    </div>
+    <div class="text-end d-flex gap-2">
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+            <i class="ti ti-arrow-left me-1"></i> VOLVER
+        </a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
+            <i class="ti ti-edit me-1"></i> EDITAR
+        </a>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-file-certificate me-2 text-primary"></i>Información del Contrato</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Número de Contrato</label>
+                            <span class="fs-16 fw-bold">@Model.NumeroContrato</span>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Tipo Tercero</label>
+                            <span class="badge bg-light text-dark">@Model.TerceroTipo</span>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Estado</label>
+                            <span class="badge @(Model.Estado == "VIGENTE" ? "bg-success" : "bg-secondary")">@Model.Estado</span>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Objeto del Contrato</label>
+                            <p class="fs-15">@Model.Objeto</p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Fecha de Firma</label>
+                            <span>@Model.FechaFirma.ToString("dd/MM/yyyy")</span>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Fecha Inicio</label>
+                            <span>@Model.FechaInicio.ToString("dd/MM/yyyy")</span>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Fecha Vencimiento</label>
+                            <span class="fw-bold @(Model.FechaFin.HasValue && Model.FechaFin < DateOnly.FromDateTime(DateTime.Now) ? "text-danger" : "")">
+                                @(Model.FechaFin?.ToString("dd/MM/yyyy") ?? "Indeterminado")
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-history me-2 text-primary"></i>Trazabilidad de Operaciones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 border-end">
+                            <div class="text-muted small text-uppercase fw-bold">Facturas Emitidas</div>
+                            <div class="fs-24 fw-bold">@Model.FacturaVenta.Count</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted small text-uppercase fw-bold">Órdenes de Compra</div>
+                            <div class="fs-24 fw-bold">@Model.OrdenCompras.Count</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-user me-2 text-primary"></i>Contraparte</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.TerceroTipo == "CLIENTE" && Model.Cliente != null)
+                    {
+                        <div class="text-muted small text-uppercase fw-bold mb-1">Cliente</div>
+                        <a asp-controller="Cliente" asp-action="Details" asp-route-id="@Model.ClienteId" class="fw-bold fs-15">
+                            @Model.Cliente.NombreRazonSocial
+                        </a>
+                        <div class="small text-muted">NIT/CI: @Model.Cliente.NitOCi</div>
+                    }
+                    else if (Model.TerceroTipo == "PROVEEDOR" && Model.Proveedor != null)
+                    {
+                        <div class="text-muted small text-uppercase fw-bold mb-1">Proveedor</div>
+                        <a asp-controller="Proveedor" asp-action="Details" asp-route-id="@Model.ProveedorId" class="fw-bold fs-15">
+                            @Model.Proveedor.RazonSocial
+                        </a>
+                        <div class="small text-muted">NIT: @Model.Proveedor.Nit</div>
+                    }
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-primary-subtle">
+                    <h5 class="m-0 fw-bold text-primary"><i class="ti ti-coin me-2"></i>Monto Pactado</h5>
+                </div>
+                <div class="card-body">
+                    <div class="fs-28 fw-bold text-center">
+                        @(Model.MontoTotal?.ToString("C") ?? "SIN LÍMITE")
+                    </div>
+                    @if (Model.DocumentoUrl != null)
+                    {
+                        <hr>
+                        <a href="@Model.DocumentoUrl" target="_blank" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="ti ti-download me-1"></i> VER DOCUMENTO DIGITAL
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

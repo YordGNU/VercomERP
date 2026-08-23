@@ -50,6 +50,9 @@ public class ProductoController : Controller
         ModelState.Remove("Producto.Familia");
         ModelState.Remove("Producto.UnidadMedida");
         ModelState.Remove("Producto.EntidadId");
+        ModelState.Remove("Producto.CuentaInventario");
+        ModelState.Remove("Producto.CuentaCostoVenta");
+        ModelState.Remove("Producto.CuentaIngreso");
 
         if (ModelState.IsValid)
         {
@@ -84,6 +87,9 @@ public class ProductoController : Controller
         ModelState.Remove("Producto.Familia");
         ModelState.Remove("Producto.UnidadMedida");
         ModelState.Remove("Producto.EntidadId");
+        ModelState.Remove("Producto.CuentaInventario");
+        ModelState.Remove("Producto.CuentaCostoVenta");
+        ModelState.Remove("Producto.CuentaIngreso");
 
         if (ModelState.IsValid)
         {

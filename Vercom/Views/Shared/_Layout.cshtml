@@ -14,7 +14,6 @@
     <!-- App css -->
     <link id="app-style" href="~/css/app.min.css" rel="stylesheet" type="text/css">
     <link href="~/js/plugins/dataTables/dataTables.bootstrap5.min.js" rel="stylesheet" />
-
     <link href="~/css/animate.css" rel="stylesheet" type="text/css">
     @if (IsSectionDefined("Styles"))
     {
@@ -38,6 +37,7 @@
     <partial name="_Theme" />
     <!-- Scripts -->
     <!-- Vendor js -->
+    <script src="~/js/jquery-3.7.1.intellisense.js"></script>
     <script src="~/js/vendors.min.js"></script>
     <script src="~/js/plugins/dataTables/jquery.dataTables.min.js"></script>
     <script src="~/js/plugins/dataTables/dataTables.bootstrap5.min.js"></script>
@@ -47,7 +47,6 @@
     <script src="~/js/config.js"></script>
     <script src="~/js/plugins/sweetalert/sweetalert2@11.js"></script>
     <script src="~/js/ajax/ajax.js"></script>
-    <script src="~/js/jquery-3.7.1.min.js"></script>
     <script>
         // Global SignalR
         const connection = new signalR.HubConnectionBuilder()

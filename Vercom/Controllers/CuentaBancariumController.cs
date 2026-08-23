@@ -44,10 +44,9 @@ public class CuentaBancariumController : Controller
     [Authorize(Policy = "CONTABILIDAD.CUENTA.CREAR")]
     public async Task<IActionResult> Create(BankAccountFormViewModel vm)
     {
-        var account = vm.BankAccount;
+        var account = vm.BankAccount;       
         ModelState.Remove("BankAccount.Entidad");
         ModelState.Remove("BankAccount.CuentaContable");
-
         if (ModelState.IsValid)
         {
             var result = await _cashBankService.CreateBankAccountAsync(account);

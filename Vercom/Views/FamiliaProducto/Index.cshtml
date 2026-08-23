@@ -1,89 +1,71 @@
 @model IEnumerable<Vercom.Models.FamiliaProducto>
-
 @{
-    ViewData["Title"] = "Index";
+    ViewBag.Title = "Familias de Productos";
 }
 
-<div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Gesti�n de FamiliaProducto</h4>
+        <h4 class="page-main-title m-0 fw-bold">Gestión de Categorías y Familias</h4>
+        <p class="text-muted small mb-0">Organización jerárquica del catálogo de productos e insumos.</p>
     </div>
     <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">FamiliaProducto</a></li>
-            <li class="breadcrumb-item active">Listado</li>
-        </ol>
+        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
+            <i class="ti ti-plus"></i> NUEVA FAMILIA
+        </a>
     </div>
 </div>
 
 <div class="container-xxl">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Listado de FamiliaProducto</h4>
-                </div>
-                <div class="card-body">
-
-
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<div class="table-responsive"><table id="dataTable" class="table table-hover align-middle w-100">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.EntidadId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Codigo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Nombre)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FamiliaPadre)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.EntidadId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Codigo)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Nombre)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FamiliaPadre.Id)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table></div>
-                </div>
+    <div class="card">
+        <div class="card-header">
+            <h5 class="m-0 fw-bold"><i class="ti ti-category me-2 text-primary"></i>Familias Registradas</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table id="familiesTable" class="table">
+                    <thead>
+                        <tr>
+                            <th width="150">Código</th>
+                            <th>Nombre de la Familia</th>
+                            <th width="250">Categoría Padre</th>
+                            <th width="100" class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="text-numeric fw-bold text-primary">@item.Codigo</td>
+                                <td class="fw-semibold">@item.Nombre</td>
+                                <td>
+                                    @if (item.FamiliaPadre != null) {
+                                        <span class="badge badge-soft-secondary"><i class="ti ti-corner-down-right me-1"></i> @item.FamiliaPadre.Nombre</span>
+                                    } else {
+                                        <span class="text-muted small">Nivel Raíz</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group">
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline py-1 px-2" title="Editar">
+                                            <i class="ti ti-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
 
-
 @section Scripts {
     <script>
-        .ready(function () {
-            #dataTable.DataTable();
+        $(document).ready(function () {
+            $('#familiesTable').DataTable({
+                language: { url: '/js/i18n/es-ES.json' }
+            });
         });
     </script>
 }

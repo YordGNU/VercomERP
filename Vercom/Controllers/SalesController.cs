@@ -57,8 +57,10 @@ public class SalesController : Controller
         ModelState.Remove("Invoice.Cliente");
         ModelState.Remove("Invoice.Entidad");
         ModelState.Remove("Invoice.Sucursal");
+        ModelState.Remove("Invoice.Contrato");
         ModelState.Remove("Invoice.NumeroFactura");
         ModelState.Remove("Invoice.EntidadId");
+        ModelState.Remove("Invoice.CreadoEn");
 
         if (ModelState.IsValid)
         {
@@ -66,6 +68,8 @@ public class SalesController : Controller
             invoice.CreadoPor = _entidadProvider.CurrentUsuarioId;
             invoice.CanalVenta = "ERP";
             invoice.Moneda = "CUP";
+            invoice.Estado = "EMITIDA";
+            invoice.Fecha = DateTimeOffset.Now;
 
             var result = await _salesService.CreateInvoiceAsync(invoice);
             if (result.Succeeded)

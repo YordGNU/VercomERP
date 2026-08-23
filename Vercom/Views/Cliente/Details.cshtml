@@ -1,0 +1,154 @@
+@model Vercom.ViewModels.ClientFormViewModel
+@{
+    ViewBag.Title = "Ficha del Cliente";
+}
+
+<div class="page-title-head d-flex align-items-center mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">@Model.Client.NombreRazonSocial</h4>
+        <p class="text-muted small mb-0">NIT/CI: <span class="fw-bold">@(Model.Client.NitOCi ?? "CONSUMIDOR FINAL")</span> | Segmento: @Model.Client.Segmento</p>
+    </div>
+    <div class="text-end d-flex gap-2">
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+            <i class="ti ti-arrow-left me-1"></i> VOLVER
+        </a>
+        <a asp-action="Edit" asp-route-id="@Model.Client.Id" class="btn btn-sm btn-primary">
+            <i class="ti ti-edit me-1"></i> EDITAR
+        </a>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-id me-2 text-primary"></i>Datos de Contacto y Legales</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Razón Social / Nombre</label>
+                            <span class="fs-16 fw-bold">@Model.Client.NombreRazonSocial</span>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Tipo Persona</label>
+                            <span>@Model.Client.TipoPersona</span>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Estado</label>
+                            <span class="badge @(Model.Client.Activo ? "bg-success" : "bg-danger")">@(Model.Client.Activo ? "ACTIVO" : "INACTIVO")</span>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Dirección Fiscal</label>
+                            <span>@(Model.Client.Direccion ?? "No especificada")</span>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Teléfono</label>
+                            <span>@(Model.Client.Telefono ?? "N/A")</span>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Correo Electrónico</label>
+                            <a href="mailto:@Model.Client.Email">@(Model.Client.Email ?? "N/A")</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-file-text me-2 text-primary"></i>Contratos Económicos</h5>
+                    <a asp-controller="ContratoEconomico" asp-action="Create" asp-route-clienteId="@Model.Client.Id" class="btn btn-sm btn-ghost-primary">NUEVO CONTRATO</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Nº Contrato</th>
+                                    <th>Objeto</th>
+                                    <th>Vigencia</th>
+                                    <th class="text-center">Estado</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Client.ContratoEconomicos.Any())
+                                {
+                                    foreach (var c in Model.Client.ContratoEconomicos.OrderByDescending(x => x.FechaInicio))
+                                    {
+                                        <tr>
+                                            <td class="fw-bold">@c.NumeroContrato</td>
+                                            <td class="small">@c.Objeto</td>
+                                            <td class="small">@c.FechaInicio.ToString("MM/yy") - @(c.FechaFin?.ToString("MM/yy") ?? "Indef.")</td>
+                                            <td class="text-center">
+                                                <span class="badge @(c.Estado == "VIGENTE" ? "bg-success" : "bg-secondary")">@c.Estado</span>
+                                            </td>
+                                            <td class="text-end">
+                                                <a asp-controller="ContratoEconomico" asp-action="Details" asp-route-id="@c.Id" class="btn btn-sm btn-outline-secondary py-0 px-2">Ver</a>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr><td colspan="5" class="text-center py-3 text-muted">No se registran contratos vigentes.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary-subtle">
+                    <h5 class="m-0 fw-bold text-primary"><i class="ti ti-wallet me-2"></i>Condiciones Comerciales</h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="text-muted small fw-bold">Límite de Crédito:</span>
+                            <span class="fw-bold text-danger">@Model.Client.LimiteCredito.ToString("C")</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="text-muted small fw-bold">Lista de Precios:</span>
+                            <span>@(Model.Client.ListaPrecio?.Nombre ?? "GENERAL")</span>
+                        </li>
+                        <li class="list-group-item">
+                            <label class="text-muted tiny text-uppercase d-block mb-1">Cuenta Contable (CxC)</label>
+                            @if (Model.Client.CuentaContable != null)
+                            {
+                                <a asp-controller="CuentaContable" asp-action="Details" asp-route-id="@Model.Client.CuentaContableId" class="small fw-bold">
+                                    @Model.Client.CuentaContable.Codigo - @Model.Client.CuentaContable.Nombre
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning-subtle text-warning small">SIN VINCULACIÓN</span>
+                            }
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card bg-blue-lt">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-blue text-white rounded p-2 me-3">
+                            <i class="ti ti-receipt fs-24"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small fw-bold">Saldo Pendiente</div>
+                            <div class="fs-24 fw-bold">0.00 CUP</div>
+                        </div>
+                    </div>
+                    <a asp-controller="CuentaPorCobrar" asp-action="Index" asp-route-clienteId="@Model.Client.Id" class="btn btn-sm btn-primary w-100">
+                        ESTADO DE CUENTA
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -34,7 +34,7 @@ public class ParametroSistemaController : Controller
     public async Task<IActionResult> Edit(Guid id, ParametroFormViewModel vm)
     {
         var entry = vm.Parametro;
-        if (id != entry.Id) return NotFound();
+        if (id ==  Guid.Empty) return NotFound();
 
         ModelState.Remove("Parametro.Entidad");
 

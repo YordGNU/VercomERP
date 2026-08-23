@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vercom.Models;
 using Vercom.Services;
+using Vercom.ViewModels;
 
 namespace Vercom.Controllers;
 

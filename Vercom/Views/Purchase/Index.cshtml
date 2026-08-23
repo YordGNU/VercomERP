@@ -1,0 +1,85 @@
+@model IEnumerable<Vercom.Models.OrdenCompra>
+@{
+    ViewBag.Title = "Órdenes de Compra";
+}
+
+<div class="page-title-head d-flex align-items-center mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Abastecimiento y Compras</h4>
+        <p class="text-muted small mb-0">Gestión de órdenes de compra a proveedores y recepción de mercancías.</p>
+    </div>
+    <div class="text-end">
+        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
+            <i class="ti ti-shopping-cart-plus"></i> NUEVA ORDEN
+        </a>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="m-0 fw-bold"><i class="ti ti-list me-2 text-primary"></i>Órdenes de Compra Emitidas</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table id="purchaseTable" class="table">
+                    <thead>
+                        <tr>
+                            <th width="120" class="text-center">Fecha</th>
+                            <th width="140">Nº Orden</th>
+                            <th>Proveedor</th>
+                            <th width="120">Moneda</th>
+                            <th width="140" class="text-end">Monto Total ($)</th>
+                            <th width="120" class="text-center">Estado</th>
+                            <th width="120" class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var statusClass = item.Estado switch {
+                                "RECIBIDA" => "badge-soft-success",
+                                "APROBADA" => "badge-soft-info",
+                                "BORRADOR" => "badge-soft-warning",
+                                "ANULADA" => "badge-soft-danger",
+                                _ => "badge-soft-secondary"
+                            };
+
+                            <tr>
+                                <td class="text-date">@item.Fecha.ToString("dd/MM/yyyy")</td>
+                                <td class="text-numeric fw-bold text-primary">@item.NumeroOrden</td>
+                                <td class="fw-semibold">@item.Proveedor.RazonSocial</td>
+                                <td class="text-center">@item.Moneda</td>
+                                <td class="text-numeric fw-bold">@item.Total.ToString("N2")</td>
+                                <td class="text-center"><span class="badge @statusClass">@item.Estado</span></td>
+                                <td class="text-end">
+                                    <div class="btn-group">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline py-1 px-2" title="Detalles">
+                                            <i class="ti ti-eye"></i>
+                                        </a>
+                                        @if (item.Estado == "APROBADA") {
+                                            <a asp-action="Receive" asp-route-id="@item.Id" class="btn btn-sm btn-outline py-1 px-2 text-success" title="Recibir Mercancía">
+                                                <i class="ti ti-download"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#purchaseTable').DataTable({
+                         language: { url: '/js/i18n/es-ES.json' },
+                order: [[0, 'desc']]
+            });
+        });
+    </script>
+}

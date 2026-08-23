@@ -21,6 +21,8 @@ public partial class CuentaBancarium
 
     public bool Activa { get; set; }
 
+    public string Moneda { get; set; } = null!;
+
     public virtual CuentaContable CuentaContable { get; set; } = null!;
 
     public virtual Entidad Entidad { get; set; } = null!;

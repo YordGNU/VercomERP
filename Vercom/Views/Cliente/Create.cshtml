@@ -1,4 +1,4 @@
-﻿@model Vercom.Models.Cliente
+﻿@model Vercom.ViewModels.ClientFormViewModel
 
 @{
     ViewData["Title"] = "Crear Cliente";
@@ -31,58 +31,72 @@
                     <form asp-action="Create" class="row g-3">
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-                        <div class="col-md-6">
-                            <label asp-for="EntidadId" class="form-label"></label>
-                            <select asp-for="EntidadId" class="form-select" asp-items="ViewBag.EntidadId"></select>
-                            <span asp-validation-for="EntidadId" class="text-danger"></span>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label asp-for="NitOCi" class="form-label"></label>
-                            <input asp-for="NitOCi" class="form-control" placeholder="NIT o CI" />
-                            <span asp-validation-for="NitOCi" class="text-danger"></span>
-                        </div>
-
-                        <div class="col-md-8">
-                            <label asp-for="NombreRazonSocial" class="form-label"></label>
-                            <input asp-for="NombreRazonSocial" class="form-control" placeholder="Nombre o razón social" />
-                            <span asp-validation-for="NombreRazonSocial" class="text-danger"></span>
+                        <div class="col-md-4">
+                            <label asp-for="Client.TipoPersona" class="form-label">Tipo de Cliente</label>
+                            <select asp-for="Client.TipoPersona" class="form-select">
+                                <option value="JURIDICA">Persona Jurídica (Empresa)</option>
+                                <option value="NATURAL">Persona Natural (Particular)</option>
+                            </select>
+                            <span asp-validation-for="Client.TipoPersona" class="text-danger"></span>
                         </div>
 
                         <div class="col-md-4">
-                            <label asp-for="ListaPrecioId" class="form-label"></label>
-                            <select asp-for="ListaPrecioId" class="form-select" asp-items="ViewBag.ListaPrecioId"></select>
-                            <span asp-validation-for="ListaPrecioId" class="text-danger"></span>
+                            <label asp-for="Client.NitOCi" class="form-label">NIT o Carnet Identidad</label>
+                            <input asp-for="Client.NitOCi" class="form-control" placeholder="NIT / CI" maxlength="20" />
+                            <span asp-validation-for="Client.NitOCi" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="Client.Segmento" class="form-label">Segmento Comercial</label>
+                            <select asp-for="Client.Segmento" class="form-select">
+                                <option value="MINORISTA">Minorista (Público)</option>
+                                <option value="MAYORISTA">Mayorista (B2B)</option>
+                            </select>
+                            <span asp-validation-for="Client.Segmento" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-8">
+                            <label asp-for="Client.NombreRazonSocial" class="form-label">Nombre / Razón Social</label>
+                            <input asp-for="Client.NombreRazonSocial" class="form-control" placeholder="Nombre completo o nombre de empresa" maxlength="255" required />
+                            <span asp-validation-for="Client.NombreRazonSocial" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="Client.ListaPrecioId" class="form-label">Lista de Precios</label>
+                            <select asp-for="Client.ListaPrecioId" class="form-select" asp-items="ViewBag.ListaPrecioId">
+                                <option value="">-- Usar General --</option>
+                            </select>
+                            <span asp-validation-for="Client.ListaPrecioId" class="text-danger"></span>
                         </div>
 
                         <div class="col-12">
-                            <label asp-for="Direccion" class="form-label"></label>
-                            <input asp-for="Direccion" class="form-control" placeholder="Dirección completa" />
-                            <span asp-validation-for="Direccion" class="text-danger"></span>
+                            <label asp-for="Client.Direccion" class="form-label"></label>
+                            <input asp-for="Client.Direccion" class="form-control" placeholder="Dirección completa" />
+                            <span asp-validation-for="Client.Direccion" class="text-danger"></span>
                         </div>
 
                         <div class="col-md-6">
-                            <label asp-for="Telefono" class="form-label"></label>
-                            <input asp-for="Telefono" class="form-control" placeholder="Teléfono de contacto" />
-                            <span asp-validation-for="Telefono" class="text-danger"></span>
+                            <label asp-for="Client.Telefono" class="form-label"></label>
+                            <input asp-for="Client.Telefono" class="form-control" placeholder="Teléfono de contacto" />
+                            <span asp-validation-for="Client.Telefono" class="text-danger"></span>
                         </div>
 
                         <div class="col-md-6">
-                            <label asp-for="Email" class="form-label"></label>
-                            <input asp-for="Email" class="form-control" placeholder="Correo electrónico" />
-                            <span asp-validation-for="Email" class="text-danger"></span>
+                            <label asp-for="Client.Email" class="form-label"></label>
+                            <input asp-for="Client.Email" class="form-control" placeholder="Correo electrónico" />
+                            <span asp-validation-for="Client.Email" class="text-danger"></span>
                         </div>
 
                         <div class="col-md-6">
-                            <label asp-for="LimiteCredito" class="form-label"></label>
-                            <input asp-for="LimiteCredito" class="form-control" placeholder="0.00" />
-                            <span asp-validation-for="LimiteCredito" class="text-danger"></span>
+                            <label asp-for="Client.LimiteCredito" class="form-label"></label>
+                            <input asp-for="Client.LimiteCredito" class="form-control" placeholder="0.00" />
+                            <span asp-validation-for="Client.LimiteCredito" class="text-danger"></span>
                         </div>
 
                         <div class="col-md-6">
-                            <label asp-for="CuentaContableId" class="form-label"></label>
-                            <select asp-for="CuentaContableId" class="form-select" asp-items="ViewBag.CuentaContableId"></select>
-                            <span asp-validation-for="CuentaContableId" class="text-danger"></span>
+                            <label asp-for="Client.CuentaContableId" class="form-label"></label>
+                            <select asp-for="Client.CuentaContableId" class="form-select" asp-items="Model.CuentasContables"></select>
+                            <span asp-validation-for="Client.CuentaContableId" class="text-danger"></span>
                         </div>
 
                         <div class="col-12 d-flex justify-content-end gap-2">

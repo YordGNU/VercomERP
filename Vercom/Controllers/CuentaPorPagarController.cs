@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vercom.Services;
 using Vercom.Security;
+using Vercom.ViewModels;
 
 namespace Vercom.Controllers;
 
@@ -27,12 +28,20 @@ public class CuentaPorPagarController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Policy = "CONTABILIDAD.PAGO.CREAR")]
-    public async Task<IActionResult> RecordPayment(Guid id, decimal amount, string paymentMethod, string? reference)
+    public async Task<IActionResult> RecordPayment(PaymentRecordViewModel vm)
     {
-        var result = await _carteraService.RecordPaymentAsync(id, amount, paymentMethod, reference, _entidadProvider.CurrentUsuarioId);
-        if (result.Succeeded) TempData["Success"] = result.Message;
-        else TempData["Error"] = result.Message;
+        if (ModelState.IsValid)
+        {
+            var result = await _carteraService.RecordPaymentAsync(vm.ItemId, vm.Amount, vm.PaymentMethod, vm.Reference, _entidadProvider.CurrentUsuarioId);
+            if (result.Succeeded)
+            {
+                TempData["Success"] = result.Message;
+                return RedirectToAction(nameof(Index));
+            }
+            ModelState.AddModelError("", result.Message);
+        }
 
-        return RedirectToAction(nameof(Index));
+        var report = await _carteraService.GetPayablesAgingAsync(_entidadProvider.CurrentEntidadId);
+        return View("Index", report);
     }
 }

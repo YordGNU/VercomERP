@@ -1,5 +1,4 @@
-﻿@model Vercom.Models.Caja
-
+﻿@model Vercom.ViewModels.CajaFormViewModel
 @{
     ViewData["Title"] = "Crear Caja";
 }
@@ -29,42 +28,32 @@
                 </div>
                 <div class="card-body">
                     <form asp-action="Create" class="row g-3">
-                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>                       
                         <div class="col-md-6">
-                            <label asp-for="EntidadId" class="form-label"></label>
-                            <select asp-for="EntidadId" class="form-select" asp-items="ViewBag.EntidadId"></select>
-                            <span asp-validation-for="EntidadId" class="text-danger"></span>
+                            <label asp-for="Caja.SucursalId" class="form-label">Sucursal</label>
+                            <select asp-for="Caja.SucursalId" name="Caja.SucursalId" class="form-control form-select w-100 select2" asp-items="Model.Sucursales" required></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Caja.Nombre" class="form-label"></label>
+                            <input asp-for="Caja.Nombre" class="form-control" placeholder="Nombre de la caja" />
+                            <span asp-validation-for="Caja.Nombre" class="text-danger"></span>
                         </div>
 
                         <div class="col-md-6">
-                            <label asp-for="SucursalId" class="form-label"></label>
-             <select asp-for="SucursalId" class="form-select" asp-items="ViewBag.SucursalId"></select>
-                            <span asp-validation-for="SucursalId" class="text-danger"></span>
+                            <label asp-for="Caja.CuentaContableId" class="form-label">Cuenta contable asociada</label>
+                            <select asp-for="Caja.CuentaContableId" name="Caja.CuentaContableId" class="form-control form-select w-100 select2" asp-items="Model.CuentasContables" required></select>
                         </div>
 
                         <div class="col-md-6">
-                            <label asp-for="Nombre" class="form-label"></label>
-                            <input asp-for="Nombre" class="form-control" placeholder="Nombre de la caja" />
-                            <span asp-validation-for="Nombre" class="text-danger"></span>
+                            <label asp-for="Caja.LimiteEfectivo" class="form-label"></label>
+                            <input asp-for="Caja.LimiteEfectivo" class="form-control" placeholder="0.00" />
+                            <span asp-validation-for="Caja.LimiteEfectivo" class="text-danger"></span>
                         </div>
 
                         <div class="col-md-6">
-                            <label asp-for="CuentaContableId" class="form-label"></label>
-                            <select asp-for="CuentaContableId" class="form-select" asp-items="ViewBag.CuentaContableId"></select>
-                            <span asp-validation-for="CuentaContableId" class="text-danger"></span>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label asp-for="LimiteEfectivo" class="form-label"></label>
-                            <input asp-for="LimiteEfectivo" class="form-control" placeholder="0.00" />
-                            <span asp-validation-for="LimiteEfectivo" class="text-danger"></span>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label asp-for="SaldoActual" class="form-label"></label>
-                            <input asp-for="SaldoActual" class="form-control" placeholder="0.00" />
-                            <span asp-validation-for="SaldoActual" class="text-danger"></span>
+                            <label asp-for="Caja.SaldoActual" class="form-label"></label>
+                            <input asp-for="Caja.SaldoActual" class="form-control" placeholder="0.00" />
+                            <span asp-validation-for="Caja.SaldoActual" class="text-danger"></span>
                         </div>
 
                         <div class="col-12 d-flex justify-content-end gap-2">

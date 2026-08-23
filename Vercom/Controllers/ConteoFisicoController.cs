@@ -9,11 +9,13 @@ namespace Vercom.Controllers;
 public class ConteoFisicoController : Controller
 {
     private readonly IWarehouseService _warehouseService;
+    private readonly IInventoryService _inventoryService;
     private readonly IEntidadProvider _entidadProvider;
 
-    public ConteoFisicoController(IWarehouseService warehouseService, IEntidadProvider entidadProvider)
+    public ConteoFisicoController(IWarehouseService warehouseService, IInventoryService inventoryService, IEntidadProvider entidadProvider)
     {
         _warehouseService = warehouseService;
+        _inventoryService = inventoryService;
         _entidadProvider = entidadProvider;
     }
 
@@ -21,6 +23,8 @@ public class ConteoFisicoController : Controller
     public async Task<IActionResult> Index()
     {
         var counts = await _warehouseService.GetCountsAsync();
+        var warehouses = await _inventoryService.GetWarehousesAsync();
+        ViewBag.Almacenes = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(warehouses.Where(a => a.Activo), "Id", "Nombre");
         return View(counts);
     }
 

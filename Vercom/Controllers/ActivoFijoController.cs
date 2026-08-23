@@ -51,9 +51,13 @@ public class ActivoFijoController : Controller
         ModelState.Remove("Asset.CuentaActivo");
         ModelState.Remove("Asset.CuentaDepreciacion");
         ModelState.Remove("Asset.CuentaGastoDep");
+        ModelState.Remove("Asset.Estado");
+        ModelState.Remove("Asset.MetodoDepreciacion");
 
         if (ModelState.IsValid)
         {
+            asset.Estado = "ACTIVO";
+            asset.MetodoDepreciacion = "LINEA_RECTA";
             var result = await _assetService.CreateAssetAsync(asset);
             if (result.Succeeded)
             {

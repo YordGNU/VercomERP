@@ -1,0 +1,72 @@
+@model Vercom.Models.ListaMateriale
+@{
+    ViewBag.Title = "Detalle de Lista de Materiales (BOM)";
+}
+
+<div class="page-title-head d-flex align-items-center mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">@Model.ProductoTerminado.Nombre</h4>
+        <p class="text-muted small mb-0">Versión: <span class="fw-bold">@Model.Version</span> | Creado: @Model.CreadoEn.ToString("dd/MM/yyyy")</p>
+    </div>
+    <div class="text-end d-flex gap-2">
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+            <i class="ti ti-arrow-left me-1"></i> VOLVER
+        </a>
+        @if (Model.Activa) {
+            <span class="badge bg-success-lt p-2 px-3"><i class="ti ti-check me-1"></i>VERSIÓN ACTIVA</span>
+        }
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-components me-2 text-primary"></i>Estructura de Materiales (Explosión)</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Insumo / Materia Prima</th>
+                                    <th width="150" class="text-center">Cant. Requerida</th>
+                                    <th width="100" class="text-center">U.M.</th>
+                                    <th width="150" class="text-center">% Merma Est.</th>
+                                    <th width="200" class="text-end">Cant. Total Bruta</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var det in Model.ListaMaterialesDetalles)
+                                {
+                                    var totalBruta = det.CantidadRequerida * (1 + (det.PorcentajeMerma / 100));
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold">@det.ProductoInsumo.Nombre</div>
+                                            <small class="text-muted">@det.ProductoInsumo.Codigo</small>
+                                        </td>
+                                        <td class="text-center fw-bold">@det.CantidadRequerida.ToString("N4")</td>
+                                        <td class="text-center">@det.ProductoInsumo.UnidadMedida.Codigo</td>
+                                        <td class="text-center text-danger">@det.PorcentajeMerma.ToString("N2")%</td>
+                                        <td class="text-end fw-bold text-primary">@totalBruta.ToString("N4")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-light-subtle">
+                    <small class="text-muted italic">
+                        <i class="ti ti-info-circle me-1"></i>
+                        Esta lista define los requerimientos teóricos para producir **1 unidad** de @Model.ProductoTerminado.Nombre.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-success-lt { background-color: #ecfdf5; color: #059669; border: 1px solid #10b981; }
+</style>

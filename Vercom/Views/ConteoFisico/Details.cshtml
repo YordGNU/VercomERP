@@ -1,0 +1,87 @@
+@model Vercom.Models.ConteoFisico
+@{
+    ViewBag.Title = "Detalle de Conteo Físico";
+}
+
+<div class="page-title-head d-flex align-items-center mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Conteo: @Model.Almacen.Nombre</h4>
+        <p class="text-muted small mb-0">Fecha: <span class="fw-bold">@Model.Fecha.ToString("dd/MM/yyyy")</span> | Tipo: @Model.Tipo</p>
+    </div>
+    <div class="text-end d-flex gap-2">
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+            <i class="ti ti-arrow-left me-1"></i> VOLVER
+        </a>
+        @if (Model.Estado == "ABIERTO")
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
+                <i class="ti ti-edit me-1"></i> CONTINUAR CONTEO
+            </a>
+        }
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-clipboard-list me-2 text-primary"></i>Comparativa Stock Sistema vs. Físico</h5>
+                    <span class="badge @(Model.Estado == "FINALIZADO" ? "bg-success" : "bg-warning")">@Model.Estado</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th width="150" class="text-center">Stock Sistema</th>
+                                    <th width="150" class="text-center">Stock Físico</th>
+                                    <th width="150" class="text-center">Diferencia</th>
+                                    <th width="150" class="text-center">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var det in Model.ConteoFisicoDetalles)
+                                {
+                                    var diff = det.CantidadFisica - det.CantidadSistema;
+                                    var rowClass = diff switch {
+                                        < 0 => "table-danger-subtle",
+                                        > 0 => "table-success-subtle",
+                                        _ => ""
+                                    };
+
+                                    <tr class="@rowClass">
+                                        <td>
+                                            <div class="fw-bold">@det.Producto.Nombre</div>
+                                            <small class="text-muted">@det.Producto.Codigo</small>
+                                        </td>
+                                        <td class="text-center fw-bold">@(det.CantidadFisica?.ToString("N2") ?? "0.00")</td>
+                                        <td class="text-center fw-bold @(diff < 0 ? "text-danger" : (diff > 0 ? "text-success" : ""))">
+                                            @(diff > 0 ? "+" : "")@(diff?.ToString("N2") ?? "0.00")
+                                        </td>
+                                        <td class="text-center">
+                                            @if(diff == 0) { <span class="badge bg-success">OK</span> }
+                                            else { <span class="badge bg-danger">DESCUADRE</span> }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body py-3 d-flex justify-content-between">
+                    <div class="text-muted">
+                        <i class="ti ti-user me-1"></i> Responsable: <strong>@(Model.Responsable?.NombreCompleto ?? "No asignado")</strong>
+                    </div>
+                    <div class="text-muted">
+                        <i class="ti ti-clock me-1"></i> Iniciado: @Model.CreadoEn.ToString("g")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

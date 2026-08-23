@@ -1,70 +1,73 @@
 @model IEnumerable<Vercom.Models.Usuario>
 @{
-    ViewBag.Title = "Gesti�n de Usuarios";
+    ViewBag.Title = "Gestión de Usuarios";
 }
 
-<div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Usuarios del Sistema</h4>
+        <h4 class="page-main-title m-0 fw-bold">Seguridad: Usuarios del Sistema</h4>
+        <p class="text-muted small mb-0">Control de acceso, gestión de identidades y monitoreo de sesiones.</p>
     </div>
     <div class="text-end">
-        @if (User.HasClaim(c => c.Type == "Permission" && c.Value == "SEC_EDIT_USERS") || User.IsInRole("ADMINISTRADOR"))
-        {
-            <a asp-action="Create" class="btn btn-primary">
-                <i class="ti ti-plus me-1"></i> Nuevo Usuario
-            </a>
-        }
+        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
+            <i class="ti ti-user-plus"></i> NUEVO USUARIO
+        </a>
     </div>
 </div>
 
-<div class="container-xxl mt-4">
+<div class="container-xxl">
     <div class="card">
-        <div class="card-body">
+        <div class="card-header">
+            <h5 class="m-0 fw-bold"><i class="ti ti-shield me-2 text-primary"></i>Directorio de Usuarios</h5>
+        </div>
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table id="dataTable" class="table table-hover align-middle w-100">
-                    <thead class="table-light">
+                <table id="usersTable" class="table">
+                    <thead>
                         <tr>
-                            <th>Usuario</th>
-                            <th>Nombre Completo</th>
-                            <th>Email</th>
-                            <th>Sucursal</th>
-                            <th>Estado</th>
-                            <th>�ltimo Acceso</th>
-                            <th>Acciones</th>
+                            <th>Nombre de Usuario</th>
+                            <th>Colaborador</th>
+                            <th>Correo Electrónico</th>
+                            <th width="150">Sucursal</th>
+                            <th width="120" class="text-center">Estado</th>
+                            <th width="180" class="text-center">Último Acceso</th>
+                            <th width="120" class="text-end">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var item in Model)
                         {
-                            var statusClass = item.Activo ? "badge bg-success-subtle text-success" : "badge bg-danger-subtle text-danger";
-                            var statusText = item.Activo ? "Activo" : "Inactivo";
+                            var statusClass = item.Activo ? "badge-soft-success" : "badge-soft-danger";
 
                             <tr>
                                 <td class="fw-bold">
                                     <div class="d-flex align-items-center">
-                                        <div class="avatar-xs bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center me-2">
-                                            <i class="ti ti-user fs-16"></i>
+                                        <div class="avatar-xs bg-light rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                            <i class="ti ti-user fs-16 text-primary"></i>
                                         </div>
                                         @item.NombreUsuario
                                     </div>
                                 </td>
-                                <td>@item.NombreCompleto</td>
-                                <td>@item.Email</td>
-                                <td>@(item.Sucursal?.Nombre ?? "Acceso Global")</td>
-                                <td><span class="@statusClass">@statusText</span></td>
-                                <td class="small text-muted">
-                                    @(item.UltimoLogin.HasValue ? item.UltimoLogin.Value.ToString("dd/MM/yyyy HH:mm") : "Nunca")
+                                <td class="fw-semibold">@item.NombreCompleto</td>
+                                <td class="small">@item.Email</td>
+                                <td><span class="badge badge-soft-secondary">@(item.Sucursal?.Nombre ?? "Acceso Global")</span></td>
+                                <td class="text-center">
+                                    <span class="badge @statusClass">@(item.Activo ? "ACTIVO" : "INACTIVO")</span>
                                 </td>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-light" title="Ver Detalles">
+                                <td class="text-date text-muted small">
+                                    @(item.UltimoLogin.HasValue ? item.UltimoLogin.Value.ToString("dd/MM/yyyy HH:mm") : "Sin registro")
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline py-1 px-2" title="Detalles">
                                             <i class="ti ti-eye"></i>
                                         </a>
-                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-light" title="Editar">
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline py-1 px-2" title="Editar">
                                             <i class="ti ti-edit"></i>
                                         </a>
                                         <form asp-action="ToggleStatus" asp-route-id="@item.Id" method="post" class="d-inline">
-                                            <button type="submit" class="btn btn-sm @(item.Activo ? "btn-outline-danger" : "btn-outline-success")"
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline py-1 px-2 @(item.Activo ? "text-danger" : "text-success")"
                                                     title="@(item.Activo ? "Desactivar" : "Activar")">
                                                 <i class="ti @(item.Activo ? "ti-user-off" : "ti-user-check")"></i>
                                             </button>
@@ -80,11 +83,12 @@
     </div>
 </div>
 
-
 @section Scripts {
     <script>
-        .ready(function () {
-            #dataTable.DataTable();
+        $(document).ready(function () {
+            $('#usersTable').DataTable({
+                         language: { url: '/js/i18n/es-ES.json' }
+            });
         });
     </script>
 }

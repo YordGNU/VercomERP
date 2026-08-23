@@ -1,0 +1,88 @@
+@model Vercom.Models.Almacen
+@{
+    ViewBag.Title = "Detalle de Almacén";
+}
+
+<div class="page-title-head d-flex align-items-center mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">@Model.Nombre</h4>
+        <p class="text-muted small mb-0">Código: <span class="fw-bold">@Model.Codigo</span> | Sucursal: @Model.Sucursal.Nombre</p>
+    </div>
+    <div class="text-end d-flex gap-2">
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+            <i class="ti ti-arrow-left me-1"></i> VOLVER
+        </a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
+            <i class="ti ti-edit me-1"></i> EDITAR
+        </a>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-home me-2 text-primary"></i>Configuración del Almacén</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Identificador Interno</label>
+                            <span class="fs-16 fw-bold">@Model.Codigo</span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Estado</label>
+                            <span class="badge @(Model.Activo ? "bg-success" : "bg-danger")">@(Model.Activo ? "ACTIVO" : "INACTIVO")</span>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Función</label>
+                            @if (Model.EsPuntoVenta)
+                            {
+                                <div class="badge badge-soft-info py-2 px-3 w-100 text-start">
+                                    <i class="ti ti-device-mobile me-2"></i> PUNTO DE VENTA (Sincronización POS Habilitada)
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="badge badge-soft-secondary py-2 px-3 w-100 text-start">
+                                    <i class="ti ti-building-warehouse me-2"></i> ALMACÉN CENTRAL (Solo ERP)
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-box me-2 text-primary"></i>Capacidad y Existencias</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 border-end">
+                            <div class="text-muted small text-uppercase fw-bold">Artículos Únicos</div>
+                            <div class="fs-24 fw-bold">@Model.Existencia.Count</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted small text-uppercase fw-bold">Total Unidades</div>
+                            <div class="fs-24 fw-bold text-primary">@Model.Existencia.Sum(e => e.Cantidad).ToString("N0")</div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <a asp-controller="Inventory" asp-action="Index" asp-route-almacenId="@Model.Id" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="ti ti-list-search me-1"></i> VER INVENTARIO COMPLETO
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .badge-soft-info { background-color: #e0f2fe; color: #0369a1; }
+    .badge-soft-secondary { background-color: #f3f4f6; color: #4b5563; }
+</style>

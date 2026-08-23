@@ -86,7 +86,7 @@ public class AsientoContableController : Controller
         ModelState.Remove("Entry.TipoComprobante");
         ModelState.Remove("Entry.EntidadId");
 
-        if (ModelState.IsValid)
+        if (vm.Entry.AsientoDetalles.Count > 0)
         {
             asientoContable.EntidadId = _entidadProvider.CurrentEntidadId;
             asientoContable.CreadoPor = _entidadProvider.CurrentUsuarioId;

@@ -5,61 +5,71 @@
     ViewBag.Title = "Plantilla de Empleados";
 }
 
-<div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center mb-4">
     <div class="flex-grow-1">
         <h4 class="page-main-title m-0">Expedientes del Personal</h4>
+        <p class="text-muted small mb-0">Gestión integral de la fuerza laboral y control de plantilla.</p>
     </div>
     <div class="text-end">
         @if ((await AuthorizationService.AuthorizeAsync(User, "RRHH.EMPLEADO.CREAR")).Succeeded)
         {
-            <a asp-action="Create" class="btn btn-primary">
-                <i class="ti ti-user-plus me-1"></i> Nuevo Ingreso
+            <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
+                <i class="ti ti-user-plus"></i> NUEVO INGRESO
             </a>
         }
     </div>
 </div>
 
-<div class="container-xxl mt-4">
+<div class="container-xxl">
     <div class="row">
         @foreach (var item in Model)
         {
+            var isBaja = item.Estado == "BAJA";
             <div class="col-xl-4 col-md-6 mb-4">
-                <div class="card h-100 shadow-sm border-0">
+                <div class="card h-100 transition-all hover-shadow">
                     <div class="card-body">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="avatar-lg bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="avatar-lg bg-primary-subtle text-primary rounded-3 d-flex align-items-center justify-content-center me-3" style="width: 54px; height: 54px;">
                                 <i class="ti ti-user fs-28"></i>
                             </div>
                             <div class="flex-grow-1 overflow-hidden">
-                                <h5 class="mb-0 text-truncate"><a asp-action="File" asp-route-id="@item.Id" class="text-dark">@item.Nombres @item.Apellidos</a></h5>
-                                <p class="text-muted mb-0 small">@item.Cargo.Nombre</p>
+                                <h5 class="mb-1 text-truncate fw-bold">
+                                    <a asp-action="File" asp-route-id="@item.Id" class="text-dark text-decoration-none">@item.Nombres @item.Apellidos</a>
+                                </h5>
+                                <p class="text-primary mb-0 small fw-semibold text-uppercase">@item.Cargo.Nombre</p>
                             </div>
                             <div class="dropdown">
-                                <button class="btn btn-sm btn-light btn-icon" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></button>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" asp-action="File" asp-route-id="@item.Id"><i class="ti ti-folder me-1"></i> Ver Expediente</a></li>
-                                    <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@item.Id"><i class="ti ti-edit me-1"></i> Editar</a></li>
+                                <button class="btn btn-sm btn-outline py-1 px-2 border-0" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                    <li><a class="dropdown-item py-2" asp-action="File" asp-route-id="@item.Id"><i class="ti ti-folder me-2 text-primary"></i> Ver Expediente</a></li>
+                                    <li><a class="dropdown-item py-2" asp-action="Edit" asp-route-id="@item.Id"><i class="ti ti-edit me-2 text-info"></i> Editar Datos</a></li>
+                                    @if (!isBaja) {
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item py-2 text-danger" asp-action="Terminate" asp-route-id="@item.Id"><i class="ti ti-user-x me-2"></i> Procesar Baja</a></li>
+                                    }
                                 </ul>
                             </div>
                         </div>
 
-                        <div class="bg-light rounded p-2 mb-3">
+                        <div class="bg-light-subtle border rounded-3 p-3 mb-3">
                             <div class="row g-0 text-center">
                                 <div class="col-6 border-end">
-                                    <span class="d-block small text-muted">CI</span>
-                                    <span class="fw-bold small">@item.CarnetIdentidad</span>
+                                    <span class="d-block tiny text-muted text-uppercase fw-bold">Identificación</span>
+                                    <span class="text-numeric small">@item.CarnetIdentidad</span>
                                 </div>
                                 <div class="col-6">
-                                    <span class="d-block small text-muted">Ingreso</span>
-                                    <span class="fw-bold small">@item.FechaIngreso.ToString("dd/MM/yyyy")</span>
+                                    <span class="d-block tiny text-muted text-uppercase fw-bold">Fecha Ingreso</span>
+                                    <span class="small fw-semibold">@item.FechaIngreso.ToString("dd MMM yyyy")</span>
                                 </div>
                             </div>
                         </div>
 
                         <div class="d-flex justify-content-between align-items-center">
-                            <span class="badge @(item.Estado == "ACTIVO" ? "bg-success" : "bg-danger")">@item.Estado</span>
+                            <span class="badge @(isBaja ? "badge-soft-danger" : "badge-soft-success")">
+                                <i class="ti ti-circle-filled fs-8 me-1"></i> @item.Estado
+                            </span>
                             <div class="small text-muted">
-                                <i class="ti ti-phone me-1"></i> @item.Telefono
+                                <i class="ti ti-mail me-1"></i> @(item.Email ?? "No definido")
                             </div>
                         </div>
                     </div>
@@ -69,22 +79,19 @@
 
         @if (!Model.Any())
         {
-            <div class="col-12 text-center py-5 text-muted">
-                <i class="ti ti-users-group fs-48 mb-3"></i>
-                <h3>No hay empleados registrados</h3>
-                <p>Comience dando de alta al personal para gestionar la n�mina.</p>
+            <div class="col-12 text-center py-5">
+                <div class="avatar-xl bg-light-subtle rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 100px; height: 100px;">
+                    <i class="ti ti-users-group fs-48 text-muted"></i>
+                </div>
+                <h3 class="fw-bold">No hay empleados registrados</h3>
+                <p class="text-muted">Comience dando de alta al personal para gestionar la nómina y asistencia.</p>
+                <a asp-action="Create" class="btn btn-sm btn-primary mt-3">DAR DE ALTA TRABAJADOR</a>
             </div>
         }
     </div>
 </div>
 
-
-@section Scripts {
-    <script>
-        .ready(function () {
-            #dataTable.DataTable();
-        });
-    </script>
-}
-
-
+<style>
+    .hover-shadow:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important; }
+    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
+</style>

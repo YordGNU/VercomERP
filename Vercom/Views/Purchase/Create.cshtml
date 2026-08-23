@@ -3,104 +3,125 @@
     ViewBag.Title = Model.Title;
 }
 
-<div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">@Model.Title</h4>
+        <h4 class="page-main-title m-0 fw-bold">Nueva Orden de Compra</h4>
+        <p class="text-muted small mb-0">Gestión de aprovisionamiento y solicitudes a proveedores (RF-51).</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Comercial</a></li>
+            <li class="breadcrumb-item active">Nueva Orden</li>
+        </ol>
     </div>
 </div>
 
-<div class="container-xxl mt-4">
-    <form asp-action="Create" method="post">
+<div class="container-xxl">
+    <form asp-action="Create" method="post" id="purchaseForm">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="All" class="alert alert-danger py-2 small border-0 mb-4 shadow-sm"></div>
+
         <div class="row">
+            <!-- Columna Principal: Cabecera y Partidas -->
             <div class="col-lg-8">
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-light-subtle">
-                        <h4 class="card-title">Encabezado de la Orden (RF-51)</h4>
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="m-0 fw-bold"><i class="ti ti-truck-delivery me-2 text-primary"></i>Datos del Suministro</h5>
                     </div>
                     <div class="card-body">
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
-
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label asp-for="Order.ProveedorId" class="form-label fw-bold">Proveedor</label>
-                                <select asp-for="Order.ProveedorId" name="Order.ProveedorId" class="form-select select2" asp-items="Model.Proveedores" required>
+                                <label class="form-label">Proveedor</label>
+                                <select asp-for="Order.ProveedorId" name="Order.ProveedorId" class="form-control form-select w-100 select2" asp-items="Model.Proveedores" required>
                                     <option value="">-- Seleccione Proveedor --</option>
                                 </select>
                             </div>
-
                             <div class="col-md-6">
-                                <label asp-for="Order.ContratoId" class="form-label fw-bold">Contrato Vinculado (RF-50)</label>
-                                <select asp-for="Order.ContratoId" name="Order.ContratoId" class="form-select" asp-items="Model.Contratos">
-                                    <option value="">-- Sin Contrato (Compra Directa) --</option>
+                                <label class="form-label">Contrato Marco (RF-50)</label>
+                                <select asp-for="Order.ContratoId" name="Order.ContratoId" class="form-control form-select w-100" asp-items="Model.Contratos">
+                                    <option value="">-- Compra Directa sin Contrato --</option>
                                 </select>
                             </div>
 
                             <div class="col-md-6">
-                                <label asp-for="Order.AlmacenDestinoId" class="form-label fw-bold">Almacén de Recepción</label>
-                                <select asp-for="Order.AlmacenDestinoId" name="Order.AlmacenDestinoId" class="form-select" asp-items="Model.Almacenes" required></select>
+                                <label class="form-label">Almacén de Destino</label>
+                                <select asp-for="Order.AlmacenDestinoId" name="Order.AlmacenDestinoId" class="form-control form-select w-100" asp-items="Model.Almacenes" required></select>
                             </div>
-
                             <div class="col-md-3">
-                                <label asp-for="Order.Fecha" class="form-label fw-bold">Fecha Pedido</label>
-                                <input asp-for="Order.Fecha" name="Order.Fecha" type="date" class="form-control" required />
+                                <label class="form-label">Fecha de Orden</label>
+                                <input asp-for="Order.Fecha" name="Order.Fecha" type="date" class="form-control w-100" required />
                             </div>
-
                             <div class="col-md-3">
-                                <label asp-for="Order.Moneda" class="form-label fw-bold">Moneda</label>
-                                <select asp-for="Order.Moneda" name="Order.Moneda" class="form-select">
-                                    <option value="CUP">CUP</option>
-                                    <option value="USD">USD</option>
+                                <label class="form-label">Divisa</label>
+                                <select asp-for="Order.Moneda" name="Order.Moneda" class="form-control form-select w-100">
+                                    <option value="CUP">CUP - Pesos</option>
+                                    <option value="USD">USD - Dólares</option>
                                 </select>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Detalle de Productos -->
-                <div class="card shadow-sm">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h4 class="card-title mb-0">Artículos a Solicitar</h4>
-                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addRow()">
-                            <i class="ti ti-plus me-1"></i> Añadir Artículo
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="m-0 fw-bold"><i class="ti ti-list-details me-2 text-primary"></i>Artículos Solicitados</h5>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="addRow()">
+                            <i class="ti ti-plus"></i> AÑADIR LÍNEA
                         </button>
                     </div>
                     <div class="card-body p-0">
-                        <table class="table mb-0" id="detailsTable">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="45%">Producto</th>
-                                    <th width="20%" class="text-end">Cantidad</th>
-                                    <th width="20%" class="text-end">Precio Unit. ($)</th>
-                                    <th width="50"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- JS -->
-                            </tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table mb-0" id="detailsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Producto / Insumo</th>
+                                        <th width="140" class="text-end">Cantidad</th>
+                                        <th width="140" class="text-end">Precio Unit. ($)</th>
+                                        <th width="140" class="text-end">Importe ($)</th>
+                                        <th width="60"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- JS -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Columna Lateral: Totales y Envío -->
             <div class="col-lg-4">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h5 class="fw-bold mb-3">Resumen de Importe</h5>
+                <div class="card border-primary shadow-lg sticky-top" style="top: 100px; z-index: 100;">
+                    <div class="card-header bg-primary text-white border-0">
+                        <h5 class="m-0 fw-bold">Presupuesto de Orden</h5>
+                    </div>
+                    <div class="card-body p-4">
                         <div class="d-flex justify-content-between mb-2">
-                            <span>Subtotal:</span>
+                            <span class="text-muted">Subtotal:</span>
                             <span class="fw-bold" id="labelSubtotal">0.00</span>
                         </div>
-                        <hr>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h3 class="mb-0">TOTAL:</h3>
-                            <h3 class="mb-0 text-primary" id="labelTotal">0.00</h3>
+                        <div class="d-flex justify-content-between mb-4">
+                            <span class="text-muted">Otros Cargos:</span>
+                            <span class="fw-bold">0.00</span>
+                        </div>
+                        <hr class="border-secondary opacity-25">
+                        <div class="d-flex justify-content-between align-items-end mb-5">
+                            <h4 class="fw-bold mb-0">TOTAL ESTIMADO:</h4>
+                            <h2 class="fw-bold text-primary mb-0" id="labelTotal">0.00</h2>
                         </div>
 
-                        <div class="d-grid gap-2 mt-4">
-                            <button type="submit" class="btn btn-primary btn-lg" id="btnSubmit" disabled>
-                                <i class="ti ti-send me-1"></i> CREAR ORDEN (BORRADOR)
+                        <div class="bg-light rounded-3 p-3 mb-4 small text-muted">
+                            <i class="ti ti-info-circle-filled text-primary me-2"></i>
+                            La orden se creará en estado <strong>BORRADOR</strong>. Deberá ser aprobada por el responsable de compras para ser válida legalmente.
+                        </div>
+
+                        <div class="d-grid gap-3">
+                            <button type="submit" class="btn btn-sm btn-primary py-3 shadow" id="btnSubmit" disabled>
+                                <i class="ti ti-send"></i> EMITIR ORDEN DE COMPRA
                             </button>
-                            <a asp-action="Index" class="btn btn-outline-secondary">Descartar</a>
+                            <a asp-action="Index" class="btn btn-sm btn-outline">CANCELAR</a>
                         </div>
                     </div>
                 </div>
@@ -119,16 +140,17 @@
             const row = document.createElement("tr");
             row.innerHTML = `
                 <td>
-                    <select name="Order.OrdenCompraDetalles[${rowCount}].ProductoId" class="form-select select2" required>
-                        <option value="">-- Seleccione Articulo --</option>
-                        ${parsedProductos.map(p => `<option value="${p.id}">${p.codigo} - ${p.nombre}</option>`).join('')}
+                    <select name="Order.OrdenCompraDetalles[${rowCount}].ProductoId" class="form-control form-select w-100 select2" required>
+                        <option value="">-- Buscar Artículo --</option>
+                        ${parsedProductos.map(p => `<option value="${p.id}">${p.display}</option>`).join('')}
                     </select>
                 </td>
-                <td><input name="Order.OrdenCompraDetalles[${rowCount}].CantidadSolicitada" type="number" step="0.01" class="form-control text-end input-qty" value="1.00" onchange="calculateTotals()" required /></td>
-                <td><input name="Order.OrdenCompraDetalles[${rowCount}].PrecioUnitario" type="number" step="0.01" class="form-control text-end input-price" value="0.00" onchange="calculateTotals()" required /></td>
+                <td><input name="Order.OrdenCompraDetalles[${rowCount}].CantidadSolicitada" type="number" step="0.01" class="form-control text-numeric w-100 input-qty" value="1.00" onchange="calculateTotals()" required /></td>
+                <td><input name="Order.OrdenCompraDetalles[${rowCount}].PrecioUnitario" type="number" step="0.01" class="form-control text-numeric w-100 input-price" value="0.00" onchange="calculateTotals()" required /></td>
+                <td class="text-numeric fw-bold label-line-total">0.00</td>
                 <td class="text-center">
-                    <button type="button" class="btn btn-sm btn-link text-danger" onclick="this.closest('tr').remove(); calculateTotals();">
-                        <i class="ti ti-trash"></i>
+                    <button type="button" class="btn btn-sm text-danger border-0 bg-transparent" onclick="this.closest('tr').remove(); calculateTotals();">
+                        <i class="ti ti-trash fs-18"></i>
                     </button>
                 </td>
             `;
@@ -141,7 +163,9 @@
             document.querySelectorAll("#detailsTable tbody tr").forEach(row => {
                 const qty = parseFloat(row.querySelector('.input-qty').value || 0);
                 const price = parseFloat(row.querySelector('.input-price').value || 0);
-                total += (qty * price);
+                const lineTotal = qty * price;
+                row.querySelector('.label-line-total').innerText = lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2 });
+                total += lineTotal;
             });
 
             document.getElementById('labelSubtotal').innerText = total.toLocaleString('en-US', { minimumFractionDigits: 2 });

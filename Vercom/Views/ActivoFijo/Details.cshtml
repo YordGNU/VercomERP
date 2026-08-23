@@ -1,0 +1,141 @@
+@model Vercom.Models.ActivoFijo
+@{
+    ViewBag.Title = "Detalle de Activo Fijo";
+}
+
+<div class="page-title-head d-flex align-items-center mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">@Model.Descripcion</h4>
+        <p class="text-muted small mb-0">Código de Inventario: <span class="fw-bold">@Model.CodigoInventario</span></p>
+    </div>
+    <div class="text-end d-flex gap-2">
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+            <i class="ti ti-arrow-left me-1"></i> VOLVER
+        </a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
+            <i class="ti ti-edit me-1"></i> EDITAR
+        </a>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-info-circle me-2 text-primary"></i>Información General</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Descripción</label>
+                            <span class="fs-16">@Model.Descripcion</span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Estado</label>
+                            @{
+                                var statusClass = Model.Estado switch {
+                                    "ACTIVO" => "badge-soft-success",
+                                    "BAJA" => "badge-soft-danger",
+                                    _ => "badge-soft-secondary"
+                                };
+                            }
+                            <span class="badge @statusClass">@Model.Estado</span>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Fecha de Adquisición</label>
+                            <span>@Model.FechaAdquisicion.ToString("dd/MM/yyyy")</span>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Valor Adquisición</label>
+                            <span class="fw-bold">@Model.ValorAdquisicion.ToString("N2") CUP</span>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Valor Residual</label>
+                            <span>@Model.ValorResidual.ToString("N2") CUP</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-calculator me-2 text-primary"></i>Configuración de Depreciación</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Método</label>
+                            <span>@Model.MetodoDepreciacion</span>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Vida Útil (Meses)</label>
+                            <span>@Model.VidaUtilMeses</span>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Tasa Anual</label>
+                            <span>@(Model.TasaDepreciacionAnual?.ToString("P2") ?? "N/A")</span>
+                        </div>
+                        <div class="col-md-12">
+                            <hr class="my-2">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Depreciación Acumulada</label>
+                            <span class="text-danger fw-bold">@Model.DepreciacionAcumulada.ToString("N2") CUP</span>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Valor en Libros</label>
+                            <span class="fs-18 fw-bold text-primary">@((Model.ValorAdquisicion - Model.DepreciacionAcumulada).ToString("N2")) CUP</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-link me-2 text-primary"></i>Cuentas Contables</h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <label class="text-muted tiny text-uppercase d-block">Cuenta de Activo</label>
+                            <span class="small fw-bold">@Model.CuentaActivo.Codigo - @Model.CuentaActivo.Nombre</span>
+                        </li>
+                        <li class="list-group-item">
+                            <label class="text-muted tiny text-uppercase d-block">Cuenta Depreciación</label>
+                            <span class="small">@Model.CuentaDepreciacion.Codigo - @Model.CuentaDepreciacion.Nombre</span>
+                        </li>
+                        <li class="list-group-item">
+                            <label class="text-muted tiny text-uppercase d-block">Cuenta de Gasto</label>
+                            <span class="small">@Model.CuentaGastoDep.Codigo - @Model.CuentaGastoDep.Nombre</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            @if (Model.FechaBaja.HasValue)
+            {
+                <div class="card border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="m-0 fw-bold">Información de Baja</h5>
+                    </div>
+                    <div class="card-body">
+                        <label class="text-muted small text-uppercase fw-bold d-block">Fecha de Baja</label>
+                        <span class="d-block mb-2">@Model.FechaBaja.Value.ToString("dd/MM/yyyy")</span>
+                        <label class="text-muted small text-uppercase fw-bold d-block">Motivo</label>
+                        <p class="mb-0">@Model.MotivoBaja</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .badge-soft-success { background-color: #ecfdf5; color: #059669; }
+    .badge-soft-danger { background-color: #fef2f2; color: #dc2626; }
+    .badge-soft-secondary { background-color: #f3f4f6; color: #4b5563; }
+    .tiny { font-size: 0.65rem; }
+</style>

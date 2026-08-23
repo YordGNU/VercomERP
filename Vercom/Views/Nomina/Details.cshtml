@@ -4,46 +4,49 @@
     var meses = new[] { "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
 }
 
-<div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Nómina @meses[Model.Periodo.Mes] @Model.Periodo.Anio</h4>
+        <h4 class="page-main-title m-0">Liquidación de Haberes: @meses[Model.Periodo.Mes] @Model.Periodo.Anio</h4>
+        <p class="text-muted small mb-0">Detalle individual de devengados y retenciones legales del periodo.</p>
     </div>
     <div class="text-end d-flex gap-2">
-        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Volver</a>
+        <a asp-action="Index" class="btn btn-sm btn-outline"><i class="ti ti-arrow-left"></i> VOLVER</a>
         @if (Model.Periodo.Estado == "PRENOMINA")
         {
             <form asp-action="Approve" method="post">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="id" value="@Model.Periodo.Id" />
-                <button type="submit" class="btn btn-sm btn-success"><i class="ti ti-check me-1"></i> APROBAR Y CONTABILIZAR (RF-24)</button>
+                <button type="submit" class="btn btn-sm btn-primary shadow-sm bg-success">
+                    <i class="ti ti-check"></i> APROBAR Y CONTABILIZAR
+                </button>
             </form>
         }
         @if (Model.Periodo.AsientoId.HasValue)
         {
-            <a asp-controller="AsientoContable" asp-action="Details" asp-route-id="@Model.Periodo.AsientoId" class="btn btn-sm btn-info">
-                <i class="ti ti-calculator me-1"></i> Ver Asiento Automático
+            <a asp-controller="AsientoContable" asp-action="Details" asp-route-id="@Model.Periodo.AsientoId" class="btn btn-sm btn-outline text-info">
+                <i class="ti ti-calculator"></i> VER ASIENTO
             </a>
         }
     </div>
 </div>
 
-<div class="container-xxl mt-4">
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-light-subtle d-flex justify-content-between align-items-center">
-            <h4 class="card-title mb-0">Resumen de Pagos por Trabajador (Bancarización)</h4>
-            <span class="badge @(Model.Periodo.Estado == "APROBADA" ? "bg-success" : "bg-warning")">ESTADO: @Model.Periodo.Estado</span>
+<div class="container-xxl">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="m-0 fw-bold"><i class="ti ti-users-group me-2 text-primary"></i>Listado de Pago (Bancarización)</h5>
+            <span class="badge @(Model.Periodo.Estado == "APROBADA" ? "badge-soft-success" : "badge-soft-warning")">@Model.Periodo.Estado</span>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
+                <table class="table">
+                    <thead>
                         <tr>
-                            <th>Empleado</th>
-                            <th class="text-center">Días Asis.</th>
-                            <th class="text-center">Extras (h)</th>
-                            <th class="text-end">Bruto / Devengado</th>
-                            <th class="text-end">Retención SS</th>
-                            <th class="text-end">NETO A PAGAR</th>
+                            <th>Nombre del Trabajador</th>
+                            <th width="100" class="text-center">Días Asis.</th>
+                            <th width="100" class="text-center">Extras (h)</th>
+                            <th width="160" class="text-end">Bruto Devengado ($)</th>
+                            <th width="160" class="text-end">Retenciones ($)</th>
+                            <th width="180" class="text-end">NETO A COBRAR ($)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -51,21 +54,20 @@
                         {
                             <tr>
                                 <td class="fw-bold">@det.Empleado.Apellidos, @det.Empleado.Nombres</td>
-                                <td class="text-center">@det.DiasTrabajados.ToString("N1")</td>
-                                <td class="text-center">@det.HorasExtra.ToString("N1")</td>
-                                <td class="text-end">@det.SalarioDevengado.ToString("C")</td>
-                                <td class="text-end text-danger">- @det.TotalDeducciones.ToString("C")</td>
-                                <td class="text-end fw-bold text-primary">@det.SalarioNeto.ToString("C")</td>
+                                <td class="text-center text-numeric small">@det.DiasTrabajados.ToString("N1")</td>
+                                <td class="text-center text-numeric small text-muted">@det.HorasExtra.ToString("N1")</td>
+                                <td class="text-numeric">@det.SalarioDevengado.ToString("N2")</td>
+                                <td class="text-numeric text-danger">-@det.TotalDeducciones.ToString("N2")</td>
+                                <td class="text-numeric fw-bold text-primary">@det.SalarioNeto.ToString("N2")</td>
                             </tr>
                         }
                     </tbody>
-                    <tfoot class="table-dark fw-bold fs-15">
+                    <tfoot class="bg-light fw-bold" style="border-top: 2px solid var(--erp-border-color);">
                         <tr>
-                            <td>TOTALES DE NÓMINA:</td>
-                            <td colspan="2"></td>
-                            <td class="text-end">@Model.Detalles.Sum(d => d.SalarioDevengado).ToString("C")</td>
-                            <td class="text-end text-white-50">- @Model.Detalles.Sum(d => d.TotalDeducciones).ToString("C")</td>
-                            <td class="text-end text-warning">@Model.Detalles.Sum(d => d.SalarioNeto).ToString("C")</td>
+                            <td colspan="3" class="text-uppercase p-3">Totales de Nómina:</td>
+                            <td class="text-numeric p-3">@Model.Detalles.Sum(d => d.SalarioDevengado).ToString("N2")</td>
+                            <td class="text-numeric p-3 text-danger">-@Model.Detalles.Sum(d => d.TotalDeducciones).ToString("N2")</td>
+                            <td class="text-numeric p-3 fs-5 text-primary">@Model.Detalles.Sum(d => d.SalarioNeto).ToString("N2")</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -73,7 +75,13 @@
         </div>
     </div>
 
-    <div class="alert alert-warning mt-4 py-2 small shadow-sm border-0">
-        <i class="ti ti-alert-circle me-1"></i> RNF-22: Una vez aprobada, el historial salarial es inalterable con fines probatorios laborales.
+    <div class="alert alert-warning border-0 shadow-sm rounded-3 py-3">
+        <div class="d-flex align-items-center">
+            <i class="ti ti-alert-octagon-filled fs-32 me-3 opacity-50"></i>
+            <div>
+                <h6 class="fw-bold mb-1">Inmutabilidad Salarial (RF-22)</h6>
+                <p class="mb-0 small">Una vez aprobada esta nómina, el asiento contable se ha sellado y el historial queda archivado para auditorías del MTSS y ONAT.</p>
+            </div>
+        </div>
     </div>
 </div>

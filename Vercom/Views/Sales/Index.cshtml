@@ -3,52 +3,67 @@
     ViewBag.Title = "Historial de Ventas";
 }
 
-<div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Ventas y Facturación</h4>
+        <h4 class="page-main-title m-0">Ventas y Facturación Fiscal</h4>
+        <p class="text-muted small mb-0">Gestión de ingresos por ventas directas y corporativas (ERP/POS).</p>
     </div>
     <div class="text-end">
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="ti ti-plus me-1"></i> Nueva Venta Fiscal
+        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
+            <i class="ti ti-receipt"></i> EMITIR NUEVA FACTURA
         </a>
     </div>
 </div>
 
-<div class="container-xxl mt-4">
+<div class="container-xxl">
     <div class="card">
-        <div class="card-body">
+        <div class="card-header">
+            <h5 class="m-0 fw-bold"><i class="ti ti-list me-2 text-primary"></i>Libro de Ventas</h5>
+        </div>
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table id="dataTable" class="table table-hover align-middle w-100">
-                    <thead class="table-light">
+                <table id="salesTable" class="table">
+                    <thead>
                         <tr>
-                            <th>Fecha</th>
-                            <th>Nº Factura</th>
-                            <th>Cliente</th>
-                            <th>Canal</th>
-                            <th>Total</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
+                            <th width="160" class="text-center">Fecha / Hora</th>
+                            <th width="140">Nº Factura</th>
+                            <th>Cliente / Razón Social</th>
+                            <th width="120">Canal</th>
+                            <th width="140" class="text-end">Monto Total ($)</th>
+                            <th width="120" class="text-center">Estado</th>
+                            <th width="100" class="text-end">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var item in Model)
                         {
-                            var statusClass = item.Estado == "EMITIDA" ? "badge bg-success-subtle text-success" : (item.Estado == "ANULADA" ? "badge bg-danger-subtle text-danger" : "badge bg-warning-subtle text-warning");
+                            var statusClass = item.Estado switch {
+                                "EMITIDA" => "badge-soft-success",
+                                "ANULADA" => "badge-soft-danger",
+                                "PENDIENTE" => "badge-soft-warning",
+                                _ => "badge-soft-secondary"
+                            };
 
                             <tr>
-                                <td>@item.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
-                                <td class="fw-bold">@item.Serie-@item.NumeroFactura</td>
-                                <td>@item.Cliente.NombreRazonSocial</td>
+                                <td class="text-date text-muted">@item.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-numeric fw-bold text-primary">@item.Serie-@item.NumeroFactura</td>
+                                <td class="fw-semibold">@item.Cliente.NombreRazonSocial</td>
                                 <td>
-                                    @if(item.CanalVenta == "POS") { <span class="text-info"><i class="ti ti-device-mobile"></i> POS</span> }
-                                    else { <span class="text-primary"><i class="ti ti-world"></i> ERP</span> }
+                                    @if(item.CanalVenta == "POS") { <span class="badge badge-soft-info"><i class="ti ti-device-mobile me-1"></i> POS</span> }
+                                    else { <span class="badge badge-soft-primary"><i class="ti ti-world me-1"></i> ERP</span> }
                                 </td>
-                                <td class="fw-bold">@item.Total.ToString("C")</td>
-                                <td><span class="@statusClass">@item.Estado</span></td>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        <button class="btn btn-sm btn-light"><i class="ti ti-eye"></i></button>
-                                        <button class="btn btn-sm btn-light text-danger"><i class="ti ti-ban"></i></button>
+                                <td class="text-numeric fw-bold">@item.Total.ToString("N2")</td>
+                                <td class="text-center"><span class="badge @statusClass">@item.Estado</span></td>
+                                <td class="text-end">
+                                    <div class="btn-group">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline py-1 px-2" title="Detalles">
+                                            <i class="ti ti-eye"></i>
+                                        </a>
+                                        @if (item.Estado != "ANULADA") {
+                                            <button type="button" class="btn btn-sm btn-outline py-1 px-2 text-danger" title="Anular" onclick="confirmCancel('@item.Id')">
+                                                <i class="ti ti-ban"></i>
+                                            </button>
+                                        }
                                     </div>
                                 </td>
                             </tr>
@@ -60,11 +75,29 @@
     </div>
 </div>
 
-
 @section Scripts {
     <script>
-        .ready(function () {
-            #dataTable.DataTable();
+        $(document).ready(function () {
+            $('#salesTable').DataTable({
+                         language: { url: '/js/i18n/es-ES.json' },
+                order: [[0, 'desc']]
+            });
         });
+
+        function confirmCancel(id) {
+            Swal.fire({
+                title: '¿Anular Factura?',
+                text: "Esta acción generará un asiento de reversión automática (RF-12).",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'SÍ, ANULAR',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Submit cancel form or call API
+                }
+            });
+        }
     </script>
 }

@@ -1,119 +1,88 @@
 @model IEnumerable<Vercom.Models.MovimientoBancario>
-
 @{
-    ViewData["Title"] = "Index";
+    ViewBag.Title = "Movimientos Bancarios";
 }
 
-<div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Gesti�n de MovimientoBancario</h4>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">MovimientoBancario</a></li>
-            <li class="breadcrumb-item active">Listado</li>
-        </ol>
+        <h4 class="page-main-title m-0 fw-bold">Libro Auxiliar de Bancos</h4>
+        <p class="text-muted small mb-0">Detalle de transacciones bancarias y estado de conciliación.</p>
     </div>
 </div>
 
 <div class="container-xxl">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Listado de MovimientoBancario</h4>
-                </div>
-                <div class="card-body">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="m-0 fw-bold"><i class="ti ti-receipt-2 me-2 text-primary"></i>Movimientos Registrados</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table id="bankTable" class="table">
+                    <thead>
+                        <tr>
+                            <th width="120" class="text-center">Fecha</th>
+                            <th width="120">Operación</th>
+                            <th>Descripción / Concepto</th>
+                            <th width="120">Referencia</th>
+                            <th width="140" class="text-end">Monto ($)</th>
+                            <th width="120" class="text-center">Conciliado</th>
+                            <th width="100" class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var isEntry = item.Tipo == "CREDITO" || item.Tipo == "INGRESO";
+                            var amountClass = isEntry ? "text-success" : "text-danger";
 
-
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<div class="table-responsive"><table id="dataTable" class="table table-hover align-middle w-100">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Fecha)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Tipo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Monto)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Descripcion)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Referencia)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Conciliado)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FechaConciliacion)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Asiento)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CuentaBancaria)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Fecha)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Tipo)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Monto)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Descripcion)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Referencia)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Conciliado)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FechaConciliacion)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Asiento.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CuentaBancaria.Id)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table></div>
-                </div>
+                            <tr>
+                                <td class="text-date text-muted">@item.Fecha.ToString("dd/MM/yyyy")</td>
+                                <td><span class="badge badge-soft-secondary">@item.Tipo</span></td>
+                                <td class="fw-semibold">@item.Descripcion</td>
+                                <td class="small text-muted font-monospace">@item.Referencia</td>
+                                <td class="text-numeric fw-bold @amountClass">
+                                    @(isEntry ? "" : "-")@item.Monto.ToString("N2")
+                                </td>
+                                <td class="text-center">
+                                    @if (item.Conciliado) {
+                                        <span class="badge badge-soft-success" title="Conciliado el @item.FechaConciliacion?.ToString("dd/MM/yyyy")">
+                                            <i class="ti ti-circle-check-filled me-1"></i> SÍ
+                                        </span>
+                                    } else {
+                                        <span class="badge badge-soft-warning"><i class="ti ti-clock me-1"></i> PENDIENTE</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group">
+                                        @if (!item.Conciliado) {
+                                            <form asp-action="Reconcile" asp-route-id="@item.Id" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline py-1 text-success" title="Marcar como Conciliado">
+                                                    <i class="ti ti-checks"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        <a asp-controller="AsientoContable" asp-action="Details" asp-route-id="@item.AsientoId" class="btn btn-sm btn-outline py-1" title="Ver Asiento">
+                                            <i class="ti ti-calculator"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
 
-
 @section Scripts {
     <script>
-        .ready(function () {
-            #dataTable.DataTable();
+        $(document).ready(function () {
+            $('#bankTable').DataTable({
+                         language: { url: '/js/i18n/es-ES.json' },
+                order: [[0, 'desc']]
+            });
         });
     </script>
 }

@@ -164,7 +164,7 @@ public class HRService : IHRService
             NombreEmpleado = emp != null ? $"{emp.Apellidos}, {emp.Nombres}" : "Desconocido",
             Contrato = new ContratoLaboral { EmpleadoId = employeeId, FechaInicio = DateOnly.FromDateTime(DateTime.Now), Estado = "VIGENTE" },
             Cargos = new SelectList(await _context.Cargos.ToListAsync(), "Id", "Nombre"),
-            TiposContrato = new SelectList(new[] { "INDETERMINADO", "DETERMINADO", "ADIESTRAMIENTO", "APRENDIZAJE" })
+            TiposContrato = new SelectList(new[] { "PRUEBA", "DETERMINADO", "INDETERMINADO" })
         };
     }
 

@@ -1,53 +1,59 @@
+@model Vercom.ViewModels.ReportsIndexViewModel
 @{
-    ViewBag.Title = "Central de Reportes";
+    ViewBag.Title = Model.Title;
 }
 
-<div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Reportes Oficiales y Fiscales</h4>
+        <h4 class="page-main-title m-0 fw-bold">Reportes Oficiales y Fiscales</h4>
+        <p class="text-muted small mb-0">Consolidación de estados financieros y cumplimiento normativo ante la ONAT.</p>
     </div>
 </div>
 
-<div class="container-xxl mt-4">
+<div class="container-xxl">
     <div class="row">
-        <!-- Contabilidad -->
-        <div class="col-md-6 mb-4">
+        <!-- Grupo 1: Contabilidad -->
+        <div class="col-md-6">
             <div class="card h-100">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0 text-white"><i class="ti ti-calculator me-1"></i> Estados Financieros (NCC)</h5>
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-calculator me-2 text-primary"></i>Estados Financieros (NCC)</h5>
                 </div>
                 <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" data-bs-toggle="modal" data-bs-target="#reportModal" data-type="BALANCE">
-                            Balance General Consolidado <i class="ti ti-chevron-right"></i>
-                        </a>
-                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" data-bs-toggle="modal" data-bs-target="#reportModal" data-type="RESULTADOS">
-                            Estado de Resultados (P y G) <i class="ti ti-chevron-right"></i>
-                        </a>
-                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                            Estado de Flujo de Efectivo <span class="badge bg-light text-dark">Próximamente</span>
-                        </a>
+                    <p class="text-muted small mb-4">Generación de balances y resultados basados en el Nomenclador de Cuentas vigente.</p>
+                    <div class="list-group list-group-flush border rounded-3 overflow-hidden">
+                        <button type="button" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-3" data-bs-toggle="modal" data-bs-target="#reportModal" data-type="BALANCE">
+                            <span><i class="ti ti-report-money me-2 text-success"></i>Balance General Consolidado</span>
+                            <i class="ti ti-chevron-right text-muted"></i>
+                        </button>
+                        <button type="button" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-3" data-bs-toggle="modal" data-bs-target="#reportModal" data-type="RESULTADOS">
+                            <span><i class="ti ti-chart-arrows-vertical me-2 text-info"></i>Estado de Resultados (P y G)</span>
+                            <i class="ti ti-chevron-right text-muted"></i>
+                        </button>
+                        <div class="list-group-item bg-light-subtle text-muted d-flex align-items-center justify-content-between py-3 opacity-50">
+                            <span><i class="ti ti-cash me-2"></i>Estado de Flujo de Efectivo</span>
+                            <span class="badge badge-soft-secondary">PRÓXIMAMENTE</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Cumplimiento ONAT -->
-        <div class="col-md-6 mb-4">
+        <!-- Grupo 2: Fiscal y ONAT -->
+        <div class="col-md-6">
             <div class="card h-100">
-                <div class="card-header bg-dark text-white">
-                    <h5 class="card-title mb-0 text-white"><i class="ti ti-file-certificate me-1"></i> Cumplimiento ONAT/MFP</h5>
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-file-certificate me-2 text-danger"></i>Cumplimiento ONAT / MFP</h5>
                 </div>
                 <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        <a asp-controller="DeclaracionJuradum" asp-action="Index" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                            Declaraciones Juradas (DJ-08/02) <i class="ti ti-external-link"></i>
+                    <p class="text-muted small mb-4">Documentación inmutable para procesos de auditoría y declaraciones juradas mensuales.</p>
+                    <div class="list-group list-group-flush border rounded-3 overflow-hidden">
+                        <a asp-controller="DeclaracionJuradum" asp-action="Index" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-3">
+                            <span><i class="ti ti-file-analytics me-2 text-warning"></i>Declaraciones Juradas (DJ-08/02)</span>
+                            <i class="ti ti-external-link text-muted"></i>
                         </a>
-                        <a asp-action="Packages" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                            Paquetes Informativos Mensuales <i class="ti ti-package"></i>
-                        </a>
-                        <a asp-controller="Auditoria" asp-action="Index" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                            Bitácora de Auditoría (Res. 60) <i class="ti ti-shield-check"></i>
+                        <a asp-controller="Auditoria" asp-action="Index" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-3">
+                            <span><i class="ti ti-shield-check me-2 text-success"></i>Bitácora de Auditoría (Resolución 60)</span>
+                            <i class="ti ti-list-check text-muted"></i>
                         </a>
                     </div>
                 </div>
@@ -56,36 +62,43 @@
     </div>
 </div>
 
-<!-- Modal Generador de Reporte -->
-<div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <form asp-action="FinancialStatement" method="get">
+<!-- Modal de Configuración de Reporte -->
+<div class="modal fade" id="reportModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form asp-action="FinancialStatement" method="get" class="w-100">
             <input type="hidden" name="type" id="reportType" />
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Configurar Reporte</h5>
+            <div class="modal-content shadow-lg border-0 rounded-4">
+                <div class="modal-header border-0 p-4">
+                    <h5 class="modal-title fw-bold">Configurar Generación</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Periodo Contable</label>
-                        <select name="periodId" class="form-select" id="periodSelect">
-                            @foreach(var p in ViewBag.Periods as List<Vercom.Models.PeriodoContable>) {
-                                <option value="@p.Id">@p.Mes / @p.Anio (@p.Estado)</option>
-                            }
-                        </select>
+                <div class="modal-body p-4 pt-0">
+                    <div class="mb-4">
+                        <label class="form-label">Periodo Contable</label>
+                        <select name="periodId" class="form-control form-select w-100" asp-items="Model.Periods" required></select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Formato de Salida</label>
-                        <select class="form-select">
-                            <option value="HTML">Vista Web Interactiva</option>
-                            <option value="PDF">Documento PDF (Oficial)</option>
-                            <option value="EXCEL">Hoja de Cálculo (.xlsx)</option>
-                        </select>
+                    <div class="mb-0">
+                        <label class="form-label">Formato de Salida</label>
+                        <div class="d-flex gap-3">
+                            <div class="form-check card-select flex-grow-1">
+                                <input class="form-check-input d-none" type="radio" name="format" id="fmtWeb" value="HTML" checked>
+                                <label class="form-check-label card p-3 text-center w-100 cursor-pointer" for="fmtWeb">
+                                    <i class="ti ti-world fs-24 d-block mb-1 text-primary"></i>
+                                    <span class="small fw-bold">Vista Web</span>
+                                </label>
+                            </div>
+                            <div class="form-check card-select flex-grow-1">
+                                <input class="form-check-input d-none" type="radio" name="format" id="fmtPdf" value="PDF">
+                                <label class="form-check-label card p-3 text-center w-100 cursor-pointer" for="fmtPdf">
+                                    <i class="ti ti-file-type-pdf fs-24 d-block mb-1 text-danger"></i>
+                                    <span class="small fw-bold">Oficial PDF</span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary w-100">VISUALIZAR REPORTE</button>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="submit" class="btn btn-sm btn-primary w-100 py-3 shadow">VISUALIZAR REPORTE</button>
                 </div>
             </div>
         </form>
@@ -103,5 +116,11 @@
     </script>
 }
 
-
-
+<style>
+    .cursor-pointer { cursor: pointer; }
+    .card-select input:checked + label {
+        border-color: var(--erp-primary);
+        background-color: #eff6ff;
+        box-shadow: 0 0 0 2px var(--erp-primary);
+    }
+</style>

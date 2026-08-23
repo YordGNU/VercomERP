@@ -33,48 +33,65 @@
                 <div class="card-body">
 <form class="row g-3" asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="mb-3">
-                <label asp-for="EntidadId" class="form-label"></label>
-                <input asp-for="EntidadId" class="form-control" />
-                <span asp-validation-for="EntidadId" class="text-danger"></span>
+
+            <div class="col-md-4">
+                <label asp-for="TipoPersona" class="form-label">Tipo de Proveedor</label>
+                <select asp-for="TipoPersona" class="form-select">
+                    <option value="JURIDICA">Persona Jurídica (Empresa)</option>
+                    <option value="NATURAL">Persona Natural (TCP/Mipyme)</option>
+                </select>
+                <span asp-validation-for="TipoPersona" class="text-danger"></span>
             </div>
-            <div class="mb-3">
-                <label asp-for="Nit" class="form-label"></label>
-                <input asp-for="Nit" class="form-control" />
+
+            <div class="col-md-4">
+                <label asp-for="Nit" class="form-label">NIT / Identificación</label>
+                <input asp-for="Nit" class="form-control" maxlength="20" />
                 <span asp-validation-for="Nit" class="text-danger"></span>
             </div>
-            <div class="mb-3">
-                <label asp-for="RazonSocial" class="form-label"></label>
-                <input asp-for="RazonSocial" class="form-control" />
+
+            <div class="col-md-4">
+                <label asp-for="RazonSocial" class="form-label">Razón Social</label>
+                <input asp-for="RazonSocial" class="form-control" maxlength="255" required />
                 <span asp-validation-for="RazonSocial" class="text-danger"></span>
             </div>
-            <div class="mb-3">
-                <label asp-for="Direccion" class="form-label"></label>
+
+            <div class="col-12">
+                <label asp-for="Direccion" class="form-label">Dirección Fiscal</label>
                 <input asp-for="Direccion" class="form-control" />
                 <span asp-validation-for="Direccion" class="text-danger"></span>
             </div>
-            <div class="mb-3">
-                <label asp-for="Telefono" class="form-label"></label>
-                <input asp-for="Telefono" class="form-control" />
+
+            <div class="col-md-6">
+                <label asp-for="Telefono" class="form-label">Teléfono</label>
+                <input asp-for="Telefono" class="form-control" maxlength="30" />
                 <span asp-validation-for="Telefono" class="text-danger"></span>
             </div>
-            <div class="mb-3">
-                <label asp-for="Email" class="form-label"></label>
-                <input asp-for="Email" class="form-control" />
+
+            <div class="col-md-6">
+                <label asp-for="Email" class="form-label">Correo Electrónico</label>
+                <input asp-for="Email" class="form-control" type="email" maxlength="150" />
                 <span asp-validation-for="Email" class="text-danger"></span>
             </div>
-            <div class="mb-3">
-                <label asp-for="CuentaBancaria" class="form-label"></label>
-                <input asp-for="CuentaBancaria" class="form-control" />
+
+            <div class="col-md-6">
+                <label asp-for="CuentaBancaria" class="form-label">Número de Cuenta Bancaria</label>
+                <input asp-for="CuentaBancaria" class="form-control" maxlength="40" />
                 <span asp-validation-for="CuentaBancaria" class="text-danger"></span>
             </div>
-            <div class="mb-3">
-                <label asp-for="CuentaContableId" class="form-label"></label>
-                <input asp-for="CuentaContableId" class="form-control" />
+
+            <div class="col-md-6">
+                <label asp-for="CuentaContableId" class="form-label">Cuenta Contable (CxP)</label>
+                <select asp-for="CuentaContableId" class="form-select" asp-items="ViewBag.CuentaContableId">
+                    <option value="">-- Sin Vincular --</option>
+                </select>
                 <span asp-validation-for="CuentaContableId" class="text-danger"></span>
             </div>
-            <div class="mb-3">
-                <button type="submit" class="btn btn-primary">Guardar</button>
+
+            <div class="col-12 d-flex justify-content-end gap-2 mt-4">
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary px-4">
+                    <i class="ti ti-device-floppy me-1"></i> REGISTRAR PROVEEDOR
+                </button>
             </div>
         </form>
                 </div>

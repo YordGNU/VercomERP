@@ -1,57 +1,76 @@
 @model IEnumerable<Vercom.Models.Caja>
 @{
-    ViewBag.Title = "GestiÛn de Arcas";
+    ViewBag.Title = "Gesti√≥n de Arcas";
 }
 
-<div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Disponibilidad en Caja</h4>
+        <h4 class="page-main-title m-0 fw-bold">Disponibilidad de Efectivo en Arcas</h4>
+        <p class="text-muted small mb-0">Control de saldos en efectivo por unidad y puntos de venta.</p>
     </div>
     <div class="text-end">
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="ti ti-plus me-1"></i> Nueva Caja
+        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
+            <i class="ti ti-plus"></i> NUEVA CAJA
         </a>
     </div>
 </div>
 
-<div class="container-xxl mt-4">
+<div class="container-xxl">
     <div class="row">
         @foreach (var item in Model)
         {
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 border-start border-success border-3">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between mb-3">
-                            <h4 class="card-title">@item.Nombre</h4>
-                            <span class="badge @(item.Activa ? "bg-success" : "bg-danger")">@(item.Activa ? "OPERATIVA" : "CERRADA")</span>
+            <div class="col-xl-4 col-md-6 mb-4">
+                <div class="card border-start border-success border-4 h-100 transition-all hover-shadow">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-4">
+                            <div>
+                                <h5 class="fw-bold mb-0 text-dark">@item.Nombre</h5>
+                                <small class="text-muted text-uppercase fw-semibold tiny">Unidad: @(item.Sucursal?.Nombre ?? "Central")</small>
+                            </div>
+                            <span class="badge @(item.Activa ? "badge-soft-success" : "badge-soft-danger")">
+                                @(item.Activa ? "OPERATIVA" : "INACTIVA")
+                            </span>
                         </div>
 
-                        <div class="text-center py-2 bg-light rounded mb-3">
-                            <h2 class="fw-bold text-success mb-0">@item.SaldoActual.ToString("C")</h2>
-                            <small class="text-muted">Saldo Disponible</small>
+                        <div class="text-center py-3 bg-light-subtle border rounded-3 mb-4">
+                            <h2 class="fw-bold text-success mb-0 text-numeric">@item.SaldoActual.ToString("N2")</h2>
+                            <p class="small text-muted text-uppercase mb-0 fw-bold">Saldo en CUP</p>
                         </div>
 
-                        <div class="small text-muted">
-                            <p class="mb-1"><strong>Cuenta:</strong> @item.CuentaContable.Codigo - @item.CuentaContable.Nombre</p>
-                            <p class="mb-0"><strong>LÌmite:</strong> @(item.LimiteEfectivo?.ToString("C") ?? "Sin lÌmite")</p>
+                        <div class="small text-muted border-top pt-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Cuenta Mayor:</span>
+                                <span class="fw-semibold text-primary">@item.CuentaContable.Codigo</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>L√≠mite Efectivo:</span>
+                                <span class="text-dark fw-bold">@(item.LimiteEfectivo?.ToString("N2") ?? "Ilimitado")</span>
+                            </div>
+                        </div>
+
+                        <div class="d-grid mt-4">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline">
+                                <i class="ti ti-list-search me-1"></i> VER MOVIMIENTOS
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
         }
         @if (!Model.Any()) {
-            <div class="col-12 text-center py-5 text-muted small">No hay cajas configuradas.</div>
+            <div class="col-12 text-center py-5">
+                <div class="avatar-xl bg-light-subtle rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 100px; height: 100px;">
+                    <i class="ti ti-cash fs-48 text-muted"></i>
+                </div>
+                <h3 class="fw-bold">No hay cajas configuradas</h3>
+                <p class="text-muted">Inicie la configuraci√≥n de tesorer√≠a registrando su primera caja f√≠sica.</p>
+                <a asp-action="Create" class="btn btn-sm btn-primary mt-3">CONFIGURAR CAJA</a>
+            </div>
         }
     </div>
 </div>
 
-
-@section Scripts {
-    <script>
-        .ready(function () {
-            #dataTable.DataTable();
-        });
-    </script>
-}
-
-
+<style>
+    .hover-shadow:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important; }
+    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
+</style>

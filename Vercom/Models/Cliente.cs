@@ -40,6 +40,8 @@ public partial class Cliente
 
     public virtual CuentaContable? CuentaContable { get; set; }
 
+    public virtual ICollection<CuentaPorCobrar> CuentaPorCobrars { get; set; } = new List<CuentaPorCobrar>();
+
     public virtual Entidad Entidad { get; set; } = null!;
 
     public virtual ICollection<FacturaVentum> FacturaVenta { get; set; } = new List<FacturaVentum>();

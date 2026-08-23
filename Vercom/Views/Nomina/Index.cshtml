@@ -4,43 +4,47 @@
     var meses = new[] { "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
 }
 
-<div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Nómina de Salarios (RF-22)</h4>
+        <h4 class="page-main-title m-0">Control de Nóminas y Haberes</h4>
+        <p class="text-muted small mb-0">Cálculo de salarios, retenciones e impuestos sobre la fuerza de trabajo (RF-22).</p>
     </div>
     <div class="text-end">
-        <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#calcPayrollModal">
-            <i class="ti ti-calculator me-1"></i> CALCULAR NUEVA NÓMINA
+        <button type="button" class="btn btn-sm btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#calcPayrollModal">
+            <i class="ti ti-calculator"></i> CALCULAR NUEVA NÓMINA
         </button>
     </div>
 </div>
 
-<div class="container-xxl mt-4">
-    <div class="card shadow-sm">
-        <div class="card-body">
+<div class="container-xxl">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="m-0 fw-bold"><i class="ti ti-history me-2 text-primary"></i>Historial de Períodos de Pago</h5>
+        </div>
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table id="dataTable" class="table table-hover align-middle w-100">
-                    <thead class="table-light">
+                <table id="payrollTable" class="table">
+                    <thead>
                         <tr>
                             <th>Periodo Fiscal</th>
-                            <th>Frecuencia</th>
-                            <th class="text-center">Estado (Flujo)</th>
-                            <th>F. de Cálculo</th>
-                            <th class="text-end">Acciones</th>
+                            <th width="150">Frecuencia</th>
+                            <th width="150" class="text-center">Estado (Flujo)</th>
+                            <th width="180">F. de Cálculo</th>
+                            <th width="120" class="text-end">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var item in Model.Periodos)
                         {
-                            var statusClass = item.Estado == "APROBADA" ? "badge bg-success" : "badge bg-warning";
+                            var statusClass = item.Estado == "APROBADA" ? "badge-soft-success" : "badge-soft-warning";
 
                             <tr>
                                 <td class="fw-bold">@meses[item.Mes] @item.Anio</td>
-                                <td><span class="badge border text-dark">@item.Tipo</span></td>
-                                <td class="text-center"><span class="@statusClass">@item.Estado</span></td>
-                                <td class="small text-muted">@item.CalculadoEn?.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td><span class="badge badge-soft-secondary">@item.Tipo</span></td>
+                                <td class="text-center"><span class="badge @statusClass">@item.Estado</span></td>
+                                <td class="text-date text-muted">@item.CalculadoEn?.ToString("dd/MM/yyyy HH:mm")</td>
                                 <td class="text-end">
-                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline py-1 px-3">
                                         <i class="ti ti-file-text me-1"></i> REVISAR
                                     </a>
                                 </td>
@@ -53,28 +57,29 @@
     </div>
 </div>
 
-<!-- Modal de Cálculo (XP: Exploración de periodo) -->
+<!-- Modal de Cálculo -->
 <div class="modal fade" id="calcPayrollModal" tabindex="-1">
-    <div class="modal-dialog">
-        <form asp-action="Calculate" method="post">
+    <div class="modal-dialog modal-dialog-centered">
+        <form asp-action="Calculate" method="post" class="w-100">
             @Html.AntiForgeryToken()
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">Iniciar Cálculo de Nómina</h5>
+            <div class="modal-content shadow-lg border-0 rounded-4">
+                <div class="modal-header border-0 bg-primary text-white p-4">
+                    <h5 class="modal-title fw-bold">Configurar Nuevo Cálculo</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <div class="alert alert-info py-2 small">
-                        <i class="ti ti-info-circle me-1"></i> El cálculo tomará la asistencia registrada del mes y el salario pactado en el contrato vigente (RF-22).
+                <div class="modal-body p-4">
+                    <div class="bg-light-subtle border rounded-3 p-3 mb-4 small">
+                        <i class="ti ti-info-circle-filled text-primary me-2"></i>
+                        El cálculo automático procesará la asistencia registrada y aplicará las escalas salariales vigentes según contrato.
                     </div>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Año Fiscal</label>
-                            <input type="number" name="anio" class="form-control" value="@Model.CurrentAnio" required />
+                            <label class="form-label">Año Fiscal</label>
+                            <input type="number" name="anio" class="form-control w-100" value="@Model.CurrentAnio" required />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Mes</label>
-                            <select name="mes" class="form-select" required>
+                            <label class="form-label">Mes</label>
+                            <select name="mes" class="form-control form-select w-100" required>
                                 @for(int m=1; m<=12; m++) {
                                     <!option value="@m" @(Model.CurrentMes == m ? "selected" : "")>@meses[m]</!option>
                                 }
@@ -82,9 +87,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">PROCESAR CÁLCULO</button>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-sm btn-outline px-4" data-bs-dismiss="modal">CANCELAR</button>
+                    <button type="submit" class="btn btn-sm btn-primary px-4">PROCESAR NÓMINA</button>
                 </div>
             </div>
         </form>
@@ -94,9 +99,9 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
-            $('#dataTable').DataTable({
-                language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
-                order: [[0, 'desc']]
+            $('#payrollTable').DataTable({
+                         language: { url: '/js/i18n/es-ES.json' },
+                order: [[3, 'desc']]
             });
         });
     </script>

@@ -129,9 +129,8 @@ public class AdminService : IAdminService
     {
         try
         {
-            if (entry.Id == Guid.Empty)
-            {
-                entry.Id = Guid.NewGuid();
+            if (entry.Id == 0)
+            {                
                 entry.EntidadId = _entidadProvider.CurrentEntidadId;
                 _context.Consecutivos.Add(entry);
             }
@@ -165,9 +164,8 @@ public class AdminService : IAdminService
     {
         try
         {
-            if (entry.Id == Guid.Empty)
+            if (entry.Id == 0)
             {
-                entry.Id = Guid.NewGuid();
                 entry.EntidadId = _entidadProvider.CurrentEntidadId;
                 _context.ParametroSistemas.Add(entry);
             }

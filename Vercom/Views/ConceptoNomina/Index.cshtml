@@ -4,92 +4,80 @@
     ViewData["Title"] = "Index";
 }
 
-<div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Gesti髇 de ConceptoNomina</h4>
+        <h4 class="page-main-title m-0 fw-bold">Configuraci贸n de Conceptos de N贸mina</h4>
+        <p class="text-muted small mb-0">Definici贸n de devengos, deducciones y aportes patronales (RF-23).</p>
     </div>
     <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
             <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">ConceptoNomina</a></li>
-            <li class="breadcrumb-item active">Listado</li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">RRHH</a></li>
+            <li class="breadcrumb-item active">Conceptos</li>
         </ol>
+        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
+            <i class="ti ti-plus"></i> NUEVO CONCEPTO
+        </a>
     </div>
 </div>
 
 <div class="container-xxl">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Listado de ConceptoNomina</h4>
-                </div>
-                <div class="card-body">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="m-0 fw-bold"><i class="ti ti-settings me-2 text-primary"></i>Cat谩logo de Conceptos Salariales</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table id="conceptosTable" class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th width="120">C贸digo</th>
+                            <th>Descripci贸n del Concepto</th>
+                            <th width="150" class="text-center">Tipo</th>
+                            <th width="200">Cuenta Contable</th>
+                            <th width="100" class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var typeClass = item.Tipo switch {
+                                "DEVENGO" => "badge-soft-success",
+                                "DEDUCCION" => "badge-soft-danger",
+                                "APORTE_PATRONAL" => "badge-soft-info",
+                                _ => "badge-soft-secondary"
+                            };
 
-
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<div class="table-responsive"><table id="dataTable" class="table table-hover align-middle w-100">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Codigo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Nombre)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Tipo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CuentaContableId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Formula)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Codigo)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Nombre)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Tipo)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CuentaContableId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Formula)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table></div>
-                </div>
+                            <tr>
+                                <td class="text-numeric fw-bold text-primary">@item.Codigo</td>
+                                <td class="fw-semibold">@item.Nombre</td>
+                                <td class="text-center"><span class="badge @typeClass">@item.Tipo</span></td>
+                                <td class="small">@item.CuentaContableId</td>
+                                <td class="text-end">
+                                    <div class="btn-group">
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline py-1 px-2" title="Editar">
+                                            <i class="ti ti-edit"></i>
+                                        </a>
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline py-1 px-2" title="Ver">
+                                            <i class="ti ti-eye"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
 
-
 @section Scripts {
     <script>
-        .ready(function () {
-            #dataTable.DataTable();
+        $(document).ready(function () {
+            $('#conceptosTable').DataTable({
+                language: { url: '/js/i18n/es-ES.json' }
+            });
         });
     </script>
 }

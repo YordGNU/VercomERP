@@ -134,16 +134,13 @@ public class EmpleadoController : Controller
     [Authorize(Policy = "RRHH.EMPLEADO.EDITAR")]
     public async Task<IActionResult> AddContract(ContratoLaboral contrato)
     {
-        if (ModelState.IsValid)
+        var result = await _hrService.AddContractAsync(contrato);
+        if (result.Succeeded)
         {
-            var result = await _hrService.AddContractAsync(contrato);
-            if (result.Succeeded)
-            {
-                TempData["Success"] = result.Message;
-                return RedirectToAction(nameof(File), new { id = contrato.EmpleadoId });
-            }
-            ModelState.AddModelError("", result.Message);
+            TempData["Success"] = result.Message;
+            return RedirectToAction(nameof(File), new { id = contrato.EmpleadoId });
         }
+        ModelState.AddModelError("", result.Message);       
         var vm = await _hrService.GetContractCreateContextAsync(contrato.EmpleadoId);
         return View(vm);
     }

@@ -1,0 +1,129 @@
+@model Vercom.Models.CuentaContable
+@{
+    ViewBag.Title = "Detalle de Cuenta Contable";
+}
+
+<div class="page-title-head d-flex align-items-center mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">@Model.Codigo - @Model.Nombre</h4>
+        <p class="text-muted small mb-0">Nivel: @Model.Nivel | Clase: <span class="fw-bold">@Model.Clase</span></p>
+    </div>
+    <div class="text-end d-flex gap-2">
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+            <i class="ti ti-arrow-left me-1"></i> VOLVER
+        </a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
+            <i class="ti ti-edit me-1"></i> EDITAR
+        </a>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-7">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-info-circle me-2 text-primary"></i>Configuración de la Cuenta</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Código</label>
+                            <span class="fs-18 font-monospace fw-bold">@Model.Codigo</span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Naturaleza</label>
+                            <span class="badge @(Model.Naturaleza == "DEUDORA" ? "bg-info" : "bg-warning")">@Model.Naturaleza</span>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Nombre de la Cuenta</label>
+                            <span class="fs-16 fw-semibold">@Model.Nombre</span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Moneda</label>
+                            <span>@Model.Moneda</span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Estado</label>
+                            @if (Model.Activo) { <span class="text-success"><i class="ti ti-check me-1"></i>ACTIVA</span> }
+                            else { <span class="text-danger"><i class="ti ti-x me-1"></i>INACTIVA</span> }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-settings me-2 text-primary"></i>Reglas de Validación</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-vcenter mb-0">
+                        <tbody>
+                            <tr>
+                                <td>Acepta Movimientos Directos (Operativa)</td>
+                                <td class="text-end">
+                                    @if(Model.AceptaMovimiento) { <i class="ti ti-square-check-filled text-success fs-20"></i> }
+                                    else { <i class="ti ti-square-x-filled text-muted fs-20"></i> }
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Requiere Centro de Costo</td>
+                                <td class="text-end">
+                                    @if(Model.RequiereCentroCosto) { <i class="ti ti-square-check-filled text-primary fs-20"></i> }
+                                    else { <i class="ti ti-square-x-filled text-muted fs-20"></i> }
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Requiere Tercero (Cliente/Proveedor/Empleado)</td>
+                                <td class="text-end">
+                                    @if(Model.RequiereTercero) { <i class="ti ti-square-check-filled text-primary fs-20"></i> }
+                                    else { <i class="ti ti-square-x-filled text-muted fs-20"></i> }
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-hierarchy me-2 text-primary"></i>Jerarquía</h5>
+                </div>
+                <div class="card-body">
+                    <label class="text-muted small text-uppercase fw-bold d-block">Cuenta Padre</label>
+                    @if (Model.CuentaPadre != null)
+                    {
+                        <a asp-action="Details" asp-route-id="@Model.CuentaPadreId" class="fw-bold">
+                            @Model.CuentaPadre.Codigo - @Model.CuentaPadre.Nombre
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="text-muted italic">Cuenta de primer nivel</span>
+                    }
+
+                    <div class="mt-4">
+                        <label class="text-muted small text-uppercase fw-bold d-block mb-2">Subcuentas (@Model.InverseCuentaPadre.Count)</label>
+                        @if (Model.InverseCuentaPadre.Any())
+                        {
+                            <div class="list-group list-group-flush border rounded">
+                                @foreach (var sub in Model.InverseCuentaPadre.OrderBy(s => s.Codigo))
+                                {
+                                    <a asp-action="Details" asp-route-id="@sub.Id" class="list-group-item list-group-item-action py-2">
+                                        <small class="font-monospace text-primary">@sub.Codigo</small> - @sub.Nombre
+                                    </a>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-light border-0 mb-0 py-2">No tiene subcuentas asociadas.</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

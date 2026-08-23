@@ -1,0 +1,89 @@
+@model Vercom.Models.CuentaBancarium
+@{
+    ViewBag.Title = "Detalle de Cuenta Bancaria";
+}
+
+<div class="page-title-head d-flex align-items-center mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">@Model.Banco</h4>
+        <p class="text-muted small mb-0">Nº de Cuenta: <span class="fw-bold">@Model.NumeroCuenta</span></p>
+    </div>
+    <div class="text-end d-flex gap-2">
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+            <i class="ti ti-arrow-left me-1"></i> VOLVER
+        </a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
+            <i class="ti ti-edit me-1"></i> EDITAR
+        </a>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-building-bank me-2 text-primary"></i>Información de la Cuenta</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Banco</label>
+                            <span class="fs-16 fw-bold">@Model.Banco</span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Estado</label>
+                            @if (Model.Activa) { <span class="badge bg-success">ACTIVA</span> }
+                            else { <span class="badge bg-danger">INACTIVA</span> }
+                        </div>
+                        <div class="col-md-12">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Número de Cuenta</label>
+                            <span class="fs-15 font-monospace">@Model.NumeroCuenta</span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Tipo de Cuenta</label>
+                            <span>@Model.TipoCuenta</span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Moneda</label>
+                            <span class="fw-bold">@Model.Moneda</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-primary">
+                <div class="card-body text-center py-4">
+                    <div class="text-muted small text-uppercase fw-bold mb-1">Saldo Contable Actual</div>
+                    <div class="fs-32 fw-bold text-primary">@Model.SaldoActual.ToString("N2") <small class="fs-16">@Model.Moneda</small></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-link me-2 text-primary"></i>Enlace Contable</h5>
+                </div>
+                <div class="card-body">
+                    <p>Esta cuenta bancaria está vinculada a la siguiente cuenta del Libro Mayor:</p>
+                    <div class="bg-light rounded p-3 d-flex align-items-center">
+                        <div class="bg-white rounded-circle p-2 me-3 shadow-sm text-primary">
+                            <i class="ti ti-book fs-24"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small text-uppercase fw-bold">Cuenta Contable</div>
+                            <a asp-controller="CuentaContable" asp-action="Details" asp-route-id="@Model.CuentaContableId" class="fw-bold fs-16">
+                                @Model.CuentaContable.Codigo - @Model.CuentaContable.Nombre
+                            </a>
+                        </div>
+                    </div>
+                    <div class="mt-4 alert alert-info py-2 small">
+                        <i class="ti ti-info-circle me-1"></i>
+                        Todas las conciliaciones bancarias y transferencias automáticas afectarán directamente este enlace contable.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

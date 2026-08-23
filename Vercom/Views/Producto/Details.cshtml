@@ -1,0 +1,137 @@
+@model Vercom.Models.Producto
+@{
+    ViewBag.Title = "Ficha de Producto";
+}
+
+<div class="page-title-head d-flex align-items-center mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">@Model.Nombre</h4>
+        <p class="text-muted small mb-0">Código: <span class="fw-bold">@Model.Codigo</span> | Familia: @(Model.Familia?.Nombre ?? "Sin asignar")</p>
+    </div>
+    <div class="text-end d-flex gap-2">
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+            <i class="ti ti-arrow-left me-1"></i> VOLVER
+        </a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
+            <i class="ti ti-edit me-1"></i> EDITAR
+        </a>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-barcode me-2 text-primary"></i>Especificaciones Técnicas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Nombre del Producto/Servicio</label>
+                            <span class="fs-16 fw-bold">@Model.Nombre</span>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Tipo</label>
+                            <span class="badge bg-blue-lt">@Model.Tipo</span>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Unidad Medida</label>
+                            <span>@Model.UnidadMedida.Nombre (@Model.UnidadMedida.Codigo)</span>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Descripción</label>
+                            <p class="mb-0">@(Model.Descripcion ?? "Sin descripción adicional.")</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Código de Barras</label>
+                            <span class="font-monospace">@(Model.CodigoBarras ?? "N/A")</span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Impuestos</label>
+                            <span>@(Model.AplicaImpuestoVentas ? "Aplica Impuesto Ventas (10%)" : "Exento de Impuestos")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-package me-2 text-primary"></i>Existencia en Almacenes</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Almacén / Ubicación</th>
+                                    <th class="text-center">Stock Físico</th>
+                                    <th class="text-end">Costo Promedio (PPP)</th>
+                                    <th class="text-end">Valor Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Existencia.Any())
+                                {
+                                    foreach (var e in Model.Existencia)
+                                    {
+                                        <tr>
+                                            <td>@e.Almacen.Nombre</td>
+                                            <td class="text-center fw-bold">@e.Cantidad.ToString("N2")</td>
+                                            <td class="text-end text-muted">@e.CostoPromedio.ToString("C")</td>
+                                            <td class="text-end fw-bold">@((e.Cantidad * e.CostoPromedio).ToString("C"))</td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr><td colspan="4" class="text-center py-3 text-muted">No hay stock registrado en ningún almacén.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-success-subtle">
+                    <h5 class="m-0 fw-bold text-success"><i class="ti ti-coin me-2"></i>Precio de Venta</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="text-muted small text-uppercase fw-bold mb-1">Precio Unitario Actual</div>
+                    <div class="fs-32 fw-bold text-success">@(Model.PrecioVentaActual?.ToString("C") ?? "N/A")</div>
+                    <div class="small text-muted">Moneda: CUP</div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-link me-2 text-primary"></i>Configuración Contable</h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush small">
+                        <li class="list-group-item">
+                            <label class="text-muted text-uppercase fw-bold d-block tiny">Cuenta Inventario</label>
+                            <span>@(Model.CuentaInventario?.Codigo ?? "N/A") - @(Model.CuentaInventario?.Nombre ?? "Sin asignar")</span>
+                        </li>
+                        <li class="list-group-item">
+                            <label class="text-muted text-uppercase fw-bold d-block tiny">Cuenta Ingresos</label>
+                            <span>@(Model.CuentaIngreso?.Codigo ?? "N/A") - @(Model.CuentaIngreso?.Nombre ?? "Sin asignar")</span>
+                        </li>
+                        <li class="list-group-item">
+                            <label class="text-muted text-uppercase fw-bold d-block tiny">Cuenta Costo Venta</label>
+                            <span>@(Model.CuentaCostoVenta?.Codigo ?? "N/A") - @(Model.CuentaCostoVenta?.Nombre ?? "Sin asignar")</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-blue-lt { background-color: #eff6ff; color: #2563eb; }
+    .tiny { font-size: 0.65rem; }
+</style>
