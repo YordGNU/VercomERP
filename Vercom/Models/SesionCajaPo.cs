@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Vercom.Models;
+﻿namespace Vercom.Models;
 
 /// <summary>
 /// Un dispositivo solo puede tener una sesión ABIERTA a la vez — aplicar índice único parcial en capa de aplicación o UNIQUE(dispositivo_pos_id) WHERE estado=&apos;ABIERTA&apos;.

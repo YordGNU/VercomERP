@@ -1,5 +1,3 @@
-using System;
-
 namespace Vercom.Models;
 
 public abstract class BaseEntity

@@ -11,7 +11,7 @@ public interface IContractService
 
 public class ContractService : IContractService
 {
-   private readonly AppDbContext _context;  
+    private readonly AppDbContext _context;
 
     public ContractService(AppDbContext context)
     {

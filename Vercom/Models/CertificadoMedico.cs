@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Vercom.Models;
+﻿namespace Vercom.Models;
 
 /// <summary>
 /// RNF-20: acceso restringido — datos de salud del trabajador, solo RR.HH. y dirección.

@@ -9,6 +9,11 @@
         <p class="text-muted small mb-0">Nomenclador de magnitudes para el control de inventario y producción.</p>
     </div>
     <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Inventario</a></li>
+            <li class="breadcrumb-item active">Unidades</li>
+        </ol>
         <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
             <i class="ti ti-plus"></i> NUEVA UNIDAD
         </a>
@@ -20,9 +25,9 @@
         <div class="card-header">
             <h5 class="m-0 fw-bold"><i class="ti ti-scale me-2 text-primary"></i>Unidades Registradas</h5>
         </div>
-        <div class="card-body p-0">
+        <div class="card-body">
             <div class="table-responsive">
-                <table id="unitsTable" class="table">
+                <table id="unitsTable"  class="table table-striped table-bordered">
                     <thead>
                         <tr>
                             <th width="150">Sigla / Código</th>

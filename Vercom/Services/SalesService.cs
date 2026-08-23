@@ -24,16 +24,18 @@ public class SalesService : ISalesService
     private readonly IContractService _contractService;
     private readonly ITaxService _taxService;
     private readonly IConsecutivoService _consecutivoService;
+    private readonly IAccountingService _accountingService;
     private readonly Security.IEntidadProvider _entidadProvider;
 
     public SalesService(AppDbContext context, IInventoryService inventoryService, IContractService contractService,
-        ITaxService taxService, IConsecutivoService consecutivoService, Security.IEntidadProvider entidadProvider)
+        ITaxService taxService, IConsecutivoService consecutivoService, IAccountingService accountingService, Security.IEntidadProvider entidadProvider)
     {
         _context = context;
         _inventoryService = inventoryService;
         _contractService = contractService;
         _taxService = taxService;
         _consecutivoService = consecutivoService;
+        _accountingService = accountingService;
         _entidadProvider = entidadProvider;
     }
 
@@ -182,6 +184,58 @@ public class SalesService : ISalesService
 
             _context.FacturaVenta.Add(invoice);
             await _context.SaveChangesAsync();
+
+            // 5. Integración Contable Venta (RF-52/RF-11)
+            var tipoComprobante = await _context.TipoComprobantes.FirstOrDefaultAsync(t => t.Codigo == "ING"); // Ingresos
+            if (tipoComprobante != null)
+            {
+                var period = await _context.PeriodoContables.FirstOrDefaultAsync(p => p.EntidadId == invoice.EntidadId && p.Anio == invoice.Fecha.Year && p.Mes == invoice.Fecha.Month);
+                if (period != null && period.Estado == "ABIERTO")
+                {
+                    var entry = new AsientoContable
+                    {
+                        Id = Guid.NewGuid(),
+                        EntidadId = invoice.EntidadId,
+                        PeriodoId = period.Id,
+                        Fecha = DateOnly.FromDateTime(invoice.Fecha.DateTime),
+                        Concepto = $"FACTURACIÓN FISCAL #{invoice.Serie}-{invoice.NumeroFactura}",
+                        ModuloOrigen = "VENTAS",
+                        DocumentoOrigenTipo = "FACTURA_VENTA",
+                        DocumentoOrigenId = invoice.Id,
+                        TipoComprobanteId = tipoComprobante.Id,
+                        CreadoPor = invoice.CreadoPor ?? Guid.Empty,
+                        CreadoEn = DateTimeOffset.Now,
+                        Estado = "CONTABILIZADO"
+                    };
+
+                    // DEBE: Caja o Cuenta por Cobrar
+                    var caja = await _context.Cajas.FirstOrDefaultAsync(c => c.SucursalId == invoice.SucursalId);
+                    var debitAccId = (totalPagado >= invoice.Total) ? caja?.CuentaContableId : invoice.Cliente.CuentaContableId;
+
+                    if (debitAccId.HasValue)
+                        entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = debitAccId.Value, Debe = invoice.Total, Haber = 0, Glosa = "Cobro Factura" });
+
+                    // HABER: Ingresos e Impuestos
+                    // Usamos la cuenta de ingresos del primer producto para simplificar el asiento global
+                    var firstProd = await _context.Productos.FindAsync(invoice.FacturaVentaDetalles.First().ProductoId);
+                    if (firstProd?.CuentaIngresoId != null)
+                        entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = firstProd.CuentaIngresoId.Value, Debe = 0, Haber = invoice.Subtotal - invoice.DescuentoTotal, Glosa = "Venta de Mercancías" });
+
+                    if (invoice.ImpuestoVentasTotal > 0)
+                    {
+                        var taxAcc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "402" && c.EntidadId == invoice.EntidadId); // 402: Impuestos por Pagar
+                        if (taxAcc != null)
+                            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = taxAcc.Id, Debe = 0, Haber = invoice.ImpuestoVentasTotal, Glosa = "Impuesto sobre Ventas (10%)" });
+                    }
+
+                    if (entry.AsientoDetalles.Sum(d => d.Debe) == entry.AsientoDetalles.Sum(d => d.Haber))
+                    {
+                        var res = await _accountingService.CreateEntryAsync(entry);
+                        if (res.Succeeded) invoice.AsientoId = entry.Id;
+                    }
+                }
+            }
+
             await transaction.CommitAsync();
 
             return (true, $"Factura {invoice.NumeroFactura} emitida.", invoice);

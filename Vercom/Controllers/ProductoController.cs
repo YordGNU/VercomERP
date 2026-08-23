@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Vercom.Models;
 using Vercom.Services;
 using Vercom.ViewModels;
 
@@ -101,24 +100,72 @@ public class ProductoController : Controller
         return View(contextVm);
     }
 
-    [Authorize(Policy = "INVENTARIO.PRODUCTO.ELIMINAR")]
-    public async Task<IActionResult> Delete(Guid? id)
-    {
-        if (id == null) return NotFound();
-        var product = await _inventoryService.GetProductByIdAsync(id.Value);
-        if (product == null) return NotFound();
-        return View(product);
-    }
-
-    [HttpPost, ActionName("Delete")]
+    // ============================================================
+    // ELIMINACIÓN INDIVIDUAL (AJAX)
+    // ============================================================
+    [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Policy = "INVENTARIO.PRODUCTO.ELIMINAR")]
-    public async Task<IActionResult> DeleteConfirmed(Guid id)
+    public async Task<IActionResult> Delete([FromBody] DeleteRequest request)
     {
-        var result = await _inventoryService.DeleteProductAsync(id);
-        if (result.Succeeded) return RedirectToAction(nameof(Index));
+        try
+        {
+            var result = await _inventoryService.DeleteAsync(request.Id);
 
-        TempData["Error"] = result.Message;
-        return RedirectToAction(nameof(Index));
+            if (result)
+            {
+                return Json(new { success = true, message = "Producto eliminado correctamente." });
+            }
+            else
+            {
+                var producto = await _inventoryService.GetProductByIdAsync(request.Id);
+                if (producto == null)
+                    return Json(new { success = false, message = "Producto no encontrado." });
+
+                return Json(new { success = false, message = "No se puede eliminar porque tiene movimientos de inventario." });
+            }
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = "Ocurrió un error al eliminar el producto." });
+        }
     }
+
+    // ============================================================
+    // ELIMINACIÓN EN LOTE (AJAX)
+    // ============================================================
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "INVENTARIO.PRODUCTO.ELIMINAR")]
+    public async Task<IActionResult> DeleteSelected([FromBody] DeleteSelectedRequest request)
+    {
+        try
+        {
+            var result = await _inventoryService.DeleteSelectedAsync(request.Ids);
+
+            if (result.Success)
+            {
+                return Json(new { success = true, message = result.Message, count = result.DeletedCount });
+            }
+            else
+            {
+                return Json(new { success = false, message = result.Message, failedIds = result.FailedIds });
+            }
+        }
+        catch (Exception ex)
+        {
+
+            return Json(new { success = false, message = "Ocurrió un error al eliminar los productos." });
+        }
+    }
+}
+
+public class DeleteRequest
+{
+    public Guid Id { get; set; }
+}
+
+public class DeleteSelectedRequest
+{
+    public List<Guid> Ids { get; set; } = new();
 }

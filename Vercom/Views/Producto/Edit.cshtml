@@ -78,22 +78,34 @@
                     <div class="tab-pane fade" id="tab-accounting" role="tabpanel">
                         <div class="row g-4">
                             <div class="col-md-4">
-                                <label asp-for="Producto.CuentaInventarioId" class="form-label fw-bold">Cta. Inventario</label>
-                                <select asp-for="Producto.CuentaInventarioId" name="Producto.CuentaInventarioId" class="form-select" asp-items="Model.CuentasContables">
-                                    <option value="">-- Por defecto --</option>
-                                </select>
+                                <div class="form-group">
+                                    <label asp-for="Producto.CuentaInventarioId" class="control-label fw-bold"></label>
+                                    <select asp-for="Producto.CuentaInventarioId" asp-items="Model.CuentasInventario" class="form-control select2-cuenta">
+                                        <option value="">-- Seleccionar --</option>
+                                    </select>
+                                    <span asp-validation-for="Producto.CuentaInventarioId" class="text-danger"></span>
+                                    <small class="form-text text-muted">Cuenta de Activo (ej. 240-251 Activos Fijos Tangibles)</small>
+                                </div>
                             </div>
                             <div class="col-md-4">
-                                <label asp-for="Producto.CuentaCostoVentaId" class="form-label fw-bold">Cta. Costo</label>
-                                <select asp-for="Producto.CuentaCostoVentaId" name="Producto.CuentaCostoVentaId" class="form-select" asp-items="Model.CuentasContables">
-                                    <option value="">-- Por defecto --</option>
-                                </select>
+                                <div class="form-group">
+                                    <label asp-for="Producto.CuentaCostoVentaId" class="control-label fw-bold"></label>
+                                    <select asp-for="Producto.CuentaCostoVentaId" asp-items="Model.CuentasCostoVenta" class="form-control select2-cuenta">
+                                        <option value="">-- Seleccionar --</option>
+                                    </select>
+                                    <span asp-validation-for="Producto.CuentaCostoVentaId" class="text-danger"></span>
+                                    <small class="form-text text-muted">Cuenta de Egreso (ej. 810 Costo de Ventas)</small>
+                                </div>
                             </div>
                             <div class="col-md-4">
-                                <label asp-for="Producto.CuentaIngresoId" class="form-label fw-bold">Cta. Ingreso</label>
-                                <select asp-for="Producto.CuentaIngresoId" name="Producto.CuentaIngresoId" class="form-select" asp-items="Model.CuentasContables">
-                                    <option value="">-- Por defecto --</option>
-                                </select>
+                                <div class="form-group">
+                                    <label asp-for="Producto.CuentaIngresoId" class="control-label fw-bold"></label>
+                                    <select asp-for="Producto.CuentaIngresoId" asp-items="Model.CuentasIngresos" class="form-control select2-cuenta">
+                                        <option value="">-- Seleccionar --</option>
+                                    </select>
+                                    <span asp-validation-for="Producto.CuentaIngresoId" class="text-danger"></span>
+                                    <small class="form-text text-muted">Cuenta de Ingreso (ej. 701 Producción Propia para Insumo)</small>
+                                </div>
                             </div>
                         </div>
                     </div>

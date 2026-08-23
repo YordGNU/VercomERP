@@ -101,7 +101,8 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
             var cashAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "101" && c.EntidadId == cxc.EntidadId);
             if (cashAccount == null) throw new Exception("Cuenta de caja no configurada.");
 
-            entry.AsientoDetalles.Add(new AsientoDetalle {
+            entry.AsientoDetalles.Add(new AsientoDetalle
+            {
                 Id = Guid.NewGuid(),
                 CuentaId = cashAccount.Id,
                 Debe = amount,
@@ -112,7 +113,8 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
             var cxcAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "201" && c.EntidadId == cxc.EntidadId);
             if (cxcAccount == null) throw new Exception("Cuenta de CxC no configurada.");
 
-            entry.AsientoDetalles.Add(new AsientoDetalle {
+            entry.AsientoDetalles.Add(new AsientoDetalle
+            {
                 Id = Guid.NewGuid(),
                 CuentaId = cxcAccount.Id,
                 Haber = amount,
@@ -175,7 +177,8 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
             var cxpAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "401" && c.EntidadId == cxp.EntidadId);
             if (cxpAccount == null) throw new Exception("Cuenta de CxP no configurada.");
 
-            entry.AsientoDetalles.Add(new AsientoDetalle {
+            entry.AsientoDetalles.Add(new AsientoDetalle
+            {
                 Id = Guid.NewGuid(),
                 CuentaId = cxpAccount.Id,
                 Debe = amount,
@@ -186,7 +189,8 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
             var cashAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "101" && c.EntidadId == cxp.EntidadId);
             if (cashAccount == null) throw new Exception("Cuenta de caja no configurada.");
 
-            entry.AsientoDetalles.Add(new AsientoDetalle {
+            entry.AsientoDetalles.Add(new AsientoDetalle
+            {
                 Id = Guid.NewGuid(),
                 CuentaId = cashAccount.Id,
                 Haber = amount,

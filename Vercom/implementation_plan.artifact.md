@@ -1,51 +1,64 @@
-# Plan: Modernización y Estandarización de Vistas (Index & Create)
+# Protocolo de Pruebas de Aceptación (FAT) - ERP Vercom Elite
 
-Este plan tiene como objetivo elevar la calidad de la interfaz de usuario del ERP Vercom Elite, asegurando que todos los listados (`Index`) y formularios (`Create`) sigan un patrón de diseño profesional, coherente y altamente funcional basado en el framework **Tabler**.
+Este documento define el conjunto de pruebas finales para validar que el ERP cumple con los Requisitos Funcionales (RF) y No Funcionales (RNF) establecidos, integrando las normativas cubanas del MFP, ONAT y CGR.
 
-## User Review Required
+## Escenario Maestro: "Ciclo Operativo de la Tierra Prometida S.U.R.L."
+
+El objetivo es simular un mes completo de operación, desde la contratación del personal hasta la emisión de los estados financieros.
+
+---
+
+### 1. Infraestructura y Configuración (Módulo 0)
+*   **Caso 1.1: Multi-inquilino y Seguridad.**
+    *   *Acción:* Crear un nuevo Rol "ECONÓMICO" con permisos limitados a Contabilidad.
+    *   *Resultado Esperado:* Un usuario con este rol no debe ver el menú de "Configuración de Seguridad" ni "RRHH".
+*   **Caso 1.2: Parámetros Fiscales.**
+    *   *Acción:* Configurar la tasa de Seguridad Social en 12.5% en `ParametroSistema`.
+    *   *Resultado:* Los cálculos de nómina deben usar este valor dinámicamente.
+
+### 2. Gestión de Capital Humano (Módulo 2)
+*   **Caso 2.1: El Ciclo del Trabajador.**
+    *   *Acción:* Registrar un empleado -> Crear contrato -> Marcar 20 días de asistencia.
+    *   *Resultado:* El sistema debe acumular 1.82 días de vacaciones (9.09% de 20).
+*   **Caso 2.2: Nómina y Contabilización.**
+    *   *Acción:* Calcular nómina del mes -> Aprobar nómina.
+    *   *Resultado:* Se debe generar un asiento contable cuadrado en el módulo de Contabilidad (Cuentas 701 y 401).
+
+### 3. Cadena de Suministro y Producción (Módulos 3 y 4)
+*   **Caso 3.1: Recepción de Materia Prima.**
+    *   *Acción:* Crear Orden de Compra -> Registrar Recepción en Almacén.
+    *   *Resultado:* El stock debe aumentar y el costo promedio (PPP) debe actualizarse. Se debe generar una Cuenta por Pagar automática.
+*   **Caso 3.2: Transformación (BOM).**
+    *   *Acción:* Crear Orden de Producción -> Consumir Insumos -> Finalizar Producto Terminado.
+    *   *Resultado:* El sistema debe descontar materia prima y cargar el costo total al producto elaborado según la Ficha de Costo.
+
+### 4. Ciclo Comercial y Facturación (Módulo 5)
+*   **Caso 4.1: Venta con Contrato (B2B).**
+    *   *Acción:* Emitir factura mayorista vinculada a un Contrato Económico vigente.
+    *   *Resultado:* El sistema debe validar que el monto no exceda el límite del contrato y generar una Cuenta por Cobrar.
+*   **Caso 4.2: Integración POS.**
+    *   *Acción:* Simular llegada de venta desde la App Android (`integracion.pos_venta_pendiente`).
+    *   *Resultado:* El `PosSyncWorker` debe procesar la venta, bajar el stock y generar el ingreso en Caja.
+
+### 5. Inteligencia y Cumplimiento (Módulo 1 y 6)
+*   **Caso 5.1: Integridad de la Partida Doble.**
+    *   *Acción:* Intentar registrar un asiento manual descuadrado.
+    *   *Resultado:* El sistema (y los triggers de DB) deben rechazar la operación (RF-11).
+*   **Caso 5.2: Reportes Oficiales.**
+    *   *Acción:* Generar Balance General al cierre del mes.
+    *   *Resultado:* El reporte debe mostrar Activos = Pasivos + Patrimonio con exactitud decimal.
+
+---
+
+## Plan de Verificación Técnica
+
+1.  **Auditoría (Res. 60/2011):** Tras cada caso, verificar que en `nucleo.auditoria` exista la traza de (Quién, Qué, Cuándo).
+2.  **Inmutabilidad:** Intentar editar un asiento contable ya "Contabilizado". El sistema debe arrojar un error y exigir una Reversión.
+
+## Preguntas para el Usuario
 
 > [!IMPORTANT]
-> **Consistencia de DataTables:** Se estandarizará el uso de DataTables en todos los `Index` con soporte para idioma español y ordenamiento por defecto. ¿Desea que se habiliten botones de exportación (PDF/Excel) en todos los listados?
+> **¿Desea que estas pruebas las realicemos juntos paso a paso a través de comandos SQL de verificación, o prefiere que yo ejecute el ciclo completo y le entregue el informe final de consistencia?**
 
-> [!TIP]
-> **UX de Formularios:** Los formularios de creación se organizarán en secciones lógicas usando "Cards" y cuadrículas responsivas para mejorar la velocidad de entrada de datos, vital para un sistema POS/ERP.
-
-## Estrategia de Mejora
-
-### 1. Vistas de Listado (Index)
-- **Cabeceras Dinámicas:** Inclusión de títulos claros, descripciones breves y breadcrumbs.
-- **Acciones Prominentes:** Botones de "Crear Nuevo" destacados en la esquina superior derecha.
-- **DataTables Profesional:**
-  - Inicialización corregida (jQuery `$(document).ready`).
-  - Localización al español.
-  - Diseño `table-hover` y `align-middle`.
-- **Badges de Estado:** Uso de colores "soft" (badge-soft-success, etc.) para mayor legibilidad.
-
-### 2. Vistas de Creación (Create)
-- **Agrupación Lógica:** Uso de tarjetas (`card`) para separar datos personales, técnicos y contables.
-- **Layout Responsivo:** Implementación de `row g-3` y columnas balanceadas.
-- **Limpieza de Inputs:** Ocultar campos técnicos (`EntidadId`, `SucursalId`) que el sistema gestiona internamente.
-- **Validación en Tiempo Real:** Integración consistente de `_ValidationScriptsPartial`.
-- **Barra de Acciones:** Botones "Guardar" y "Cancelar" estandarizados al final del formulario.
-
-## Módulos Prioritarios
-
-Se aplicarán las mejoras de forma iterativa por módulos:
-
-### [Módulo 1] Contabilidad y Finanzas
-- `ActivoFijo`, `CuentaContable`, `CentroCosto`, `AsientoContable`.
-
-### [Módulo 2] Recursos Humanos
-- `Empleado`, `Cargo`, `ConceptoNomina`.
-
-### [Módulo 3] Comercial y Abastecimiento
-- `Cliente`, `Proveedor`, `ContratoEconomico`, `Purchase`.
-
-### [Módulo 4] Inventario y Producción
-- `Producto`, `Almacen`, `ListaMateriale`.
-
-## Plan de Verificación
-
-1.  **Integridad Visual:** Verificar que todas las páginas se vean uniformes y profesionales.
-2.  **Funcionalidad de Tablas:** Comprobar que el buscador y el ordenamiento de DataTables funcionen en cada listado.
-3.  **Flujo de Datos:** Asegurar que los formularios sigan enviando los datos correctamente a los controladores tras el cambio de layout.
+> [!CAUTION]
+> Estas pruebas implican la inserción de datos "limpios". Se recomienda realizar un respaldo previo (`BackupController`) antes de iniciar.

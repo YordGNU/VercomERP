@@ -1,7 +1,7 @@
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
 using Vercom.ViewModels;
-using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Vercom.Services;
 
@@ -198,7 +198,8 @@ public class PosService : IPosService
             query = query.Where(p => p.ActualizadoEn > updatedSince.Value);
         }
 
-        var res = await query.Select(p => new {
+        var res = await query.Select(p => new
+        {
             serverId = p.Id,
             cod = p.Codigo,
             nombre = p.Nombre,

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Vercom.Models;
+﻿namespace Vercom.Models;
 
 /// <summary>
 /// RNF-40: versionada para permitir redefinición ágil ante cambios de precios de insumos.

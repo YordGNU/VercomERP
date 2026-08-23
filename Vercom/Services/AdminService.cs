@@ -130,7 +130,7 @@ public class AdminService : IAdminService
         try
         {
             if (entry.Id == 0)
-            {                
+            {
                 entry.EntidadId = _entidadProvider.CurrentEntidadId;
                 _context.Consecutivos.Add(entry);
             }

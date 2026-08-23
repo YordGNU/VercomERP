@@ -19,7 +19,7 @@ public interface IHRReportService
 
 public class HRReportService : IHRReportService
 {
-   private readonly AppDbContext _context;  
+    private readonly AppDbContext _context;
 
     public HRReportService(AppDbContext context)
     {
@@ -38,7 +38,7 @@ public class HRReportService : IHRReportService
             Periodo = $"{r.Mes}/{r.Anio}",
             DiasTrabajados = r.DiasTrabajados,
             SalarioDevengado = r.SalarioDevengado,
-            TiempoServicioMeses = (int) r.TiempoServicioAcumuladoMeses
+            TiempoServicioMeses = (int)r.TiempoServicioAcumuladoMeses
         }).ToList();
     }
 

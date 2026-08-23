@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Vercom.Models;
 
 namespace Vercom.ViewModels;
 

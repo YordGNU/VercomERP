@@ -3,13 +3,19 @@
     ViewBag.Title = "Lista de Materiales (BOM)";
 }
 
-<div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Estructura de Productos (BOM)</h4>
+        <h4 class="page-main-title m-0 fw-bold">Estructura de Productos (BOM)</h4>
+        <p class="text-muted small mb-0">Definici贸n de composici贸n y requerimientos de insumos para fabricaci贸n.</p>
     </div>
     <div class="text-end">
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="ti ti-binary me-1"></i> Nueva Definici髇 de Insumos
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Producci贸n</a></li>
+            <li class="breadcrumb-item active">BOM</li>
+        </ol>
+        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
+            <i class="ti ti-binary me-1"></i> NUEVA DEFINICI脫N DE INSUMOS
         </a>
     </div>
 </div>
@@ -24,7 +30,7 @@
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
                                 <h4 class="card-title mb-1">@item.ProductoTerminado.Nombre</h4>
-                                <span class="badge @(item.Activa ? "bg-success" : "bg-light text-dark")">@(item.Activa ? "ACTIVA" : "HIST覴ICA")</span>
+                                <span class="badge @(item.Activa ? "bg-success" : "bg-light text-dark")">@(item.Activa ? "ACTIVA" : "HIST脫RICA")</span>
                             </div>
                             <div class="avatar-sm bg-light text-primary rounded d-flex align-items-center justify-content-center">
                                 <i class="ti ti-manual-gearbox fs-20"></i>
@@ -32,14 +38,14 @@
                         </div>
 
                         <p class="small text-muted mb-4">
-                            Versi髇: <strong>v.@item.Version</strong><br>
+                            Versi贸n: <strong>v.@item.Version</strong><br>
                             Definida el: @item.CreadoEn.ToString("dd/MM/yyyy")
                         </p>
 
                         <div class="d-grid gap-2">
-                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Ver Explosi髇 de Materiales</a>
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Ver Explosi贸n de Materiales</a>
                             @if(item.Activa) {
-                                <a asp-controller="Production" asp-action="CreateOrder" asp-route-productId="@item.ProductoTerminadoId" class="btn btn-sm btn-light text-primary">Generar Orden de Producci髇</a>
+                                <a asp-controller="Production" asp-action="CreateOrder" asp-route-productId="@item.ProductoTerminadoId" class="btn btn-sm btn-light text-primary">Generar Orden de Producci贸n</a>
                             }
                         </div>
                     </div>
@@ -50,7 +56,7 @@
         @if (!Model.Any())
         {
             <div class="col-12 text-center py-5 text-muted small">
-                No hay listas de materiales definidas. Empiece definiendo la composici髇 de sus productos elaborados.
+                No hay listas de materiales definidas. Empiece definiendo la composici贸n de sus productos elaborados.
             </div>
         }
     </div>
@@ -59,10 +65,10 @@
 
 @section Scripts {
     <script>
-        .ready(function () {
-            #dataTable.DataTable();
+        $(document).ready(function () {
+            $('#dataTable').DataTable({
+                language: { url: '/js/i18n/es-ES.json' }
+            });
         });
     </script>
 }
-
-

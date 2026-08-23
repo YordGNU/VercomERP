@@ -97,11 +97,14 @@ public class TaxService : ITaxService
         if (periodo == null) return Result.Failure("El período contable no existe.");
 
         decimal baseImponible = 0;
-        if (tipoObligacion.Codigo.Contains("VENTA")) {
+        if (tipoObligacion.Codigo.Contains("VENTA"))
+        {
             baseImponible = await _context.AsientoDetalles
                 .Where(d => d.Asiento.EntidadId == entidadId && d.Asiento.PeriodoId == periodoId && d.Cuenta.Clase == "INGRESOS")
                 .SumAsync(d => d.Haber - d.Debe);
-        } else if (tipoObligacion.Codigo.Contains("UTILIDAD")) {
+        }
+        else if (tipoObligacion.Codigo.Contains("UTILIDAD"))
+        {
             baseImponible = await CalculateIncomeTaxAsync(entidadId, periodoId) / 0.35m;
         }
 

@@ -40,7 +40,7 @@ public static class SeedData
             context.Sucursals.Add(sucursal);
             await context.SaveChangesAsync();
         }
-        var sucursalId = sucursal.Id;       
+        var sucursalId = sucursal.Id;
 
         // ======================================================================
         // 6. USUARIOS
@@ -83,9 +83,9 @@ public static class SeedData
         {
             new UsuarioRol { UsuarioId = masterUser.Id, RolId = adminRoleId, AsignadoEn = DateTimeOffset.UtcNow },
             new UsuarioRol { UsuarioId = admin.Id, RolId = adminRoleId, AsignadoEn = DateTimeOffset.UtcNow }
-        });      
-      
-        
+        });
+
+
         // ======================================================================
         // 13. INDICADORES BI (CORREGIDO: CATEGORÍA)
         // ======================================================================
@@ -101,6 +101,22 @@ public static class SeedData
         {
             if (!await context.Indicadors.AnyAsync(ind => ind.Codigo == i.Codigo))
                 context.Indicadors.Add(i);
+        }
+
+        // ======================================================================
+        // 14. PARÁMETROS FISCALES NÓMINA (NUEVO)
+        // ======================================================================
+        var parametros = new List<ParametroSistema>
+        {
+            new ParametroSistema { EntidadId = entidadId, Codigo = "TASA_SS_PATRONAL", Valor = "0.125", TipoDato = "NUMERIC", Descripcion = "Tasa de Contribución a la Seguridad Social (Entidad)", VigenteDesde = DateOnly.FromDateTime(DateTime.Now) },
+            new ParametroSistema { EntidadId = entidadId, Codigo = "TASA_FUERZA_TRAB", Valor = "0.05", TipoDato = "NUMERIC", Descripcion = "Impuesto por la Utilización de la Fuerza de Trabajo", VigenteDesde = DateOnly.FromDateTime(DateTime.Now) },
+            new ParametroSistema { EntidadId = entidadId, Codigo = "RET_SS_TRAB", Valor = "0.05", TipoDato = "NUMERIC", Descripcion = "Retención Seguridad Social Trabajador", VigenteDesde = DateOnly.FromDateTime(DateTime.Now) }
+        };
+
+        foreach (var p in parametros)
+        {
+            if (!await context.ParametroSistemas.AnyAsync(ps => ps.EntidadId == entidadId && ps.Codigo == p.Codigo))
+                context.ParametroSistemas.Add(p);
         }
 
         // ======================================================================

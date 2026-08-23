@@ -1,11 +1,10 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using Vercom.Models;
-using Vercom.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Vercom.Filters;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Vercom.Filters;
+using Vercom.Models;
 using Vercom.Security;
+using Vercom.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpContextAccessor();

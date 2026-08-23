@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Vercom.Models;
+using Vercom.Security;
 using Vercom.Services;
 using Vercom.ViewModels;
 
@@ -10,10 +10,12 @@ namespace Vercom.Controllers;
 public class ContratoEconomicoController : Controller
 {
     private readonly ICommercialService _commercialService;
+    private readonly IEntidadProvider _entidadProvider;
 
-    public ContratoEconomicoController(ICommercialService commercialService)
+    public ContratoEconomicoController(ICommercialService commercialService, IEntidadProvider entidadProvider)
     {
         _commercialService = commercialService;
+        _entidadProvider = entidadProvider;
     }
 
     [Authorize(Policy = "COMERCIAL.CONTRATO.VER")]
@@ -45,14 +47,56 @@ public class ContratoEconomicoController : Controller
     public async Task<IActionResult> Create(EconomicContractViewModel vm)
     {
         var contract = vm.Contract;
+
         ModelState.Remove("Contract.Entidad");
+        ModelState.Remove("Contract.Cliente");
+        ModelState.Remove("Contract.Proveedor");
+        ModelState.Remove("Contract.EntidadId");
 
         if (ModelState.IsValid)
         {
+            contract.EntidadId = _entidadProvider.CurrentEntidadId;
             var result = await _commercialService.CreateContractAsync(contract);
             if (result.Succeeded) return RedirectToAction(nameof(Index));
             ModelState.AddModelError("", result.Message);
         }
+
+        var contextVm = await _commercialService.GetContractFormContextAsync(contract);
+        return View(contextVm);
+    }
+
+    [Authorize(Policy = "COMERCIAL.CONTRATO.EDITAR")]
+    public async Task<IActionResult> Edit(Guid? id)
+    {
+        if (id == null) return NotFound();
+        var contract = await _commercialService.GetContractByIdAsync(id.Value);
+        if (contract == null) return NotFound();
+
+        var vm = await _commercialService.GetContractFormContextAsync(contract);
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "COMERCIAL.CONTRATO.EDITAR")]
+    public async Task<IActionResult> Edit(Guid id, EconomicContractViewModel vm)
+    {
+        var contract = vm.Contract;
+        if (id != contract.Id) return NotFound();
+
+        ModelState.Remove("Contract.Entidad");
+        ModelState.Remove("Contract.Cliente");
+        ModelState.Remove("Contract.Proveedor");
+        ModelState.Remove("Contract.EntidadId");
+
+        if (ModelState.IsValid)
+        {
+            contract.EntidadId = _entidadProvider.CurrentEntidadId;
+            var result = await _commercialService.UpdateContractAsync(contract);
+            if (result.Succeeded) return RedirectToAction(nameof(Index));
+            ModelState.AddModelError("", result.Message);
+        }
+
         var contextVm = await _commercialService.GetContractFormContextAsync(contract);
         return View(contextVm);
     }

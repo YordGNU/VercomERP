@@ -12,7 +12,7 @@ public interface IReportingService
 
 public class ReportingService : IReportingService
 {
-   private readonly AppDbContext _context;   
+    private readonly AppDbContext _context;
 
     public ReportingService(AppDbContext context)
     {

@@ -281,8 +281,8 @@ public class HRService : IHRService
                 {
                     EmpleadoId = e.Id,
                     Fecha = targetDate,
-                    HoraEntrada = new TimeOnly(8,0),
-                    HoraSalida = new TimeOnly(17,0)
+                    HoraEntrada = new TimeOnly(8, 0),
+                    HoraSalida = new TimeOnly(17, 0)
                 }
             }).ToList()
         };

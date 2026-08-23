@@ -1,36 +1,33 @@
-# Modernización de Interfaz y Armonización de Datos - Walkthrough
+# Corrección de Inconsistencias en Aprobación de Nómina - Walkthrough
 
-Se ha completado una actualización profunda de la capa de presentación (UI) del ERP Vercom Elite, transformando los listados y formularios básicos en interfaces profesionales, coherentes y altamente funcionales basadas en **Tabler**.
+Se ha robustecido el proceso de aprobación y contabilización de la nómina para garantizar el cumplimiento de las normativas de control interno (Res. 60/2011) y la adaptabilidad a las leyes fiscales cubanas.
 
 ## Cambios Realizados
 
-### 1. Estandarización de Listados (Index)
-Todos los listados principales ahora cuentan con:
-- **Navegación Intuitiva:** Implementación de *Breadcrumbs* (migas de pan) para facilitar la ubicación del usuario.
-- **DataTables Profesional:** Localización completa al español, búsqueda optimizada y diseño de filas espaciado (`align-middle`).
-- **Indicadores Visuales:** Uso de "Soft Badges" (colores tenues) para estados como *ACTIVO*, *BORRADOR* o *VENCIDO*, mejorando la legibilidad.
-- **Cabeceras Descriptivas:** Cada módulo incluye ahora un subtítulo técnico que explica su función operativa.
+### 1. Dinamicidad Fiscal (Parametrización)
+Se eliminaron las tasas impositivas fijas del código fuente. El sistema ahora consulta la tabla `ParametroSistema` para obtener los valores vigentes de:
+- **TASA_SS_PATRONAL:** Contribución a la Seguridad Social (entidad).
+- **TASA_FUERZA_TRAB:** Impuesto por el uso de la fuerza de trabajo.
+- **RET_SS_TRAB:** Retención obligatoria al trabajador.
 
-### 2. Optimización de Formularios (Create)
-Se rediseñaron los formularios de creación para eliminar la fricción detectada:
-- **Agrupación en Cards:** Los campos se organizan por contexto (Datos Identificativos, Perfil Laboral, Configuración Contable).
-- **Limpieza de Inconsistencias:** Se ocultaron campos técnicos (`EntidadId`, `SucursalId`) que el sistema gestiona en segundo plano, evitando errores de validación innecesarios.
-- **Validaciones Robustas:** Implementación de límites de longitud (`maxlength`) y máscaras de entrada (ej: Carnet de Identidad de 11 dígitos).
+### 2. Integración Contable Robusta
+- **Resolución de Error de ID:** Se corrigió el fallo donde el sistema buscaba un tipo de comprobante inexistente. Ahora busca dinámicamente el código "DIA" (Diario).
+- **Validación Previa:** Antes de aprobar, el sistema verifica que las cuentas de Gastos (701) y Pasivos (401) existan y estén activas. Si faltan, el usuario recibe un mensaje de "Error de Integración" en lugar de un error 500.
+- **Partida Doble Garantizada:** Se mejoró la construcción del asiento contable para asegurar que el Debe y el Haber coincidan exactamente, incluyendo los centavos redondeados de los impuestos patronales.
 
-### 3. Ajustes de Integridad (DB Sync)
-Se corrigieron discrepancias críticas entre la interfaz y las reglas de negocio de SQL Server:
-- **Tipos de Producto:** Actualizados a `MATERIA_PRIMA` y `EN_PROCESO` para cumplir con las restricciones técnicas.
-- **Nomenclador Contable:** Sincronización de clases de cuenta (`INGRESO`, `GASTO`, `ORDEN`) en el generador de catálogos.
-- **Mapeo de Terceros:** El formulario de Contratos ahora muestra/oculta dinámicamente el selector de Cliente o Proveedor según el tipo seleccionado.
+### 3. Seguridad Transaccional
+Se implementó una **Transacción SQL** en el proceso de aprobación. Esto garantiza que:
+- O se aprueba la nómina Y se crea el asiento contable simultáneamente.
+- O no se hace nada si ocurre un error (evitando nóminas aprobadas sin respaldo en libros).
 
-## Resultados Visuales
+## Resultados Técnicos
 
 > [!SUCCESS]
-> **Identidad Visual ERP:** El sistema ahora presenta una estética unificada. Un usuario que sepa usar el módulo de Inventario, sabrá usar el de Contabilidad sin curva de aprendizaje.
+> **Contabilización Automática:** Al presionar "APROBAR", el sistema ahora genera un comprobante de diario perfecto, con trazabilidad total desde el expediente del trabajador hasta el Balance General.
 
 > [!IMPORTANT]
-> **Foco Operativo:** Se han eliminado campos "ruido" que distraían o causaban errores al usuario final, permitiendo un registro de datos mucho más ágil.
+> **Resistencia Normativa:** Si el MFP cambia una tasa mañana, el administrador puede actualizarla desde la pantalla de Parámetros del Sistema sin necesidad de recompilar la aplicación.
 
-## Próximos Pasos Recomendados
-1.  **Ejecución de FAT:** Con la interfaz estabilizada, podemos proceder a las Pruebas de Aceptación del sistema completo.
-2.  **Reportes Dinámicos:** Extender la estandarización a las vistas de reportes y dashboards.
+## Próximos Pasos
+- Validar el proceso de pago (bancarización) una vez que el asiento esté generado.
+- Iniciar el Plan de Pruebas Maestro (FAT) para certificar el sistema completo.

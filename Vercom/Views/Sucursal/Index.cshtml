@@ -1,15 +1,21 @@
 @model IEnumerable<Vercom.Models.Sucursal>
 @{
-    ViewBag.Title = "Gestión de Sucursales";
+    ViewBag.Title = "Gestiï¿½n de Sucursales";
 }
 
-<div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Sucursales y Puntos de Venta</h4>
+        <h4 class="page-main-title m-0 fw-bold">Sucursales y Puntos de Venta</h4>
+        <p class="text-muted small mb-0">GestiÃ³n de ubicaciones fÃ­sicas, almacenes y Ã¡reas de producciÃ³n.</p>
     </div>
     <div class="text-end">
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="ti ti-plus me-1"></i> Nueva Sucursal
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">AdministraciÃ³n</a></li>
+            <li class="breadcrumb-item active">Sucursales</li>
+        </ol>
+        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
+            <i class="ti ti-plus"></i> NUEVA SUCURSAL
         </a>
     </div>
 </div>
@@ -42,12 +48,12 @@
 
                         <div class="row text-center g-0 border-top pt-3">
                             <div class="col-6 border-end">
-                                <h5 class="mb-0">@(item.Activo ? "SÍ" : "NO")</h5>
+                                <h5 class="mb-0">@(item.Activo ? "Sï¿½" : "NO")</h5>
                                 <small class="text-muted">Activa</small>
                             </div>
                             <div class="col-6">
                                 <h5 class="mb-0">@item.Provincia</h5>
-                                <small class="text-muted">Ubicación</small>
+                                <small class="text-muted">Ubicaciï¿½n</small>
                             </div>
                         </div>
                     </div>
@@ -62,7 +68,7 @@
                     <i class="ti ti-building-store fs-40"></i>
                 </div>
                 <h3>No hay sucursales registradas</h3>
-                <p class="text-muted">Empiece creando la sucursal principal o un almacén de distribución.</p>
+                <p class="text-muted">Empiece creando la sucursal principal o un almacï¿½n de distribuciï¿½n.</p>
                 <a asp-action="Create" class="btn btn-primary mt-2">Crear mi primera sucursal</a>
             </div>
         }

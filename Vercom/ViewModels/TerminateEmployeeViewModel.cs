@@ -1,5 +1,3 @@
-using Vercom.Models;
-
 namespace Vercom.ViewModels;
 
 public class TerminateEmployeeViewModel

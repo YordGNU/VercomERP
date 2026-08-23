@@ -230,7 +230,8 @@ public class FixedAssetService : IFixedAssetService
             };
 
             // 1. Revertir Depreciación Acumulada (Debe)
-            entry.AsientoDetalles.Add(new AsientoDetalle {
+            entry.AsientoDetalles.Add(new AsientoDetalle
+            {
                 Id = Guid.NewGuid(),
                 CuentaId = asset.CuentaDepreciacionId,
                 Debe = asset.DepreciacionAcumulada,
@@ -243,8 +244,10 @@ public class FixedAssetService : IFixedAssetService
             {
                 // Buscar cuenta de gastos por pérdida de activos (ej: 7xx)
                 var lossAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "701" && c.EntidadId == asset.EntidadId);
-                if (lossAccount != null) {
-                    entry.AsientoDetalles.Add(new AsientoDetalle {
+                if (lossAccount != null)
+                {
+                    entry.AsientoDetalles.Add(new AsientoDetalle
+                    {
                         Id = Guid.NewGuid(),
                         CuentaId = lossAccount.Id,
                         Debe = valorNeto,
@@ -254,7 +257,8 @@ public class FixedAssetService : IFixedAssetService
             }
 
             // 3. Cancelar Valor de Adquisición (Haber)
-            entry.AsientoDetalles.Add(new AsientoDetalle {
+            entry.AsientoDetalles.Add(new AsientoDetalle
+            {
                 Id = Guid.NewGuid(),
                 CuentaId = asset.CuentaActivoId,
                 Haber = asset.ValorAdquisicion,

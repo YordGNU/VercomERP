@@ -4,9 +4,17 @@
     var meses = new[] { "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
 }
 
-<div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Control de Periodos Fiscales</h4>
+        <h4 class="page-main-title m-0 fw-bold">Control de Periodos Fiscales</h4>
+        <p class="text-muted small mb-0">GestiÃ³n de aperturas y cierres mensuales para el reporte de estados financieros.</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Contabilidad</a></li>
+            <li class="breadcrumb-item active">Periodos</li>
+        </ol>
     </div>
 </div>
 
@@ -21,7 +29,7 @@
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
                                 <h3 class="fw-bold mb-0">@meses[item.Mes]</h3>
-                                <h5 class="text-muted">Año @item.Anio</h5>
+                                <h5 class="text-muted">Aï¿½o @item.Anio</h5>
                             </div>
                             <span class="badge @(isClosed ? "bg-danger" : "bg-success")">@item.Estado</span>
                         </div>
@@ -52,7 +60,7 @@
     </div>
 </div>
 
-<!-- Modal de Confirmación -->
+<!-- Modal de Confirmaciï¿½n -->
 <div class="modal fade" id="closePeriodModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <form asp-action="Close" method="post">
@@ -65,15 +73,15 @@
                 </div>
                 <div class="modal-body text-center">
                     <i class="ti ti-alert-triangle fs-48 text-warning mb-3"></i>
-                    <h4>¿Cerrar el periodo <span id="periodNameLabel"></span>?</h4>
+                    <h4>ï¿½Cerrar el periodo <span id="periodNameLabel"></span>?</h4>
                     <p class="text-muted">
-                        Al cerrar el periodo, ya no se podrán registrar nuevos asientos contables.
-                        Esta acción es definitiva y asegura la integridad de los estados financieros.
+                        Al cerrar el periodo, ya no se podrï¿½n registrar nuevos asientos contables.
+                        Esta acciï¿½n es definitiva y asegura la integridad de los estados financieros.
                     </p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger px-4">SÍ, CERRAR PERIODO</button>
+                    <button type="submit" class="btn btn-danger px-4">Sï¿½, CERRAR PERIODO</button>
                 </div>
             </div>
         </form>

@@ -17,7 +17,7 @@ public interface IWarehouseService
 
 public class WarehouseService : IWarehouseService
 {
-   private readonly AppDbContext _context;  
+    private readonly AppDbContext _context;
     private readonly IInventoryService _inventoryService;
 
     public WarehouseService(AppDbContext context, IInventoryService inventoryService)

@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vercom.Models;
 using Vercom.Services;
-using Vercom.Security;
 using Vercom.ViewModels;
 
 namespace Vercom.Controllers;
@@ -140,7 +139,7 @@ public class EmpleadoController : Controller
             TempData["Success"] = result.Message;
             return RedirectToAction(nameof(File), new { id = contrato.EmpleadoId });
         }
-        ModelState.AddModelError("", result.Message);       
+        ModelState.AddModelError("", result.Message);
         var vm = await _hrService.GetContractCreateContextAsync(contrato.EmpleadoId);
         return View(vm);
     }

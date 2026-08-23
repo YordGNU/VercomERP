@@ -26,6 +26,7 @@ public interface ICommercialService
     Task<ContratoEconomico?> GetContractByIdAsync(Guid id);
     Task<EconomicContractViewModel> GetContractFormContextAsync(ContratoEconomico? existing = null);
     Task<(bool Succeeded, string Message)> CreateContractAsync(ContratoEconomico contract);
+    Task<(bool Succeeded, string Message)> UpdateContractAsync(ContratoEconomico contract);
 
     // Topes de Precio MFP
     Task<IEnumerable<TopePrecioMfp>> GetPriceLimitsAsync();
@@ -173,6 +174,22 @@ public class CommercialService : ICommercialService
             _context.ContratoEconomicos.Add(contract);
             await _context.SaveChangesAsync();
             return (true, "Contrato económico registrado.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<(bool Succeeded, string Message)> UpdateContractAsync(ContratoEconomico contract)
+    {
+        try
+        {
+            var existing = await _context.ContratoEconomicos.FindAsync(contract.Id);
+            if (existing == null) return (false, "El contrato no existe.");
+
+            _context.Entry(existing).CurrentValues.SetValues(contract);
+            existing.EntidadId = _entidadProvider.CurrentEntidadId; // Preservar multi-inquilino
+
+            await _context.SaveChangesAsync();
+            return (true, "Contrato económico actualizado.");
         }
         catch (Exception ex) { return (false, ex.Message); }
     }

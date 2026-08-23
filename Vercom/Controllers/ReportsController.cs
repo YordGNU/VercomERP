@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Vercom.Services;
-using Vercom.Security;
-using Vercom.ViewModels;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Vercom.Security;
+using Vercom.Services;
+using Vercom.ViewModels;
 
 namespace Vercom.Controllers;
 

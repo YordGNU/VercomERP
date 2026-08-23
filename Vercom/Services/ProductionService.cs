@@ -462,6 +462,9 @@ public class ProductionService : IProductionService
                     CostoUnitario = stock?.CostoPromedio ?? 0
                 });
 
+                // RF-41: Registrar el costo unitario capturado en el detalle del consumo para el cálculo final
+                item.CostoUnitario = stock?.CostoPromedio ?? 0;
+
                 var invResult = await _inventoryService.ProcessMovementAsync(movSalida);
                 if (!invResult.Succeeded) throw new Exception($"Stock insuficiente para insumo: {invResult.Message}");
             }

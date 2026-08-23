@@ -1,5 +1,3 @@
-using Vercom.Services;
-
 namespace Vercom.ViewModels;
 
 public class FinancialReportViewModel

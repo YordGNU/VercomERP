@@ -9,6 +9,11 @@
         <p class="text-muted small mb-0">Control de existencias mediante conteos periódicos y ajustes automáticos.</p>
     </div>
     <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Inventario</a></li>
+            <li class="breadcrumb-item active">Conteos</li>
+        </ol>
         <button type="button" class="btn btn-sm btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#startCountModal">
             <i class="ti ti-scan"></i> INICIAR NUEVO CONTEO
         </button>
@@ -20,9 +25,9 @@
         <div class="card-header">
             <h5 class="m-0 fw-bold"><i class="ti ti-list me-2 text-primary"></i>Historial de Conteos</h5>
         </div>
-        <div class="card-body p-0">
+        <div class="card-body">
             <div class="table-responsive">
-                <table id="countsTable" class="table">
+                <table id="countsTable"  class="table table-striped table-bordered">
                     <thead>
                         <tr>
                             <th width="150" class="text-center">Fecha</th>

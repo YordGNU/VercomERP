@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace Vercom.DTOs;
 
 public class ProductoRequestDto

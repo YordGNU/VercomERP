@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Vercom.Models;
+﻿namespace Vercom.Models;
 
 public partial class ConteoFisicoDetalle
 {

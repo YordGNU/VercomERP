@@ -9,6 +9,11 @@
         <p class="text-muted small mb-0">Gestión de órdenes de compra a proveedores y recepción de mercancías.</p>
     </div>
     <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Comercial</a></li>
+            <li class="breadcrumb-item active">Compras</li>
+        </ol>
         <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
             <i class="ti ti-shopping-cart-plus"></i> NUEVA ORDEN
         </a>
@@ -20,9 +25,9 @@
         <div class="card-header">
             <h5 class="m-0 fw-bold"><i class="ti ti-list me-2 text-primary"></i>Órdenes de Compra Emitidas</h5>
         </div>
-        <div class="card-body p-0">
+        <div class="card-body">
             <div class="table-responsive">
-                <table id="purchaseTable" class="table">
+                <table id="purchaseTable"  class="table table-striped table-bordered">
                     <thead>
                         <tr>
                             <th width="120" class="text-center">Fecha</th>

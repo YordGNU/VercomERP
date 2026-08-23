@@ -162,7 +162,8 @@ public class PayrollService : IPayrollService
 
             // Impuesto sobre Ingresos Personales (IRP - Escalado Simplificado para Mipyme)
             decimal irpAmount = 0;
-            if (brutoTotal > 3260) {
+            if (brutoTotal > 3260)
+            {
                 irpAmount = (brutoTotal - 3260) * 0.03m; // Ejemplo base: 3% sobre exceso de 3260
             }
 
@@ -201,58 +202,96 @@ public class PayrollService : IPayrollService
             .Include(p => p.NominaDetalles)
             .FirstOrDefaultAsync(p => p.Id == periodId);
 
-        if (period == null) return (false, "Periodo no encontrado.");
-        if (period.Estado != "PRENOMINA") return (false, "La nómina ya fue aprobada.");
+        if (period == null) return (false, "Periodo de nómina no encontrado.");
+        if (period.Estado != "PRENOMINA" && period.Estado != "CALCULADA")
+            return (false, $"La nómina no puede ser aprobada en su estado actual: {period.Estado}");
 
-        var totalDevengado = period.NominaDetalles.Sum(d => d.SalarioDevengado);
-        var totalRetenciones = period.NominaDetalles.Sum(d => d.TotalDeducciones);
-        var totalNeto = period.NominaDetalles.Sum(d => d.SalarioNeto);
+        if (!period.NominaDetalles.Any())
+            return (false, "La nómina no contiene detalles calculados.");
 
-        // RF-23: Aportes Patronales (Estimados)
-        var aporteSS = totalDevengado * 0.125m; // 12.5% Seguridad Social
-        var impuestoFT = totalDevengado * 0.05m; // 5% Fuerza de Trabajo
-
-        var entry = new AsientoContable
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
         {
-            Id = Guid.NewGuid(),
-            EntidadId = period.EntidadId,
-            Fecha = DateOnly.FromDateTime(DateTime.Now),
-            Concepto = $"CONTABILIZACIÓN NÓMINA {period.Mes}/{period.Anio} (INCLUYE APORTES PATRONALES)",
-            ModuloOrigen = "NOMINA",
-            DocumentoOrigenTipo = "PERIODO_NOMINA",
-            DocumentoOrigenId = period.Id,
-            TipoComprobanteId = 8,
-            CreadoPor = userId,
-            CreadoEn = DateTimeOffset.Now
-        };
+            var totalDevengado = period.NominaDetalles.Sum(d => d.SalarioDevengado);
+            var totalRetenciones = period.NominaDetalles.Sum(d => d.TotalDeducciones);
+            var totalNeto = period.NominaDetalles.Sum(d => d.SalarioNeto);
 
-        // 1. Gastos de Salarios y Aportes
-        var expenseAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "701" && c.EntidadId == period.EntidadId);
-        if (expenseAccount != null)
-        {
-            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = expenseAccount.Id, Debe = totalDevengado, Glosa = "Gasto Salarios Brutos" });
-            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = expenseAccount.Id, Debe = aporteSS, Glosa = "Gasto Aporte SS (12.5%)" });
-            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = expenseAccount.Id, Debe = impuestoFT, Glosa = "Gasto Impuesto FT (5%)" });
+            // 1. Obtener Tasas Dinámicas (RF-23)
+            var tasaSSPatronal = await _paramService.ObtenerValorNumericoVigenteAsync(period.EntidadId, "TASA_SS_PATRONAL");
+            if (tasaSSPatronal == 0) tasaSSPatronal = 0.125m;
+
+            var tasaFT = await _paramService.ObtenerValorNumericoVigenteAsync(period.EntidadId, "TASA_FUERZA_TRAB");
+            if (tasaFT == 0) tasaFT = 0.05m;
+
+            var aporteSS = Math.Round(totalDevengado * tasaSSPatronal, 2);
+            var impuestoFT = Math.Round(totalDevengado * tasaFT, 2);
+
+            // 2. Validar Cuentas Contables Obligatorias
+            var expenseAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "701" && c.EntidadId == period.EntidadId);
+            var payableAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "401" && c.EntidadId == period.EntidadId);
+
+            if (expenseAccount == null || !expenseAccount.Activo)
+                return (false, "Error de Integración: No se encontró la cuenta de Gasto de Nómina (701) activa.");
+
+            if (payableAccount == null || !payableAccount.Activo)
+                return (false, "Error de Integración: No se encontró la cuenta de Pasivo de Nómina (401) activa.");
+
+            // 3. Obtener Tipo de Comprobante (DIA - Diario)
+            var tipoComprobante = await _context.TipoComprobantes.FirstOrDefaultAsync(t => t.Codigo == "DIA");
+            if (tipoComprobante == null)
+                return (false, "Error de Configuración: No se encontró el tipo de comprobante 'DIA' (Diario).");
+
+            var entry = new AsientoContable
+            {
+                Id = Guid.NewGuid(),
+                EntidadId = period.EntidadId,
+                PeriodoId = await _context.PeriodoContables
+                    .Where(pc => pc.EntidadId == period.EntidadId && pc.Anio == period.Anio && pc.Mes == period.Mes)
+                    .Select(pc => pc.Id)
+                    .FirstOrDefaultAsync(),
+                Fecha = DateOnly.FromDateTime(DateTime.Now),
+                Concepto = $"CONTABILIZACIÓN NÓMINA {period.Mes}/{period.Anio} - {period.NominaDetalles.Count} TRABAJADORES",
+                ModuloOrigen = "NOMINA",
+                DocumentoOrigenTipo = "PERIODO_NOMINA",
+                DocumentoOrigenId = period.Id,
+                TipoComprobanteId = tipoComprobante.Id,
+                CreadoPor = userId,
+                CreadoEn = DateTimeOffset.Now,
+                Estado = "CONTABILIZADO"
+            };
+
+            if (entry.PeriodoId == Guid.Empty)
+                return (false, "Error Contable: No existe un periodo contable abierto para la fecha de la nómina.");
+
+            // --- DEBE (GASTOS) ---
+            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = expenseAccount.Id, Debe = totalDevengado, Haber = 0, Glosa = "Salarios Brutos Devengados" });
+            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = expenseAccount.Id, Debe = aporteSS, Haber = 0, Glosa = $"Aporte Seg. Social Entidad ({tasaSSPatronal:P1})" });
+            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = expenseAccount.Id, Debe = impuestoFT, Haber = 0, Glosa = $"Impuesto Fuerza de Trabajo ({tasaFT:P1})" });
+
+            // --- HABER (PASIVOS) ---
+            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = payableAccount.Id, Debe = 0, Haber = totalRetenciones, Glosa = "Retenciones Legales Trabajadores" });
+            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = payableAccount.Id, Debe = 0, Haber = aporteSS, Glosa = "Seguridad Social por Pagar (Entidad)" });
+            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = payableAccount.Id, Debe = 0, Haber = impuestoFT, Glosa = "Impuesto FT por Pagar (Entidad)" });
+            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = payableAccount.Id, Debe = 0, Haber = totalNeto, Glosa = "Salarios Netos por Pagar (Bancarización)" });
+
+            // 4. Procesar Asiento (Validará partida doble internamente)
+            var result = await _accountingService.CreateEntryAsync(entry);
+            if (!result.Succeeded) return (false, $"Error al generar comprobante contable: {result.Message}");
+
+            // 5. Actualizar Estado de la Nómina
+            period.Estado = "APROBADA";
+            period.AprobadoPor = userId;
+            period.AsientoId = entry.Id;
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return (true, $"Nómina aprobada y contabilizada con éxito. Comprobante #{entry.NumeroComprobante} generado.");
         }
-
-        // 2. Pasivos y Retenciones
-        var payableAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "401" && c.EntidadId == period.EntidadId);
-        if (payableAccount != null)
+        catch (Exception ex)
         {
-            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = payableAccount.Id, Haber = totalRetenciones, Glosa = "Retenciones Trabajadores (SS+IRP)" });
-            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = payableAccount.Id, Haber = aporteSS, Glosa = "Seguridad Social por Pagar (Entidad)" });
-            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = payableAccount.Id, Haber = impuestoFT, Glosa = "Impuesto FT por Pagar" });
-            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = payableAccount.Id, Haber = totalNeto, Glosa = "Salarios Netos por Pagar" });
+            await transaction.RollbackAsync();
+            return (false, $"Fallo crítico en aprobación: {ex.Message}");
         }
-
-        var result = await _accountingService.CreateEntryAsync(entry);
-        if (!result.Succeeded) return (false, $"Error contable: {result.Message}");
-
-        period.Estado = "APROBADA";
-        period.AprobadoPor = userId;
-        period.AsientoId = entry.Id;
-
-        await _context.SaveChangesAsync();
-        return (true, "Nómina aprobada y contabilizada correctamente.");
     }
 }

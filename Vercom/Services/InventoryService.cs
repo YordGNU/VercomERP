@@ -20,6 +20,8 @@ public interface IInventoryService
     Task<(bool Succeeded, string Message)> CreateProductAsync(Producto product);
     Task<(bool Succeeded, string Message)> UpdateProductAsync(Producto product);
     Task<(bool Succeeded, string Message)> DeleteProductAsync(Guid id);
+    Task<bool> DeleteAsync(Guid id);
+    Task<DeleteResult> DeleteSelectedAsync(List<Guid> ids);
 
     // Gestión de Almacenes
     Task<IEnumerable<Almacen>> GetWarehousesAsync();
@@ -138,10 +140,23 @@ public class InventoryService : IInventoryService
     public async Task<ProductFormViewModel> GetProductFormContextAsync(Producto? existing = null)
     {
         var entidadId = _entidadProvider.CurrentEntidadId;
-        var cuentas = await _context.CuentaContables
-            .Where(c => c.Activo)
+
+        var cuentasActivo = await _context.CuentaContables
+              .Where(c => c.EntidadId == entidadId && c.Activo && c.Clase == "ACTIVO")
+              .OrderBy(c => c.Codigo)
+              .Select(c => new { c.Id, Display = $"{c.Codigo} - {c.Nombre}" })
+              .ToListAsync();
+
+        var cuentasGasto = await _context.CuentaContables
+            .Where(c => c.EntidadId == entidadId && c.Activo && c.Clase == "GASTO")
             .OrderBy(c => c.Codigo)
-            .Select(c => new { c.Id, Display = c.Codigo + " " + c.Nombre })
+            .Select(c => new { c.Id, Display = $"{c.Codigo} - {c.Nombre}" })
+            .ToListAsync();
+
+        var cuentasIngreso = await _context.CuentaContables
+            .Where(c => c.EntidadId == entidadId && c.Activo && c.Clase == "INGRESO")
+            .OrderBy(c => c.Codigo)
+            .Select(c => new { c.Id, Display = $"{c.Codigo} - {c.Nombre}" })
             .ToListAsync();
 
         return new ProductFormViewModel
@@ -149,7 +164,9 @@ public class InventoryService : IInventoryService
             Producto = existing ?? new Producto { Activo = true, AplicaImpuestoVentas = true, Tipo = "TERMINADO" },
             Familias = new SelectList(await _context.FamiliaProductos.ToListAsync(), "Id", "Nombre"),
             UnidadesMedida = new SelectList(await _context.UnidadMedida.ToListAsync(), "Id", "Nombre"),
-            CuentasContables = new SelectList(cuentas, "Id", "Display"),
+            CuentasInventario = new SelectList(cuentasActivo, "Id", "Display"),
+            CuentasCostoVenta = new SelectList(cuentasGasto, "Id", "Display"),
+            CuentasIngresos = new SelectList(cuentasIngreso, "Id", "Display"),
             TiposProducto = new SelectList(new[] { "MATERIA_PRIMA", "EN_PROCESO", "TERMINADO", "SERVICIO", "MERCANCIA" })
         };
     }
@@ -515,7 +532,7 @@ public class InventoryService : IInventoryService
                     TipoMovimientoId = 4, // AJU: Ajuste
                     AlmacenOrigenId = isFaltante ? count.AlmacenId : null,
                     AlmacenDestinoId = isFaltante ? null : count.AlmacenId,
-                    NumeroDocumento = $"AJU-CONTEO-{countId.ToString().Substring(0,8)}",
+                    NumeroDocumento = $"AJU-CONTEO-{countId.ToString().Substring(0, 8)}",
                     Fecha = DateTimeOffset.Now,
                     Observaciones = $"Ajuste automático por conteo físico. Justificación: {detail.Justificacion}",
                     Canal = "ERP",
@@ -568,9 +585,106 @@ public class InventoryService : IInventoryService
             .Where(e => e.Almacen.EntidadId == entidadId && e.Cantidad <= e.StockMinimo)
             .ToListAsync();
     }
+
+    public async Task<bool> HasMovimientosAsync(Guid id)
+    {
+        return await _context.MovimientoInventarioDetalles
+            .AnyAsync(d => d.ProductoId == id);
+    }
+    public async Task<bool> DeleteAsync(Guid id)
+    {
+        try
+        {
+            var producto = await GetProductByIdAsync(id);
+            if (producto == null)
+                return false;
+
+            // Verificar si tiene movimientos de inventario
+            if (await HasMovimientosAsync(id))
+            {
+
+                return false;
+            }
+
+            _context.Productos.Remove(producto);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+
+            return false;
+        }
+    }
+
+    public async Task<DeleteResult> DeleteSelectedAsync(List<Guid> ids)
+    {
+        var result = new DeleteResult();
+
+        try
+        {
+            if (ids == null || !ids.Any())
+            {
+                result.Success = false;
+                result.Message = "No se seleccionó ningún producto.";
+                return result;
+            }
+
+            var productos = await _context.Productos
+                .Where(p => ids.Contains(p.Id))
+                .ToListAsync();
+
+            if (!productos.Any())
+            {
+                result.Success = false;
+                result.Message = "No se encontraron productos para eliminar.";
+                return result;
+            }
+
+            // Verificar movimientos asociados
+            var idsConMovimientos = new List<Guid>();
+            foreach (var p in productos)
+            {
+                if (await HasMovimientosAsync(p.Id))
+                    idsConMovimientos.Add(p.Id);
+            }
+
+            if (idsConMovimientos.Any())
+            {
+                result.Success = false;
+                result.Message = $"Los siguientes productos tienen movimientos y no pueden eliminarse: {string.Join(", ", idsConMovimientos)}";
+                result.FailedIds = idsConMovimientos;
+                return result;
+            }
+
+            _context.Productos.RemoveRange(productos);
+            await _context.SaveChangesAsync();
+
+            result.Success = true;
+            result.DeletedCount = productos.Count;
+            result.Message = $"{productos.Count} producto(s) eliminado(s) correctamente.";
+        }
+        catch (Exception ex)
+        {
+            result.Success = false;
+            result.Message = "Ocurrió un error al eliminar los productos.";
+        }
+
+        return result;
+    }
+
 }
 
 // Extensión para normalizar cantidad (evitar problemas de tipos)
-public static class DetailExtensions {
+public static class DetailExtensions
+{
     public static decimal QuantityNormalized(this MovimientoInventarioDetalle d) => d.Cantidad;
+}
+
+public class DeleteResult
+{
+    public bool Success { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public int DeletedCount { get; set; }
+    public List<Guid> FailedIds { get; set; } = new();
 }

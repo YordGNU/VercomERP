@@ -1,7 +1,7 @@
-using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using Vercom.Models;
+using System.Text.Json;
 using Vercom.DTOs;
+using Vercom.Models;
 
 namespace Vercom.Services;
 

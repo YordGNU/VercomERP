@@ -135,7 +135,7 @@ foreach ($file in $files) {
             $content = $razorBlock + "`n`n" + $inspiniaHeader + $htmlContent + $inspiniaFooter
 
             # Transformar tabla a data-table
-            $content = $content -replace '<table class="table">', '<div class="table-responsive"><table class="table data-table">'
+            $content = $content -replace '<table  class="table table-striped table-bordered">', '<div class="table-responsive"><table class="table data-table">'
             $content = $content -replace '</table>', '</table></div>'
         }
 

@@ -4,7 +4,6 @@
 @{
     ViewBag.Title = "Catálogo de Productos";
 }
-
 <div class="page-title-head d-flex align-items-center mb-4">
     <div class="flex-grow-1">
         <h4 class="page-main-title m-0 fw-bold">Maestro de Productos e Insumos</h4>
@@ -15,93 +14,354 @@
             <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
             <li class="breadcrumb-item"><a href="javascript: void(0);">Inventario</a></li>
             <li class="breadcrumb-item active">Productos</li>
-        </ol>
-        @if ((await AuthorizationService.AuthorizeAsync(User, "INVENTARIO.PRODUCTO.CREAR")).Succeeded)
-        {
-            <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
-                <i class="ti ti-plus"></i> NUEVO PRODUCTO
-            </a>
-        }
+        </ol>      
     </div>
 </div>
-
 <div class="container-xxl">
     <div class="card">
-        <div class="card-header">
+        <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="m-0 fw-bold"><i class="ti ti-box me-2 text-primary"></i>Artículos Registrados</h5>
             <div class="d-flex gap-2">
                 <span class="badge badge-soft-info">@Model.Count() Items</span>
+            </div>  
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <select id="filterTipo" class="form-select form-select-sm">
+                        <option value="">Todos los tipos</option>
+                        <option value="TERMINADO">Terminado</option>
+                        <option value="INSUMO">Insumo</option>
+                        <option value="ELABORADO">Elaborado</option>
+                    </select>
+                </div>
             </div>
+            <div class="row mt-3 align-items-center">            
+                @if ((await AuthorizationService.AuthorizeAsync(User, "INVENTARIO.PRODUCTO.ELIMINAR")).Succeeded)
+                {
+                    <div class="col-md-6">
+                        <span id="selectedCount" class="text-muted small">Ningún producto seleccionado</span>
+                    </div>
+                    <div class="col-md-3 text-end">
+                        <button type="button" id="deleteSelected" class="btn btn-danger btn-sm" disabled>
+                            <i class="ti ti-trash"></i> Eliminar seleccionados
+                        </button>
+                    </div>    
+                    <div class="col-md-3 text-end">
+                        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
+                            <i class="ti ti-plus"></i> NUEVO PRODUCTO
+                        </a>
+                    </div>                   
+                }       
+            </div>       
         </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table id="productsTable" class="table">
-                    <thead>
-                        <tr>
-                            <th width="100">Código</th>
-                            <th>Descripción / Producto</th>
-                            <th width="140">Familia</th>
-                            <th width="80" class="text-center">U.M.</th>
-                            <th width="130" class="text-end">Precio Venta ($)</th>
-                            <th width="120" class="text-center">Tipo</th>
-                            <th width="100" class="text-center">Estado</th>
-                            <th width="120" class="text-end">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model)
+        <div class="card-body">
+            <table id="productsTable" class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">
+                            <input type="checkbox" id="selectAll" class="form-check-input" />
+                        </th>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Familia</th>
+                        <th>U/M</th>
+                        <th>Precio</th>
+                        <th>Tipo</th>
+                        <th>Estado</th>
+                        <th style="width: 80px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        var typeClass = item.Tipo switch
                         {
-                            var typeClass = item.Tipo switch {
-                                "TERMINADO" => "badge-soft-success",
-                                "INSUMO" => "badge-soft-info",
-                                "ELABORADO" => "badge-soft-warning",
-                                _ => "badge-soft-secondary"
-                            };
+                            "TERMINADO" => "badge-soft-success",
+                            "INSUMO" => "badge-soft-info",
+                            "ELABORADO" => "badge-soft-warning",
+                            _ => "badge-soft-secondary"
+                        };
 
-                            <tr>
-                                <td class="text-numeric fw-bold text-primary">@item.Codigo</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="avatar-xs bg-light rounded-2 d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px;">
-                                            <i class="ti ti-package-export fs-16 text-muted"></i>
-                                        </div>
-                                        <div class="fw-semibold">@item.Nombre</div>
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="row-checkbox form-check-input" data-id="@item.Id" />
+                            </td>
+                            <td class="text-numeric fw-bold text-primary">@item.Codigo</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-xs bg-light rounded-2 d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px;">
+                                        <i class="ti ti-package-export fs-16 text-muted"></i>
                                     </div>
-                                </td>
-                                <td><span class="small text-muted">@item.Familia?.Nombre</span></td>
-                                <td class="text-center small fw-bold">@item.UnidadMedida.Codigo</td>
-                                <td class="text-numeric fw-bold text-success">@item.PrecioVentaActual?.ToString("N2")</td>
-                                <td class="text-center"><span class="badge @typeClass">@item.Tipo</span></td>
-                                <td class="text-center">
-                                    @if (item.Activo) { <span class="badge badge-soft-success">ACTIVO</span> }
-                                    else { <span class="badge badge-soft-danger">INACTIVO</span> }
-                                </td>
-                                <td class="text-end">
-                                    <div class="btn-group">
-                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline py-1 px-2" title="Detalles">
-                                            <i class="ti ti-eye"></i>
-                                        </a>
-                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline py-1 px-2" title="Editar">
-                                            <i class="ti ti-edit"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+                                    <div class="fw-semibold">@item.Nombre</div>
+                                </div>
+                            </td>
+                            <td><span class="small text-muted">@item.Familia?.Nombre</span></td>
+                            <td class="text-center small fw-bold">@item.UnidadMedida.Codigo</td>
+                            <td class="text-numeric fw-bold text-success">@item.PrecioVentaActual?.ToString("N2")</td>
+                            <td class="text-center"><span class="badge @typeClass">@item.Tipo</span></td>
+                            <td class="text-center">
+                                @if (item.Activo)
+                                {
+                                    <span class="badge badge-soft-success">ACTIVO</span>
+                                }
+                                else
+                                {
+
+                                    <span class="badge badge-soft-danger">INACTIVO</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline py-1 px-2" title="Detalles">
+                                        <i class="ti ti-eye"></i>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline py-1 px-2" title="Editar">
+                                        <i class="ti ti-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2 delete-single" data-id="@item.Id" title="Eliminar">
+                                        <i class="ti ti-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <!-- Barra de acciones para seleccionados -->            
         </div>
     </div>
 </div>
-
 @section Scripts {
+    <script src="~/js/plugins/toastr/toastr.min.js"></script>
+    <!-- Configuración de Toastr -->
     <script>
-        $(document).ready(function () {
-            $('#productsTable').DataTable({
-                         language: { url: '/js/i18n/es-ES.json' },
-                order: [[1, 'asc']]
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "5000",
+            "extendedTimeOut": "2000"
+        };
+    </script>
+    <script>
+        $(document).ready(function() {
+            // ============================================================
+            // 1. INICIALIZACIÓN DE DATATABLE
+            // ============================================================
+            var table = $('#productsTable').DataTable({
+                language: {
+                    url: '@Url.Content("~/lib/i18n/es-ES.json")'
+                },
+                order: [[1, 'asc']],
+                pageLength: 25,
+                lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
+                columnDefs: [
+                    { targets: [0], orderable: false, searchable: false, className: 'text-center' },
+                    {
+                        targets: [5], type: 'numeric', render: function(data) {
+                            if (typeof data === 'string') return parseFloat(data.replace(/[$,]/g, '')) || 0;
+                            return data || 0;
+                        }
+                    },
+                    { targets: [7], type: 'string' },
+                    { targets: [8], orderable: false, searchable: false, className: 'text-end' }
+                ],
+                dom: '<"row align-items-center"<"col-md-6"l><"col-md-6"f>>rt<"row align-items-center"<"col-md-5"i><"col-md-7"p>>',
+                autoWidth: false,
+                responsive: true,
+                drawCallback: function() {
+                    updateSelectedCount();
+                    updateDeleteButtonState();
+                }
             });
+
+            // ============================================================
+            // 2. MANEJO DE CHECKBOXES
+            // ============================================================
+            $('#selectAll').on('change', function() {
+                var isChecked = $(this).prop('checked');
+                $('.row-checkbox').prop('checked', isChecked);
+                updateSelectedCount();
+                updateDeleteButtonState();
+            });
+
+            $('#productsTable').on('change', '.row-checkbox', function() {
+                var allChecked = $('.row-checkbox:checked').length === $('.row-checkbox').length;
+                $('#selectAll').prop('checked', allChecked);
+                updateSelectedCount();
+                updateDeleteButtonState();
+            });
+
+            // ============================================================
+            // 3. FUNCIONES AUXILIARES
+            // ============================================================
+            function updateSelectedCount() {
+                var count = $('.row-checkbox:checked').length;
+                $('#selectedCount').text(count === 0 ? 'Ningún producto seleccionado' : count + ' producto(s) seleccionado(s)');
+            }
+
+            function updateDeleteButtonState() {
+                var count = $('.row-checkbox:checked').length;
+                $('#deleteSelected').prop('disabled', count === 0);
+            }
+
+            function getSelectedIds() {
+                var ids = [];
+                $('.row-checkbox:checked').each(function() {
+                    ids.push($(this).data('id'));
+                });
+                return ids;
+            }
+
+            // ============================================================
+            // 4. FUNCIÓN DE ELIMINACIÓN CON TOAST (Notificación)
+            // ============================================================
+            function showToast(message, type = 'success') {
+                // Usar Toastr o SweetAlert2
+                if (type === 'success') {
+                    toastr.success(message);
+                } else if (type === 'error') {
+                    toastr.error(message);
+                } else if (type === 'warning') {
+                    toastr.warning(message);
+                } else {
+                    toastr.info(message);
+                }
+            }
+
+            // ============================================================
+            // 5. ELIMINACIÓN EN LOTE
+            // ============================================================
+            $('#deleteSelected').on('click', function() {
+                var selectedIds = getSelectedIds();
+                if (selectedIds.length === 0) return;
+
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: `Se eliminarán ${selectedIds.length} producto(s). Esta acción no se puede deshacer.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        var token = $('input[name="__RequestVerificationToken"]').val();
+
+                        $.ajax({
+                            url: '@Url.Action("DeleteSelected", "Producto")',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify({ ids: selectedIds }),
+                            headers: { 'RequestVerificationToken': token },
+                            beforeSend: function() {
+                                $('#deleteSelected').prop('disabled', true).html(
+                                    '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Eliminando...'
+                                );
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    showToast(response.message, 'success');
+                                    // Recargar la página o eliminar filas vía DataTables
+                                    location.reload();
+                                } else {
+                                    showToast(response.message, 'error');
+                                    if (response.failedIds && response.failedIds.length > 0) {
+                                        // Marcar los productos que no se pudieron eliminar
+                                        response.failedIds.forEach(function(id) {
+                                            var row = $('#productsTable').find('input[data-id="' + id + '"]').closest('tr');
+                                            row.addClass('table-danger');
+                                            setTimeout(function() {
+                                                row.removeClass('table-danger');
+                                            }, 3000);
+                                        });
+                                    }
+                                }
+                            },
+                            error: function() {
+                                showToast('Ocurrió un error al procesar la solicitud.', 'error');
+                            },
+                            complete: function() {
+                                $('#deleteSelected').prop('disabled', false).html(
+                                    '<i class="ti ti-trash"></i> Eliminar seleccionados'
+                                );
+                            }
+                        });
+                    }
+                });
+            });
+
+            // ============================================================
+            // 6. ELIMINACIÓN INDIVIDUAL
+            // ============================================================
+            $('#productsTable').on('click', '.delete-single', function() {
+                var id = $(this).data('id');
+                var row = $(this).closest('tr');
+                var nombre = row.find('.fw-semibold').text();
+
+                Swal.fire({
+                    title: '¿Eliminar producto?',
+                    text: `¿Estás seguro de eliminar "${nombre}"? Esta acción no se puede deshacer.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        var token = $('input[name="__RequestVerificationToken"]').val();
+                        var $this = $(this);
+
+                        $.ajax({
+                            url: '@Url.Action("Delete", "Producto")',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify({ id: id }),
+                            headers: { 'RequestVerificationToken': token },
+                            beforeSend: function() {
+                                $this.prop('disabled', true).html(
+                                    '<span class="spinner-border spinner-border-sm"></span>'
+                                );
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    showToast(response.message, 'success');
+                                    table.row(row).remove().draw();
+                                    updateSelectedCount();
+                                    updateDeleteButtonState();
+                                } else {
+                                    showToast(response.message, 'error');
+                                }
+                            },
+                            error: function() {
+                                showToast('Error al eliminar el producto.', 'error');
+                            },
+                            complete: function() {
+                                // El botón desaparece con la fila
+                            }
+                        });
+                    }
+                });
+            });
+
+            // ============================================================
+            // 7. INICIALIZAR ESTADO
+            // ============================================================
+            updateSelectedCount();
+            updateDeleteButtonState();
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                var filterTipo = $('#filterTipo').val();
+                if (!filterTipo) return true;
+                var tipo = data[5]; // columna de Tipo
+                return tipo === filterTipo;
+            });
+
+            $('#filterTipo').on('change', function() {
+                table.draw();
+            });
+
         });
+
     </script>
 }

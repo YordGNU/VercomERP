@@ -10,7 +10,7 @@ public interface IClosureService
 
 public class ClosureService : IClosureService
 {
-   private readonly AppDbContext _context;   
+    private readonly AppDbContext _context;
     private readonly IAccountingService _accountingService;
 
     public ClosureService(AppDbContext context, IAccountingService accountingService)

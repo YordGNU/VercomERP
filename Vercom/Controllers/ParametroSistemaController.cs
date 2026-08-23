@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Vercom.Models;
 using Vercom.Services;
 using Vercom.ViewModels;
 
@@ -34,7 +33,7 @@ public class ParametroSistemaController : Controller
     public async Task<IActionResult> Edit(Guid id, ParametroFormViewModel vm)
     {
         var entry = vm.Parametro;
-        if (id ==  Guid.Empty) return NotFound();
+        if (id == Guid.Empty) return NotFound();
 
         ModelState.Remove("Parametro.Entidad");
 

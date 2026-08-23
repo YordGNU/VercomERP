@@ -1,7 +1,6 @@
-﻿@model Vercom.Models.ContratoEconomico
-
+﻿@model Vercom.ViewModels.EconomicContractViewModel
 @{
-    ViewData["Title"] = "Crear Contrato Económico";
+    ViewBag.Title = Model.Title;
 }
 
 <div class="page-title-head d-flex align-items-center mb-4">
@@ -27,79 +26,80 @@
                 </div>
                 <div class="card-body p-4">
                     <form asp-action="Create" class="row g-4">
+                        @Html.AntiForgeryToken()
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
 
                         <div class="col-md-4">
                             <label class="form-label">Tipo de Contraparte</label>
-                            <select asp-for="TerceroTipo" name="TerceroTipo" class="form-control form-select w-100" id="terceroTipo" required>
+                            <select asp-for="Contract.TerceroTipo" name="Contract.TerceroTipo" class="form-control form-select w-100" id="terceroTipo" required>
                                 <option value="">-- Seleccione tipo --</option>
                                 <option value="CLIENTE">Cliente</option>
                                 <option value="PROVEEDOR">Proveedor</option>
                             </select>
-                            <span asp-validation-for="TerceroTipo" class="text-danger small"></span>
+                            <span asp-validation-for="Contract.TerceroTipo" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-8" id="divCliente" style="display:none;">
                             <label class="form-label">Seleccionar Cliente</label>
-                            <select asp-for="ClienteId" name="ClienteId" class="form-control form-select w-100 select2" asp-items="ViewBag.ClienteId">
+                            <select asp-for="Contract.ClienteId" name="Contract.ClienteId" class="form-control form-select w-100 select2" asp-items="Model.Clientes">
                                 <option value="">-- Seleccionar Cliente --</option>
                             </select>
                         </div>
 
                         <div class="col-md-8" id="divProveedor" style="display:none;">
                             <label class="form-label">Seleccionar Proveedor</label>
-                            <select asp-for="ProveedorId" name="ProveedorId" class="form-control form-select w-100 select2" asp-items="ViewBag.ProveedorId">
+                            <select asp-for="Contract.ProveedorId" name="Contract.ProveedorId" class="form-control form-select w-100 select2" asp-items="Model.Proveedores">
                                 <option value="">-- Seleccionar Proveedor --</option>
                             </select>
                         </div>
 
                         <div class="col-md-4">
                             <label class="form-label">Número de Contrato</label>
-                            <input asp-for="NumeroContrato" name="NumeroContrato" class="form-control w-100 fw-bold text-primary" placeholder="Ej: CONTR-2026-001" required />
-                            <span asp-validation-for="NumeroContrato" class="text-danger small"></span>
+                            <input asp-for="Contract.NumeroContrato" name="Contract.NumeroContrato" class="form-control w-100 fw-bold text-primary" placeholder="Ej: CONTR-2026-001" required />
+                            <span asp-validation-for="Contract.NumeroContrato" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-8">
                             <label class="form-label">Objeto del Contrato</label>
-                            <input asp-for="Objeto" name="Objeto" class="form-control w-100" placeholder="Ej: Suministro de materias primas..." required />
-                            <span asp-validation-for="Objeto" class="text-danger small"></span>
+                            <input asp-for="Contract.Objeto" name="Contract.Objeto" class="form-control w-100" placeholder="Ej: Suministro de materias primas..." required />
+                            <span asp-validation-for="Contract.Objeto" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-4">
                             <label class="form-label">Fecha de Firma</label>
-                            <input asp-for="FechaFirma" name="FechaFirma" class="form-control w-100" type="date" required />
-                            <span asp-validation-for="FechaFirma" class="text-danger small"></span>
+                            <input asp-for="Contract.FechaFirma" name="Contract.FechaFirma" class="form-control w-100" type="date" required />
+                            <span asp-validation-for="Contract.FechaFirma" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-4">
                             <label class="form-label">Fecha Inicio Vigencia</label>
-                            <input asp-for="FechaInicio" name="FechaInicio" class="form-control w-100" type="date" required />
-                            <span asp-validation-for="FechaInicio" class="text-danger small"></span>
+                            <input asp-for="Contract.FechaInicio" name="Contract.FechaInicio" class="form-control w-100" type="date" required />
+                            <span asp-validation-for="Contract.FechaInicio" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-4">
                             <label class="form-label">Fecha Vencimiento</label>
-                            <input asp-for="FechaFin" name="FechaFin" class="form-control w-100" type="date" />
-                            <span asp-validation-for="FechaFin" class="text-danger small"></span>
+                            <input asp-for="Contract.FechaFin" name="Contract.FechaFin" class="form-control w-100" type="date" />
+                            <span asp-validation-for="Contract.FechaFin" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-4">
                             <label class="form-label">Monto Total Pactado ($)</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0">$</span>
-                                <input asp-for="MontoTotal" name="MontoTotal" class="form-control w-grow" placeholder="0.00" type="number" step="0.01" />
+                                <input asp-for="Contract.MontoTotal" name="Contract.MontoTotal" class="form-control w-grow" placeholder="0.00" type="number" step="0.01" />
                             </div>
                             <small class="text-muted italic">Dejar vacío para monto indeterminado.</small>
-                            <span asp-validation-for="MontoTotal" class="text-danger small"></span>
+                            <span asp-validation-for="Contract.MontoTotal" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-8">
                             <label class="form-label">Documento Digital (URL/Ruta)</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="ti ti-link"></i></span>
-                                <input asp-for="DocumentoUrl" name="DocumentoUrl" class="form-control w-grow" placeholder="https://..." />
+                                <input asp-for="Contract.DocumentoUrl" name="Contract.DocumentoUrl" class="form-control w-grow" placeholder="https://..." />
                             </div>
-                            <span asp-validation-for="DocumentoUrl" class="text-danger small"></span>
+                            <span asp-validation-for="Contract.DocumentoUrl" class="text-danger small"></span>
                         </div>
 
                         <div class="col-12 d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
@@ -118,16 +118,14 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script>
-        document.getElementById('terceroTipo').addEventListener('change', function() {
-            const val = this.value;
-            document.getElementById('divCliente').style.display = (val === 'CLIENTE') ? 'block' : 'none';
-            document.getElementById('divProveedor').style.display = (val === 'PROVEEDOR') ? 'block' : 'none';
+        $(document).ready(function() {
+            const toggleDivs = () => {
+                const val = $('#terceroTipo').val();
+                $('#divCliente').toggle(val === 'CLIENTE');
+                $('#divProveedor').toggle(val === 'PROVEEDOR');
+            };
+            $('#terceroTipo').change(toggleDivs);
+            toggleDivs();
         });
     </script>
-}
-
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
 }
