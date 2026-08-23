@@ -99,8 +99,8 @@
         $(document).ready(function () {
             $('#accountsTable').DataTable({
                 pageLength: 25,
-                         language: { url: '/js/i18n/es-ES.json' },
-                order: [] // Mantener orden jerárquico por código
+                    language: { url: '@Url.Content("~/lib/i18n/es-ES.json")' },
+                order: [[1, 'asc']], dom: '<"row align-items-center"<"col-md-6"l><"col-md-6"f>>rt<"row align-items-center"<"col-md-5"i><"col-md-7"p>>', responsive: true, // Mantener orden jerárquico por código
             });
         });
     </script>

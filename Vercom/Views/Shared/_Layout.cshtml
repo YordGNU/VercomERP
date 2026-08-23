@@ -5,30 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>VERCOM ELITE | @ViewBag.Title</title>
-       <!-- App favicon -->
-    <link rel="shortcut icon" href="~/Content/images/favicon.ico">
+    <!-- App favicon -->
+    <link rel="shortcut icon" href="assets/images/favicon.ico">
+    <!-- Datatables css -->
+    <link href="~/css/plugins/datatables/responsive.bootstrap5.min.css" rel="stylesheet" type="text/css">
     <!-- Theme Config Js -->
-    <script src="~/js/config_1.js"></script>
-    <
+    <script src="~/js/config.js"></script>
     <!-- Vendor css -->
     <link href="~/css/vendors.min.css" rel="stylesheet" type="text/css">
     <!-- App css -->
-    <link id="app-style" href="~/css/app.min.css" rel="stylesheet" type="text/css">
-    <link href="~/css/plugins/dataTables/dataTables.bootstrap5.min.css" rel="stylesheet" />
-    <link href="~/css/plugins/dataTables/responsive.dataTables.min.css" rel="stylesheet" />
-    <link href="~/css/animate.css" rel="stylesheet" type="text/css">
-    <!-- Toastr -->
-    <link rel="stylesheet" href="~/css/plugins/toastr/toastr.min.css" />
-    <link rel="stylesheet" href="~/css/plugins/toastr/toastr.css" />
+    <link href="~/css/app.min.css" rel="stylesheet" type="text/css">
     @if (IsSectionDefined("Styles"))
     {
         @RenderSection("Styles", required: false)
     }
-</head>
-<body>
-    <div id="global-loader">
-        <div class="spinner"></div>
-    </div>
+    </head>
+    <body>
     <div class="wrapper">
         <partial name="_TopBar" />
         <partial name="_SideNav" />
@@ -40,27 +32,18 @@
         </div>
     </div>
     <partial name="_Theme" />
-    <!-- Scripts -->
-    <!-- jQuery (Carga prioritaria para evitar ReferenceError) -->
-    <script src="~/js/jquery-3.7.1.min.js"></script>
-    <script src="~/js/plugins/dataTables/responsive.bootstrap5.min.js"></script>
-    <script src="~/js/plugins/dataTables/dataTables.responsive.min.js"></script>
-
-
     <!-- Vendor js -->
     <script src="~/js/vendors.min.js"></script>
-    <script src="~/js/plugins/dataTables/jquery.dataTables.min.js"></script>
-    <script src="~/js/plugins/dataTables/dataTables.bootstrap5.min.js"></script>
-    <!-- SignalR Core -->
-    <script src="~/js/signalr.min.js"></script>
-
     <!-- App js -->
     <script src="~/js/app.js"></script>
-    <!-- Dashboard js -->
-    <script src="~/js/config.js"></script>
-    <script src="~/js/plugins/sweetalert/sweetalert2@11.js"></script>
-    <script src="~/js/ajax/ajax.js"></script>
-    <script>
+    <!-- Datatables js -->
+    <script src="~/js/plugins/datatables/dataTables.min.js"></script>
+    <script src="~/js/plugins/datatables/dataTables.bootstrap5.min.js"></script>
+    <script src="~/js/plugins/datatables/dataTables.responsive.min.js"></script>
+    <script src="~/js/plugins/datatables/responsive.bootstrap5.min.js"></script>    
+    <!-- Page js -->
+    <script src="~/js/pages/datatables-ajax.js"></script>
+    @*     <script>
         // Global SignalR Integration
         if (typeof signalR !== 'undefined') {
             const connection = new signalR.HubConnectionBuilder()
@@ -74,7 +57,7 @@
 
             connection.start().catch(err => console.log("SignalR hub connection deferred."));
         }
-    </script>
+    </script> *@
     @RenderSection("Scripts", required: false)
 </body>
 </html>

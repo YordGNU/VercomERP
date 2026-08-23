@@ -100,7 +100,7 @@
     <script>
         $(document).ready(function () {
             $('#payrollTable').DataTable({
-                         language: { url: '/js/i18n/es-ES.json' },
+                    language: { url: '@Url.Content("~/lib/i18n/es-ES.json")' },
                 order: [[3, 'desc']]
             });
         });

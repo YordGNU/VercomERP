@@ -75,7 +75,7 @@
     <script>
         $(document).ready(function () {
             $('#movementsTable').DataTable({
-                         language: { url: '/js/i18n/es-ES.json' },
+                    language: { url: '@Url.Content("~/lib/i18n/es-ES.json")' },
                 order: [[0, 'desc']]
             });
         });

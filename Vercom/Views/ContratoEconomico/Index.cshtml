@@ -87,7 +87,7 @@
     <script>
         $(document).ready(function () {
             $('#contractsTable').DataTable({
-                         language: { url: '/js/i18n/es-ES.json' },
+                    language: { url: '@Url.Content("~/lib/i18n/es-ES.json")' },
                 order: [[2, 'desc']]
             });
         });
