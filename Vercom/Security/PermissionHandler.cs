@@ -6,11 +6,17 @@ public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
 {
     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
     {
-        // Verificamos si el usuario tiene el claim de permiso correspondiente
-        // Los permisos se cargaron en el AuthService durante el Login
+        // 1. El Administrador Global (MASTER) tiene acceso total omnipresente
+        if (context.User.IsInRole("MASTER"))
+        {
+            context.Succeed(requirement);
+            return Task.CompletedTask;
+        }
+
+        // 2. Verificamos si el usuario tiene el claim de permiso específico
         var hasPermission = context.User.HasClaim(c => c.Type == "Permission" && c.Value == requirement.Permission);
 
-        // El Administrador del Sistema (Rol) tiene acceso total por defecto
+        // 3. El Administrador de Entidad (ADMINISTRADOR) tiene acceso total a su propia empresa
         var isAdmin = context.User.IsInRole("ADMINISTRADOR");
 
         if (hasPermission || isAdmin)

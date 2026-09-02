@@ -93,11 +93,11 @@ foreach ($file in $files) {
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <div class="row">
         <div class="col-lg-12">
             <div class="card">
-                <div class="card-header">
+                 <div class="card-header border-light justify-content-between">
                     <h4 class="card-title">$cardTitle</h4>
                 </div>
                 <div class="card-body">
@@ -135,7 +135,7 @@ foreach ($file in $files) {
             $content = $razorBlock + "`n`n" + $inspiniaHeader + $htmlContent + $inspiniaFooter
 
             # Transformar tabla a data-table
-            $content = $content -replace '<table  class="table table-striped table-bordered">', '<div class="table-responsive"><table class="table data-table">'
+            $content = $content -replace '<table  class="table table-striped dt-responsive mb-0">', '<div class="table-responsive"><table class="table data-table">'
             $content = $content -replace '</table>', '</table></div>'
         }
 

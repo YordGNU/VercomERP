@@ -1,10 +1,10 @@
 -- ============================================================================
--- ESQUEMA COMPLETO SQL SERVER — ERP Sociedad Mercantil Tierra Prometida S.U.R.L.
--- CORREGIDO: índice filtrado, orden de GO y ejecución de sp_addextendedproperty
+-- ESQUEMA COMPLETO SQL SERVER ï¿½ ERP Sociedad Mercantil Tierra Prometida S.U.R.L.
+-- CORREGIDO: ï¿½ndice filtrado, orden de GO y ejecuciï¿½n de sp_addextendedproperty
 -- ============================================================================
 
 -- ============================================================================
--- MÓDULO 0: NÚCLEO, SEGURIDAD, ADMINISTRACIÓN Y GESTIÓN API/POS
+-- Mï¿½DULO 0: Nï¿½CLEO, SEGURIDAD, ADMINISTRACIï¿½N Y GESTIï¿½N API/POS
 -- ============================================================================
 
 IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'nucleo')
@@ -51,11 +51,13 @@ CREATE TABLE nucleo.sucursal (
 
 CREATE TABLE nucleo.rol (
     id                  INT IDENTITY(1,1) PRIMARY KEY,
-    codigo              NVARCHAR(30) NOT NULL UNIQUE,
+    entidad_id          UNIQUEIDENTIFIER REFERENCES nucleo.entidad(id), -- NULL para roles globales/sistema
+    codigo              NVARCHAR(30) NOT NULL,
     nombre              NVARCHAR(100) NOT NULL,
     descripcion         NVARCHAR(MAX),
     es_sistema          BIT NOT NULL DEFAULT 0,
-    creado_en           DATETIMEOFFSET NOT NULL DEFAULT SYSDATETIMEOFFSET()
+    creado_en           DATETIMEOFFSET NOT NULL DEFAULT SYSDATETIMEOFFSET(),
+    CONSTRAINT UQ_Rol_Entidad_Codigo UNIQUE (entidad_id, codigo)
 );
 
 CREATE TABLE nucleo.permiso (
@@ -116,6 +118,19 @@ CREATE INDEX idx_auditoria_tabla_registro ON nucleo.auditoria(esquema_tabla, reg
 CREATE INDEX idx_auditoria_usuario ON nucleo.auditoria(usuario_id);
 CREATE INDEX idx_auditoria_fecha ON nucleo.auditoria(ocurrido_en);
 
+CREATE TABLE nucleo.feedback (
+    id                  UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    entidad_id          UNIQUEIDENTIFIER NOT NULL REFERENCES nucleo.entidad(id),
+    usuario_id          UNIQUEIDENTIFIER NOT NULL REFERENCES nucleo.usuario(id),
+    tipo                NVARCHAR(20) NOT NULL CHECK (tipo IN ('SUGERENCIA', 'ERROR', 'FELICITACION', 'SOPORTE')),
+    mensaje             NVARCHAR(MAX) NOT NULL,
+    metadata_tecnica    NVARCHAR(MAX),
+    estado              NVARCHAR(15) NOT NULL DEFAULT 'PENDIENTE' CHECK (estado IN ('PENDIENTE', 'REVISADO', 'RESUELTO', 'ARCHIVADO')),
+    creado_en           DATETIMEOFFSET NOT NULL DEFAULT SYSDATETIMEOFFSET()
+);
+CREATE INDEX idx_feedback_entidad ON nucleo.feedback(entidad_id);
+CREATE INDEX idx_feedback_fecha ON nucleo.feedback(creado_en);
+
 CREATE TABLE nucleo.backup_log (
     id                  UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     tipo                NVARCHAR(20) NOT NULL CHECK (tipo IN ('PROGRAMADO','MANUAL','PRE_CIERRE')),
@@ -152,11 +167,11 @@ CREATE TABLE nucleo.consecutivo (
     actualizado_en      DATETIMEOFFSET NOT NULL DEFAULT SYSDATETIMEOFFSET(),
     UNIQUE (entidad_id, sucursal_id, tipo_documento, serie)
 );
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Actualizar con SELECT ... FOR UPDATE dentro de la transacción para evitar saltos/duplicados concurrentes (POS + ERP simultáneo).', @level0type=N'SCHEMA', @level0name=N'nucleo', @level1type=N'TABLE', @level1name=N'consecutivo';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Actualizar con SELECT ... FOR UPDATE dentro de la transacciï¿½n para evitar saltos/duplicados concurrentes (POS + ERP simultï¿½neo).', @level0type=N'SCHEMA', @level0name=N'nucleo', @level1type=N'TABLE', @level1name=N'consecutivo';
 GO
 
 -- ============================================================================
--- MÓDULO 1: CONTABILIDAD Y FINANZAS
+-- Mï¿½DULO 1: CONTABILIDAD Y FINANZAS
 -- ============================================================================
 
 IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'contabilidad')
@@ -238,7 +253,7 @@ CREATE TABLE contabilidad.asiento_contable (
 );
 CREATE INDEX idx_asiento_periodo ON contabilidad.asiento_contable(periodo_id);
 CREATE INDEX idx_asiento_origen ON contabilidad.asiento_contable(modulo_origen, documento_origen_id);
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'RF-12: un asiento contabilizado jamás se edita ni elimina; solo se revierte mediante un nuevo asiento de ajuste enlazado aquí.', @level0type=N'SCHEMA', @level0name=N'contabilidad', @level1type=N'TABLE', @level1name=N'asiento_contable', @level2type=N'COLUMN', @level2name=N'asiento_reversion_id';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'RF-12: un asiento contabilizado jamï¿½s se edita ni elimina; solo se revierte mediante un nuevo asiento de ajuste enlazado aquï¿½.', @level0type=N'SCHEMA', @level0name=N'contabilidad', @level1type=N'TABLE', @level1name=N'asiento_contable', @level2type=N'COLUMN', @level2name=N'asiento_reversion_id';
 GO
 
 CREATE TABLE contabilidad.asiento_detalle (
@@ -448,7 +463,7 @@ GROUP BY pl.presupuesto_id, pl.cuenta_id, pl.centro_costo_id, pl.mes, pl.monto_p
 GO
 
 -- ============================================================================
--- MÓDULO 2: RECURSOS HUMANOS Y NÓMINA
+-- Mï¿½DULO 2: RECURSOS HUMANOS Y Nï¿½MINA
 -- ============================================================================
 
 IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'rrhh')
@@ -462,6 +477,7 @@ CREATE TABLE rrhh.cargo (
     entidad_id          UNIQUEIDENTIFIER NOT NULL REFERENCES nucleo.entidad(id),
     codigo              NVARCHAR(20) NOT NULL,
     nombre              NVARCHAR(150) NOT NULL,
+    funciones           NVARCHAR(MAX), -- RF-20: MisiÃ³n y funciones del cargo
     salario_escala_min  NUMERIC(12,2),
     salario_escala_max  NUMERIC(12,2),
     UNIQUE (entidad_id, codigo)
@@ -559,7 +575,7 @@ CREATE TABLE rrhh.certificado_medico (
     numero_certificado  NVARCHAR(40),
     creado_en           DATETIMEOFFSET NOT NULL DEFAULT SYSDATETIMEOFFSET()
 );
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'RNF-20: acceso restringido — datos de salud del trabajador, solo RR.HH. y dirección.', @level0type=N'SCHEMA', @level0name=N'rrhh', @level1type=N'TABLE', @level1name=N'certificado_medico';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'RNF-20: acceso restringido ï¿½ datos de salud del trabajador, solo RR.HH. y direcciï¿½n.', @level0type=N'SCHEMA', @level0name=N'rrhh', @level1type=N'TABLE', @level1name=N'certificado_medico';
 GO
 
 CREATE TABLE rrhh.concepto_nomina (
@@ -604,7 +620,7 @@ CREATE TABLE rrhh.nomina_detalle_concepto (
     monto               NUMERIC(12,2) NOT NULL,
     UNIQUE (nomina_detalle_id, concepto_id)
 );
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'RNF-22: histórico salarial inalterable — no se actualiza tras CONTABILIZADA, solo se referencia para reportes probatorios.', @level0type=N'SCHEMA', @level0name=N'rrhh', @level1type=N'TABLE', @level1name=N'nomina_detalle_concepto';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'RNF-22: histï¿½rico salarial inalterable ï¿½ no se actualiza tras CONTABILIZADA, solo se referencia para reportes probatorios.', @level0type=N'SCHEMA', @level0name=N'rrhh', @level1type=N'TABLE', @level1name=N'nomina_detalle_concepto';
 GO
 
 CREATE TABLE rrhh.registro_salario_tiempo_servicio (
@@ -618,10 +634,24 @@ CREATE TABLE rrhh.registro_salario_tiempo_servicio (
     UNIQUE (empleado_id, anio, mes)
 );
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Equivalente a modelo SC-4-08 u oficial vigente MTSS.', @level0type=N'SCHEMA', @level0name=N'rrhh', @level1type=N'TABLE', @level1name=N'registro_salario_tiempo_servicio';
+
+CREATE TABLE rrhh.utile_responsabilidad (
+    id                  UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    entidad_id          UNIQUEIDENTIFIER NOT NULL REFERENCES nucleo.entidad(id),
+    empleado_id         UNIQUEIDENTIFIER NOT NULL REFERENCES rrhh.empleado(id),
+    descripcion         NVARCHAR(200) NOT NULL, -- Ej: Laptop Dell Latitude 5420
+    numero_serie        NVARCHAR(50),
+    fecha_entrega       DATE NOT NULL DEFAULT CAST(GETDATE() AS DATE),
+    fecha_devolucion    DATE,
+    estado_entrega      NVARCHAR(50), -- Ej: NUEVO, USADO
+    observaciones       NVARCHAR(MAX),
+    creado_en           DATETIMEOFFSET NOT NULL DEFAULT SYSDATETIMEOFFSET()
+);
+CREATE INDEX idx_utile_empleado ON rrhh.utile_responsabilidad(empleado_id);
 GO
 
 -- ============================================================================
--- MÓDULO 3: INVENTARIO Y ALMACÉN
+-- Mï¿½DULO 3: INVENTARIO Y ALMACï¿½N
 -- ============================================================================
 
 IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'inventario')
@@ -712,7 +742,7 @@ CREATE TABLE inventario.existencia (
     actualizado_en      DATETIMEOFFSET NOT NULL DEFAULT SYSDATETIMEOFFSET(),
     UNIQUE (almacen_id, producto_id)
 );
--- Índice corregido: se eliminó la cláusula WHERE con comparación de dos columnas
+-- ï¿½ndice corregido: se eliminï¿½ la clï¿½usula WHERE con comparaciï¿½n de dos columnas
 CREATE INDEX idx_existencia_bajo_minimo ON inventario.existencia(almacen_id, cantidad, stock_minimo);
 
 CREATE TABLE inventario.tipo_movimiento (
@@ -778,7 +808,7 @@ CREATE TABLE inventario.conteo_fisico_detalle (
 );
 
 -- ============================================================================
--- MÓDULO 4: PRODUCCIÓN Y MANUFACTURA
+-- Mï¿½DULO 4: PRODUCCIï¿½N Y MANUFACTURA
 -- ============================================================================
 
 IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'produccion')
@@ -805,7 +835,7 @@ CREATE TABLE produccion.ficha_costo (
     creado_en           DATETIMEOFFSET NOT NULL DEFAULT SYSDATETIMEOFFSET(),
     UNIQUE (producto_id, version)
 );
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'RNF-40: versionada para permitir redefinición ágil ante cambios de precios de insumos.', @level0type=N'SCHEMA', @level0name=N'produccion', @level1type=N'TABLE', @level1name=N'ficha_costo';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'RNF-40: versionada para permitir redefiniciï¿½n ï¿½gil ante cambios de precios de insumos.', @level0type=N'SCHEMA', @level0name=N'produccion', @level1type=N'TABLE', @level1name=N'ficha_costo';
 GO
 
 CREATE TABLE produccion.lista_materiales (
@@ -928,7 +958,7 @@ CREATE TABLE produccion.mantenimiento_programado (
 );
 
 -- ============================================================================
--- MÓDULO 5: COMPRAS Y VENTAS
+-- Mï¿½DULO 5: COMPRAS Y VENTAS
 -- ============================================================================
 
 IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'comercial')
@@ -970,7 +1000,7 @@ CREATE TABLE comercial.cliente (
     creado_en           DATETIMEOFFSET NOT NULL DEFAULT SYSDATETIMEOFFSET()
 );
 CREATE UNIQUE INDEX uq_cliente_nit_o_ci ON comercial.cliente(entidad_id, nit_o_ci) WHERE nit_o_ci IS NOT NULL;
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'El "cliente mostrador" del POS (venta anónima) se modela como registro fijo con nit_o_ci=NULL, nombre_razon_social=''CONSUMIDOR FINAL''.', @level0type=N'SCHEMA', @level0name=N'comercial', @level1type=N'TABLE', @level1name=N'cliente';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'El "cliente mostrador" del POS (venta anï¿½nima) se modela como registro fijo con nit_o_ci=NULL, nombre_razon_social=''CONSUMIDOR FINAL''.', @level0type=N'SCHEMA', @level0name=N'comercial', @level1type=N'TABLE', @level1name=N'cliente';
 GO
 
 CREATE TABLE comercial.contrato_economico (
@@ -1065,7 +1095,7 @@ CREATE TABLE comercial.factura_venta (
 CREATE INDEX idx_factura_cliente ON comercial.factura_venta(cliente_id);
 CREATE INDEX idx_factura_canal ON comercial.factura_venta(canal_venta, fecha);
 CREATE INDEX idx_factura_pos_sesion ON comercial.factura_venta(sesion_caja_pos_id);
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'RNF-51: asignado vía nucleo.consecutivo con SELECT...FOR UPDATE; numeración reservada por sesión offline (ver integracion.pos_venta_pendiente) para sobrevivir cortes de red del POS.', @level0type=N'SCHEMA', @level0name=N'comercial', @level1type=N'TABLE', @level1name=N'factura_venta', @level2type=N'COLUMN', @level2name=N'numero_factura';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'RNF-51: asignado vï¿½a nucleo.consecutivo con SELECT...FOR UPDATE; numeraciï¿½n reservada por sesiï¿½n offline (ver integracion.pos_venta_pendiente) para sobrevivir cortes de red del POS.', @level0type=N'SCHEMA', @level0name=N'comercial', @level1type=N'TABLE', @level1name=N'factura_venta', @level2type=N'COLUMN', @level2name=N'numero_factura';
 GO
 
 CREATE TABLE comercial.factura_venta_detalle (
@@ -1120,7 +1150,7 @@ CREATE TABLE comercial.tope_precio_mfp (
 );
 
 -- ============================================================================
--- MÓDULO 6: REPORTES, INDICADORES Y CIERRE
+-- Mï¿½DULO 6: REPORTES, INDICADORES Y CIERRE
 -- ============================================================================
 
 IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'reportes')
@@ -1215,7 +1245,7 @@ EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Base para bala
 GO
 
 -- ============================================================================
--- MÓDULO 7: INTEGRACIÓN API Y APLICACIÓN POS
+-- Mï¿½DULO 7: INTEGRACIï¿½N API Y APLICACIï¿½N POS
 -- ============================================================================
 
 IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'integracion')
@@ -1311,7 +1341,7 @@ CREATE TABLE integracion.sesion_caja_pos (
     supervisor_conciliacion_id UNIQUEIDENTIFIER REFERENCES nucleo.usuario(id)
 );
 CREATE INDEX idx_sesion_caja_dispositivo ON integracion.sesion_caja_pos(dispositivo_pos_id, estado);
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Un dispositivo solo puede tener una sesión ABIERTA a la vez — aplicar índice único parcial en capa de aplicación o UNIQUE(dispositivo_pos_id) WHERE estado=''ABIERTA''.', @level0type=N'SCHEMA', @level0name=N'integracion', @level1type=N'TABLE', @level1name=N'sesion_caja_pos';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Un dispositivo solo puede tener una sesiï¿½n ABIERTA a la vez ï¿½ aplicar ï¿½ndice ï¿½nico parcial en capa de aplicaciï¿½n o UNIQUE(dispositivo_pos_id) WHERE estado=''ABIERTA''.', @level0type=N'SCHEMA', @level0name=N'integracion', @level1type=N'TABLE', @level1name=N'sesion_caja_pos';
 GO
 
 CREATE UNIQUE INDEX uq_sesion_caja_abierta ON integracion.sesion_caja_pos(dispositivo_pos_id) WHERE estado = 'ABIERTA';
@@ -1346,7 +1376,7 @@ CREATE TABLE integracion.pos_venta_pendiente (
     UNIQUE (dispositivo_pos_id, idempotency_key)
 );
 CREATE INDEX idx_pos_venta_pendiente_estado ON integracion.pos_venta_pendiente(estado) WHERE estado = 'PENDIENTE';
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'RNF-02/RNF-50: la app POS crea el registro localmente con idempotency_key propio y hace upsert al reconectar. El worker de sincronización procesa PENDIENTE -> crea factura_venta -> marca PROCESADO. Reintentos seguros gracias a la clave única (dispositivo, idempotency_key).', @level0type=N'SCHEMA', @level0name=N'integracion', @level1type=N'TABLE', @level1name=N'pos_venta_pendiente';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'RNF-02/RNF-50: la app POS crea el registro localmente con idempotency_key propio y hace upsert al reconectar. El worker de sincronizaciï¿½n procesa PENDIENTE -> crea factura_venta -> marca PROCESADO. Reintentos seguros gracias a la clave ï¿½nica (dispositivo, idempotency_key).', @level0type=N'SCHEMA', @level0name=N'integracion', @level1type=N'TABLE', @level1name=N'pos_venta_pendiente';
 GO
 
 CREATE TABLE integracion.pos_rango_numeracion (
@@ -1361,7 +1391,7 @@ CREATE TABLE integracion.pos_rango_numeracion (
     agotado             BIT NOT NULL DEFAULT 0,
     CONSTRAINT chk_rango CHECK (numero_hasta > numero_desde AND numero_siguiente_local BETWEEN numero_desde AND numero_hasta + 1)
 );
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Alternativa a reservar consecutivos: el servidor asigna bloques (p.ej. 1000 números) a cada terminal al sincronizar. El terminal numera localmente dentro de su rango incluso sin conexión, preservando RNF-51 (sin duplicados ni saltos) sin depender de la red para cada venta.', @level0type=N'SCHEMA', @level0name=N'integracion', @level1type=N'TABLE', @level1name=N'pos_rango_numeracion';
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Alternativa a reservar consecutivos: el servidor asigna bloques (p.ej. 1000 nï¿½meros) a cada terminal al sincronizar. El terminal numera localmente dentro de su rango incluso sin conexiï¿½n, preservando RNF-51 (sin duplicados ni saltos) sin depender de la red para cada venta.', @level0type=N'SCHEMA', @level0name=N'integracion', @level1type=N'TABLE', @level1name=N'pos_rango_numeracion';
 GO
 
 CREATE TABLE integracion.pos_sync_log (
@@ -1406,19 +1436,19 @@ CREATE INDEX idx_webhook_entrega_pendiente ON integracion.webhook_entrega(proxim
 INSERT INTO nucleo.rol (codigo, nombre, es_sistema) VALUES
     ('ADMIN', 'Administrador del sistema', 1),
     ('CONTADOR', 'Contador', 1),
-    ('ECONOMICO', 'Económico', 1),
-    ('JEFE_PRODUCCION', 'Jefe de Producción', 1),
+    ('ECONOMICO', 'Econï¿½mico', 1),
+    ('JEFE_PRODUCCION', 'Jefe de Producciï¿½n', 1),
     ('ALMACENERO', 'Almacenero', 1),
     ('RRHH', 'Recursos Humanos', 1),
     ('COMERCIAL', 'Comercial / Ventas', 1),
     ('CAJERO_POS', 'Cajero de punto de venta', 1),
-    ('DIRECCION', 'Dirección', 1);
+    ('DIRECCION', 'Direcciï¿½n', 1);
 
 INSERT INTO contabilidad.tipo_comprobante (codigo, nombre) VALUES
     ('ING', 'Comprobante de Ingreso'),
     ('EGR', 'Comprobante de Egreso'),
     ('DIA', 'Comprobante Diario / Operaciones'),
-    ('AJU', 'Comprobante de Ajuste / Reversión');
+    ('AJU', 'Comprobante de Ajuste / Reversiï¿½n');
 
 INSERT INTO inventario.unidad_medida (codigo, nombre, es_fraccionable) VALUES
     ('UN', 'Unidad', 0),
@@ -1431,21 +1461,21 @@ INSERT INTO inventario.unidad_medida (codigo, nombre, es_fraccionable) VALUES
     ('PAQ', 'Paquete', 0);
 
 INSERT INTO inventario.tipo_movimiento (codigo, nombre, naturaleza, afecta_costo) VALUES
-    ('RECEPCION', 'Informe de Recepción', 'ENTRADA', 1),
+    ('RECEPCION', 'Informe de Recepciï¿½n', 'ENTRADA', 1),
     ('VALE_ENTREGA', 'Vale de Entrega', 'SALIDA', 1),
-    ('DEVOLUCION_ENTRADA', 'Devolución de Cliente', 'ENTRADA', 1),
-    ('DEVOLUCION_SALIDA', 'Devolución a Proveedor', 'SALIDA', 1),
+    ('DEVOLUCION_ENTRADA', 'Devoluciï¿½n de Cliente', 'ENTRADA', 1),
+    ('DEVOLUCION_SALIDA', 'Devoluciï¿½n a Proveedor', 'SALIDA', 1),
     ('TRANSFERENCIA_SALIDA', 'Transferencia - Salida', 'SALIDA', 0),
     ('TRANSFERENCIA_ENTRADA', 'Transferencia - Entrada', 'ENTRADA', 0),
     ('AJUSTE_POSITIVO', 'Ajuste por Sobrante', 'ENTRADA', 1),
     ('AJUSTE_NEGATIVO', 'Ajuste por Faltante', 'SALIDA', 1),
-    ('CONSUMO_PRODUCCION', 'Consumo en Producción', 'SALIDA', 1),
+    ('CONSUMO_PRODUCCION', 'Consumo en Producciï¿½n', 'SALIDA', 1),
     ('ENTRADA_PRODUCCION', 'Entrada de Producto Terminado', 'ENTRADA', 1),
     ('VENTA_POS', 'Venta en Punto de Venta', 'SALIDA', 1);
 
 INSERT INTO rrhh.tipo_ausencia (codigo, nombre, remunerada, afecta_vacaciones) VALUES
     ('VACACIONES', 'Vacaciones', 1, 0),
-    ('CERT_MEDICO', 'Certificado Médico', 1, 0),
+    ('CERT_MEDICO', 'Certificado Mï¿½dico', 1, 0),
     ('LICENCIA_NO_RETRIBUIDA', 'Licencia no Retribuida', 0, 1),
     ('MATERNIDAD', 'Licencia de Maternidad', 1, 0),
     ('AUSENCIA_INJUSTIFICADA', 'Ausencia Injustificada', 0, 1);
@@ -1454,16 +1484,16 @@ INSERT INTO contabilidad.tipo_obligacion_fiscal (codigo, nombre, periodicidad, b
     ('IMP_UTILIDADES', 'Impuesto sobre Utilidades', 'ANUAL', 'Ley 113 del Sistema Tributario'),
     ('IMP_VENTAS', 'Impuesto sobre Ventas', 'MENSUAL', 'Ley 113 del Sistema Tributario'),
     ('IMP_SERVICIOS', 'Impuesto sobre Servicios', 'MENSUAL', 'Ley 113 del Sistema Tributario'),
-    ('SEG_SOCIAL', 'Contribución a la Seguridad Social', 'MENSUAL', 'Ley 113 del Sistema Tributario'),
-    ('FUERZA_TRABAJO', 'Impuesto por Utilización de Fuerza de Trabajo', 'MENSUAL', 'Ley 113 del Sistema Tributario');
+    ('SEG_SOCIAL', 'Contribuciï¿½n a la Seguridad Social', 'MENSUAL', 'Ley 113 del Sistema Tributario'),
+    ('FUERZA_TRABAJO', 'Impuesto por Utilizaciï¿½n de Fuerza de Trabajo', 'MENSUAL', 'Ley 113 del Sistema Tributario');
 
 INSERT INTO rrhh.concepto_nomina (codigo, nombre, tipo) VALUES
-    ('SAL_BASICO', 'Salario Básico', 'DEVENGO'),
+    ('SAL_BASICO', 'Salario Bï¿½sico', 'DEVENGO'),
     ('PAGO_RESULTADOS', 'Pago por Resultados', 'DEVENGO'),
     ('HORA_EXTRA', 'Horas Extras', 'DEVENGO'),
     ('SUBSIDIO_SS', 'Subsidio Seguridad Social (corto plazo)', 'DEVENGO'),
     ('VACACIONES_PAGO', 'Pago de Vacaciones', 'DEVENGO'),
-    ('CONT_SS_TRAB', 'Contribución Especial Seg. Social (trabajador)', 'DEDUCCION'),
+    ('CONT_SS_TRAB', 'Contribuciï¿½n Especial Seg. Social (trabajador)', 'DEDUCCION'),
     ('IMP_INGRESOS_PERS', 'Impuesto sobre Ingresos Personales', 'DEDUCCION'),
     ('OTRAS_DEDUCCIONES', 'Otras Deducciones', 'DEDUCCION'),
     ('APORTE_SS_PATRONAL', 'Aporte Seg. Social (empleador)', 'APORTE_PATRONAL'),

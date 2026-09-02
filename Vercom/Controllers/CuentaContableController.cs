@@ -81,20 +81,17 @@ public class CuentaContableController : Controller
     {
         var account = vm.Account;
         if (id != account.Id) return NotFound();
-
+        vm.Account.Moneda = "CUP";
         ModelState.Remove("Account.Entidad");
         ModelState.Remove("Account.CuentaPadre");
 
-        if (ModelState.IsValid)
+        var result = await _accountingService.UpdateAccountAsync(account);
+        if (result.Succeeded)
         {
-            var result = await _accountingService.UpdateAccountAsync(account);
-            if (result.Succeeded)
-            {
-                TempData["Success"] = result.Message;
-                return RedirectToAction(nameof(Index));
-            }
-            ModelState.AddModelError("", result.Message);
+            TempData["Success"] = result.Message;
+            return RedirectToAction(nameof(Index));
         }
+        ModelState.AddModelError("", result.Message);
 
         var contextVm = await _accountingService.GetAccountFormContextAsync(account);
         return View(contextVm);

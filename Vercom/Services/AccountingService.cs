@@ -67,20 +67,41 @@ public class AccountingService : IAccountingService
     public async Task<AsientoIndexViewModel> GetAsientoIndexContextAsync(Guid? periodId)
     {
         var entidadId = _entidadProvider.CurrentEntidadId;
+        var isMaster = _entidadProvider.IsMaster;
 
         if (periodId == null)
         {
-            var currentPeriod = await GetOrCreateActivePeriodAsync(entidadId, DateTime.Now);
-            periodId = currentPeriod?.Id;
+            if (isMaster)
+            {
+                // Para el Maestro, si no hay filtro, mostrar el periodo más reciente registrado globalmente
+                periodId = await _context.PeriodoContables
+                    .OrderByDescending(p => p.Anio).ThenByDescending(p => p.Mes)
+                    .Select(p => (Guid?)p.Id)
+                    .FirstOrDefaultAsync();
+            }
+            else
+            {
+                var currentPeriod = await GetOrCreateActivePeriodAsync(entidadId, DateTime.Now);
+                periodId = currentPeriod?.Id;
+            }
         }
+
+        var periodsQuery = _context.PeriodoContables.Include(p => p.Entidad).AsQueryable();
+
+        // El Maestro ve todos los periodos, el usuario normal solo los suyos (via filtro global)
+        var periods = await periodsQuery
+            .OrderByDescending(p => p.Anio).ThenByDescending(p => p.Mes)
+            .Select(p => new {
+                p.Id,
+                Display = isMaster ? $"{p.Mes}/{p.Anio} - {p.Entidad.RazonSocial}" : $"{p.Mes}/{p.Anio}"
+            })
+            .ToListAsync();
 
         return new AsientoIndexViewModel
         {
             SelectedPeriodId = periodId,
-            Periods = new SelectList(await _context.PeriodoContables
-                .OrderByDescending(p => p.Anio).ThenByDescending(p => p.Mes)
-                .ToListAsync(), "Id", "Mes", periodId),
-            Entries = await GetEntriesByPeriodAsync(periodId ?? Guid.Empty)
+            Periods = new SelectList(periods, "Id", "Display", periodId),
+            Entries = periodId.HasValue ? await GetEntriesByPeriodAsync(periodId.Value) : new List<AsientoContable>()
         };
     }
 
@@ -118,7 +139,9 @@ public class AccountingService : IAccountingService
     public async Task<CuentaContable?> GetAccountByIdAsync(Guid id)
     {
         return await _context.CuentaContables
-            .Include(c => c.AsientoDetalles)
+            .Include(c => c.CuentaPadre)
+            .Include(c => c.InverseCuentaPadre)
+            .Include(c => c.AsientoDetalles).ThenInclude(d => d.Asiento)
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 
@@ -274,6 +297,14 @@ public class AccountingService : IAccountingService
         }
 
         _context.AsientoContables.Add(entry);
+
+        // RF-11: Asegurar numeración de líneas correlativa para evitar errores de clave duplicada
+        short index = 1;
+        foreach (var det in entry.AsientoDetalles)
+        {
+            det.Linea = index++;
+        }
+
         await _context.SaveChangesAsync();
         return (true, "Asiento creado exitosamente.", entry);
     }
@@ -372,6 +403,7 @@ public class AccountingService : IAccountingService
     {
         return await _context.AsientoContables
             .Include(a => a.TipoComprobante)
+            .Include(a => a.Entidad)
             .Include(a => a.AsientoDetalles)
                 .ThenInclude(d => d.Cuenta)
             .Where(a => a.PeriodoId == periodId)

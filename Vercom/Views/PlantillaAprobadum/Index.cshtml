@@ -1,67 +1,129 @@
+@using Vercom.Security
+@inject IEntidadProvider EntidadProvider
 @model Vercom.ViewModels.PlantillaStatusViewModel
 @{
-    ViewBag.Title = Model.Title;
+    ViewBag.Title = "Plantilla de Cargos";
+    var isMaster = EntidadProvider.IsMaster;
 }
-
-<div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Plantilla de Cargos (RF-26)</h4>
+        <h4 class="page-main-title m-0 fw-bold">Plantilla de Cargos y Ocupaciones</h4>
+        <p class="text-muted small mb-0">Control de plazas aprobadas vs. cubiertas por unidad organizativa</p>
+    </div>
+    <div class="text-end">   
+        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
+            <i class="ti ti-plus me-1"></i> GESTIONAR PLAZAS
+        </a>
     </div>
 </div>
+<div class="card">
+    <div class="card-header bg-light-subtle d-flex justify-content-between align-items-center">
+        <h5 class="m-0 fw-bold"><i class="ti ti-users-group me-2 text-primary"></i>Estado de Cobertura de Plantilla</h5>
+        <span class="badge badge-soft-success">Sincronizado en Tiempo Real</span>
+    </div>
+    <div class="card-body">
+        <table id="plantillaTable" class="table table-striped dt-responsive mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">Cargo / Puesto</th>
+                    <th>Unidad / Sucursal</th>
+                    <th class="text-center">Aprobadas</th>
+                    <th class="text-center">Cubiertas</th>
+                    <th class="text-center">Disponibles</th>
+                    <th>Cobertura</th>
+                    <th class="text-end pe-4">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    var isFull = row.PorcentajeOcupacion >= 100;
+                    var isCritical = row.PorcentajeOcupacion < 50;
+                    var colorClass = isFull ? "bg-success" : (isCritical ? "bg-danger" : "bg-warning");
 
-<div class="container-xxl mt-4">
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <h4 class="card-title mb-0">Comparativo Aprobada vs. Cubierta</h4>
-            <span class="badge bg-primary">Tiempo Real</span>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table id="dataTable" class="table table-hover align-middle w-100">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Cargo / Ocupación</th>
-                            <th>Unidad / Sucursal</th>
-                            <th class="text-center">Aprobadas</th>
-                            <th class="text-center">Cubiertas</th>
-                            <th class="text-center">Disponibles</th>
-                            <th width="200">Estado de Cobertura</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var row in Model.Rows)
-                        {
-                            var colorClass = row.PorcentajeOcupacion >= 100 ? "bg-success" : (row.PorcentajeOcupacion > 50 ? "bg-warning" : "bg-danger");
-                            <tr>
-                                <td class="fw-bold">@row.Cargo</td>
-                                <td>@row.Sucursal</td>
-                                <td class="text-center">@row.Aprobadas</td>
-                                <td class="text-center fw-bold">@row.Cubiertas</td>
-                                <td class="text-center text-muted">@row.Disponibles</td>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="progress flex-grow-1" style="height: 6px;">
-                                            <div class="progress-bar @colorClass" role="progressbar" style="width: @row.PorcentajeOcupacion%"></div>
-                                        </div>
-                                        <span class="small fw-bold">@row.PorcentajeOcupacion.ToString("N0")%</span>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                    <tr>
+                        <td class="ps-4">
+                            <div class="fw-bold fs-14">@row.Cargo</div>
+                            @if (isMaster)
+                            {
+                                <small class="text-muted tiny">ID: @row.Id.ToString().Substring(0, 8)</small>
+                            }
+                        </td>
+                        <td>
+                            <span class="badge badge-outline text-muted">@row.Sucursal</span>
+                        </td>
+                        <td class="text-center fw-semibold">@row.Aprobadas</td>
+                        <td class="text-center fw-bold text-primary">@row.Cubiertas</td>
+                        <td class="text-center">
+                            <span class="badge @(row.Disponibles > 0 ? "bg-info-subtle text-info" : "bg-light text-muted")">
+                                @row.Disponibles
+                            </span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-grow-1" style="height: 8px;">
+                                    <div class="progress-bar @colorClass" role="progressbar" style="width: @(Math.Min(row.PorcentajeOcupacion, 100))%"></div>
+                                </div>
+                                <span class="small fw-bold">@row.PorcentajeOcupacion.ToString("N0")%</span>
+                            </div>
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="btn-list justify-content-end">
+                                <a asp-action="Edit" asp-route-id="@row.Id" class="btn btn-sm btn-icon btn-light rounded-circle" title="Editar Plazas">
+                                    <i class="ti ti-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-icon btn-light rounded-circle text-danger" onclick="deletePlaza('@row.Id', '@row.Cargo')" title="Eliminar">
+                                    <i class="ti ti-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
 </div>
-
 @section Scripts {
     <script>
         $(document).ready(function () {
-            $('#dataTable').DataTable({
-                    language: { url: '@Url.Content("~/lib/i18n/es-ES.json")' },
-                order: [[0, 'asc']]
+            $('#plantillaTable').DataTable({
+                pageLength: 25,
+                language: { url: '@Url.Content("~/lib/i18n/es-ES.json")' },
+                order: [[1, 'asc']],
+                dom: '<"row align-items-center"<"col-md-6"l><"col-md-6"f>>rt<"row align-items-center"<"col-md-5"i><"col-md-7"p>>',
+                responsive: true,
             });
         });
+        function deletePlaza(id, cargo) {
+            Swal.fire({
+                title: '¿Eliminar plaza?',
+                text: `Se eliminará la configuración de plazas para el cargo: ${cargo}`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'SÍ, ELIMINAR'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const formData = new FormData();
+                    formData.append("id", id);
+                    formData.append("__RequestVerificationToken", $('input[name="__RequestVerificationToken"]').val());
+
+                    fetch('/PlantillaAprobadum/Delete', {
+                        method: 'POST',
+                        body: formData
+                    }).then(res => res.json()).then(data => {
+                        if (data.success) location.reload();
+                        else toastr.error(data.message);
+                    });
+                }
+            });
+        }
     </script>
+    <style>
+        .fs-14 {
+            font-size: 0.875rem;
+        }
+    </style>
 }
+
+

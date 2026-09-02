@@ -1,0 +1,376 @@
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@inject AppDbContext DbContext
+@inject IAuthorizationService AuthorizationService
+
+@functions {
+    // Reduce ~30 repeticiones de (await AuthorizationService.AuthorizeAsync(User, "...")).Succeeded
+    async Task<bool> PuedeAsync(string permiso) => (await AuthorizationService.AuthorizeAsync(User, permiso)).Succeeded;
+}
+
+<div class="sidenav-menu">
+
+    <!-- Brand Logo -->
+    <a asp-controller="Dashboard" asp-action="Index" class="logo" style="text-align:center;">
+        <span class="logo logo-light">
+            <span class="logo-lg"><img src="~/css/images/logo.svg" alt="logo" style="height: calc(.9064rem + 1.5em + 16px);"></span>
+        </span>
+    </a>
+
+    <button class="button-on-hover"><i class="ti ti-menu-4 fs-22 align-middle"></i></button>
+    <button class="button-close-offcanvas"><i class="ti ti-x align-middle"></i></button>
+
+    <div class="scrollbar" data-simplebar="">
+        <ul class="side-nav">
+            <li class="side-nav-title">Navegación Principal</li>
+
+            <!-- ════════════════════════════════════════════════════════════════
+            ═══ 1. DASHBOARD (visión ejecutiva) ═══
+            ════════════════════════════════════════════════════════════════ -->
+            <li class="side-nav-item">
+                <a asp-controller="Dashboard" asp-action="Index" class="side-nav-link">
+                    <span class="menu-icon"><i class="ti ti-dashboard"></i></span>
+                    <span class="menu-text"> Dashboard </span>
+                </a>
+            </li>
+
+            <!-- ════════════════════════════════════════════════════════════════
+            ═══ 2. CONTABILIDAD Y FINANZAS (Módulo 1) ═══
+            ════════════════════════════════════════════════════════════════ -->
+            @if (await PuedeAsync("CONTABILIDAD.CUENTA.VER"))
+            {
+                <li class="side-nav-item">
+                    <a data-bs-toggle="collapse" href="#sidebarContabilidad" class="side-nav-link">
+                        <span class="menu-icon"><i class="ti ti-calculator"></i></span>
+                        <span class="menu-text"> Contabilidad </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarContabilidad">
+                        <ul class="sub-menu">
+                            <li class="side-nav-title text-primary small">Operaciones Contables</li>
+                            <li class="side-nav-item"><a asp-controller="AsientoContable" asp-action="Index" class="side-nav-link">Libro Diario (Asientos)</a></li>
+                            @if (await PuedeAsync("CONTABILIDAD.ASIENTO.VER"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="AsientoContable" asp-action="Create" class="side-nav-link text-success">+ Nuevo Asiento</a></li>
+                            }
+                            <li class="side-nav-item"><a asp-controller="PeriodoContable" asp-action="Index" class="side-nav-link">Períodos Fiscales</a></li>
+                            @if (await PuedeAsync("CONTABILIDAD.CIERRE.VER"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="Closure" asp-action="Yearly" class="side-nav-link text-warning fw-bold">Cierre de Ejercicio</a></li>
+                            }
+
+                            <li class="side-nav-title text-primary small mt-2">Tesorería</li>
+                            <li class="side-nav-item"><a asp-controller="Caja" asp-action="Index" class="side-nav-link">Gestión de Cajas</a></li>
+                            <li class="side-nav-item"><a asp-controller="CuentaBancarium" asp-action="Index" class="side-nav-link">Cuentas Bancarias</a></li>
+                            <li class="side-nav-item"><a asp-controller="MovimientoBancario" asp-action="Index" class="side-nav-link">Conciliación Bancaria</a></li>
+                            <li class="side-nav-item"><a asp-controller="ActivoFijo" asp-action="Index" class="side-nav-link">Activos Fijos</a></li>
+
+                            @if (await PuedeAsync("CONTABILIDAD.ONAT.VER"))
+                            {
+                                <li class="side-nav-title text-primary small mt-2">Obligaciones Fiscales</li>
+                                <li class="side-nav-item"><a asp-controller="DeclaracionJuradum" asp-action="Index" class="side-nav-link">Declaraciones ONAT</a></li>
+                                <li class="side-nav-item"><a asp-controller="TipoObligacionFiscal" asp-action="Index" class="side-nav-link">Tipos de Impuestos</a></li>
+                            }
+
+                            <li class="side-nav-title text-primary small mt-2">Configuración Contable</li>
+                            <li class="side-nav-item"><a asp-controller="CuentaContable" asp-action="Index" class="side-nav-link">Cuentas (Nomenclador)</a></li>
+                            <li class="side-nav-item"><a asp-controller="CentroCosto" asp-action="Index" class="side-nav-link">Centros de Costo</a></li>
+                            <li class="side-nav-item"><a asp-controller="TipoComprobante" asp-action="Index" class="side-nav-link">Tipos de Comprobante</a></li>
+                        </ul>
+                    </div>
+                </li>
+            }
+
+            <!-- ════════════════════════════════════════════════════════════════
+            ═══ 3. INVENTARIO Y LOGÍSTICA (Módulo 3) ═══
+            ════════════════════════════════════════════════════════════════ -->
+            @if (await PuedeAsync("INVENTARIO.EXISTENCIA.VER"))
+            {
+                <li class="side-nav-item">
+                    <a data-bs-toggle="collapse" href="#sidebarInventario" class="side-nav-link">
+                        <span class="menu-icon"><i class="ti ti-package"></i></span>
+                        <span class="menu-text"> Inventario </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarInventario">
+                        <ul class="sub-menu">
+                            <li class="side-nav-title text-primary small">Gestión de Stock</li>
+                            <li class="side-nav-item"><a asp-controller="Producto" asp-action="Index" class="side-nav-link">Maestro de Productos</a></li>
+                            <li class="side-nav-item"><a asp-controller="Inventory" asp-action="Index" class="side-nav-link">Existencias Actuales</a></li>
+                            @if (await PuedeAsync("INVENTARIO.MOVIMIENTO.VER"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="Inventory" asp-action="Movements" class="side-nav-link">Bitácora de Movimientos</a></li>
+                            }
+                            @if (await PuedeAsync("INVENTARIO.CONTEO.VER"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="ConteoFisico" asp-action="Index" class="side-nav-link">Conteo Físico / Inventario</a></li>
+                            }
+                            <li class="side-nav-item"><a asp-controller="Inventory" asp-action="LowStock" class="side-nav-link text-danger">Alertas de Stock</a></li>
+                            <li class="side-nav-title text-primary small mt-2">Configuración</li>
+                            <li class="side-nav-item"><a asp-controller="Almacen" asp-action="Index" class="side-nav-link">Almacenes y Depósitos</a></li>
+                            <li class="side-nav-item"><a asp-controller="FamiliaProducto" asp-action="Index" class="side-nav-link">Familias de Productos</a></li>
+                            <li class="side-nav-item"><a asp-controller="UnidadMedidum" asp-action="Index" class="side-nav-link">Unidades de Medida</a></li>
+                            <li class="side-nav-item"><a asp-controller="TipoMovimiento" asp-action="Index" class="side-nav-link">Tipos de Movimiento</a></li>
+                            @if (await PuedeAsync("INVENTARIO.LISTA_PRECIO.VER"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="ListaPrecio" asp-action="Index" class="side-nav-link">Listas de Precios</a></li>
+                            }
+                        </ul>
+                    </div>
+                </li>
+            }
+
+            <!-- ════════════════════════════════════════════════════════════════
+            ═══ 4. GESTIÓN COMERCIAL (Módulo 5) ═══
+            ════════════════════════════════════════════════════════════════ -->
+            @if (await PuedeAsync("COMERCIAL.FACTURA_VENTA.VER") || await PuedeAsync("COMERCIAL.ORDEN_COMPRA.VER"))
+            {
+                <li class="side-nav-item">
+                    <a data-bs-toggle="collapse" href="#sidebarComercial" class="side-nav-link">
+                        <span class="menu-icon"><i class="ti ti-shopping-cart"></i></span>
+                        <span class="menu-text"> Comercial </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarComercial">
+                        <ul class="sub-menu">
+                            @if (await PuedeAsync("COMERCIAL.FACTURA_VENTA.VER"))
+                            {
+                                <li class="side-nav-title text-primary small">Ventas</li>
+                                <li class="side-nav-item"><a asp-controller="Sales" asp-action="Index" class="side-nav-link">Facturación y Ventas</a></li>
+                                <li class="side-nav-item"><a asp-controller="Sales" asp-action="Create" class="side-nav-link text-success">+ Nueva Factura</a></li>
+                                <li class="side-nav-item"><a asp-controller="DevolucionVentum" asp-action="Index" class="side-nav-link">Devoluciones</a></li>
+                                <li class="side-nav-item"><a asp-controller="Cliente" asp-action="Index" class="side-nav-link">Cartera de Clientes</a></li>
+                                @if (await PuedeAsync("COMERCIAL.CLIENTE.CREDITO"))
+                                {
+                                    <li class="side-nav-item"><a asp-controller="CuentaPorCobrar" asp-action="Index" class="side-nav-link">Cobros Pendientes</a></li>
+                                }
+                                <li class="side-nav-item"><a asp-controller="TopePrecioMfp" asp-action="Index" class="side-nav-link">Topes de Precio (MFP)</a></li>
+                            }
+
+                            @if (await PuedeAsync("COMERCIAL.ORDEN_COMPRA.VER"))
+                            {
+                                <li class="side-nav-title text-primary small mt-2">Compras</li>
+                                <li class="side-nav-item"><a asp-controller="Purchase" asp-action="Index" class="side-nav-link">Órdenes de Compra</a></li>
+                                <li class="side-nav-item"><a asp-controller="Purchase" asp-action="Create" class="side-nav-link text-success">+ Nueva OC</a></li>
+                                <li class="side-nav-item"><a asp-controller="Proveedor" asp-action="Index" class="side-nav-link">Cartera de Proveedores</a></li>
+                                @if (await PuedeAsync("COMERCIAL.PROVEEDOR.CREDITO"))
+                                {
+                                    <li class="side-nav-item"><a asp-controller="CuentaPorPagar" asp-action="Index" class="side-nav-link">Pagos Pendientes</a></li>
+                                }
+                            }
+
+                            <li class="side-nav-title text-primary small mt-2">Contratos</li>
+                            <li class="side-nav-item"><a asp-controller="ContratoEconomico" asp-action="Index" class="side-nav-link">Contratos Económicos</a></li>
+                        </ul>
+                    </div>
+                </li>
+            }
+
+            <!-- ════════════════════════════════════════════════════════════════
+            ═══ 5. RECURSOS HUMANOS (Módulo 2) ═══
+            ════════════════════════════════════════════════════════════════ -->
+            @if (await PuedeAsync("RRHH.EMPLEADO.VER"))
+            {
+                <li class="side-nav-item">
+                    <a data-bs-toggle="collapse" href="#sidebarRRHH" class="side-nav-link">
+                        <span class="menu-icon"><i class="ti ti-users"></i></span>
+                        <span class="menu-text"> Recursos Humanos </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarRRHH">
+                        <ul class="sub-menu">
+                            <li class="side-nav-title text-primary small">Gestión</li>
+                            <li class="side-nav-item"><a asp-controller="Empleado" asp-action="Index" class="side-nav-link">Expedientes del Personal</a></li>
+                            @if (await PuedeAsync("RRHH.EMPLEADO.CREAR"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="Empleado" asp-action="Create" class="side-nav-link text-success">+ Nuevo Empleado</a></li>
+                            }
+                            <li class="side-nav-item"><a asp-controller="RegistroAsistencia" asp-action="Console" class="side-nav-link">Control de Asistencia</a></li>
+                            @if (await PuedeAsync("RRHH.NOMINA.VER"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="Nomina" asp-action="Index" class="side-nav-link">Nómina de Salarios</a></li>
+                            }
+
+                            <li class="side-nav-title text-primary small mt-2">Configuración</li>
+                            <li class="side-nav-item"><a asp-controller="Cargo" asp-action="Index" class="side-nav-link">Cargos y Ocupaciones</a></li>
+                            <li class="side-nav-item"><a asp-controller="ConceptoNomina" asp-action="Index" class="side-nav-link">Conceptos Salariales</a></li>
+                            <li class="side-nav-item"><a asp-controller="TipoAusencium" asp-action="Index" class="side-nav-link">Tipos de Ausencia</a></li>
+                            @if (await PuedeAsync("RRHH.PLANTILLA.VER"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="PlantillaAprobadum" asp-action="Index" class="side-nav-link">Plantilla Cargos (RF-26)</a></li>
+                            }
+                            <li class="side-nav-item"><a asp-controller="SaldoVacaciones" asp-action="Index" class="side-nav-link">Saldo de Vacaciones</a></li>
+                        </ul>
+                    </div>
+                </li>
+            }
+
+            <!-- ════════════════════════════════════════════════════════════════
+            ═══ 6. PRODUCCIÓN Y MANTENIMIENTO (Módulo 4) ═══
+            ════════════════════════════════════════════════════════════════ -->
+            @if (await PuedeAsync("PRODUCCION.FICHA.VER"))
+            {
+                <li class="side-nav-item">
+                    <a data-bs-toggle="collapse" href="#sidebarProduccion" class="side-nav-link">
+                        <span class="menu-icon"><i class="ti ti-assembly"></i></span>
+                        <span class="menu-text"> Producción </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarProduccion">
+                        <ul class="sub-menu">
+                            <li class="side-nav-title text-primary small">Ingeniería</li>
+                            <li class="side-nav-item"><a asp-controller="FichaCosto" asp-action="Index" class="side-nav-link">Fichas de Costo</a></li>
+                            <li class="side-nav-item"><a asp-controller="ListaMateriale" asp-action="Index" class="side-nav-link">Estructuras (BOM)</a></li>
+                            <li class="side-nav-item"><a asp-controller="Equipo" asp-action="Index" class="side-nav-link">Equipos de Producción</a></li>
+
+                            <li class="side-nav-title text-primary small mt-2">Operaciones</li>
+                            @if (await PuedeAsync("PRODUCCION.ORDEN.VER"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="Production" asp-action="Index" class="side-nav-link">Órdenes de Producción</a></li>
+                                <li class="side-nav-item"><a asp-controller="Production" asp-action="Create" class="side-nav-link text-success">+ Nueva OP</a></li>
+                            }
+                            @if (await PuedeAsync("PRODUCCION.PLAN.VER"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="PlanProduccion" asp-action="Index" class="side-nav-link">Planificación Mensual</a></li>
+                            }
+                            @if (await PuedeAsync("PRODUCCION.MERMA.VER"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="Merma" asp-action="Index" class="side-nav-link text-danger">Control de Mermas</a></li>
+                            }
+                            <li class="side-nav-item"><a asp-controller="MantenimientoProgramado" asp-action="Index" class="side-nav-link">Mantenimiento Preventivo</a></li>
+
+                            <li class="side-nav-title text-primary small mt-2">Costos</li>
+                            <li class="side-nav-item"><a asp-controller="Produccion" asp-action="AnalisisDesviacion" class="side-nav-link">Análisis de Desviaciones</a></li>
+                        </ul>
+                    </div>
+                </li>
+            }
+
+            <!-- ════════════════════════════════════════════════════════════════
+            ═══ 7. PUNTO DE VENTA (POS) - Módulo 7 ═══
+            ════════════════════════════════════════════════════════════════ -->
+            @if (await PuedeAsync("POS.CAJA"))
+            {
+                <li class="side-nav-item">
+                    <a data-bs-toggle="collapse" href="#sidebarPos" class="side-nav-link">
+                        <span class="menu-icon"><i class="ti ti-device-desktop"></i></span>
+                        <span class="menu-text"> Punto de Venta (POS) </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarPos">
+                        <ul class="sub-menu">
+                            <li class="side-nav-item"><a href="/POS" class="side-nav-link fw-bold text-success">🖥️ Abrir Terminal de Caja</a></li>
+                            <li class="side-nav-title text-primary small mt-2">Administración POS</li>
+                            @if (await PuedeAsync("INTEGRACION.POS.VER"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="DispositivoPo" asp-action="Index" class="side-nav-link">Dispositivos y Terminales</a></li>
+                                <li class="side-nav-item"><a asp-controller="SesionCajaPo" asp-action="Index" class="side-nav-link">Sesiones de Venta</a></li>
+                                <li class="side-nav-item"><a asp-controller="PosVentaPendiente" asp-action="Index" class="side-nav-link">Ventas Offline</a></li>
+                                <li class="side-nav-item"><a asp-controller="PosRangoNumeracion" asp-action="Index" class="side-nav-link">Bloques de Numeración</a></li>
+                            }
+                        </ul>
+                    </div>
+                </li>
+            }
+
+            <!-- ════════════════════════════════════════════════════════════════
+            ═══ 8. REPORTES E INTELIGENCIA (Módulo 6) ═══
+            ════════════════════════════════════════════════════════════════ -->
+            @if (await PuedeAsync("REPORTES.INDICADORES.VER") || await PuedeAsync("REPORTES.CONTABLES.VER"))
+            {
+                <li class="side-nav-item">
+                    <a data-bs-toggle="collapse" href="#sidebarReportes" class="side-nav-link">
+                        <span class="menu-icon"><i class="ti ti-chart-bar"></i></span>
+                        <span class="menu-text"> Reportes </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarReportes">
+                        <ul class="sub-menu">
+                            @if (await PuedeAsync("REPORTES.INDICADORES.VER"))
+                            {
+                                <li class="side-nav-title text-primary small">Gestión</li>
+                                <li class="side-nav-item"><a asp-controller="Reports" asp-action="Dashboard" class="side-nav-link">Dashboard Ejecutivo</a></li>
+                            }
+                            @if (await PuedeAsync("REPORTES.CONTABLES.VER"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="Reports" asp-action="Balance" class="side-nav-link">Balance General</a></li>
+                                <li class="side-nav-item"><a asp-controller="Reports" asp-action="Resultados" class="side-nav-link">Estado de Resultados</a></li>
+                                <li class="side-nav-item"><a asp-controller="Reports" asp-action="Indicadores" class="side-nav-link">Ratios Financieros</a></li>
+                            }
+                            @if (await PuedeAsync("REPORTES.AUDITORIA.VER"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="Auditoria" asp-action="Index" class="side-nav-link">Bitácora de Auditoría</a></li>
+                            }
+                            <li class="side-nav-item"><a asp-controller="Reports" asp-action="Index" class="side-nav-link">📋 Central de Reportes</a></li>
+                        </ul>
+                    </div>
+                </li>
+            }
+
+            <!-- ════════════════════════════════════════════════════════════════
+            ═══ SEPARADOR ═══
+            ════════════════════════════════════════════════════════════════ -->
+            <li class="side-nav-title mt-2">Administración del Sistema</li>
+
+            <!-- ════════════════════════════════════════════════════════════════
+            ═══ 9. CONFIGURACIÓN EMPRESA ═══
+            ════════════════════════════════════════════════════════════════ -->
+            @if (await PuedeAsync("ADMIN.ENTIDAD.VER"))
+            {
+                <li class="side-nav-item">
+                    <a data-bs-toggle="collapse" href="#sidebarAdmin" class="side-nav-link">
+                        <span class="menu-icon"><i class="ti ti-building"></i></span>
+                        <span class="menu-text"> Mi Empresa </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarAdmin">
+                        <ul class="sub-menu">
+                            <li class="side-nav-item"><a asp-controller="Entidad" asp-action="Details" class="side-nav-link">Datos Jurídicos</a></li>
+                            <li class="side-nav-item"><a asp-controller="Sucursal" asp-action="Index" class="side-nav-link">Sucursales / Unidades</a></li>
+                            <li class="side-nav-item"><a asp-controller="Consecutivo" asp-action="Index" class="side-nav-link">Control de Numeración</a></li>
+                        </ul>
+                    </div>
+                </li>
+            }
+
+            <!-- ════════════════════════════════════════════════════════════════
+            ═══ 10. SEGURIDAD Y HERRAMIENTAS ═══
+            ════════════════════════════════════════════════════════════════ -->
+            @if (await PuedeAsync("SEGURIDAD.USUARIO.VER") || await PuedeAsync("ADMIN.BACKUP.VER"))
+            {
+                <li class="side-nav-item">
+                    <a data-bs-toggle="collapse" href="#sidebarSeguridad" class="side-nav-link">
+                        <span class="menu-icon"><i class="ti ti-shield-lock"></i></span>
+                        <span class="menu-text"> Seguridad </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarSeguridad">
+                        <ul class="sub-menu">
+                            @if (await PuedeAsync("SEGURIDAD.USUARIO.VER"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="Usuario" asp-action="Index" class="side-nav-link">Usuarios</a></li>
+                            }
+                            @if (await PuedeAsync("SEGURIDAD.ROL.VER"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="Rol" asp-action="Index" class="side-nav-link">Roles y Permisos</a></li>
+                            }
+                            @if (await PuedeAsync("SEGURIDAD.AUDITORIA.VER"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="Auditoria" asp-action="Index" class="side-nav-link">Bitácora de Auditoría</a></li>
+                            }
+                            @if (await PuedeAsync("ADMIN.PARAMETROS.VER"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="ParametroSistema" asp-action="Index" class="side-nav-link">Parámetros del ERP</a></li>
+                            }
+                            @if (await PuedeAsync("ADMIN.BACKUP.VER"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="Backup" asp-action="Index" class="side-nav-link">Resguardos (Backup)</a></li>
+                            }
+                        </ul>
+                    </div>
+                </li>
+            }
+
+        </ul>
+    </div>
+</div>

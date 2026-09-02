@@ -64,6 +64,7 @@ public class SalesController : Controller
         if (ModelState.IsValid)
         {
             invoice.EntidadId = _entidadProvider.CurrentEntidadId;
+            invoice.SucursalId = _entidadProvider.CurrentSucursalId ?? invoice.SucursalId; // Forzar sucursal si está restringido
             invoice.CreadoPor = _entidadProvider.CurrentUsuarioId;
             invoice.CanalVenta = "ERP";
             invoice.Moneda = "CUP";

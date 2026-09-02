@@ -25,6 +25,7 @@ public class TipoAusenciumController : Controller
     [Authorize(Policy = "RRHH.ASISTENCIA.REGISTRAR")]
     public IActionResult Create() => View(new TipoAusencium { Remunerada = true });
 
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Policy = "RRHH.ASISTENCIA.REGISTRAR")]
@@ -38,4 +39,5 @@ public class TipoAusenciumController : Controller
         }
         return View(type);
     }
+
 }

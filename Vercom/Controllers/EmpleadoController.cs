@@ -10,16 +10,32 @@ namespace Vercom.Controllers;
 public class EmpleadoController : Controller
 {
     private readonly IHRService _hrService;
+    private readonly IHRReportService _hrReportService;
+    private readonly IAdminService _adminService;
 
-    public EmpleadoController(IHRService hrService)
+    public EmpleadoController(IHRService hrService, IHRReportService hrReportService, IAdminService adminService)
     {
         _hrService = hrService;
+        _hrReportService = hrReportService;
+        _adminService = adminService;
     }
 
     [Authorize(Policy = "RRHH.EMPLEADO.VER")]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? search, Guid? cargoId, Guid? sucursalId, string? estado, DateOnly? desde, DateOnly? hasta)
     {
-        var empleados = await _hrService.GetEmployeesAsync();
+        var empleados = await _hrService.GetEmployeesAsync(search, cargoId, sucursalId, estado, desde, hasta);
+        ViewBag.Stats = await _hrReportService.GetGeneralStatsAsync(Guid.Empty);
+
+        ViewBag.CargoId = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(await _hrService.GetCargosAsync(), "Id", "Nombre", cargoId);
+        ViewBag.SucursalId = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(await _adminService.GetSucursalesAsync(), "Id", "Nombre", sucursalId);
+
+        ViewBag.CurrentSearch = search;
+        ViewBag.CurrentCargo = cargoId;
+        ViewBag.CurrentSucursal = sucursalId;
+        ViewBag.CurrentEstado = estado;
+        ViewBag.CurrentDesde = desde?.ToString("yyyy-MM-dd");
+        ViewBag.CurrentHasta = hasta?.ToString("yyyy-MM-dd");
+
         return View(empleados);
     }
 
@@ -193,5 +209,17 @@ public class EmpleadoController : Controller
 
         TempData["Error"] = result.Message;
         return RedirectToAction(nameof(Terminate), new { id = EmpleadoId });
+    }
+
+    // REPORTE OFICIAL SC-4-08 (RF-25)
+    [Authorize(Policy = "RRHH.EMPLEADO.VER")]
+    public async Task<IActionResult> SC408(Guid id)
+    {
+        var employee = await _hrService.GetEmployeeByIdAsync(id);
+        if (employee == null) return NotFound();
+
+        var reportData = await _hrReportService.GetSC408ReportAsync(id);
+        ViewBag.Employee = employee;
+        return View(reportData);
     }
 }

@@ -15,4 +15,5 @@ public partial class ListaMaterialesDetalle
     public virtual ListaMateriale ListaMateriales { get; set; } = null!;
 
     public virtual Producto ProductoInsumo { get; set; } = null!;
+
 }

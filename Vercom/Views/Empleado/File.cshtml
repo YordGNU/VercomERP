@@ -2,7 +2,7 @@
 @{
     ViewBag.Title = "Expediente: " + Model.Nombres;
 }
-<div class="page-title-head d-flex align-items-center mb-4">
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
     <div class="flex-grow-1">
         <h4 class="page-main-title m-0 fw-bold">Expediente Digital: @Model.Nombres @Model.Apellidos</h4>
         <p class="text-muted small mb-0">Hoja de vida laboral, historial contractual y control de incidencias.</p>
@@ -16,10 +16,8 @@
         }
     </div>
 </div>
-
-<div class="container-xxl">
-    <div class="row">
-        <!-- Columna Izquierda: Perfil y Stats -->
+<div class="row">
+    <!-- Columna Izquierda: Perfil y Stats -->
         <div class="col-lg-4">
             <div class="card text-center overflow-hidden">
                 <div class="card-body p-4">
@@ -47,7 +45,6 @@
                     </ul>
                 </div>
             </div>
-
             <div class="card bg-info text-white border-0 shadow-lg mt-4">
                 <div class="card-body p-4 text-center">
                     <h6 class="text-white-50 small fw-bold text-uppercase mb-3">Saldo de Vacaciones Acumuladas</h6>
@@ -57,136 +54,210 @@
             </div>
 
             <div class="d-grid mt-4">
-                 <a href="#" class="btn btn-sm btn-outline py-3 text-dark border-dashed">
+                 <a asp-action="SC408" asp-route-id="@Model.Id" class="btn btn-sm btn-outline py-3 text-dark border-dashed">
                     <i class="ti ti-printer me-2"></i> IMPRIMIR MODELO SC-4-08
                 </a>
             </div>
         </div>
-
         <!-- Columna Derecha: Detalles Dinámicos -->
-        <div class="col-lg-8">
+        <div class="col-xxl-8">
             <div class="card">
-                <div class="card-header p-0 bg-light-subtle">
-                    <ul class="nav nav-tabs nav-tabs border-0" role="tablist">
-                        <li class="nav-item flex-fill text-center">
-                            <a class="nav-link active py-3 fw-bold" data-bs-toggle="tab" href="#tab-contracts" role="tab">CONTRATOS</a>
-                        </li>
-                        <li class="nav-item flex-fill text-center">
-                            <a class="nav-link py-3 fw-bold" data-bs-toggle="tab" href="#tab-attendance" role="tab">ASISTENCIA</a>
-                        </li>
-                        <li class="nav-item flex-fill text-center">
-                            <a class="nav-link py-3 fw-bold" data-bs-toggle="tab" href="#tab-medical" role="tab">C. MÉDICOS</a>
-                        </li>
-                    </ul>
-                </div>
-                <div class="card-body p-4">
-                    <div class="tab-content">
-                        <!-- Tab: Contratos -->
-                        <div class="tab-pane fade show active" id="tab-contracts" role="tabpanel">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h5 class="fw-bold mb-0">Relación Contractual</h5>
-                                <a asp-action="AddContract" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
-                                    <i class="ti ti-plus"></i> NUEVO CONTRATO
-                                </a>
-                            </div>
-                            <div class="table-responsive">
-                                <table  class="table table-striped table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th>F. Inicio</th>
-                                            <th>Modalidad</th>
-                                            <th class="text-end">Salario Pactado</th>
-                                            <th class="text-center">Estado</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var c in Model.ContratoLaborals.OrderByDescending(x => x.FechaInicio))
-                                        {
-                                            <tr>
-                                                <td class="text-date">@c.FechaInicio.ToString("dd/MM/yyyy")</td>
-                                                <td class="fw-semibold">@c.TipoContrato</td>
-                                                <td class="text-numeric fw-bold text-success">@c.SalarioPactado.ToString("N2")</td>
-                                                <td class="text-center">
-                                                    <span class="badge @(c.Estado == "VIGENTE" ? "badge-soft-success" : "badge-soft-secondary")">@c.Estado</span>
-                                                </td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Tab: Asistencia -->
-                        <div class="tab-pane fade" id="tab-attendance" role="tabpanel">
-                            <h5 class="fw-bold mb-4">Registro Reciente de Jornadas</h5>
-                            <div class="table-responsive">
-                                <table  class="table table-striped table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th class="text-center">Fecha</th>
-                                            <th class="text-center">Entrada</th>
-                                            <th class="text-center">Salida</th>
-                                            <th class="text-center">Extras (h)</th>
-                                            <th>Incidencia</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var a in Model.RegistroAsistencia.OrderByDescending(x => x.Fecha).Take(10))
-                                        {
-                                            <tr>
-                                                <td class="text-date">@a.Fecha.ToString("dd/MM/yyyy")</td>
-                                                <td class="text-center font-monospace">@a.HoraEntrada</td>
-                                                <td class="text-center font-monospace">@a.HoraSalida</td>
-                                                <td class="text-center text-numeric text-primary">@a.HorasExtra.ToString("N1")</td>
-                                                <td>
-                                                    @if (a.TipoAusencia != null) {
-                                                        <span class="badge badge-soft-danger">@a.TipoAusencia.Nombre</span>
-                                                    } else {
-                                                        <span class="text-muted small">Normal</span>
-                                                    }
-                                                </td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Tab: Médicos -->
-                        <div class="tab-pane fade" id="tab-medical" role="tabpanel">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h5 class="fw-bold mb-0">Certificados y Subsidios</h5>
-                                <a asp-action="AddMedicalCertificate" asp-route-id="@Model.Id" class="btn btn-sm btn-outline text-danger">
-                                    <i class="ti ti-medical-cross"></i> REGISTRAR CERTIFICADO
-                                </a>
-                            </div>
-                            <div class="table-responsive">
-                                <table  class="table table-striped table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th>Nº Certificado</th>
-                                            <th class="text-center">F. Inicio</th>
-                                            <th class="text-center">Días</th>
-                                            <th class="text-center">Subsidio</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var cm in Model.CertificadoMedicos.OrderByDescending(x => x.FechaInicio))
-                                        {
-                                            <tr>
-                                                <td class="font-monospace text-primary fw-bold">@cm.NumeroCertificado</td>
-                                                <td class="text-date">@cm.FechaInicio.ToString("dd/MM/yyyy")</td>
-                                                <td class="text-center fw-bold">@cm.Dias</td>
-                                                <td class="text-center"><span class="badge badge-soft-info">@cm.PorcentajeSubsidio%</span></td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                <div class="card-body">               
+                <ul class="nav nav-tabs nav-justified nav-bordered nav-bordered-danger mb-3" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <a href="#home-b2" data-bs-toggle="tab" aria-expanded="false" class="nav-link" aria-selected="false" role="tab" tabindex="-1">
+                            <i class="ti ti-file-type-doc fs-lg me-md-1 align-middle"></i>
+                            <span class="d-none d-md-inline-block align-middle">Contratos</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a href="#profile-b2" data-bs-toggle="tab" aria-expanded="true" class="nav-link active" aria-selected="true" role="tab">
+                            <i class="ti ti-user-circle fs-lg me-md-1 align-middle"></i>
+                            <span class="d-none d-md-inline-block align-middle">Asistencia</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a href="#settings-b2" data-bs-toggle="tab" aria-expanded="false" class="nav-link" aria-selected="false" role="tab" tabindex="-1">
+                            <i class="ti ti-settings fs-lg me-md-1 align-middle"></i>
+                            <span class="d-none d-md-inline-block align-middle">Certificados</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a href="#about-b2" data-bs-toggle="tab" aria-expanded="false" class="nav-link" aria-selected="false" role="tab" tabindex="-1">
+                            <i class="ti ti-alert-octagon fs-lg me-md-1 align-middle"></i>
+                            <span class="d-none d-md-inline-block align-middle">Medios</span>
+                        </a>
+                    </li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane" id="home-b2" role="tabpanel">
+                        <table class="table table-striped dt-responsive mb-0">
+                            <thead class="thead-sm text-uppercase fs-xxs">
+                                <tr>
+                                    <th>F. Inicio</th>
+                                    <th>Modalidad</th>
+                                    <th class="text-end">Salario Pactado</th>
+                                    <th class="text-center">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var c in Model.ContratoLaborals.OrderByDescending(x => x.FechaInicio))
+                                {
+                                    <tr>
+                                        <td class="text-date">@c.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                        <td class="fw-semibold">@c.TipoContrato</td>
+                                        <td class="text-numeric fw-bold text-success">@c.SalarioPactado.ToString("N2")</td>
+                                        <td>
+                                            <span class="badge @(c.Estado == "VIGENTE" ? "badge-soft-success" : "badge-soft-secondary")">@c.Estado</span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="tab-pane active show" id="profile-b2" role="tabpanel">
+                        <table class="table table-striped dt-responsive mb-0">
+                            <thead class="thead-sm text-uppercase fs-xxs">
+                                <tr>
+                                    <th class="text-center">Fecha</th>
+                                    <th class="text-center">Entrada</th>
+                                    <th class="text-center">Salida</th>
+                                    <th class="text-center">Extras (h)</th>
+                                    <th>Incidencia</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var a in Model.RegistroAsistencia.OrderByDescending(x => x.Fecha).Take(10))
+                                {
+                                    <tr>
+                                        <td class="text-date">@a.Fecha.ToString("dd/MM/yyyy")</td>
+                                        <td class="text-center font-monospace">@a.HoraEntrada</td>
+                                        <td class="text-center font-monospace">@a.HoraSalida</td>
+                                        <td class="text-center text-numeric text-primary">@a.HorasExtra.ToString("N1")</td>
+                                        <td>
+                                            @if (a.TipoAusencia != null)
+                                            {
+                                                <span class="badge badge-soft-danger">@a.TipoAusencia.Nombre</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">Normal</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="tab-pane" id="settings-b2" role="tabpanel">
+                        <table class="table table-striped dt-responsive mb-0">
+                            <thead class="thead-sm text-uppercase fs-xxs">
+                                <tr>
+                                    <th>Nº Certificado</th>
+                                    <th class="text-center">F. Inicio</th>
+                                    <th class="text-center">Días</th>
+                                    <th class="text-center">Subsidio</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var cm in Model.CertificadoMedicos.OrderByDescending(x => x.FechaInicio))
+                                {
+                                    <tr>
+                                        <td class="font-monospace text-primary fw-bold">@cm.NumeroCertificado</td>
+                                        <td class="text-date">@cm.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                        <td class="text-center fw-bold">@cm.Dias</td>
+                                        <td><span class="badge badge-soft-info">@cm.PorcentajeSubsidio%</span></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="tab-pane" id="about-b2" role="tabpanel">
+                        <table class="table table-striped dt-responsive mb-0">
+                            <thead class="thead-sm text-uppercase fs-xxs">
+                                <tr>
+                                    <th>Descripción del Medio</th>
+                                    <th class="text-center">Fecha Entrega</th>
+                                    <th class="text-center">Estado</th>
+                                    <th class="text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var u in Model.UtileResponsabilidades.OrderByDescending(x => x.FechaEntrega))
+                                {
+                                    var isReturned = u.FechaDevolucion.HasValue;
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold">@u.Descripcion</div>
+                                            <small class="text-muted tiny">S/N: @(u.NumeroSerie ?? "N/A")</small>
+                                        </td>
+                                        <td class="text-center text-date">@u.FechaEntrega.ToString("dd/MM/yyyy")</td>
+                                        <td class="text-center">
+                                            @if (isReturned)
+                                            {
+                                                <span class="badge bg-secondary-subtle text-secondary">DEVUELTO</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success-subtle text-success">EN CUSTODIA</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            @if (!isReturned)
+                                            {
+                                                <button type="button" class="btn btn-xs btn-outline-danger" onclick="returnMedio('@u.Id', '@u.Descripcion')">
+                                                    <i class="ti ti-arrow-back"></i>
+                                                </button>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                                @if (!Model.UtileResponsabilidades.Any())
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4 text-muted small">No hay medios asignados a este trabajador.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
+            <!-- end card body-->
         </div>
+        <!-- end card-->
     </div>
 </div>
+@section Scripts {
+    <script>
+        function returnMedio(id, desc) {
+            Swal.fire({
+                title: 'Registrar Devolución',
+                text: `¿Confirma la entrega del medio: ${desc}?`,
+                input: 'textarea',
+                inputPlaceholder: 'Estado de devolución u observaciones...',
+                showCancelButton: true,
+                confirmButtonText: 'PROCESAR RETORNO',
+                cancelButtonText: 'CANCELAR'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const formData = new FormData();
+                    formData.append("id", id);
+                    formData.append("returnDate", new Date().toISOString().split('T')[0]);
+                    formData.append("observations", result.value);
+                    formData.append("__RequestVerificationToken", $('input[name="__RequestVerificationToken"]').val());
+                    fetch('/Utile/Return', {
+                        method: 'POST',
+                        body: formData
+                    }).then(res => res.json()).then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            toastr.error(data.message);
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+}

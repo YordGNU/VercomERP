@@ -49,7 +49,10 @@ public class CashBankService : ICashBankService
 
     public async Task<Caja?> GetCajaByIdAsync(Guid id)
     {
-        return await _context.Cajas.Include(c => c.CuentaContable).FirstOrDefaultAsync(m => m.Id == id);
+        return await _context.Cajas
+            .Include(c => c.CuentaContable)
+            .Include(c => c.Sucursal)
+            .FirstOrDefaultAsync(m => m.Id == id);
     }
 
     public async Task<CajaFormViewModel> GetCajaFormContextAsync(Caja? existing = null)
@@ -96,7 +99,10 @@ public class CashBankService : ICashBankService
 
     public async Task<CuentaBancarium?> GetBankAccountByIdAsync(Guid id)
     {
-        return await _context.CuentaBancaria.Include(c => c.CuentaContable).FirstOrDefaultAsync(m => m.Id == id);
+        return await _context.CuentaBancaria
+            .Include(c => c.CuentaContable)
+            .Include(c => c.MovimientoBancarios).ThenInclude(m => m.Asiento)
+            .FirstOrDefaultAsync(m => m.Id == id);
     }
 
     public async Task<BankAccountFormViewModel> GetBankAccountFormContextAsync(CuentaBancarium? existing = null)

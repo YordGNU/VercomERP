@@ -7,7 +7,8 @@ public class ConsecutivoFormViewModel
 {
     public Consecutivo Consecutivo { get; set; } = new();
     public IEnumerable<SelectListItem> Sucursales { get; set; } = new List<SelectListItem>();
-    public string Title { get; set; } = "Gestión de Numeración Consecutiva";
+    public IEnumerable<SelectListItem> TipoDocumentos { get; set; } = new List<SelectListItem>();
+    public string Title { get; set; } = "Nuevo consecutivo";
 }
 
 public class ParametroFormViewModel

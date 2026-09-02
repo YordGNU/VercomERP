@@ -42,6 +42,8 @@ public partial class Empleado
 
     public DateTimeOffset CreadoEn { get; set; }
 
+    public string NombreCompleto => $"{Apellidos}, {Nombres}";
+
     public virtual Cargo Cargo { get; set; } = null!;
 
     public virtual ICollection<CertificadoMedico> CertificadoMedicos { get; set; } = new List<CertificadoMedico>();
@@ -57,6 +59,8 @@ public partial class Empleado
     public virtual ICollection<RegistroSalarioTiempoServicio> RegistroSalarioTiempoServicios { get; set; } = new List<RegistroSalarioTiempoServicio>();
 
     public virtual ICollection<SaldoVacacione> SaldoVacaciones { get; set; } = new List<SaldoVacacione>();
+
+    public virtual ICollection<UtileResponsabilidad> UtileResponsabilidades { get; set; } = new List<UtileResponsabilidad>();
 
     public virtual Sucursal? Sucursal { get; set; }
 

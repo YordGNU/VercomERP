@@ -1,0 +1,25 @@
+@{
+    Layout = "_LayoutSimple";
+    ViewBag.Title = "Solicitud Enviada";
+}
+
+<div class="container-tight py-4">
+    <div class="card card-md shadow-lg border-0">
+        <div class="card-body text-center py-5">
+            <div class="avatar avatar-xl bg-success-subtle text-success rounded-circle mb-4" style="width: 80px; height: 80px;">
+                <i class="ti ti-circle-check fs-48"></i>
+            </div>
+            <h2 class="fw-bold">¡Solicitud Registrada con Éxito!</h2>
+            <p class="text-muted mt-3 px-4">
+                Hemos recibido los datos de su entidad correctamente. El Administrador Central de <strong>Vercom Elite</strong>
+                revisará la información y procederá a la activación de su entorno corporativo.
+            </p>
+            <div class="alert alert-info border-0 py-3 small mt-4">
+                <i class="ti ti-info-circle me-1"></i> Recibirá una notificación una vez que pueda iniciar sesión con sus credenciales.
+            </div>
+            <div class="mt-5">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-primary px-5">VOLVER AL INICIO</a>
+            </div>
+        </div>
+    </div>
+</div>

@@ -55,4 +55,13 @@ public class NominaController : Controller
 
         return RedirectToAction(nameof(Details), new { id });
     }
+
+    [Authorize(Policy = "RRHH.NOMINA.VER")]
+    public async Task<IActionResult> PaySlip(Guid id)
+    {
+        var detail = await _payrollService.GetPaySlipAsync(id);
+        if (detail == null) return NotFound();
+
+        return View(detail);
+    }
 }

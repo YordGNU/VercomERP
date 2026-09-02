@@ -3,10 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using Vercom.Models;
 using Vercom.Security;
 using Vercom.Services;
+using Vercom.ViewModels;
 
 namespace Vercom.Controllers;
 
-[Authorize(Roles = "ADMINISTRADOR")]
+[Authorize]
 public class EntidadController : Controller
 {
     private readonly IAdminService _adminService;
@@ -18,11 +19,10 @@ public class EntidadController : Controller
         _entidadProvider = entidadProvider;
     }
 
-    private bool IsMasterUser => User.Identity?.Name == "master";
-
+    [Authorize(Roles = "MASTER,ADMINISTRADOR")]
     public async Task<IActionResult> Index()
     {
-        if (!IsMasterUser)
+        if (!_entidadProvider.IsMaster)
         {
             return RedirectToAction(nameof(Details), new { id = _entidadProvider.CurrentEntidadId });
         }
@@ -30,10 +30,56 @@ public class EntidadController : Controller
         return View(entidades);
     }
 
+    [Authorize(Roles = "MASTER,ADMINISTRADOR")]
+    public async Task<IActionResult> Pending()
+    {
+        if (!_entidadProvider.IsMaster) return Forbid();
+        var pending = await _adminService.GetPendingEntidadesAsync();
+        return View(pending);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "MASTER,ADMINISTRADOR")]
+    public async Task<IActionResult> Approve(Guid id)
+    {
+        if (!_entidadProvider.IsMaster) return Forbid();
+        var result = await _adminService.ApproveEntidadAsync(id, _entidadProvider.CurrentUsuarioId);
+        if (result.Succeeded) TempData["Success"] = result.Message;
+        else TempData["Error"] = result.Message;
+
+        return RedirectToAction(nameof(Pending));
+    }
+
+    [AllowAnonymous]
+    [HttpGet]
+    public IActionResult Register()
+    {
+        return View(new EntityRegistrationViewModel());
+    }
+
+    [AllowAnonymous]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Register(EntityRegistrationViewModel vm)
+    {
+        if (ModelState.IsValid)
+        {
+            var result = await _adminService.RegisterEntidadAsync(vm);
+            if (result.Succeeded)
+            {
+                return View("RegisterSuccess");
+            }
+            ModelState.AddModelError("", result.Message);
+        }
+        return View(vm);
+    }
+
+    [Authorize(Roles = "MASTER,ADMINISTRADOR")]
     public async Task<IActionResult> Details(Guid? id)
     {
         var targetId = id ?? _entidadProvider.CurrentEntidadId;
-        var entidad = await _adminService.GetEntidadByIdAsync(targetId, IsMasterUser, _entidadProvider.CurrentEntidadId);
+        var entidad = await _adminService.GetEntidadByIdAsync(targetId, _entidadProvider.IsMaster, _entidadProvider.CurrentEntidadId);
 
         if (entidad == null) return Forbid();
 
@@ -44,7 +90,7 @@ public class EntidadController : Controller
     public async Task<IActionResult> Edit(Guid? id)
     {
         var targetId = id ?? _entidadProvider.CurrentEntidadId;
-        var entidad = await _adminService.GetEntidadByIdAsync(targetId, IsMasterUser, _entidadProvider.CurrentEntidadId);
+        var entidad = await _adminService.GetEntidadByIdAsync(targetId, _entidadProvider.IsMaster, _entidadProvider.CurrentEntidadId);
 
         if (entidad == null) return Forbid();
 
@@ -56,7 +102,7 @@ public class EntidadController : Controller
     public async Task<IActionResult> Edit(Guid id, Entidad entidad)
     {
         if (id != entidad.Id) return NotFound();
-        if (!IsMasterUser && id != _entidadProvider.CurrentEntidadId) return Forbid();
+        if (!_entidadProvider.IsMaster && id != _entidadProvider.CurrentEntidadId) return Forbid();
 
         if (ModelState.IsValid)
         {

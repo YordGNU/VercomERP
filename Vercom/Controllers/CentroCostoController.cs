@@ -29,6 +29,40 @@ public class CentroCostoController : Controller
         return View(vm);
     }
 
+    [Authorize(Policy = "CONTABILIDAD.CUENTA.EDITAR")]
+    public async Task<IActionResult> Edit(Guid? id)
+    {
+        if (id == null) return NotFound();
+        var centrocosto = await _accountingService.GetCostCenterByIdAsync(id.Value);
+        if (centrocosto == null) return NotFound();
+
+        var vm = await _accountingService.GetCostCenterFormContextAsync(centrocosto);
+        return View(vm);
+    }
+
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "INVENTARIO.PRODUCTO.EDITAR")]
+    public async Task<IActionResult> Edit(Guid id, CentroCostoFormViewModel vm)
+    {
+        var centroCosto = vm.CentroCosto;
+        if (id != centroCosto.Id) return NotFound();
+
+        ModelState.Remove("CentroCosto.Entidad");
+        ModelState.Remove("CentroCosto.Sucursal");
+
+        if (ModelState.IsValid)
+        {
+            var result = await _accountingService.UpdateCostCenterAsync(centroCosto);
+            if (result.Succeeded) return RedirectToAction(nameof(Index));
+            ModelState.AddModelError("", result.Message);
+        }
+        var contextVm = await _accountingService.GetCostCenterFormContextAsync(centroCosto);
+        return View(contextVm);
+    }
+
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Policy = "CONTABILIDAD.CUENTA.CREAR")]

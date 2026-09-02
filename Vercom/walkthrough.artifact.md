@@ -1,33 +1,29 @@
-# Corrección de Inconsistencias en Aprobación de Nómina - Walkthrough
+# Optimización de Localización de Personal - Walkthrough
 
-Se ha robustecido el proceso de aprobación y contabilización de la nómina para garantizar el cumplimiento de las normativas de control interno (Res. 60/2011) y la adaptabilidad a las leyes fiscales cubanas.
+Se ha implementado un motor de filtrado avanzado en el módulo de Recursos Humanos para facilitar la gestión masiva de personal y la captación segmentada de asistencia.
 
-## Cambios Realizados
+## Mejoras de Usabilidad Implementadas
 
-### 1. Dinamicidad Fiscal (Parametrización)
-Se eliminaron las tasas impositivas fijas del código fuente. El sistema ahora consulta la tabla `ParametroSistema` para obtener los valores vigentes de:
-- **TASA_SS_PATRONAL:** Contribución a la Seguridad Social (entidad).
-- **TASA_FUERZA_TRAB:** Impuesto por el uso de la fuerza de trabajo.
-- **RET_SS_TRAB:** Retención obligatoria al trabajador.
+### 1. Búsqueda Avanzada de Expedientes
+Se rediseñó la cabecera de la lista de empleados para incluir una barra de herramientas de filtrado dinámico:
+- **Buscador Universal:** Permite localizar trabajadores por **Nombre, Apellidos o Carnet de Identidad** de forma instantánea.
+- **Filtros Organizativos:** Ahora es posible segmentar la lista por **Cargo** y **Sucursal/Unidad**, facilitando la revisión de grupos específicos.
+- **Gestión de Estados:** Selector para alternar entre personal **Activo** y **Bajas**, permitiendo auditar el histórico de la empresa.
 
-### 2. Integración Contable Robusta
-- **Resolución de Error de ID:** Se corrigió el fallo donde el sistema buscaba un tipo de comprobante inexistente. Ahora busca dinámicamente el código "DIA" (Diario).
-- **Validación Previa:** Antes de aprobar, el sistema verifica que las cuentas de Gastos (701) y Pasivos (401) existan y estén activas. Si faltan, el usuario recibe un mensaje de "Error de Integración" en lugar de un error 500.
-- **Partida Doble Garantizada:** Se mejoró la construcción del asiento contable para asegurar que el Debe y el Haber coincidan exactamente, incluyendo los centavos redondeados de los impuestos patronales.
-
-### 3. Seguridad Transaccional
-Se implementó una **Transacción SQL** en el proceso de aprobación. Esto garantiza que:
-- O se aprueba la nómina Y se crea el asiento contable simultáneamente.
-- O no se hace nada si ocurre un error (evitando nóminas aprobadas sin respaldo en libros).
+### 2. Consola de Asistencia por Sucursal
+Se optimizó la consola de captación de jornada (`RegistroAsistencia/Console`) para operaciones multi-sucursal:
+- **Asignación Local:** Los jefes de unidad ahora pueden filtrar la consola para que solo muestre los trabajadores de su **Sucursal**, evitando errores de marcado en listas extensas.
+- **Segmentación por Cargo:** Permite cargar la asistencia por grupos ocupacionales (ej. solo "Operarios").
+- **Búsqueda en Consola:** Incluye un campo de búsqueda rápida para localizar a un trabajador específico sin navegar por toda la tabla.
 
 ## Resultados Técnicos
 
 > [!SUCCESS]
-> **Contabilización Automática:** Al presionar "APROBAR", el sistema ahora genera un comprobante de diario perfecto, con trazabilidad total desde el expediente del trabajador hasta el Balance General.
+> **Eficiencia Operativa:** Se redujo drásticamente el tiempo necesario para localizar trabajadores en plantillas de gran tamaño.
 
 > [!IMPORTANT]
-> **Resistencia Normativa:** Si el MFP cambia una tasa mañana, el administrador puede actualizarla desde la pantalla de Parámetros del Sistema sin necesidad de recompilar la aplicación.
+> **Aislamiento Multi-tenancy:** Los filtros respetan estrictamente el aislamiento de datos de cada entidad, permitiendo al Maestro filtrar globalmente y a los Administradores Locales gestionar su propia estructura.
 
 ## Próximos Pasos
-- Validar el proceso de pago (bancarización) una vez que el asiento esté generado.
-- Iniciar el Plan de Pruebas Maestro (FAT) para certificar el sistema completo.
+- Evaluar la inclusión de filtros por "Tipo de Contrato" en el Index de Empleados.
+- Habilitar la exportación del listado filtrado a formato Excel para auditorías externas.

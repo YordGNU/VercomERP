@@ -1,16 +1,18 @@
-# Tareas: Corrección de Inconsistencias en Aprobación de Nómina
+# Tareas: Implementación de Filtros Avanzados en RRHH
 
-## Fase 1: Configuración de Parámetros (Seed)
-- [x] Asegurar parámetros de tasas patronales en `SeedData.cs`
+## 1. Capa de Servicios (Business Logic)
+- [x] Modificar `IHRService` para incluir parámetros de filtrado en `GetEmployeesAsync` y `GetAttendanceConsoleAsync`.
+- [x] Implementar la lógica de filtrado en `HRService`.
 
-## Fase 2: Lógica de Negocio (PayrollService)
-- [x] Implementar búsqueda dinámica de `TipoComprobante` (DIA)
-- [x] Cargar tasas impositivas desde `ParametroSistema`
-- [x] Validar existencia de cuentas contables ("701", "401")
-- [x] Envolver proceso de aprobación en una transacción SQL
-- [x] Manejar errores de integración contable con mensajes claros
+## 2. Controladores (MVC)
+- [x] Actualizar `EmpleadoController.Index` para recibir y pasar los filtros (inyección de `IAdminService`).
+- [x] Actualizar `RegistroAsistenciaController.Console` para soportar filtrado por sucursal, cargo y búsqueda.
 
-## Fase 3: Verificación y Cierre
-- [x] Validar flujo de aprobación completo (Lógica revisada)
-- [x] Comprobar generación de asiento contable cuadrado
-- [x] Documentar en Walkthrough
+## 3. Interfaz de Usuario (Vistas)
+- [x] Rediseñar `Views/Empleado/Index.cshtml` con la barra de búsqueda avanzada y segmentación.
+- [x] Actualizar `Views/RegistroAsistencia/Console.cshtml` con los selectores de sucursal y cargo.
+
+## 4. Verificación
+- [x] Validar búsquedas combinadas en Empleados.
+- [x] Validar segregación por sucursal en Asistencia.
+- [x] Generar Walkthrough final de la optimización de búsqueda.

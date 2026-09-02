@@ -33,7 +33,11 @@ public class WarehouseService : IWarehouseService
 
     public async Task<ConteoFisico?> GetCountByIdAsync(Guid id)
     {
-        return await _context.ConteoFisicos.Include(c => c.Almacen).Include(c => c.ConteoFisicoDetalles).ThenInclude(d => d.Producto).FirstOrDefaultAsync(m => m.Id == id);
+        return await _context.ConteoFisicos
+            .Include(c => c.Almacen)
+            .Include(c => c.Responsable)
+            .Include(c => c.ConteoFisicoDetalles).ThenInclude(d => d.Producto)
+            .FirstOrDefaultAsync(m => m.Id == id);
     }
 
     public async Task<(bool Succeeded, string Message, ConteoFisico? Count)> StartPhysicalCountAsync(Guid almacenId, Guid userId)

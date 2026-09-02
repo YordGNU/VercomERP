@@ -31,6 +31,19 @@ public class ProductoController : Controller
         return View(product);
     }
 
+    [Authorize(Policy = "INVENTARIO.PRODUCTO.VER")]
+    public async Task<IActionResult> Kardex(Guid id, Guid? almacenId)
+    {
+        var product = await _inventoryService.GetProductByIdAsync(id);
+        if (product == null) return NotFound();
+
+        var kardex = await _inventoryService.GetKardexByProductAsync(id, almacenId);
+        ViewBag.Product = product;
+        ViewBag.SelectedAlmacenId = almacenId;
+
+        return View(kardex);
+    }
+
     [Authorize(Policy = "INVENTARIO.PRODUCTO.CREAR")]
     public async Task<IActionResult> Create()
     {

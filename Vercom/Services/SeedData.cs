@@ -7,19 +7,34 @@ public static class SeedData
 {
     public static async Task Initialize(IServiceProvider serviceProvider)
     {
-        using var context = new AppDbContext();
+        using var context = serviceProvider.GetRequiredService<AppDbContext>();
 
         var authService = serviceProvider.GetRequiredService<IAuthService>();
 
         // Si ya hay usuarios, asumimos que el seed ya se ejecutó
-        if (await context.Usuarios.AnyAsync())
+        if (await context.Usuarios.IgnoreQueryFilters().AnyAsync())
             return;
         // ======================================================================
         // 1. ENTIDAD (verificar existencia para evitar duplicados)
         // ======================================================================
-        var entidadId = Guid.NewGuid(); // valor por defecto
-        var entidad = await context.Entidads.FirstOrDefaultAsync();
-        entidadId = entidad?.Id ?? Guid.NewGuid();
+        var entidad = await context.Entidads.IgnoreQueryFilters().FirstOrDefaultAsync();
+        if (entidad == null)
+        {
+            entidad = new Entidad
+            {
+                Id = Guid.NewGuid(),
+                RazonSocial = "Sociedad Mercantil Tierra Prometida S.U.R.L.",
+                Nit = "90000000000",
+                FormaJuridica = "S.U.R.L.",
+                DireccionLegal = "Calle Central #101, Matanzas",
+                MonedaBase = "CUP",
+                Activo = true,
+                CreadoEn = DateTimeOffset.UtcNow
+            };
+            context.Entidads.Add(entidad);
+            await context.SaveChangesAsync();
+        }
+        var entidadId = entidad.Id;
 
         // ======================================================================
         // 2. SUCURSAL (siempre asegurar que exista para esta entidad)
@@ -41,6 +56,24 @@ public static class SeedData
             await context.SaveChangesAsync();
         }
         var sucursalId = sucursal.Id;
+
+        // ======================================================================
+        // 5. ROLES DE SISTEMA
+        // ======================================================================
+        var roles = new List<Rol>
+        {
+            new Rol { Codigo = "MASTER", Nombre = "Administrador Global (Ecosistema)", EsSistema = true },
+            new Rol { Codigo = "ADMINISTRADOR", Nombre = "Administrador de Entidad", EsSistema = true },
+            new Rol { Codigo = "CONTADOR", Nombre = "Contador de Entidad", EsSistema = true },
+            new Rol { Codigo = "VENDEDOR", Nombre = "Vendedor", EsSistema = true }
+        };
+
+        foreach (var r in roles)
+        {
+            if (!await context.Rols.AnyAsync(x => x.Codigo == r.Codigo))
+                context.Rols.Add(r);
+        }
+        await context.SaveChangesAsync();
 
         // ======================================================================
         // 6. USUARIOS
@@ -74,15 +107,18 @@ public static class SeedData
             CreadoEn = DateTimeOffset.UtcNow,
             ActualizadoEn = DateTimeOffset.UtcNow
         };
+        context.Usuarios.Add(masterUser);
         context.Usuarios.Add(admin);
         await context.SaveChangesAsync();
 
         // Asignar roles a los usuarios
-        var adminRoleId = await context.Rols.Where(r => r.Codigo == "ADMIN").Select(r => r.Id).FirstAsync();
+        var masterRoleId = await context.Rols.Where(r => r.Codigo == "MASTER").Select(r => r.Id).FirstAsync();
+        var adminRoleId = await context.Rols.Where(r => r.Codigo == "ADMINISTRADOR").Select(r => r.Id).FirstAsync();
+
         context.UsuarioRols.AddRange(new List<UsuarioRol>
         {
-            new UsuarioRol { UsuarioId = masterUser.Id, RolId = adminRoleId, AsignadoEn = DateTimeOffset.UtcNow },
-            new UsuarioRol { UsuarioId = admin.Id, RolId = adminRoleId, AsignadoEn = DateTimeOffset.UtcNow }
+            new UsuarioRol { UsuarioId = masterUser.Id, RolId = masterRoleId, SucursalId = sucursalId, AsignadoEn = DateTimeOffset.UtcNow },
+            new UsuarioRol { UsuarioId = admin.Id, RolId = adminRoleId, SucursalId = sucursalId, AsignadoEn = DateTimeOffset.UtcNow }
         });
 
 
@@ -110,7 +146,10 @@ public static class SeedData
         {
             new ParametroSistema { EntidadId = entidadId, Codigo = "TASA_SS_PATRONAL", Valor = "0.125", TipoDato = "NUMERIC", Descripcion = "Tasa de Contribución a la Seguridad Social (Entidad)", VigenteDesde = DateOnly.FromDateTime(DateTime.Now) },
             new ParametroSistema { EntidadId = entidadId, Codigo = "TASA_FUERZA_TRAB", Valor = "0.05", TipoDato = "NUMERIC", Descripcion = "Impuesto por la Utilización de la Fuerza de Trabajo", VigenteDesde = DateOnly.FromDateTime(DateTime.Now) },
-            new ParametroSistema { EntidadId = entidadId, Codigo = "RET_SS_TRAB", Valor = "0.05", TipoDato = "NUMERIC", Descripcion = "Retención Seguridad Social Trabajador", VigenteDesde = DateOnly.FromDateTime(DateTime.Now) }
+            new ParametroSistema { EntidadId = entidadId, Codigo = "RET_SS_TRAB", Valor = "0.05", TipoDato = "NUMERIC", Descripcion = "Retención Seguridad Social Trabajador", VigenteDesde = DateOnly.FromDateTime(DateTime.Now) },
+            new ParametroSistema { EntidadId = entidadId, Codigo = "FACTOR_VAC", Valor = "0.0909", TipoDato = "NUMERIC", Descripcion = "Factor Acumulación Vacaciones (9.09%)", VigenteDesde = DateOnly.FromDateTime(DateTime.Now) },
+            new ParametroSistema { EntidadId = entidadId, Codigo = "IRP_MIN_EXENTO", Valor = "3260", TipoDato = "NUMERIC", Descripcion = "Mínimo Exento Impuesto sobre Ingresos Personales", VigenteDesde = DateOnly.FromDateTime(DateTime.Now) },
+            new ParametroSistema { EntidadId = entidadId, Codigo = "IRP_TASA", Valor = "0.03", TipoDato = "NUMERIC", Descripcion = "Tasa General Impuesto sobre Ingresos Personales", VigenteDesde = DateOnly.FromDateTime(DateTime.Now) }
         };
 
         foreach (var p in parametros)

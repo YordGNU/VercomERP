@@ -19,6 +19,7 @@ public interface IPayrollService
     Task<(bool Succeeded, string Message)> CalculatePayrollAsync(Guid entidadId, short anio, short mes);
     Task<List<NominaDetalle>> GetPayrollDetailsAsync(Guid periodId);
     Task<(bool Succeeded, string Message)> ApprovePayrollAsync(Guid periodId, Guid userId);
+    Task<NominaDetalle?> GetPaySlipAsync(Guid detailId);
 }
 
 public class PayrollService : IPayrollService
@@ -26,13 +27,17 @@ public class PayrollService : IPayrollService
     private readonly AppDbContext _context;
     private readonly IAccountingService _accountingService;
     private readonly IParametroSistemaService _paramService;
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly INotificationService _notificationService;
     private readonly Security.IEntidadProvider _entidadProvider;
 
-    public PayrollService(AppDbContext context, IAccountingService accountingService, IParametroSistemaService paramService, Security.IEntidadProvider entidadProvider)
+    public PayrollService(AppDbContext context, IAccountingService accountingService, IParametroSistemaService paramService, IServiceScopeFactory scopeFactory, INotificationService notificationService, Security.IEntidadProvider entidadProvider)
     {
         _context = context;
         _accountingService = accountingService;
         _paramService = paramService;
+        _scopeFactory = scopeFactory;
+        _notificationService = notificationService;
         _entidadProvider = entidadProvider;
     }
 
@@ -99,93 +104,134 @@ public class PayrollService : IPayrollService
 
     public async Task<(bool Succeeded, string Message)> CalculatePayrollAsync(Guid entidadId, short anio, short mes)
     {
-        var period = await _context.PeriodoNominas
-            .FirstOrDefaultAsync(p => p.EntidadId == entidadId && p.Anio == anio && p.Mes == mes);
-
-        if (period == null)
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
         {
-            period = new PeriodoNomina
+            var period = await _context.PeriodoNominas
+                .FirstOrDefaultAsync(p => p.EntidadId == entidadId && p.Anio == anio && p.Mes == mes);
+
+            if (period == null)
             {
-                Id = Guid.NewGuid(),
-                EntidadId = entidadId,
-                Anio = anio,
-                Mes = mes,
-                Tipo = "MENSUAL",
-                Estado = "PRENOMINA"
-            };
-            _context.PeriodoNominas.Add(period);
-        }
-        else if (period.Estado != "PRENOMINA")
-        {
-            return (false, "El periodo de nómina ya está calculado o aprobado.");
-        }
-
-        var existingDetails = _context.NominaDetalles.Where(d => d.PeriodoNominaId == period.Id);
-        _context.NominaDetalles.RemoveRange(existingDetails);
-
-        var employees = await _context.Empleados
-            .Include(e => e.ContratoLaborals)
-            .Include(e => e.Cargo)
-            .Where(e => e.EntidadId == entidadId && e.Estado == "ACTIVO")
-            .ToListAsync();
-
-        var ssTasa = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "RET_SS_TRAB");
-        if (ssTasa == 0) ssTasa = 0.05m;
-
-        foreach (var emp in employees)
-        {
-            var contract = emp.ContratoLaborals.FirstOrDefault(c => c.Estado == "VIGENTE");
-            if (contract == null) continue;
-
-            var attendanceCount = await _context.RegistroAsistencia
-                .CountAsync(a => a.EmpleadoId == emp.Id && a.Fecha.Year == anio && a.Fecha.Month == mes && a.TipoAusenciaId == null);
-
-            var scaleSalary = contract.SalarioPactado;
-            var dailyRate = scaleSalary / 24;
-            var earnedSalary = dailyRate * attendanceCount;
-
-            var overtimeHours = await _context.RegistroAsistencia
-                .Where(a => a.EmpleadoId == emp.Id && a.Fecha.Year == anio && a.Fecha.Month == mes)
-                .SumAsync(a => a.HorasExtra);
-
-            var overtimeAmount = dailyRate / 8 * overtimeHours * 2;
-
-            // RF-22: Pagos por Resultados (Variable)
-            var variableAmount = await _context.NominaDetalleConceptos
-                .Where(c => c.NominaDetalle.EmpleadoId == emp.Id && c.NominaDetalle.PeriodoNomina.Anio == anio && c.NominaDetalle.PeriodoNomina.Mes == mes)
-                .SumAsync(c => (decimal?)c.Monto) ?? 0;
-
-            var brutoTotal = earnedSalary + overtimeAmount + variableAmount;
-
-            // Retenciones Trabajador (RF-23)
-            var ssRetention = brutoTotal * ssTasa;
-
-            // Impuesto sobre Ingresos Personales (IRP - Escalado Simplificado para Mipyme)
-            decimal irpAmount = 0;
-            if (brutoTotal > 3260)
+                period = new PeriodoNomina
+                {
+                    Id = Guid.NewGuid(),
+                    EntidadId = entidadId,
+                    Anio = anio,
+                    Mes = mes,
+                    Tipo = "MENSUAL",
+                    Estado = "PRENOMINA"
+                };
+                _context.PeriodoNominas.Add(period);
+            }
+            else if (period.Estado != "PRENOMINA")
             {
-                irpAmount = (brutoTotal - 3260) * 0.03m; // Ejemplo base: 3% sobre exceso de 3260
+                return (false, "El periodo de nómina ya está calculado o aprobado.");
             }
 
-            var detail = new NominaDetalle
+            var existingDetails = _context.NominaDetalles.Where(d => d.PeriodoNominaId == period.Id);
+            _context.NominaDetalles.RemoveRange(existingDetails);
+
+            var employees = await _context.Empleados
+                .Include(e => e.ContratoLaborals)
+                .Include(e => e.Cargo)
+                .Where(e => e.EntidadId == entidadId && e.Estado == "ACTIVO")
+                .ToListAsync();
+
+            var ssTasa = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "RET_SS_TRAB");
+            if (ssTasa == 0) ssTasa = 0.05m;
+
+            var irpMin = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "IRP_MIN_EXENTO");
+            if (irpMin == 0) irpMin = 3260m;
+
+            var irpTasa = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "IRP_TASA");
+            if (irpTasa == 0) irpTasa = 0.03m;
+
+            foreach (var emp in employees)
             {
-                Id = Guid.NewGuid(),
-                PeriodoNominaId = period.Id,
-                EmpleadoId = emp.Id,
-                DiasTrabajados = attendanceCount,
-                HorasExtra = overtimeHours,
-                SalarioDevengado = brutoTotal,
-                TotalDeducciones = ssRetention + irpAmount,
-                SalarioNeto = brutoTotal - (ssRetention + irpAmount)
-            };
+                var contract = emp.ContratoLaborals.FirstOrDefault(c => c.Estado == "VIGENTE");
+                if (contract == null) continue;
 
-            _context.NominaDetalles.Add(detail);
+                // 1. Días trabajados (Presencia real)
+                var attendanceCount = await _context.RegistroAsistencia
+                    .CountAsync(a => a.EmpleadoId == emp.Id && a.Fecha.Year == anio && a.Fecha.Month == mes && a.TipoAusenciaId == null);
+
+                // 2. Días de Certificado Médico (Remunerados)
+                var medicalDays = await _context.CertificadoMedicos
+                    .Where(c => c.EmpleadoId == emp.Id &&
+                               ((c.FechaInicio.Year == anio && c.FechaInicio.Month == mes) ||
+                                (c.FechaFin.Year == anio && c.FechaFin.Month == mes)))
+                    .ToListAsync();
+
+                decimal medicalAmount = 0;
+                decimal medicalDaysCount = 0;
+                var dailySalary = contract.SalarioPactado / 24;
+
+                foreach (var cert in medicalDays)
+                {
+                    // Calcular solapamiento con el mes actual
+                    var start = cert.FechaInicio.Year == anio && cert.FechaInicio.Month == mes
+                                ? cert.FechaInicio
+                                : new DateOnly(anio, mes, 1);
+                    var end = cert.FechaFin.Year == anio && cert.FechaFin.Month == mes
+                              ? cert.FechaFin
+                              : new DateOnly(anio, mes, DateTime.DaysInMonth(anio, mes));
+
+                    int daysInMonth = (end.DayNumber - start.DayNumber) + 1;
+                    medicalDaysCount += daysInMonth;
+                    medicalAmount += (dailySalary * daysInMonth * (cert.PorcentajeSubsidio / 100));
+                }
+
+                var earnedSalary = dailySalary * attendanceCount;
+
+                var overtimeHours = await _context.RegistroAsistencia
+                    .Where(a => a.EmpleadoId == emp.Id && a.Fecha.Year == anio && a.Fecha.Month == mes)
+                    .SumAsync(a => a.HorasExtra);
+
+                var overtimeAmount = dailySalary / 8 * overtimeHours * 2;
+
+                // RF-22: Pagos por Resultados (Variable)
+                var variableAmount = await _context.NominaDetalleConceptos
+                    .Where(c => c.NominaDetalle.EmpleadoId == emp.Id && c.NominaDetalle.PeriodoNomina.Anio == anio && c.NominaDetalle.PeriodoNomina.Mes == mes)
+                    .SumAsync(c => (decimal?)c.Monto) ?? 0;
+
+                var brutoTotal = earnedSalary + overtimeAmount + variableAmount + medicalAmount;
+
+                // Retenciones Trabajador (RF-23)
+                var ssRetention = brutoTotal * ssTasa;
+
+                // Impuesto sobre Ingresos Personales (IRP - Escalado Simplificado para Mipyme)
+                decimal irpAmount = 0;
+                if (brutoTotal > irpMin)
+                {
+                    irpAmount = (brutoTotal - irpMin) * irpTasa;
+                }
+
+                var detail = new NominaDetalle
+                {
+                    Id = Guid.NewGuid(),
+                    PeriodoNominaId = period.Id,
+                    EmpleadoId = emp.Id,
+                    DiasTrabajados = attendanceCount + medicalDaysCount,
+                    HorasExtra = overtimeHours,
+                    SalarioDevengado = brutoTotal,
+                    TotalDeducciones = ssRetention + irpAmount,
+                    SalarioNeto = brutoTotal - (ssRetention + irpAmount)
+                };
+
+                _context.NominaDetalles.Add(detail);
+            }
+
+            period.CalculadoEn = DateTimeOffset.Now;
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return (true, "Nómina calculada exitosamente incluyendo subsidios.");
         }
-
-        period.CalculadoEn = DateTimeOffset.Now;
-        await _context.SaveChangesAsync();
-
-        return (true, "Nómina calculada exitosamente.");
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            return (false, $"Error en cálculo: {ex.Message}");
+        }
     }
 
     public async Task<List<NominaDetalle>> GetPayrollDetailsAsync(Guid periodId)
@@ -283,15 +329,56 @@ public class PayrollService : IPayrollService
             period.AprobadoPor = userId;
             period.AsientoId = entry.Id;
 
+            // 6. Acumulación Automática de Vacaciones (9.09%)
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var hrService = scope.ServiceProvider.GetRequiredService<IHRService>();
+                await hrService.AccumulateMonthlyVacationsAsync(period.EntidadId, period.Anio, period.Mes, userId);
+            }
+
+            // 7. Registro Histórico SC-4-08 (RF-25)
+            foreach (var det in period.NominaDetalles)
+            {
+                var emp = await _context.Empleados.FindAsync(det.EmpleadoId);
+                if (emp == null) continue;
+
+                var periodEndDate = new DateOnly(period.Anio, period.Mes, DateTime.DaysInMonth(period.Anio, period.Mes));
+                var totalMonths = ((periodEndDate.Year - emp.FechaIngreso.Year) * 12) + (periodEndDate.Month - emp.FechaIngreso.Month) + 1;
+
+                var historyRecord = new RegistroSalarioTiempoServicio
+                {
+                    Id = Guid.NewGuid(),
+                    EmpleadoId = det.EmpleadoId,
+                    Anio = period.Anio,
+                    Mes = period.Mes,
+                    DiasTrabajados = det.DiasTrabajados,
+                    SalarioDevengado = det.SalarioDevengado,
+                    TiempoServicioAcumuladoMeses = totalMonths
+                };
+                _context.RegistroSalarioTiempoServicios.Add(historyRecord);
+            }
+
+            // 8. Notificación en Tiempo Real
+            await _notificationService.NotifyEntityAsync(period.EntidadId, "Nómina Aprobada", $"Se ha finalizado el pago de {period.NominaDetalles.Count} trabajadores para el mes {period.Mes}.", "success");
+
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            return (true, $"Nómina aprobada y contabilizada con éxito. Comprobante #{entry.NumeroComprobante} generado.");
+            return (true, $"Nómina aprobada, contabilizada y vacaciones acumuladas. Comprobante #{entry.NumeroComprobante}.");
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
             return (false, $"Fallo crítico en aprobación: {ex.Message}");
         }
+    }
+
+    public async Task<NominaDetalle?> GetPaySlipAsync(Guid detailId)
+    {
+        return await _context.NominaDetalles
+            .Include(d => d.Empleado).ThenInclude(e => e.Cargo)
+            .Include(d => d.PeriodoNomina)
+            .Include(d => d.NominaDetalleConceptos).ThenInclude(c => c.Concepto)
+            .FirstOrDefaultAsync(d => d.Id == detailId);
     }
 }

@@ -4,14 +4,22 @@ namespace Vercom.Models;
 
 public partial class AppDbContext : DbContext
 {
+    private readonly Security.IEntidadProvider? _entidadProvider;
+
     public AppDbContext()
     {
     }
 
-    public AppDbContext(DbContextOptions<AppDbContext> options)
+    public AppDbContext(DbContextOptions<AppDbContext> options, Security.IEntidadProvider entidadProvider)
         : base(options)
     {
+        _entidadProvider = entidadProvider;
     }
+
+    // Propiedades para filtros globales
+    public Guid CurrentEntidadId => _entidadProvider?.CurrentEntidadId ?? Guid.Empty;
+    public Guid? CurrentSucursalId => _entidadProvider?.CurrentSucursalId;
+    public bool IsMaster => _entidadProvider?.IsMaster ?? false;
 
     public virtual DbSet<ActivoFijo> ActivoFijos { get; set; }
 
@@ -83,9 +91,13 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Existencium> Existencia { get; set; }
 
+    public virtual DbSet<ExistenciaLote> ExistenciaLotes { get; set; }
+
     public virtual DbSet<FacturaVentaDetalle> FacturaVentaDetalles { get; set; }
 
     public virtual DbSet<FacturaVentum> FacturaVenta { get; set; }
+
+    public virtual DbSet<Feedback> Feedbacks { get; set; }
 
     public virtual DbSet<FamiliaProducto> FamiliaProductos { get; set; }
 
@@ -193,6 +205,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<UsuarioRol> UsuarioRols { get; set; }
 
+    public virtual DbSet<UtileResponsabilidad> UtileResponsabilidads { get; set; }
+
     public virtual DbSet<VAuditoriaAcceso> VAuditoriaAccesos { get; set; }
 
     public virtual DbSet<VAuditoriaReversione> VAuditoriaReversiones { get; set; }
@@ -206,8 +220,13 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<WebhookSuscripcion> WebhookSuscripcions { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=localhost;Database=VercomERP;User Id=sa;Password=sql2025*;Trusted_Connection=True;TrustServerCertificate=True;");
+    {
+        if (!optionsBuilder.IsConfigured)
+        {
+            // Fallback para herramientas de diseño o fallos de inyección
+            optionsBuilder.UseSqlServer("Server=localhost;Database=VercomERP;User Id=sa;Password=sql2025*;TrustServerCertificate=True;MultipleActiveResultSets=true");
+        }
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -527,11 +546,11 @@ public partial class AppDbContext : DbContext
             entity.HasKey(e => e.Id).HasName("PK__asiento___3213E83FCD0DFDEB");
 
             entity.ToTable("asiento_contable", "contabilidad", tb =>
-                {
-                    tb.HasTrigger("trg_auditar_asiento_contable");
-                    tb.HasTrigger("trg_bloquear_edicion_asiento");
-                    tb.HasTrigger("trg_validar_periodo_abierto");
-                });
+            {
+                tb.HasTrigger("trg_auditar_asiento_contable");
+                tb.HasTrigger("trg_bloquear_edicion_asiento");
+                tb.HasTrigger("trg_validar_periodo_abierto");
+            });
 
             entity.HasIndex(e => new { e.EntidadId, e.TipoComprobanteId, e.NumeroComprobante }, "UQ__asiento___FCE92A3DCDC841A0").IsUnique();
 
@@ -1767,6 +1786,32 @@ public partial class AppDbContext : DbContext
                 .HasConstraintName("FK__existenci__produ__39E294A9");
         });
 
+        modelBuilder.Entity<ExistenciaLote>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("existencia_lote", "inventario");
+
+            entity.HasIndex(e => new { e.AlmacenId, e.ProductoId, e.Lote }).IsUnique();
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())").HasColumnName("id");
+            entity.Property(e => e.AlmacenId).HasColumnName("almacen_id");
+            entity.Property(e => e.ProductoId).HasColumnName("producto_id");
+            entity.Property(e => e.Lote).HasMaxLength(50).HasColumnName("lote");
+            entity.Property(e => e.FechaVencimiento).HasColumnName("fecha_vencimiento");
+            entity.Property(e => e.Cantidad).HasColumnType("numeric(16, 4)").HasColumnName("cantidad");
+            entity.Property(e => e.ActualizadoEn).HasDefaultValueSql("(sysdatetimeoffset())").HasColumnName("actualizado_en");
+
+            entity.HasOne(d => d.Almacen).WithMany(p => p.ExistenciaLotes)
+                .HasForeignKey(d => d.AlmacenId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                 .HasConstraintName("FK__existencilote__almacen__3974");
+
+            entity.HasOne(d => d.Producto).WithMany(p => p.ExistenciaLotes)
+                .HasForeignKey(d => d.ProductoId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+             .HasConstraintName("FK__existencilote__produ__39E2");
+        });
+
         modelBuilder.Entity<FacturaVentaDetalle>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__factura___3213E83F9412FA27");
@@ -2017,6 +2062,24 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.ProductoId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__ficha_cos__produ__6A85CC04");
+        });
+
+        modelBuilder.Entity<Feedback>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("feedback", "nucleo");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())").HasColumnName("id");
+            entity.Property(e => e.EntidadId).HasColumnName("entidad_id");
+            entity.Property(e => e.UsuarioId).HasColumnName("usuario_id");
+            entity.Property(e => e.Tipo).HasMaxLength(20).HasColumnName("tipo");
+            entity.Property(e => e.Mensaje).HasColumnName("mensaje");
+            entity.Property(e => e.MetadataTecnica).HasColumnName("metadata_tecnica");
+            entity.Property(e => e.Estado).HasMaxLength(15).HasDefaultValue("PENDIENTE").HasColumnName("estado");
+            entity.Property(e => e.CreadoEn).HasDefaultValueSql("(sysdatetimeoffset())").HasColumnName("creado_en");
+
+            entity.HasOne(d => d.Entidad).WithMany().HasForeignKey(d => d.EntidadId).OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(d => d.Usuario).WithMany().HasForeignKey(d => d.UsuarioId).OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         modelBuilder.Entity<FormaPagoVentum>(entity =>
@@ -3516,9 +3579,10 @@ public partial class AppDbContext : DbContext
 
             entity.ToTable("rol", "nucleo");
 
-            entity.HasIndex(e => e.Codigo, "UQ__rol__40F9A20630EFBE3D").IsUnique();
+            entity.HasIndex(e => new { e.EntidadId, e.Codigo }, "UQ_Rol_Entidad_Codigo").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.EntidadId).HasColumnName("entidad_id");
             entity.Property(e => e.Codigo)
                 .HasMaxLength(30)
                 .HasColumnName("codigo");
@@ -3530,6 +3594,10 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Nombre)
                 .HasMaxLength(100)
                 .HasColumnName("nombre");
+
+            entity.HasOne(d => d.Entidad).WithMany(p => p.Rols)
+                .HasForeignKey(d => d.EntidadId)
+                .HasConstraintName("FK_Rol_Entidad");
 
             entity.HasMany(d => d.Permisos).WithMany(p => p.Rols)
                 .UsingEntity<Dictionary<string, object>>(
@@ -3928,6 +3996,26 @@ public partial class AppDbContext : DbContext
                 .HasConstraintName("FK__usuario_r__usuar__60A75C0F");
         });
 
+        modelBuilder.Entity<UtileResponsabilidad>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("utile_responsabilidad", "rrhh");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())").HasColumnName("id");
+            entity.Property(e => e.EntidadId).HasColumnName("entidad_id");
+            entity.Property(e => e.EmpleadoId).HasColumnName("empleado_id");
+            entity.Property(e => e.Descripcion).HasMaxLength(200).HasColumnName("descripcion");
+            entity.Property(e => e.NumeroSerie).HasMaxLength(50).HasColumnName("numero_serie");
+            entity.Property(e => e.FechaEntrega).HasDefaultValueSql("(CAST(GETDATE() AS DATE))").HasColumnName("fecha_entrega");
+            entity.Property(e => e.FechaDevolucion).HasColumnName("fecha_devolucion");
+            entity.Property(e => e.EstadoEntrega).HasMaxLength(50).HasColumnName("estado_entrega");
+            entity.Property(e => e.Observaciones).HasColumnName("observaciones");
+            entity.Property(e => e.CreadoEn).HasDefaultValueSql("(sysdatetimeoffset())").HasColumnName("creado_en");
+
+            entity.HasOne(d => d.Entidad).WithMany().HasForeignKey(d => d.EntidadId).OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(d => d.Empleado).WithMany(p => p.UtileResponsabilidades).HasForeignKey(d => d.EmpleadoId).OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
         modelBuilder.Entity<VAuditoriaAcceso>(entity =>
         {
             entity
@@ -4092,6 +4180,106 @@ public partial class AppDbContext : DbContext
         });
 
         OnModelCreatingPartial(modelBuilder);
+
+        // --- FILTROS GLOBALES DE SEGURIDAD (Multi-tenancy) ---
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            var parameter = System.Linq.Expressions.Expression.Parameter(entityType.ClrType, "e");
+            System.Linq.Expressions.Expression? filterBody = null;
+
+            // Referencias dinámicas a propiedades del Contexto (EF las convertirá en parámetros SQL)
+            var contextExpr = System.Linq.Expressions.Expression.Constant(this);
+            var isMasterExpr = System.Linq.Expressions.Expression.Property(contextExpr, nameof(IsMaster));
+            var currentEntidadIdExpr = System.Linq.Expressions.Expression.Property(contextExpr, nameof(CurrentEntidadId));
+            var currentSucursalIdExpr = System.Linq.Expressions.Expression.Property(contextExpr, nameof(CurrentSucursalId));
+
+            // Función local para comparar Guids de forma segura (maneja Nullables)
+            System.Linq.Expressions.Expression SafeEqual(System.Linq.Expressions.Expression left, System.Linq.Expressions.Expression right)
+            {
+                if (left.Type != right.Type)
+                {
+                    if (left.Type == typeof(Guid?) && right.Type == typeof(Guid))
+                        right = System.Linq.Expressions.Expression.Convert(right, typeof(Guid?));
+                    else if (left.Type == typeof(Guid) && right.Type == typeof(Guid?))
+                        left = System.Linq.Expressions.Expression.Convert(left, typeof(Guid?));
+                }
+                return System.Linq.Expressions.Expression.Equal(left, right);
+            }
+
+            // 1. Aislamiento por Entidad (Directo o Jerárquico para silenciar warnings 10622)
+            var entidadIdProp = entityType.FindProperty("EntidadId");
+            if (entidadIdProp != null)
+            {
+                var entidadIdExpr = System.Linq.Expressions.Expression.Property(parameter, "EntidadId");
+                filterBody = SafeEqual(entidadIdExpr, currentEntidadIdExpr);
+
+                // Caso especial: Si EntidadId es Nullable (ej. Roles de Sistema), permitir ver los Nulos
+                if (entidadIdProp.ClrType == typeof(Guid?))
+                {
+                    var isNullExpr = System.Linq.Expressions.Expression.Equal(entidadIdExpr, System.Linq.Expressions.Expression.Constant(null, typeof(Guid?)));
+                    filterBody = System.Linq.Expressions.Expression.OrElse(isNullExpr, filterBody);
+                }
+            }
+            else
+            {
+                // Estrategia Jerárquica: Buscar el ancestro más cercano que tenga EntidadId (Máx 2 niveles)
+                var parentNav = entityType.GetNavigations()
+                    .FirstOrDefault(n => n.ForeignKey.DeclaringEntityType == entityType && n.ForeignKey.IsRequired);
+
+                if (parentNav != null)
+                {
+                    if (parentNav.TargetEntityType.FindProperty("EntidadId") != null)
+                    {
+                        // Nivel 1: e.Parent.EntidadId
+                        var parentExpr = System.Linq.Expressions.Expression.Property(parameter, parentNav.Name);
+                        var propExpr = System.Linq.Expressions.Expression.Property(parentExpr, "EntidadId");
+                        filterBody = SafeEqual(propExpr, currentEntidadIdExpr);
+                    }
+                    else
+                    {
+                        // Nivel 2: e.Parent.GrandParent.EntidadId
+                        var grandParentNav = parentNav.TargetEntityType.GetNavigations()
+                            .FirstOrDefault(n => n.ForeignKey.DeclaringEntityType == parentNav.TargetEntityType && n.ForeignKey.IsRequired && n.TargetEntityType.FindProperty("EntidadId") != null);
+
+                        if (grandParentNav != null)
+                        {
+                            var parentExpr = System.Linq.Expressions.Expression.Property(parameter, parentNav.Name);
+                            var gpExpr = System.Linq.Expressions.Expression.Property(parentExpr, grandParentNav.Name);
+                            var propExpr = System.Linq.Expressions.Expression.Property(gpExpr, "EntidadId");
+                            filterBody = SafeEqual(propExpr, currentEntidadIdExpr);
+                        }
+                    }
+                }
+            }
+
+            // 2. Aislamiento por Sucursal (Opcional - Si la tabla tiene SucursalId)
+            var sucursalIdProp = entityType.FindProperty("SucursalId");
+            if (sucursalIdProp != null && (sucursalIdProp.ClrType == typeof(Guid) || sucursalIdProp.ClrType == typeof(Guid?)))
+            {
+                var sucursalIdExpr = System.Linq.Expressions.Expression.Property(parameter, "SucursalId");
+                var nullConst = System.Linq.Expressions.Expression.Constant(null, typeof(Guid?));
+
+                // Expresión: (this.CurrentSucursalId == null || e.SucursalId == this.CurrentSucursalId)
+                var isNoRestriction = System.Linq.Expressions.Expression.Equal(currentSucursalIdExpr, nullConst);
+
+                // Asegurar comparación correcta si es nullable
+                var sucursalIdNullable = sucursalIdProp.ClrType == typeof(Guid)
+                    ? (System.Linq.Expressions.Expression)System.Linq.Expressions.Expression.Convert(sucursalIdExpr, typeof(Guid?))
+                    : (System.Linq.Expressions.Expression)sucursalIdExpr;
+
+                var isEqual = System.Linq.Expressions.Expression.Equal(sucursalIdNullable, currentSucursalIdExpr);
+                var sucursalFilter = System.Linq.Expressions.Expression.OrElse(isNoRestriction, isEqual);
+
+                filterBody = filterBody == null ? sucursalFilter : System.Linq.Expressions.Expression.AndAlso(filterBody, sucursalFilter);
+            }
+
+            // 3. Aplicar Excepción para el Usuario Master (Ve todo) y Sellar Filtro
+            if (filterBody != null)
+            {
+                var finalFilter = System.Linq.Expressions.Expression.OrElse(isMasterExpr, filterBody);
+                modelBuilder.Entity(entityType.ClrType).HasQueryFilter(System.Linq.Expressions.Expression.Lambda(finalFilter, parameter));
+            }
+        }
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

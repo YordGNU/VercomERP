@@ -8,7 +8,7 @@ namespace Vercom.Services;
 public interface IHRService
 {
     // Lectura
-    Task<IEnumerable<Empleado>> GetEmployeesAsync();
+    Task<IEnumerable<Empleado>> GetEmployeesAsync(string? search = null, Guid? cargoId = null, Guid? sucursalId = null, string? estado = null, DateOnly? desde = null, DateOnly? hasta = null);
     Task<Empleado?> GetEmployeeByIdAsync(Guid id);
     Task<EmployeeCreateViewModel> GetEmployeeCreateContextAsync(Empleado? existingEmployee = null);
     Task<List<ContratoLaboral>> GetEmployeeContractsAsync(Guid employeeId);
@@ -29,11 +29,12 @@ public interface IHRService
     Task<(bool Succeeded, string Message)> AddMedicalCertificateAsync(CertificadoMedico certificate);
 
     // Consola de Asistencia (RF-21)
-    Task<AttendanceConsoleViewModel> GetAttendanceConsoleAsync(DateTime date);
+    Task<AttendanceConsoleViewModel> GetAttendanceConsoleAsync(DateTime date, Guid? sucursalId = null, Guid? cargoId = null, string? search = null);
     Task<(bool Succeeded, string Message)> SaveAttendanceConsoleAsync(List<RegistroAsistencium> logs, Guid userId);
 
     // Gestión de Cargos (RF-26)
     Task<IEnumerable<Cargo>> GetCargosAsync();
+    Task<Cargo?> GetCargoByIdAsync(Guid id);
     Task<(bool Succeeded, string Message)> CreateCargoAsync(Cargo cargo);
     Task<(bool Succeeded, string Message)> UpdateCargoAsync(Cargo cargo);
 
@@ -43,7 +44,17 @@ public interface IHRService
     Task<(bool Succeeded, string Message)> UpdateAbsenceTypeAsync(TipoAusencium type);
 
     Task<PlantillaStatusViewModel> GetPlantillaStatusAsync();
+    Task<PlantillaAprobadum?> GetPlantillaEntryByIdAsync(Guid id);
     Task<(bool Succeeded, string Message)> CreatePlantillaEntryAsync(PlantillaAprobadum entry);
+    Task<(bool Succeeded, string Message)> UpdatePlantillaEntryAsync(PlantillaAprobadum entry);
+    Task<(bool Succeeded, string Message)> DeletePlantillaEntryAsync(Guid id);
+
+    // Gestión de Útiles (Responsabilidad Material)
+    Task<IEnumerable<UtileResponsabilidad>> GetUtilesAsync();
+    Task<UtileResponsabilidad?> GetUtileByIdAsync(Guid id);
+    Task<List<UtileResponsabilidad>> GetUtilesByEmployeeAsync(Guid employeeId);
+    Task<(bool Succeeded, string Message)> AssignUtileAsync(UtileResponsabilidad utile);
+    Task<(bool Succeeded, string Message)> ReturnUtileAsync(Guid id, DateOnly returnDate, string? observations);
 
     // Baja Laboral (RF-21)
     Task<TerminateEmployeeViewModel> GetTerminationContextAsync(Guid id);
@@ -63,10 +74,44 @@ public class HRService : IHRService
         _entidadProvider = entidadProvider;
     }
 
-    public async Task<IEnumerable<Empleado>> GetEmployeesAsync()
+    public async Task<IEnumerable<Empleado>> GetEmployeesAsync(string? search = null, Guid? cargoId = null, Guid? sucursalId = null, string? estado = null, DateOnly? desde = null, DateOnly? hasta = null)
     {
-        return await _context.Empleados
+        var query = _context.Empleados
             .Include(e => e.Cargo)
+            .Include(e => e.Sucursal)
+            .AsQueryable();
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            query = query.Where(e => e.Nombres.Contains(search) || e.Apellidos.Contains(search) || e.CarnetIdentidad.Contains(search));
+        }
+
+        if (cargoId.HasValue)
+        {
+            query = query.Where(e => e.CargoId == cargoId.Value);
+        }
+
+        if (sucursalId.HasValue)
+        {
+            query = query.Where(e => e.SucursalId == sucursalId.Value);
+        }
+
+        if (!string.IsNullOrEmpty(estado))
+        {
+            query = query.Where(e => e.Estado == estado);
+        }
+
+        if (desde.HasValue)
+        {
+            query = query.Where(e => e.FechaIngreso >= desde.Value);
+        }
+
+        if (hasta.HasValue)
+        {
+            query = query.Where(e => e.FechaIngreso <= hasta.Value);
+        }
+
+        return await query
             .OrderBy(e => e.Apellidos)
             .ToListAsync();
     }
@@ -79,6 +124,7 @@ public class HRService : IHRService
             .Include(e => e.RegistroAsistencia).ThenInclude(a => a.TipoAusencia)
             .Include(e => e.SaldoVacaciones)
             .Include(e => e.CertificadoMedicos)
+            .Include(e => e.UtileResponsabilidades)
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 
@@ -174,7 +220,7 @@ public class HRService : IHRService
         try
         {
             var previous = await _context.ContratoLaborals.Where(c => c.EmpleadoId == contract.EmpleadoId && c.Estado == "VIGENTE").ToListAsync();
-            foreach (var p in previous) p.Estado = "HISTORICO";
+            foreach (var p in previous) p.Estado = "FINALIZADO";
 
             contract.Id = Guid.NewGuid();
             contract.CreadoEn = DateTimeOffset.Now;
@@ -262,11 +308,36 @@ public class HRService : IHRService
         return (true, "Vacaciones del mes acumuladas.");
     }
 
-    public async Task<AttendanceConsoleViewModel> GetAttendanceConsoleAsync(DateTime date)
+    public async Task<AttendanceConsoleViewModel> GetAttendanceConsoleAsync(DateTime date, Guid? sucursalId = null, Guid? cargoId = null, string? search = null)
     {
         var targetDate = DateOnly.FromDateTime(date);
-        var employees = await _context.Empleados.Include(e => e.Cargo).Where(e => e.Estado == "ACTIVO").OrderBy(e => e.Apellidos).ToListAsync();
-        var records = await _context.RegistroAsistencia.Where(a => a.Fecha == targetDate).ToDictionaryAsync(a => a.EmpleadoId);
+
+        var query = _context.Empleados
+            .Include(e => e.Cargo)
+            .Where(e => e.Estado == "ACTIVO")
+            .AsQueryable();
+
+        if (sucursalId.HasValue)
+        {
+            query = query.Where(e => e.SucursalId == sucursalId.Value);
+        }
+
+        if (cargoId.HasValue)
+        {
+            query = query.Where(e => e.CargoId == cargoId.Value);
+        }
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            query = query.Where(e => e.Nombres.Contains(search) || e.Apellidos.Contains(search) || e.CarnetIdentidad.Contains(search));
+        }
+
+        var employees = await query.OrderBy(e => e.Apellidos).ToListAsync();
+        var employeeIds = employees.Select(e => e.Id).ToList();
+
+        var records = await _context.RegistroAsistencia
+            .Where(a => a.Fecha == targetDate && employeeIds.Contains(a.EmpleadoId))
+            .ToDictionaryAsync(a => a.EmpleadoId);
 
         return new AttendanceConsoleViewModel
         {
@@ -317,6 +388,13 @@ public class HRService : IHRService
     public async Task<IEnumerable<Cargo>> GetCargosAsync()
     {
         return await _context.Cargos.OrderBy(c => c.Nombre).ToListAsync();
+    }
+
+    public async Task<Cargo?> GetCargoByIdAsync(Guid id)
+    {
+        return await _context.Cargos
+            .Include(c => c.Empleados).ThenInclude(e => e.Sucursal)
+            .FirstOrDefaultAsync(c => c.Id == id);
     }
 
     public async Task<(bool Succeeded, string Message)> CreateCargoAsync(Cargo cargo)
@@ -396,6 +474,7 @@ public class HRService : IHRService
             var count = cubiertas.FirstOrDefault(c => c.CargoId == ap.CargoId && c.SucursalId == ap.SucursalId)?.Count ?? 0;
             vm.Rows.Add(new PlantillaRow
             {
+                Id = ap.Id,
                 Cargo = ap.Cargo.Nombre,
                 Sucursal = ap.Sucursal?.Nombre ?? "GLOBAL",
                 Aprobadas = ap.PlazasAprobadas,
@@ -404,6 +483,14 @@ public class HRService : IHRService
         }
 
         return vm;
+    }
+
+    public async Task<PlantillaAprobadum?> GetPlantillaEntryByIdAsync(Guid id)
+    {
+        return await _context.PlantillaAprobada
+            .Include(p => p.Cargo)
+            .Include(p => p.Sucursal)
+            .FirstOrDefaultAsync(p => p.Id == id);
     }
 
     public async Task<(bool Succeeded, string Message)> CreatePlantillaEntryAsync(PlantillaAprobadum entry)
@@ -417,6 +504,95 @@ public class HRService : IHRService
             _context.PlantillaAprobada.Add(entry);
             await _context.SaveChangesAsync();
             return (true, "Plaza aprobada registrada.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<(bool Succeeded, string Message)> UpdatePlantillaEntryAsync(PlantillaAprobadum entry)
+    {
+        try
+        {
+            var existing = await _context.PlantillaAprobada.FindAsync(entry.Id);
+            if (existing == null) return (false, "No existe.");
+
+            _context.Entry(existing).CurrentValues.SetValues(entry);
+            existing.EntidadId = _entidadProvider.CurrentEntidadId;
+
+            await _context.SaveChangesAsync();
+            return (true, "Plaza actualizada.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<(bool Succeeded, string Message)> DeletePlantillaEntryAsync(Guid id)
+    {
+        try
+        {
+            var entry = await _context.PlantillaAprobada.FindAsync(id);
+            if (entry == null) return (false, "No existe.");
+
+            _context.PlantillaAprobada.Remove(entry);
+            await _context.SaveChangesAsync();
+            return (true, "Plaza eliminada.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<IEnumerable<UtileResponsabilidad>> GetUtilesAsync()
+    {
+        return await _context.UtileResponsabilidads
+            .Include(u => u.Empleado)
+            .OrderByDescending(u => u.FechaEntrega)
+            .ToListAsync();
+    }
+
+    public async Task<UtileResponsabilidad?> GetUtileByIdAsync(Guid id)
+    {
+        return await _context.UtileResponsabilidads
+            .Include(u => u.Empleado)
+            .Include(u => u.Entidad)
+            .FirstOrDefaultAsync(u => u.Id == id);
+    }
+
+    public async Task<List<UtileResponsabilidad>> GetUtilesByEmployeeAsync(Guid employeeId)
+    {
+        return await _context.UtileResponsabilidads
+            .Where(u => u.EmpleadoId == employeeId)
+            .OrderByDescending(u => u.FechaEntrega)
+            .ToListAsync();
+    }
+
+    public async Task<(bool Succeeded, string Message)> AssignUtileAsync(UtileResponsabilidad utile)
+    {
+        try
+        {
+            utile.Id = Guid.NewGuid();
+            utile.EntidadId = _entidadProvider.CurrentEntidadId;
+            utile.CreadoEn = DateTimeOffset.Now;
+            if (utile.FechaEntrega == default) utile.FechaEntrega = DateOnly.FromDateTime(DateTime.Now);
+
+            _context.UtileResponsabilidads.Add(utile);
+            await _context.SaveChangesAsync();
+            return (true, "Útil/Medio asignado correctamente.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<(bool Succeeded, string Message)> ReturnUtileAsync(Guid id, DateOnly returnDate, string? observations)
+    {
+        try
+        {
+            var utile = await _context.UtileResponsabilidads.FindAsync(id);
+            if (utile == null) return (false, "Registro no encontrado.");
+
+            utile.FechaDevolucion = returnDate;
+            if (!string.IsNullOrEmpty(observations))
+            {
+                utile.Observaciones = (utile.Observaciones ?? "") + " | DEVOLUCIÓN: " + observations;
+            }
+
+            await _context.SaveChangesAsync();
+            return (true, "Devolución registrada correctamente.");
         }
         catch (Exception ex) { return (false, ex.Message); }
     }
@@ -456,9 +632,9 @@ public class HRService : IHRService
             emp.FechaBaja = terminationDate;
             emp.MotivoBaja = reason;
 
-            // Mark contracts as historical
+            // Mark contracts as finalizado
             var contracts = await _context.ContratoLaborals.Where(c => c.EmpleadoId == id && c.Estado == "VIGENTE").ToListAsync();
-            foreach (var c in contracts) c.Estado = "HISTORICO";
+            foreach (var c in contracts) c.Estado = "FINALIZADO";
 
             // Compensation of vacations (liquidation)
             var saldo = await _context.SaldoVacaciones
@@ -466,7 +642,14 @@ public class HRService : IHRService
 
             if (saldo != null)
             {
-                saldo.DiasCompensados += (decimal)saldo.SaldoActual;
+                saldo.DiasCompensados += (decimal)(saldo.SaldoActual ?? 0);
+            }
+
+            // Desactivar usuario vinculado si existe
+            var user = await _context.Usuarios.FirstOrDefaultAsync(u => u.EsEmpleadoId == id);
+            if (user != null)
+            {
+                user.Activo = false;
             }
 
             await _context.SaveChangesAsync();

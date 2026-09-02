@@ -50,7 +50,7 @@ public class UsuarioController : Controller
 
         if (ModelState.IsValid)
         {
-            var result = await _authService.CreateUserAsync(usuario, vm.Password ?? "");
+            var result = await _authService.CreateUserAsync(usuario, vm.Password ?? "", vm.SelectedRoles);
             if (result.Succeeded)
             {
                 return RedirectToAction(nameof(Index));
@@ -86,7 +86,7 @@ public class UsuarioController : Controller
 
         if (ModelState.IsValid)
         {
-            var result = await _authService.UpdateUserAsync(usuario);
+            var result = await _authService.UpdateUserAsync(usuario, vm.SelectedRoles);
             if (result.Succeeded)
             {
                 return RedirectToAction(nameof(Index));

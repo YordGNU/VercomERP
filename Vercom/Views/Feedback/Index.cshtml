@@ -1,0 +1,122 @@
+@model IEnumerable<Vercom.Models.Feedback>
+@{
+    ViewBag.Title = "Bandeja de Feedback y Soporte";
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Centro de Atención al Usuario</h4>
+        <p class="text-muted small mb-0">Sugerencias, reportes de error y comunicaciones de todas las entidades.</p>
+    </div>
+    <div class="text-end">
+        <span class="badge badge-soft-primary py-2 px-3">
+            <i class="ti ti-headset me-1"></i> CONTROL MAESTRO
+        </span>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-light-subtle">
+            <h5 class="m-0 fw-bold"><i class="ti ti-message-dots me-2 text-primary"></i>Mensajes Recibidos</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="feedbackTable" class="table table-striped dt-responsive mb-0">
+                <thead class="thead-sm text-uppercase fs-xxs">
+                        <tr>
+                            <th class="ps-4">Fecha</th>
+                            <th>Tipo</th>
+                            <th>Empresa / Usuario</th>
+                            <th>Mensaje</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-end pe-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var typeColor = item.Tipo switch {
+                                "ERROR" => "danger",
+                                "SUGERENCIA" => "info",
+                                "FELICITACION" => "success",
+                                "SOPORTE" => "warning",
+                                _ => "secondary"
+                            };
+
+                            <tr>
+                                <td class="ps-4 small text-muted">@item.CreadoEn.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    <span class="badge badge-soft-@typeColor">@item.Tipo</span>
+                                </td>
+                                <td>
+                                    <div class="fw-bold">@item.Entidad.RazonSocial</div>
+                                    <small class="text-muted tiny">Por: @item.Usuario.NombreCompleto</small>
+                                </td>
+                                <td style="max-width: 400px;">
+                                    <p class="mb-0 text-truncate" title="@item.Mensaje">@item.Mensaje</p>
+                                </td>
+                                <td >
+                                    <span class="badge @(item.Estado == "PENDIENTE" ? "bg-warning" : "bg-success") px-3">@item.Estado</span>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="btn-list justify-content-end">
+                                        <button type="button" class="btn btn-sm btn-icon btn-light rounded-circle"
+                                                onclick="showDetail('@item.Id', '@item.Tipo', '@item.Mensaje', '@item.MetadataTecnica')">
+                                            <i class="ti ti-eye"></i>
+                                        </button>
+                                        <form asp-action="UpdateStatus" method="post" class="d-inline">
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <input type="hidden" name="status" value="RESUELTO" />
+                                            <button type="submit" class="btn btn-sm btn-icon btn-light rounded-circle text-success" title="Marcar Resuelto">
+                                                <i class="ti ti-check"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detalle -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Detalle del Mensaje</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="modalType" class="mb-3"></div>
+                <div class="bg-light p-3 rounded mb-4">
+                    <p id="modalMessage" class="mb-0"></p>
+                </div>
+                <h6 class="fw-bold small text-muted text-uppercase mb-2">Metadata Técnica:</h6>
+                <pre id="modalMetadata" class="small bg-dark text-success p-3 rounded" style="max-height: 200px; overflow-y: auto;"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#feedbackTable').DataTable({
+                language: { url: '/js/i18n/es-ES.json' },
+                order: [[0, 'desc']]
+            });
+        });
+
+        function showDetail(id, tipo, mensaje, metadata) {
+            document.getElementById('modalType').innerHTML = `<span class="badge bg-light text-dark">${tipo}</span>`;
+            document.getElementById('modalMessage').innerText = mensaje;
+            document.getElementById('modalMetadata').innerText = metadata || "Sin datos técnicos.";
+            new bootstrap.Modal(document.getElementById('detailModal')).show();
+        }
+    </script>
+}

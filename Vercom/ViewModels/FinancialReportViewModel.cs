@@ -3,6 +3,7 @@ namespace Vercom.ViewModels;
 public class FinancialReportViewModel
 {
     public string ReportName { get; set; } = string.Empty;
+    public string EntityName { get; set; } = string.Empty;
     public string PeriodName { get; set; } = string.Empty;
 
     // Para Balance General

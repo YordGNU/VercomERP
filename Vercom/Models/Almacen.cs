@@ -24,6 +24,8 @@ public partial class Almacen
 
     public virtual ICollection<Existencium> Existencia { get; set; } = new List<Existencium>();
 
+    public virtual ICollection<ExistenciaLote> ExistenciaLotes { get; set; } = new List<ExistenciaLote>();
+
     public virtual ICollection<FacturaVentum> FacturaVenta { get; set; } = new List<FacturaVentum>();
 
     public virtual ICollection<MovimientoInventario> MovimientoInventarioAlmacenDestinos { get; set; } = new List<MovimientoInventario>();

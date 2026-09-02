@@ -54,11 +54,11 @@ public class IntelligenceService : IIntelligenceService
     public async Task<decimal> CalculateLiquidityAsync(Guid entidadId, Guid periodId)
     {
         var activos = await _context.AsientoDetalles
-            .Where(d => d.Asiento.EntidadId == entidadId && d.Asiento.PeriodoId == periodId && d.Cuenta.Codigo.StartsWith("1"))
+            .Where(d => d.Asiento.EntidadId == entidadId && d.Asiento.PeriodoId == periodId && d.Cuenta.Clase == "ACTIVO" && d.Asiento.Estado == "CONTABILIZADO")
             .SumAsync(d => d.Debe - d.Haber);
 
         var pasivos = await _context.AsientoDetalles
-            .Where(d => d.Asiento.EntidadId == entidadId && d.Asiento.PeriodoId == periodId && (d.Cuenta.Codigo.StartsWith("4") || d.Cuenta.Codigo.StartsWith("203")))
+            .Where(d => d.Asiento.EntidadId == entidadId && d.Asiento.PeriodoId == periodId && d.Cuenta.Clase == "PASIVO" && d.Asiento.Estado == "CONTABILIZADO")
             .SumAsync(d => d.Haber - d.Debe);
 
         if (pasivos == 0) return activos > 0 ? 9.99m : 0;
@@ -68,11 +68,11 @@ public class IntelligenceService : IIntelligenceService
     public async Task<decimal> CalculateProfitabilityAsync(Guid entidadId, Guid periodId)
     {
         var ingresos = await _context.AsientoDetalles
-            .Where(d => d.Asiento.EntidadId == entidadId && d.Asiento.PeriodoId == periodId && d.Cuenta.Clase == "INGRESOS" && d.Asiento.Estado == "CONTABILIZADO")
+            .Where(d => d.Asiento.EntidadId == entidadId && d.Asiento.PeriodoId == periodId && d.Cuenta.Clase == "INGRESO" && d.Asiento.Estado == "CONTABILIZADO")
             .SumAsync(d => d.Haber - d.Debe);
 
         var gastos = await _context.AsientoDetalles
-            .Where(d => d.Asiento.EntidadId == entidadId && d.Asiento.PeriodoId == periodId && d.Cuenta.Clase == "GASTOS" && d.Asiento.Estado == "CONTABILIZADO")
+            .Where(d => d.Asiento.EntidadId == entidadId && d.Asiento.PeriodoId == periodId && d.Cuenta.Clase == "GASTO" && d.Asiento.Estado == "CONTABILIZADO")
             .SumAsync(d => d.Debe - d.Haber);
 
         if (ingresos == 0) return 0;
@@ -81,15 +81,17 @@ public class IntelligenceService : IIntelligenceService
 
     public async Task<decimal> CalculateInventoryTurnoverAsync(Guid entidadId, Guid periodId)
     {
+        // Costo de Ventas (Cuentas de Gasto asociadas a ventas)
         var costoVentas = await _context.AsientoDetalles
-            .Where(d => d.Asiento.EntidadId == entidadId && d.Asiento.PeriodoId == periodId && d.Cuenta.Codigo.StartsWith("7") && d.Cuenta.Nombre.Contains("Venta"))
+            .Where(d => d.Asiento.EntidadId == entidadId && d.Asiento.PeriodoId == periodId && d.Cuenta.Clase == "GASTO" && d.Cuenta.Codigo.StartsWith("810") && d.Asiento.Estado == "CONTABILIZADO")
             .SumAsync(d => d.Debe - d.Haber);
 
+        // Inventario Promedio (Cuentas de Activo de Inventario)
         var inventario = await _context.AsientoDetalles
-            .Where(d => d.Asiento.EntidadId == entidadId && d.Asiento.PeriodoId == periodId && d.Cuenta.Codigo.StartsWith("3"))
+            .Where(d => d.Asiento.EntidadId == entidadId && d.Asiento.PeriodoId == periodId && d.Cuenta.Clase == "ACTIVO" && d.Cuenta.Codigo.StartsWith("181") && d.Asiento.Estado == "CONTABILIZADO")
             .SumAsync(d => d.Debe - d.Haber);
 
-        if (inventario == 0) return 0;
+        if (inventario <= 0) return 0;
         return Math.Round(costoVentas / inventario, 2);
     }
 
@@ -118,7 +120,10 @@ public class IntelligenceService : IIntelligenceService
 
     public async Task<FinancialReportViewModel> GetBalanceGeneralContextAsync(Guid entidadId, Guid periodId)
     {
-        var period = await _context.PeriodoContables.FindAsync(periodId);
+        var period = await _context.PeriodoContables
+            .Include(p => p.Entidad)
+            .FirstOrDefaultAsync(p => p.Id == periodId);
+
         var statement = new FinancialStatement { Titulo = "Balance General" };
         var accounts = await _context.CuentaContables
             .Where(c => c.EntidadId == entidadId && (c.Clase == "ACTIVO" || c.Clase == "PASIVO" || c.Clase == "PATRIMONIO"))
@@ -139,6 +144,7 @@ public class IntelligenceService : IIntelligenceService
         return new FinancialReportViewModel
         {
             ReportName = "Balance General",
+            EntityName = period?.Entidad?.RazonSocial ?? "N/A",
             PeriodName = period != null ? $"{period.Mes}/{period.Anio}" : "N/A",
             Balance = statement
         };
@@ -146,10 +152,13 @@ public class IntelligenceService : IIntelligenceService
 
     public async Task<FinancialReportViewModel> GetEstadoResultadosContextAsync(Guid entidadId, Guid periodId)
     {
-        var period = await _context.PeriodoContables.FindAsync(periodId);
+        var period = await _context.PeriodoContables
+            .Include(p => p.Entidad)
+            .FirstOrDefaultAsync(p => p.Id == periodId);
+
         var results = new List<AccountSummary>();
         var accounts = await _context.CuentaContables
-            .Where(c => c.EntidadId == entidadId && (c.Clase == "INGRESOS" || c.Clase == "GASTOS"))
+            .Where(c => c.EntidadId == entidadId && (c.Clase == "INGRESO" || c.Clase == "GASTO"))
             .ToListAsync();
 
         foreach (var acc in accounts)
@@ -163,6 +172,7 @@ public class IntelligenceService : IIntelligenceService
         return new FinancialReportViewModel
         {
             ReportName = "Estado de Resultados",
+            EntityName = period?.Entidad?.RazonSocial ?? "N/A",
             PeriodName = period != null ? $"{period.Mes}/{period.Anio}" : "N/A",
             Resultados = results
         };
@@ -176,11 +186,11 @@ public class IntelligenceService : IIntelligenceService
             .ToListAsync();
 
         var ingresos = await _context.AsientoDetalles
-            .Where(d => d.Asiento.EntidadId == entidadId && d.Asiento.Periodo.Anio == year && d.Cuenta.Clase == "INGRESOS")
+            .Where(d => d.Asiento.EntidadId == entidadId && d.Asiento.Periodo.Anio == year && d.Cuenta.Clase == "INGRESO")
             .SumAsync(d => d.Haber - d.Debe);
 
         var gastos = await _context.AsientoDetalles
-            .Where(d => d.Asiento.EntidadId == entidadId && d.Asiento.Periodo.Anio == year && d.Cuenta.Clase == "GASTOS")
+            .Where(d => d.Asiento.EntidadId == entidadId && d.Asiento.Periodo.Anio == year && d.Cuenta.Clase == "GASTO")
             .SumAsync(d => d.Debe - d.Haber);
 
         var vm = new ClosureYearlyViewModel

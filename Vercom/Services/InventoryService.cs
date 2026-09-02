@@ -58,6 +58,8 @@ public interface IInventoryService
     Task<(bool Succeeded, string Message, MovimientoInventario? Movement)> ProcessMovementAsync(MovimientoInventario movement);
     Task<decimal> GetStockAsync(Guid almacenId, Guid productoId);
     Task<List<Existencium>> GetLowStockAlertsAsync(Guid entidadId);
+    Task<List<ExistenciaLote>> GetExpiryAlertsAsync(Guid entidadId, int daysThreshold);
+    Task<List<KardexRowViewModel>> GetKardexByProductAsync(Guid productoId, Guid? almacenId = null);
     Task<(bool Succeeded, string Message)> TransferBetweenWarehousesAsync(Guid origenId, Guid destinoId, List<MovimientoInventarioDetalle> items, Guid userId);
     Task<(bool Succeeded, string Message)> ConciliatePhysicalCountAsync(Guid countId, Guid userId);
 }
@@ -134,6 +136,10 @@ public class InventoryService : IInventoryService
         return await _context.Productos
             .Include(p => p.Familia)
             .Include(p => p.UnidadMedida)
+            .Include(p => p.Existencia).ThenInclude(e => e.Almacen)
+            .Include(p => p.CuentaInventario)
+            .Include(p => p.CuentaCostoVenta)
+            .Include(p => p.CuentaIngreso)
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 
@@ -232,6 +238,7 @@ public class InventoryService : IInventoryService
     {
         return await _context.Almacens
             .Include(a => a.Sucursal)
+            .Include(a => a.Existencia).ThenInclude(e => e.Producto)
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 
@@ -429,13 +436,13 @@ public class InventoryService : IInventoryService
             {
                 if (movement.AlmacenOrigenId.HasValue)
                 {
-                    var res = await UpdateStockAsync(movement.AlmacenOrigenId.Value, detail.ProductoId, -detail.QuantityNormalized(), detail.CostoUnitario);
+                    var res = await UpdateStockAsync(movement.AlmacenOrigenId.Value, detail.ProductoId, -detail.QuantityNormalized(), detail.CostoUnitario, detail.Lote, detail.FechaVencimiento);
                     if (!res.Succeeded) throw new Exception(res.Message);
                 }
 
                 if (movement.AlmacenDestinoId.HasValue)
                 {
-                    var res = await UpdateStockAsync(movement.AlmacenDestinoId.Value, detail.ProductoId, detail.QuantityNormalized(), detail.CostoUnitario);
+                    var res = await UpdateStockAsync(movement.AlmacenDestinoId.Value, detail.ProductoId, detail.QuantityNormalized(), detail.CostoUnitario, detail.Lote, detail.FechaVencimiento);
                     if (!res.Succeeded) throw new Exception(res.Message);
                 }
             }
@@ -453,8 +460,9 @@ public class InventoryService : IInventoryService
         }
     }
 
-    private async Task<(bool Succeeded, string Message)> UpdateStockAsync(Guid almacenId, Guid productoId, decimal cantidad, decimal? costoEntrada)
+    private async Task<(bool Succeeded, string Message)> UpdateStockAsync(Guid almacenId, Guid productoId, decimal cantidad, decimal? costoEntrada, string? lote = null, DateOnly? fechaVencimiento = null)
     {
+        // 1. Actualizar Existencia Global
         var existencia = await _context.Existencia
             .FirstOrDefaultAsync(e => e.AlmacenId == almacenId && e.ProductoId == productoId);
 
@@ -476,6 +484,36 @@ public class InventoryService : IInventoryService
 
         if (existencia.Cantidad + cantidad < 0)
             return (false, $"Stock insuficiente. Disponible: {existencia.Cantidad}");
+
+        // 2. Actualizar Existencia por Lote (si se proporciona)
+        if (!string.IsNullOrEmpty(lote))
+        {
+            var exLote = await _context.ExistenciaLotes
+                .FirstOrDefaultAsync(l => l.AlmacenId == almacenId && l.ProductoId == productoId && l.Lote == lote);
+
+            if (exLote == null)
+            {
+                if (cantidad < 0) return (false, $"El lote '{lote}' no tiene existencias registradas.");
+
+                exLote = new ExistenciaLote
+                {
+                    Id = Guid.NewGuid(),
+                    AlmacenId = almacenId,
+                    ProductoId = productoId,
+                    Lote = lote,
+                    FechaVencimiento = fechaVencimiento,
+                    Cantidad = 0,
+                    ActualizadoEn = DateTimeOffset.Now
+                };
+                _context.ExistenciaLotes.Add(exLote);
+            }
+
+            if (exLote.Cantidad + cantidad < 0)
+                return (false, $"Stock insuficiente en lote '{lote}'. Disponible: {exLote.Cantidad}");
+
+            exLote.Cantidad += cantidad;
+            exLote.ActualizadoEn = DateTimeOffset.Now;
+        }
 
         // RF-32: PPP en entradas
         if (cantidad > 0 && costoEntrada.HasValue && costoEntrada.Value > 0)
@@ -566,7 +604,73 @@ public class InventoryService : IInventoryService
 
     private async Task CreateAccountingEntryAsync(MovimientoInventario movement, TipoMovimiento tipo)
     {
-        // Lógica de asiento (ya existente, mantenida)
+        if (movement.AsientoId != null) return; // Evitar duplicidad
+
+        var tipoComprobante = await _context.TipoComprobantes.FirstOrDefaultAsync(t => t.Codigo == "DIA");
+        if (tipoComprobante == null) return;
+
+        var period = await _accountingService.GetOrCreateActivePeriodAsync(movement.EntidadId, movement.Fecha.DateTime);
+        if (period == null || period.Estado != "ABIERTO") return;
+
+        var entry = new AsientoContable
+        {
+            Id = Guid.NewGuid(),
+            EntidadId = movement.EntidadId,
+            PeriodoId = period.Id,
+            Fecha = DateOnly.FromDateTime(movement.Fecha.DateTime),
+            Concepto = $"INTEGRACIÓN INVENTARIO: {tipo.Nombre} #{movement.NumeroDocumento}",
+            ModuloOrigen = "INVENTARIO",
+            DocumentoOrigenTipo = "MOVIMIENTO_INVENTARIO",
+            DocumentoOrigenId = movement.Id,
+            TipoComprobanteId = tipoComprobante.Id,
+            CreadoPor = movement.CreadoPor ?? Guid.Empty,
+            CreadoEn = DateTimeOffset.Now,
+            Estado = "CONTABILIZADO"
+        };
+
+        foreach (var det in movement.MovimientoInventarioDetalles)
+        {
+            var prod = await _context.Productos.FindAsync(det.ProductoId);
+            if (prod == null) continue;
+
+            var monto = det.Cantidad * (det.CostoUnitario ?? 0);
+            if (monto <= 0) continue;
+
+            // Cuentas del Producto (RF-35)
+            var invAccId = prod.CuentaInventarioId;
+            var expenseAccId = prod.CuentaCostoVentaId;
+            var incomeAccId = prod.CuentaIngresoId;
+
+            if (invAccId == null) continue;
+
+            if (tipo.Naturaleza == "ENTRADA")
+            {
+                // DEBE: Inventario | HABER: Cuenta de Contrapartida (Ingreso o Ajuste)
+                var contraAccId = (tipo.Codigo == "ORDEN_PRODUCCION" || tipo.Codigo == "OP") ? incomeAccId : incomeAccId;
+                if (contraAccId == null) continue;
+
+                entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = invAccId.Value, Debe = monto, Haber = 0, Glosa = $"Entrada {prod.Nombre}" });
+                entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = contraAccId.Value, Debe = 0, Haber = monto, Glosa = $"Contrapartida {tipo.Nombre}" });
+            }
+            else if (tipo.Naturaleza == "SALIDA")
+            {
+                // DEBE: Costo/Gasto | HABER: Inventario
+                var contraAccId = (tipo.Codigo == "VENTA" || tipo.Codigo == "VEN" || tipo.Codigo == "CONSUMO") ? expenseAccId : expenseAccId;
+                if (contraAccId == null) continue;
+
+                entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = contraAccId.Value, Debe = monto, Haber = 0, Glosa = $"Costo/Salida {prod.Nombre}" });
+                entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = invAccId.Value, Debe = 0, Haber = monto, Glosa = $"Salida Inventario {prod.Nombre}" });
+            }
+        }
+
+        if (entry.AsientoDetalles.Any())
+        {
+            var res = await _accountingService.CreateEntryAsync(entry);
+            if (res.Succeeded)
+            {
+                movement.AsientoId = entry.Id;
+            }
+        }
     }
 
     public async Task<decimal> GetStockAsync(Guid almacenId, Guid productoId)
@@ -584,6 +688,79 @@ public class InventoryService : IInventoryService
             .Include(e => e.Almacen)
             .Where(e => e.Almacen.EntidadId == entidadId && e.Cantidad <= e.StockMinimo)
             .ToListAsync();
+    }
+
+    public async Task<List<ExistenciaLote>> GetExpiryAlertsAsync(Guid entidadId, int daysThreshold)
+    {
+        var limit = DateOnly.FromDateTime(DateTime.Now.AddDays(daysThreshold));
+        return await _context.ExistenciaLotes
+            .Include(l => l.Producto)
+            .Include(l => l.Almacen)
+            .Where(l => l.Almacen.EntidadId == entidadId && l.Cantidad > 0 && l.FechaVencimiento <= limit)
+            .OrderBy(l => l.FechaVencimiento)
+            .ToListAsync();
+    }
+
+    public async Task<List<KardexRowViewModel>> GetKardexByProductAsync(Guid productoId, Guid? almacenId = null)
+    {
+        var query = _context.MovimientoInventarioDetalles
+            .Include(d => d.Movimiento).ThenInclude(m => m.TipoMovimiento)
+            .Include(d => d.Movimiento).ThenInclude(m => m.AlmacenOrigen)
+            .Include(d => d.Movimiento).ThenInclude(m => m.AlmacenDestino)
+            .Where(d => d.ProductoId == productoId);
+
+        if (almacenId.HasValue)
+        {
+            query = query.Where(d => d.Movimiento.AlmacenOrigenId == almacenId || d.Movimiento.AlmacenDestinoId == almacenId);
+        }
+
+        var details = await query
+            .OrderBy(d => d.Movimiento.Fecha)
+            .ToListAsync();
+
+        var kardex = new List<KardexRowViewModel>();
+        decimal saldoAcumulado = 0;
+
+        foreach (var d in details)
+        {
+            decimal entrada = 0;
+            decimal salida = 0;
+            string almacenNombre = "";
+
+            if (d.Movimiento.AlmacenDestinoId == (almacenId ?? d.Movimiento.AlmacenDestinoId))
+            {
+                entrada = d.Cantidad;
+                almacenNombre = d.Movimiento.AlmacenDestino?.Nombre ?? "N/A";
+            }
+
+            if (d.Movimiento.AlmacenOrigenId == (almacenId ?? d.Movimiento.AlmacenOrigenId))
+            {
+                salida = d.Cantidad;
+                almacenNombre = d.Movimiento.AlmacenOrigen?.Nombre ?? "N/A";
+            }
+
+            // Si es una transferencia interna y no estamos filtrando por un almacén específico,
+            // el registro se duplicaría conceptualmente, pero aquí tratamos el flujo neto.
+            // Para un Kardex global, las transferencias no cambian el saldo total.
+
+            saldoAcumulado += (entrada - salida);
+
+            kardex.Add(new KardexRowViewModel
+            {
+                Fecha = d.Movimiento.Fecha,
+                TipoMovimiento = d.Movimiento.TipoMovimiento.Nombre,
+                Documento = d.Movimiento.NumeroDocumento,
+                Almacen = almacenNombre,
+                Lote = d.Lote,
+                Entrada = entrada,
+                Salida = salida,
+                Saldo = saldoAcumulado,
+                CostoUnitario = d.CostoUnitario ?? 0,
+                ValorSaldo = saldoAcumulado * (d.CostoUnitario ?? 0) // Simplificación, debería usar PPP histórico
+            });
+        }
+
+        return kardex.OrderByDescending(k => k.Fecha).ToList();
     }
 
     public async Task<bool> HasMovimientosAsync(Guid id)

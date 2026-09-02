@@ -23,6 +23,15 @@ public class SucursalController : Controller
     }
 
     [Authorize(Policy = "SEGURIDAD.ROL.ASIGNAR")]
+    public async Task<IActionResult> Details(Guid? id)
+    {
+        if (id == null) return NotFound();
+        var item = await _adminService.GetSucursalByIdAsync(id.Value);
+        if (item == null) return NotFound();
+        return View(item);
+    }
+
+    [Authorize(Policy = "SEGURIDAD.ROL.ASIGNAR")]
     public IActionResult Create() => View(new Sucursal { Activo = true });
 
     [HttpPost]

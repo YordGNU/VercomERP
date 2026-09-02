@@ -1,0 +1,177 @@
+﻿@model Vercom.ViewModels.EmployeeCreateViewModel
+@{
+    ViewBag.Title = "Editar Expediente: " + Model.Empleado.Nombres;
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Actualizar Trabajador: @Model.Empleado.Nombres @Model.Empleado.Apellidos</h4>
+        <p class="text-muted small mb-0">Modificación de datos maestros y parámetros laborales del empleado.</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-1 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">RRHH</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">Expedientes</a></li>
+            <li class="breadcrumb-item active">Editar</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <form asp-action="Edit" method="post">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-4 shadow-sm"></div>
+        <input type="hidden" asp-for="Empleado.Id" name="Empleado.Id" />
+        <input type="hidden" asp-for="Empleado.EntidadId" name="Empleado.EntidadId" />
+
+        <div class="row">
+            <!-- Bloque 1: Identidad -->
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-light-subtle py-3">
+                        <h5 class="m-0 fw-bold"><i class="ti ti-id-badge me-2 text-primary"></i>Datos de Identidad y Contacto</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <label asp-for="Empleado.CarnetIdentidad" class="form-label fw-bold">Carnet Identidad</label>
+                                <input asp-for="Empleado.CarnetIdentidad" name="Empleado.CarnetIdentidad" class="form-control fw-bold bg-light" readonly />
+                                <span asp-validation-for="Empleado.CarnetIdentidad" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Empleado.Nombres" class="form-label fw-bold">Nombres</label>
+                                <input asp-for="Empleado.Nombres" name="Empleado.Nombres" class="form-control" required />
+                                <span asp-validation-for="Empleado.Nombres" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Empleado.Apellidos" class="form-label fw-bold">Apellidos</label>
+                                <input asp-for="Empleado.Apellidos" name="Empleado.Apellidos" class="form-control" required />
+                                <span asp-validation-for="Empleado.Apellidos" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label asp-for="Empleado.FechaNacimiento" class="form-label fw-bold">Fecha Nacimiento</label>
+                                <input asp-for="Empleado.FechaNacimiento" name="Empleado.FechaNacimiento" type="date" class="form-control" required />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Empleado.Sexo" class="form-label fw-bold">Sexo</label>
+                                <select asp-for="Empleado.Sexo" name="Empleado.Sexo" class="form-select">
+                                    <option value="M">Masculino</option>
+                                    <option value="F">Femenino</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Empleado.Telefono" class="form-label fw-bold">Teléfono</label>
+                                <input asp-for="Empleado.Telefono" name="Empleado.Telefono" class="form-control" placeholder="+53 5xxx xxxx" />
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Empleado.Direccion" class="form-label fw-bold">Dirección Particular</label>
+                                <textarea asp-for="Empleado.Direccion" name="Empleado.Direccion" class="form-control" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bloque 2: Situación Laboral -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-light-subtle py-3">
+                        <h5 class="m-0 fw-bold"><i class="ti ti-briefcase me-2 text-primary"></i>Ubicación y Estado Laboral</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label asp-for="Empleado.SucursalId" class="form-label fw-bold">Unidad Organizativa</label>
+                                <select asp-for="Empleado.SucursalId" name="Empleado.SucursalId" class="form-select" asp-items="Model.Sucursales" required></select>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Empleado.CargoId" class="form-label fw-bold">Cargo / Ocupación</label>
+                                <select asp-for="Empleado.CargoId" name="Empleado.CargoId" class="form-select" asp-items="Model.Cargos" required></select>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Empleado.Estado" class="form-label fw-bold">Estado</label>
+                                <select asp-for="Empleado.Estado" name="Empleado.Estado" class="form-select fw-bold @(Model.Empleado.Estado == "ACTIVO" ? "text-success" : "text-danger")">
+                                    <option value="ACTIVO">ACTIVO</option>
+                                    <option value="BAJA">BAJA LABORAL</option>
+                                    <option value="LICENCIA">LICENCIA / SUSPENSIÓN</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Empleado.NivelEscolaridad" class="form-label fw-bold">Escolaridad</label>
+                                <select asp-for="Empleado.NivelEscolaridad" name="Empleado.NivelEscolaridad" class="form-select">
+                                    <option value="UNIVERSITARIO">Universitario</option>
+                                    <option value="TECNICO_MEDIO">Técnico Medio</option>
+                                    <option value="PREUNIVERSITARIO">Preuniversitario</option>
+                                    <option value="SECUNDARIA">Secundaria</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Empleado.FechaIngreso" class="form-label fw-bold">Fecha Ingreso</label>
+                                <input asp-for="Empleado.FechaIngreso" name="Empleado.FechaIngreso" type="date" class="form-control" required />
+                                <small class="text-muted tiny">Base para cálculo de antigüedad.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bloque 3: Pagos y Cierre -->
+            <div class="col-lg-4">
+                <div class="card border-info border-3 mb-4 shadow-sm">
+                    <div class="card-header bg-info-subtle py-3">
+                        <h5 class="m-0 fw-bold text-info"><i class="ti ti-credit-card me-2"></i>Bancarización y Nómina</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="mb-4">
+                            <label asp-for="Empleado.CuentaBancariaPago" class="form-label fw-bold">Tarjeta Magnética</label>
+                            <input asp-for="Empleado.CuentaBancariaPago" name="Empleado.CuentaBancariaPago" class="form-control text-numeric fw-bold fs-5" placeholder="92xx xxxx xxxx xxxx" />
+                            <small class="text-muted italic">Para dispersión automática de fondos.</small>
+                        </div>
+                        <div class="mb-0">
+                            <label asp-for="Empleado.Email" class="form-label fw-bold">Correo Institucional</label>
+                            <input asp-for="Empleado.Email" name="Empleado.Email" type="email" class="form-control" placeholder="usuario@empresa.cu" />
+                        </div>
+                    </div>
+                </div>
+
+                @if(Model.Empleado.Estado == "BAJA") {
+                    <div class="card border-danger border-3 mb-4 shadow-sm">
+                        <div class="card-header bg-danger-subtle py-3">
+                            <h5 class="m-0 fw-bold text-danger"><i class="ti ti-user-x me-2"></i>Datos de Egreso</h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="mb-3">
+                                <label asp-for="Empleado.FechaBaja" class="form-label fw-bold">Fecha Efectiva</label>
+                                <input asp-for="Empleado.FechaBaja" name="Empleado.FechaBaja" type="date" class="form-control" />
+                            </div>
+                            <div class="mb-0">
+                                <label asp-for="Empleado.MotivoBaja" class="form-label fw-bold">Motivo</label>
+                                <input asp-for="Empleado.MotivoBaja" name="Empleado.MotivoBaja" class="form-control" placeholder="Causa legal de la baja..." />
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <div class="card shadow-lg bg-light-subtle">
+                    <div class="card-body p-4 text-center">
+                        <div class="d-grid gap-3">
+                            <button type="submit" class="btn btn-primary py-3 shadow">
+                                <i class="ti ti-device-floppy me-1"></i> GUARDAR CAMBIOS
+                            </button>
+                            <a asp-action="File" asp-route-id="@Model.Empleado.Id" class="btn btn-outline-secondary">CANCELAR Y VOLVER</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}
+
+<style>
+    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
+</style>

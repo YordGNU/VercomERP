@@ -57,7 +57,12 @@ public class CommercialService : ICommercialService
 
     public async Task<Cliente?> GetClientByIdAsync(Guid id)
     {
-        return await _context.Clientes.Include(c => c.ContratoEconomicos).FirstOrDefaultAsync(m => m.Id == id);
+        return await _context.Clientes
+            .Include(c => c.ContratoEconomicos)
+            .Include(c => c.FacturaVenta).ThenInclude(f => f.FacturaVentaDetalles)
+            .Include(c => c.CuentaPorCobrars)
+            .Include(c => c.CuentaContable)
+            .FirstOrDefaultAsync(m => m.Id == id);
     }
 
     public async Task<ClientFormViewModel> GetClientFormContextAsync(Cliente? existing = null)
@@ -105,7 +110,12 @@ public class CommercialService : ICommercialService
 
     public async Task<Proveedor?> GetProviderByIdAsync(Guid id)
     {
-        return await _context.Proveedors.FindAsync(id);
+        return await _context.Proveedors
+            .Include(p => p.ContratoEconomicos)
+            .Include(p => p.OrdenCompras)
+            .Include(p => p.CuentaPorPagars)
+            .Include(p => p.CuentaContable)
+            .FirstOrDefaultAsync(m => m.Id == id);
     }
 
     public async Task<ProviderFormViewModel> GetProviderFormContextAsync(Proveedor? existing = null)

@@ -30,12 +30,19 @@ public class CargoController : Controller
     [Authorize(Policy = "RRHH.CARGO.CREAR")]
     public async Task<IActionResult> Create(Cargo cargo)
     {
-        if (ModelState.IsValid)
-        {
-            var result = await _hrService.CreateCargoAsync(cargo);
-            if (result.Succeeded) return RedirectToAction(nameof(Index));
-            ModelState.AddModelError("", result.Message);
-        }
+
+        var result = await _hrService.CreateCargoAsync(cargo);
+        if (result.Succeeded) return RedirectToAction(nameof(Index));
+        ModelState.AddModelError("", result.Message);
+        return View(cargo);
+    }
+
+    [Authorize(Policy = "RRHH.CARGO.VER")]
+    public async Task<IActionResult> Details(Guid? id)
+    {
+        if (id == null) return NotFound();
+        var cargo = await _hrService.GetCargoByIdAsync(id.Value);
+        if (cargo == null) return NotFound();
         return View(cargo);
     }
 
@@ -43,7 +50,7 @@ public class CargoController : Controller
     public async Task<IActionResult> Edit(Guid? id)
     {
         if (id == null) return NotFound();
-        var cargo = (await _hrService.GetCargosAsync()).FirstOrDefault(c => c.Id == id);
+        var cargo = await _hrService.GetCargoByIdAsync(id.Value);
         if (cargo == null) return NotFound();
         return View(cargo);
     }

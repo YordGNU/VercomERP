@@ -8,6 +8,7 @@ public class PlantillaStatusViewModel
 
 public class PlantillaRow
 {
+    public Guid Id { get; set; }
     public string Cargo { get; set; } = null!;
     public string Sucursal { get; set; } = null!;
     public int Aprobadas { get; set; }

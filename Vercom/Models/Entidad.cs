@@ -110,6 +110,8 @@ public partial class Entidad
 
     public virtual ICollection<ReporteGenerado> ReporteGenerados { get; set; } = new List<ReporteGenerado>();
 
+    public virtual ICollection<Rol> Rols { get; set; } = new List<Rol>();
+
     public virtual ICollection<Sucursal> Sucursals { get; set; } = new List<Sucursal>();
 
     public virtual ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();

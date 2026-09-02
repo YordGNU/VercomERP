@@ -1,86 +1,78 @@
 ﻿@model Vercom.Models.PlantillaAprobadum
-
 @{
-    ViewData["Title"] = "Edit";
+    ViewBag.Title = "Actualizar Plaza";
 }
 
-
-
-<h4>PlantillaAprobadum</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Editar PlantillaAprobadum</h4>
+        <h4 class="page-main-title m-0 fw-bold">Actualizar Cupo Aprobado</h4>
+        <p class="text-muted small mb-0">Modificación de la capacidad de contratación para el cargo seleccionado.</p>
     </div>
     <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
             <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">PlantillaAprobadum</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">RRHH</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">Plantilla</a></li>
             <li class="breadcrumb-item active">Editar</li>
         </ol>
     </div>
 </div>
 
 <div class="container-xxl">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Formulario de Edición</h4>
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light-subtle py-3">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-edit me-2 text-primary"></i>Modificar Configuración</h5>
                 </div>
-                <div class="card-body">
-<form class="row g-3" asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
-            <div class="mb-3">
-                <label asp-for="EntidadId" class="form-label"></label>
-                <input asp-for="EntidadId" class="form-control" />
-                <span asp-validation-for="EntidadId" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="SucursalId" class="form-label"></label>
-                <input asp-for="SucursalId" class="form-control" />
-                <span asp-validation-for="SucursalId" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="CargoId" class="form-label"></label>
-                <select asp-for="CargoId" class="form-control" asp-items="ViewBag.CargoId"></select>
-                <span asp-validation-for="CargoId" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="PlazasAprobadas" class="form-label"></label>
-                <input asp-for="PlazasAprobadas" class="form-control" />
-                <span asp-validation-for="PlazasAprobadas" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="VigenteDesde" class="form-label"></label>
-                <input asp-for="VigenteDesde" class="form-control" />
-                <span asp-validation-for="VigenteDesde" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="VigenteHasta" class="form-label"></label>
-                <input asp-for="VigenteHasta" class="form-control" />
-                <span asp-validation-for="VigenteHasta" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <button type="submit" class="btn btn-primary">Guardar</button>
-            </div>
-        </form>
+                <div class="card-body p-4">
+                    <form asp-action="Edit" method="post" class="row g-4">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Id" />
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Cargo / Ocupación</label>
+                            <input class="form-control bg-light fw-bold" value="@Model.Cargo?.Nombre" readonly />
+                            <input type="hidden" asp-for="CargoId" />
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Unidad / Sucursal</label>
+                            <input class="form-control bg-light" value="@(Model.Sucursal?.Nombre ?? "GLOBAL")" readonly />
+                            <input type="hidden" asp-for="SucursalId" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Cantidad de Plazas</label>
+                            <input asp-for="PlazasAprobadas" type="number" class="form-control fw-bold text-center fs-5 text-primary" min="0" required />
+                            <span asp-validation-for="PlazasAprobadas" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Vigente Desde</label>
+                            <input asp-for="VigenteDesde" type="date" class="form-control" required />
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Vigente Hasta (Cierre de Plaza)</label>
+                            <input asp-for="VigenteHasta" type="date" class="form-control" />
+                            <small class="text-muted tiny">Deje en blanco si la plaza permanece abierta indefinidamente.</small>
+                        </div>
+
+                        <div class="col-12 d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <a asp-action="Index" class="btn btn-sm btn-outline-secondary px-4">CANCELAR</a>
+                            <button type="submit" class="btn btn-sm btn-primary px-5 py-2 shadow">
+                                <i class="ti ti-device-floppy me-1"></i> ACTUALIZAR PLAZA
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
-    </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }
-

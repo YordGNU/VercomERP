@@ -1,0 +1,168 @@
+@model Vercom.Models.Sucursal
+@{
+    ViewBag.Title = "Detalles de Sucursal";
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Unidad Organizativa: @Model.Nombre</h4>
+        <p class="text-muted small mb-0">Configuración operativa, geográfica y vinculación de recursos.</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Administración</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">Sucursales</a></li>
+            <li class="breadcrumb-item active">Detalle</li>
+        </ol>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary shadow-sm">
+            <i class="ti ti-edit me-1"></i> MODIFICAR DATOS
+        </a>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <!-- Columna Izquierda: Tarjeta de Estado y Ubicación -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-status-top bg-primary"></div>
+                <div class="card-body p-4 text-center">
+                    <div class="avatar avatar-xl bg-primary-subtle text-primary rounded-circle mb-3 mx-auto" style="width: 80px; height: 80px;">
+                        <i class="ti ti-building-community fs-40"></i>
+                    </div>
+                    <h3 class="fw-bold mb-1">@Model.Nombre</h3>
+                    <span class="badge badge-outline text-primary text-uppercase mb-3">@Model.Tipo</span>
+
+                    <div class="mt-4 pt-3 border-top">
+                        <span class="badge @(Model.Activo ? "badge-soft-success" : "badge-soft-danger") fs-12 px-3 py-2">
+                            <i class="ti ti-circle-filled me-1"></i> @(Model.Activo ? "UNIDAD OPERATIVA" : "UNIDAD DESACTIVADA")
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light-subtle">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-map-pin me-2 text-primary"></i>Localización Geográfica</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="text-muted small fw-bold text-uppercase d-block mb-1">Dirección Física</label>
+                        <p class="m-0 fw-semibold">@(Model.Direccion ?? "No especificada")</p>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="text-muted small fw-bold text-uppercase d-block mb-1">Municipio</label>
+                            <p class="m-0 small">@(Model.Municipio ?? "-")</p>
+                        </div>
+                        <div class="col-6 border-start ps-3">
+                            <label class="text-muted small fw-bold text-uppercase d-block mb-1">Provincia</label>
+                            <p class="m-0 small">@(Model.Provincia ?? "-")</p>
+                        </div>
+                    </div>
+                    <hr class="my-3">
+                    <div class="d-flex align-items-center">
+                        <i class="ti ti-phone me-2 text-primary"></i>
+                        <span class="small fw-bold">@(Model.Telefono ?? "Sin teléfono")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Derecha: Inventario de Recursos y Usuarios -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light-subtle">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-info-circle me-2 text-primary"></i>Identificación Corporativa</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-vcenter card-table">
+                        <tbody>
+                            <tr>
+                                <td class="text-muted fw-bold small" width="200">ID TÉCNICO</td>
+                                <td class="font-monospace small">@Model.Id</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted fw-bold small">CÓDIGO INTERNO</td>
+                                <td class="fw-bold text-primary">@Model.Codigo</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted fw-bold small">ENTIDAD PROPIETARIA</td>
+                                <td class="fw-bold">@Model.Entidad.RazonSocial</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted fw-bold small">FECHA DE ALTA</td>
+                                <td>@Model.CreadoEn.ToString("dd MMMM yyyy, HH:mm")</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="row row-cards g-3">
+                <div class="col-sm-6 col-lg-4">
+                    <div class="card card-sm shadow-none border-light">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="bg-primary text-white avatar"><i class="ti ti-users fs-20"></i></span>
+                                </div>
+                                <div class="col">
+                                    <div class="font-weight-medium fw-bold">@Model.Usuarios.Count</div>
+                                    <div class="text-muted small">Usuarios</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                    <div class="card card-sm shadow-none border-light">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="bg-success text-white avatar"><i class="ti ti-box fs-20"></i></span>
+                                </div>
+                                <div class="col">
+                                    <div class="font-weight-medium fw-bold">@Model.Almacens.Count</div>
+                                    <div class="text-muted small">Almacenes</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                    <div class="card card-sm shadow-none border-light">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="bg-info text-white avatar"><i class="ti ti-cash fs-20"></i></span>
+                                </div>
+                                <div class="col">
+                                    <div class="font-weight-medium fw-bold">@Model.Cajas.Count</div>
+                                    <div class="text-muted small">Cajas POS</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-info border-0 shadow-sm rounded-3 mt-4">
+                <div class="d-flex align-items-center">
+                    <i class="ti ti-bulb fs-32 me-3 opacity-50"></i>
+                    <div>
+                        <h6 class="fw-bold mb-1">Información de Seguridad</h6>
+                        <p class="mb-0 small">Los usuarios asignados a esta sucursal están restringidos operativamente según las políticas de aislamiento de datos activas.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <a asp-action="Index" class="btn btn-outline-secondary px-4">
+                    <i class="ti ti-arrow-left me-1"></i> VOLVER AL LISTADO
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

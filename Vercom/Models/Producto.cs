@@ -48,6 +48,8 @@ public partial class Producto
 
     public virtual ICollection<Existencium> Existencia { get; set; } = new List<Existencium>();
 
+    public virtual ICollection<ExistenciaLote> ExistenciaLotes { get; set; } = new List<ExistenciaLote>();
+
     public virtual ICollection<FacturaVentaDetalle> FacturaVentaDetalles { get; set; } = new List<FacturaVentaDetalle>();
 
     public virtual FamiliaProducto? Familia { get; set; }

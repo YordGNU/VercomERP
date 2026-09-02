@@ -35,6 +35,9 @@ builder.Services.AddScoped<IClosureService, ClosureService>();
 builder.Services.AddScoped<ICashBankService, CashBankService>();
 builder.Services.AddScoped<IParametroSistemaService, ParametroSistemaService>();
 builder.Services.AddScoped<IConsecutivoService, ConsecutivoService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
+builder.Services.AddSignalR();
 
 // Workers de Fondo
 builder.Services.AddHostedService<PosSyncBackgroundWorker>();
@@ -87,6 +90,8 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapHub<Vercom.Hubs.NotificationHub>("/notificationHub");
 
 app.MapStaticAssets();
 

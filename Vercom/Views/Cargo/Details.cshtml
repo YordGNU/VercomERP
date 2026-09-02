@@ -1,0 +1,116 @@
+@model Vercom.Models.Cargo
+@{
+    ViewBag.Title = "Detalle de Cargo: " + Model.Nombre;
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Ficha de Puesto: @Model.Nombre</h4>
+        <p class="text-muted small mb-0">Especificaciones funcionales, nivel salarial y ocupación de plantilla.</p>
+    </div>
+    <div class="text-end d-flex gap-2">
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary"><i class="ti ti-arrow-left"></i> VOLVER</a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary"><i class="ti ti-edit"></i> EDITAR CARGO</a>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <!-- Resumen del Cargo -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-status-top bg-primary"></div>
+                <div class="card-body p-4 text-center">
+                    <div class="avatar avatar-xl bg-primary-subtle text-primary rounded-circle mb-3 mx-auto" style="width: 80px; height: 80px;">
+                        <i class="ti ti-briefcase fs-40"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1">@Model.Nombre</h4>
+                    <code class="text-primary fw-bold">CÓDIGO: @Model.Codigo</code>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light-subtle">
+                    <h5 class="m-0 fw-bold small text-uppercase">Rango Salarial (CUP)</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted small fw-bold">MÍNIMO ESCALA:</span>
+                        <span class="fw-bold">@Model.SalarioEscalaMin?.ToString("C")</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted small fw-bold">MÁXIMO ESCALA:</span>
+                        <span class="fw-bold">@Model.SalarioEscalaMax?.ToString("C")</span>
+                    </div>
+                    <div class="bg-light p-3 rounded-3 mt-4 text-center">
+                        <p class="text-muted small mb-0">Utilizado para validar contratos laborales (RF-20).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detalles y Ocupación -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light-subtle py-3">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-list-check me-2 text-primary"></i>Misión y Funciones Principales</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="bg-light-subtle p-3 rounded-3 border">
+                        @if(!string.IsNullOrEmpty(Model.Funciones)) {
+                            <div class="text-dark" style="white-space: pre-wrap;">@Model.Funciones</div>
+                        } else {
+                            <p class="text-muted italic mb-0">No se han definido las funciones para este cargo.</p>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light-subtle py-3">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-users me-2 text-primary"></i>Trabajadores en este Cargo</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table table-hover">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4">Nombre y Apellidos</th>
+                                    <th>Unidad / Sucursal</th>
+                                    <th class="text-center">Estado</th>
+                                    <th width="50"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach(var emp in Model.Empleados.OrderBy(x => x.Apellidos)) {
+                                    <tr>
+                                        <td class="ps-4">
+                                            <div class="fw-bold">@emp.NombreCompleto</div>
+                                            <small class="text-muted tiny">CI: @emp.CarnetIdentidad</small>
+                                        </td>
+                                        <td class="small">@(emp.Sucursal?.Nombre ?? "Central")</td>
+                                        <td class="text-center">
+                                            <span class="badge @(emp.Estado == "ACTIVO" ? "bg-success" : "bg-danger")">@emp.Estado</span>
+                                        </td>
+                                        <td class="pe-4">
+                                            <a asp-controller="Empleado" asp-action="File" asp-route-id="@emp.Id" class="btn btn-icon btn-sm btn-ghost-primary"><i class="ti ti-user-search"></i></a>
+                                        </td>
+                                    </tr>
+                                }
+                                @if(!Model.Empleados.Any()) {
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4 text-muted small italic">No hay trabajadores activos asignados a este cargo.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
+</style>

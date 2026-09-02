@@ -10,27 +10,33 @@ namespace Vercom.Controllers;
 public class RegistroAsistenciaController : Controller
 {
     private readonly IHRService _hrService;
+    private readonly IAdminService _adminService;
     private readonly IEntidadProvider _entidadProvider;
 
-    public RegistroAsistenciaController(IHRService hrService, IEntidadProvider entidadProvider)
+    public RegistroAsistenciaController(IHRService hrService, IAdminService adminService, IEntidadProvider entidadProvider)
     {
         _hrService = hrService;
+        _adminService = adminService;
         _entidadProvider = entidadProvider;
     }
 
     [Authorize(Policy = "RRHH.ASISTENCIA.VER")]
     public async Task<IActionResult> Index()
     {
-        // Por simplicidad, el Index podría mostrar un resumen o redirigir a la consola
         return RedirectToAction(nameof(Console));
     }
 
     [HttpGet]
     [Authorize(Policy = "RRHH.ASISTENCIA.REGISTRAR")]
-    public async Task<IActionResult> Console(DateTime? date)
+    public async Task<IActionResult> Console(DateTime? date, Guid? sucursalId, Guid? cargoId, string? search)
     {
         var targetDate = date ?? DateTime.Now;
-        var vm = await _hrService.GetAttendanceConsoleAsync(targetDate);
+        var vm = await _hrService.GetAttendanceConsoleAsync(targetDate, sucursalId, cargoId, search);
+
+        ViewBag.SucursalId = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(await _adminService.GetSucursalesAsync(), "Id", "Nombre", sucursalId);
+        ViewBag.CargoId = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(await _hrService.GetCargosAsync(), "Id", "Nombre", cargoId);
+        ViewBag.CurrentSearch = search;
+
         return View(vm);
     }
 
