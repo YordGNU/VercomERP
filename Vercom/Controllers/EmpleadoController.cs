@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Vercom.Models;
 using Vercom.Services;
 using Vercom.ViewModels;
@@ -26,8 +27,11 @@ public class EmpleadoController : Controller
         var empleados = await _hrService.GetEmployeesAsync(search, cargoId, sucursalId, estado, desde, hasta);
         ViewBag.Stats = await _hrReportService.GetGeneralStatsAsync(Guid.Empty);
 
-        ViewBag.CargoId = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(await _hrService.GetCargosAsync(), "Id", "Nombre", cargoId);
-        ViewBag.SucursalId = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(await _adminService.GetSucursalesAsync(), "Id", "Nombre", sucursalId);
+        var cargos = await _hrService.GetCargosAsync();
+        ViewBag.CargoId = new SelectList(cargos.Select(c => new { Id = c.Id, DisplayText = $"{c.Codigo} - {c.Nombre}" }), "Id", "DisplayText");
+
+        var sucursales = await _adminService.GetSucursalesAsync();
+        ViewBag.SucursalId = new SelectList(sucursales.Select(c => new { Id = c.Id, DisplayText = $"{c.Codigo} - {c.Nombre}" }), "Id", "DisplayText");
 
         ViewBag.CurrentSearch = search;
         ViewBag.CurrentCargo = cargoId;
@@ -43,11 +47,17 @@ public class EmpleadoController : Controller
     public async Task<IActionResult> File(Guid? id)
     {
         if (id == null) return NotFound();
-        var empleado = await _hrService.GetEmployeeByIdAsync(id.Value);
-        if (empleado == null) return NotFound();
 
-        ViewBag.AccumulatedVacations = await _hrService.GetAccumulatedVacationsAsync(empleado.Id);
-        return View(empleado);
+        try
+        {
+            // Ahora obtenemos el ViewModel completo desde el servicio
+            var viewModel = await _hrService.GetExpedienteAsync(id.Value);
+            return View(viewModel);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
     }
 
     [Authorize(Policy = "RRHH.EMPLEADO.CREAR")]
@@ -147,17 +157,45 @@ public class EmpleadoController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Policy = "RRHH.EMPLEADO.EDITAR")]
-    public async Task<IActionResult> AddContract(ContratoLaboral contrato)
+    public async Task<IActionResult> AddContract(EmployeeContractViewModel vm)
     {
-        var result = await _hrService.AddContractAsync(contrato);
-        if (result.Succeeded)
+        var contrato = vm.Contrato;
+
+        // 1. Limpiar validaciones de campos de visualización y navegación
+        ModelState.Remove("NombreEmpleado");
+        ModelState.Remove("Cargos");
+        ModelState.Remove("TiposContrato");
+        ModelState.Remove("Contrato.Empleado");
+        ModelState.Remove("Contrato.Cargo");
+        ModelState.Remove("Contrato.Id");
+        ModelState.Remove("Contrato.CreadoEn");
+        ModelState.Remove("Contrato.DocumentoUrl");
+        ModelState.Remove("Documento");
+
+        if (string.IsNullOrEmpty(contrato.Estado)) contrato.Estado = "VIGENTE";
+
+        if (ModelState.IsValid)
         {
-            TempData["Success"] = result.Message;
-            return RedirectToAction(nameof(File), new { id = contrato.EmpleadoId });
+            var result = await _hrService.AddContractAsync(contrato, vm.Documento);
+            if (result.Succeeded)
+            {
+                TempData["Success"] = result.Message;
+                return RedirectToAction(nameof(File), new { id = contrato.EmpleadoId });
+            }
+            ModelState.AddModelError("", result.Message);
         }
-        ModelState.AddModelError("", result.Message);
-        var vm = await _hrService.GetContractCreateContextAsync(contrato.EmpleadoId);
-        return View(vm);
+        else
+        {
+            var errors = string.Join(" | ", ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage));
+            ModelState.AddModelError("", "Verifique los datos: " + errors);
+        }
+
+        // Recargar contexto de visualización
+        var contextVm = await _hrService.GetContractCreateContextAsync(contrato.EmpleadoId);
+        contextVm.Contrato = contrato;
+        return View(contextVm);
     }
 
     // GESTIÓN DE CERTIFICADOS MÉDICOS

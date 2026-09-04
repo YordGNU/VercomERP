@@ -26,6 +26,7 @@
                     <tr>
                         <th >Código</th>
                         <th>Nombre del Cargo</th>
+                        <th>Categoría</th>
                         <th>Escala Mínima ($)</th>
                         <th>Escala Máxima ($)</th>
                         <th>Acciones</th>
@@ -37,16 +38,20 @@
                         <tr>
                             <td class="text-numeric fw-bold text-primary">@item.Codigo</td>
                             <td class="fw-semibold">@item.Nombre</td>
+                            <td class="small">@item.CategoriaOcupacional</td>
                             <td class="text-numeric">@item.SalarioEscalaMin?.ToString("N2")</td>
                             <td class="text-numeric">@item.SalarioEscalaMax?.ToString("N2")</td>
                             <td>
                                <div class="d-flex justify-content-center gap-1">
-                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-light btn-icon btn-sm rounded-circle"title="Editar">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-light btn-icon btn-sm rounded-circle" title="Editar">
                                         <i class="ti ti-edit"></i>
                                     </a>
-                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-light btn-icon btn-sm rounded-circle"title="Ver">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-light btn-icon btn-sm rounded-circle" title="Ver">
                                         <i class="ti ti-eye"></i>
                                     </a>
+                                    <button type="button" class="btn btn-light btn-icon btn-sm rounded-circle text-danger" onclick="deleteCargo('@item.Id', '@item.Nombre')" title="Eliminar">
+                                        <i class="ti ti-trash"></i>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -61,10 +66,41 @@
     <script>
         $(document).ready(function () {
             $('#cargosTable').DataTable({
+                pageLength: 100,
                 language: { url: '@Url.Content("~/lib/i18n/es-ES.json")' },
                 order: [[1, 'asc']],
                 dom: '<"row align-items-center"<"col-md-6"l><"col-md-6"f>>rt<"row align-items-center"<"col-md-5"i><"col-md-7"p>>',
+                responsive: true,
             });
         });
+
+        function deleteCargo(id, nombre) {
+            Swal.fire({
+                title: '¿Eliminar Cargo?',
+                text: `Se eliminará el cargo: ${nombre}. Esta acción no se puede deshacer.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'SÍ, ELIMINAR'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const formData = new FormData();
+                    formData.append("id", id);
+                    formData.append("__RequestVerificationToken", $('input[name="__RequestVerificationToken"]').val());
+
+                    fetch('/Cargo/Delete', {
+                        method: 'POST',
+                        body: formData
+                    }).then(res => res.json()).then(data => {
+                        if (data.success) {
+                            toastr.success(data.message);
+                            location.reload();
+                        } else {
+                            toastr.error(data.message);
+                        }
+                    });
+                }
+            });
+        }
     </script>
 }

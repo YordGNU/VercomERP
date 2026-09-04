@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Vercom.Models;
 using Vercom.Services;
 
@@ -18,17 +19,24 @@ public class PlantillaAprobadumController : Controller
     }
 
     [Authorize(Policy = "RRHH.REPORTE.VER")]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(Guid? sucursalId, string? search)
     {
-        var vm = await _hrService.GetPlantillaStatusAsync();
+        var vm = await _hrService.GetPlantillaStatusAsync(sucursalId, search);
+        var sucursales = await _adminService.GetSucursalesAsync();
+        ViewBag.SucursalId = new SelectList(sucursales.Select(c => new { Id = c.Id, DisplayText = $"{c.Codigo} - {c.Nombre}" }), "Id", "DisplayText");
+        ViewBag.CurrentSearch = search;
         return View(vm);
     }
 
     [Authorize(Policy = "RRHH.CARGO.CREAR")]
     public async Task<IActionResult> Create()
     {
-        ViewBag.CargoId = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(await _hrService.GetCargosAsync(), "Id", "Nombre");
-        ViewBag.SucursalId = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(await _adminService.GetSucursalesAsync(), "Id", "Nombre");
+        var cargos = await _hrService.GetCargosAsync();
+        ViewBag.CargoId = new SelectList(cargos.Select(c => new { Id = c.Id, DisplayText = $"{c.Codigo} - {c.Nombre}" }), "Id", "DisplayText");
+
+        var sucursales = await _adminService.GetSucursalesAsync();
+        ViewBag.SucursalId = new SelectList(sucursales.Select(c => new { Id = c.Id, DisplayText = $"{c.Codigo} - {c.Nombre}" }), "Id", "DisplayText");
+
         return View(new PlantillaAprobadum { VigenteDesde = DateOnly.FromDateTime(DateTime.Now) });
     }
 
@@ -45,8 +53,12 @@ public class PlantillaAprobadumController : Controller
             if (result.Succeeded) return RedirectToAction(nameof(Index));
             ModelState.AddModelError("", result.Message);
         }
-        ViewBag.CargoId = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(await _hrService.GetCargosAsync(), "Id", "Nombre", entry.CargoId);
-        ViewBag.SucursalId = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(await _adminService.GetSucursalesAsync(), "Id", "Nombre", entry.SucursalId);
+        var cargos = await _hrService.GetCargosAsync();
+        ViewBag.CargoId = new SelectList(cargos.Select(c => new { Id = c.Id, DisplayText = $"{c.Codigo} - {c.Nombre}" }), "Id", "DisplayText");
+
+        var sucursales = await _adminService.GetSucursalesAsync();
+        ViewBag.SucursalId = new SelectList(sucursales.Select(c => new { Id = c.Id, DisplayText = $"{c.Codigo} - {c.Nombre}" }), "Id", "DisplayText");
+
         return View(entry);
     }
 
@@ -56,8 +68,10 @@ public class PlantillaAprobadumController : Controller
         var entry = await _hrService.GetPlantillaEntryByIdAsync(id);
         if (entry == null) return NotFound();
 
-        ViewBag.CargoId = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(await _hrService.GetCargosAsync(), "Id", "Nombre", entry.CargoId);
-        ViewBag.SucursalId = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(await _adminService.GetSucursalesAsync(), "Id", "Nombre", entry.SucursalId);
+        var cargos = await _hrService.GetCargosAsync();
+        ViewBag.CargoId = new SelectList(cargos.Select(c => new { Id = c.Id, DisplayText = $"{c.Codigo} - {c.Nombre}" }), "Id", "DisplayText", entry.CargoId);
+        var sucursales = await _adminService.GetSucursalesAsync();
+        ViewBag.SucursalId = new SelectList(sucursales.Select(c => new { Id = c.Id, DisplayText = $"{c.Codigo} - {c.Nombre}" }), "Id", "DisplayText", entry.SucursalId);
         return View(entry);
     }
 
@@ -75,8 +89,10 @@ public class PlantillaAprobadumController : Controller
             if (result.Succeeded) return RedirectToAction(nameof(Index));
             ModelState.AddModelError("", result.Message);
         }
-        ViewBag.CargoId = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(await _hrService.GetCargosAsync(), "Id", "Nombre", entry.CargoId);
-        ViewBag.SucursalId = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(await _adminService.GetSucursalesAsync(), "Id", "Nombre", entry.SucursalId);
+        var cargos = await _hrService.GetCargosAsync();
+        ViewBag.CargoId = new SelectList(cargos.Select(c => new { Id = c.Id, DisplayText = $"{c.Codigo} - {c.Nombre}" }), "Id", "DisplayText", entry.CargoId);
+        var sucursales = await _adminService.GetSucursalesAsync();
+        ViewBag.SucursalId = new SelectList(sucursales.Select(c => new { Id = c.Id, DisplayText = $"{c.Codigo} - {c.Nombre}" }), "Id", "DisplayText", entry.SucursalId);
         return View(entry);
     }
 

@@ -27,15 +27,15 @@
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table id="priceLimitsTable" class="table table-striped dt-responsive mb-0">
+                <table id="priceLimitsTable" class="table table-striped table-hover dt-responsive">
                 <thead class="thead-sm text-uppercase fs-xxs">
                         <tr>
                             <th>Producto / Familia</th>
-                            <th class="text-end">Precio Máx. ($)</th>
-                            <th class="text-center">Vigencia</th>
+                            <th>Precio Máx. ($)</th>
+                          <th>Vigencia</th>
                             <th>Resolución de Referencia</th>
-                            <th class="text-center">Estado</th>
-                            <th class="text-end">Acciones</th>
+                          <th>Estado</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -53,7 +53,7 @@
                                     }
                                 </td>
                                 <td class="text-end fw-bold text-danger">@item.PrecioMaximo.ToString("N2")</td>
-                                <td class="text-center small">
+                                <td small">
                                     <div class="text-muted">Desde: @item.VigenteDesde.ToString("dd/MM/yyyy")</div>
                                     <div class="fw-bold">Hasta: @(item.VigenteHasta?.ToString("dd/MM/yyyy") ?? "Indefinido")</div>
                                 </td>

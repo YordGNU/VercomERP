@@ -44,14 +44,14 @@
 
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Sucursal Responsable</label>
-                            <select asp-for="Dispositivo.SucursalId" name="Dispositivo.SucursalId" class="form-control form-select w-100" asp-items="Model.Sucursales" required>
+                            <select asp-for="Dispositivo.SucursalId" name="Dispositivo.SucursalId" class="form-control form-select w-100 select2" asp-items="Model.Sucursales" required>
                                 <option value="">-- Seleccione Sucursal --</option>
                             </select>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Caja Asociada (Tesorería)</label>
-                            <select asp-for="Dispositivo.CajaId" name="Dispositivo.CajaId" class="form-control form-select w-100" asp-items="ViewBag.CajaId" required>
+                            <select asp-for="Dispositivo.CajaId" name="Dispositivo.CajaId" class="form-control form-select w-100 select2" asp-items="ViewBag.CajaId" required>
                                 <option value="">-- Seleccione Arca de Fondos --</option>
                             </select>
                         </div>

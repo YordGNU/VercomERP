@@ -43,13 +43,13 @@
 
                             <div class="col-md-6" id="divOrigen">
                                 <label class="form-label">Almacén de Origen (Salida)</label>
-                                <select asp-for="Movement.AlmacenOrigenId" name="Movement.AlmacenOrigenId" class="form-control form-select w-100" asp-items="Model.Almacenes">
+                                <select asp-for="Movement.AlmacenOrigenId" name="Movement.AlmacenOrigenId" class="form-control form-select w-100 select2" asp-items="Model.Almacenes">
                                     <option value="">-- Procedencia Externa --</option>
                                 </select>
                             </div>
                             <div class="col-md-6" id="divDestino">
                                 <label class="form-label">Almacén de Destino (Entrada)</label>
-                                <select asp-for="Movement.AlmacenDestinoId" name="Movement.AlmacenDestinoId" class="form-control form-select w-100" asp-items="Model.Almacenes">
+                                <select asp-for="Movement.AlmacenDestinoId" name="Movement.AlmacenDestinoId" class="form-control form-select w-100 select2" asp-items="Model.Almacenes">
                                     <option value="">-- Salida Definitiva --</option>
                                 </select>
                             </div>

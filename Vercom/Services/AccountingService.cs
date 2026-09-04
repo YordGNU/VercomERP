@@ -91,9 +91,10 @@ public class AccountingService : IAccountingService
         // El Maestro ve todos los periodos, el usuario normal solo los suyos (via filtro global)
         var periods = await periodsQuery
             .OrderByDescending(p => p.Anio).ThenByDescending(p => p.Mes)
-            .Select(p => new {
+            .Select(p => new
+            {
                 p.Id,
-                Display = isMaster ? $"{p.Mes}/{p.Anio} - {p.Entidad.RazonSocial}" : $"{p.Mes}/{p.Anio}"
+                Display = isMaster ? $"{p.Mes}/{p.Anio} - {p.Entidad.NombreComercial}" : $"{p.Mes}/{p.Anio}"
             })
             .ToListAsync();
 
@@ -481,31 +482,40 @@ public class AccountingService : IAccountingService
 
     public async Task<PeriodoContable?> GetOrCreateActivePeriodAsync(Guid entidadId, DateTime date)
     {
-        if (entidadId == Guid.Empty) return null;
+        if (entidadId == Guid.Empty)
+            return null;
 
         var year = (short)date.Year;
         var month = (short)date.Month;
 
+        // Buscar período existente
         var period = await _context.PeriodoContables
             .FirstOrDefaultAsync(p => p.EntidadId == entidadId && p.Anio == year && p.Mes == month);
 
-        if (period == null)
+        if (period != null)
+            return period;
+
+        // Verificar que la entidad exista
+        var entidadExists = await _context.Entidads.AnyAsync(e => e.Id == entidadId);
+        if (!entidadExists)
+            return null; // ← En lugar de lanzar excepción
+
+        // Crear período
+        period = new PeriodoContable
         {
-            period = new PeriodoContable
-            {
-                Id = Guid.NewGuid(),
-                EntidadId = entidadId,
-                Anio = year,
-                Mes = month,
-                FechaInicio = new DateOnly(year, month, 1),
-                FechaFin = new DateOnly(year, month, DateTime.DaysInMonth(year, month)),
-                Estado = "ABIERTO",
-                CreadoEn = DateTimeOffset.Now,
-                ActualizadoEn = DateTimeOffset.Now
-            };
-            _context.PeriodoContables.Add(period);
-            await _context.SaveChangesAsync();
-        }
+            Id = Guid.NewGuid(),
+            EntidadId = entidadId,
+            Anio = year,
+            Mes = month,
+            FechaInicio = new DateOnly(year, month, 1),
+            FechaFin = new DateOnly(year, month, DateTime.DaysInMonth(year, month)),
+            Estado = "ABIERTO",
+            CreadoEn = DateTimeOffset.Now,
+            ActualizadoEn = DateTimeOffset.Now
+        };
+
+        _context.PeriodoContables.Add(period);
+        await _context.SaveChangesAsync();
 
         return period;
     }

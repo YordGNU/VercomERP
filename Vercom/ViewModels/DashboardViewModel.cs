@@ -15,4 +15,6 @@ public class DashboardViewModel
     public List<Existencium> AlertasStock { get; set; } = new();
 
     public string PeriodoActual { get; set; } = string.Empty;
+    public bool EsMaster { get; internal set; }
+    public string Mensaje { get; internal set; }
 }

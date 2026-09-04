@@ -803,6 +803,11 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Nombre)
                 .HasMaxLength(150)
                 .HasColumnName("nombre");
+            entity.Property(e => e.CategoriaOcupacional)
+                .HasMaxLength(50)
+                .HasColumnName("categoria_ocupacional");
+            entity.Property(e => e.Funciones)
+                .HasColumnName("funciones");
             entity.Property(e => e.SalarioEscalaMax)
                 .HasColumnType("numeric(12, 2)")
                 .HasColumnName("salario_escala_max");
@@ -4253,25 +4258,25 @@ public partial class AppDbContext : DbContext
             }
 
             // 2. Aislamiento por Sucursal (Opcional - Si la tabla tiene SucursalId)
-            var sucursalIdProp = entityType.FindProperty("SucursalId");
-            if (sucursalIdProp != null && (sucursalIdProp.ClrType == typeof(Guid) || sucursalIdProp.ClrType == typeof(Guid?)))
-            {
-                var sucursalIdExpr = System.Linq.Expressions.Expression.Property(parameter, "SucursalId");
-                var nullConst = System.Linq.Expressions.Expression.Constant(null, typeof(Guid?));
+            //var sucursalIdProp = entityType.FindProperty("SucursalId");
+            //if (sucursalIdProp != null && (sucursalIdProp.ClrType == typeof(Guid) || sucursalIdProp.ClrType == typeof(Guid?)))
+            //{
+            //    var sucursalIdExpr = System.Linq.Expressions.Expression.Property(parameter, "SucursalId");
+            //    var nullConst = System.Linq.Expressions.Expression.Constant(null, typeof(Guid?));
 
-                // Expresión: (this.CurrentSucursalId == null || e.SucursalId == this.CurrentSucursalId)
-                var isNoRestriction = System.Linq.Expressions.Expression.Equal(currentSucursalIdExpr, nullConst);
+            //    // Expresión: (this.CurrentSucursalId == null || e.SucursalId == this.CurrentSucursalId)
+            //    var isNoRestriction = System.Linq.Expressions.Expression.Equal(currentSucursalIdExpr, nullConst);
 
-                // Asegurar comparación correcta si es nullable
-                var sucursalIdNullable = sucursalIdProp.ClrType == typeof(Guid)
-                    ? (System.Linq.Expressions.Expression)System.Linq.Expressions.Expression.Convert(sucursalIdExpr, typeof(Guid?))
-                    : (System.Linq.Expressions.Expression)sucursalIdExpr;
+            //    // Asegurar comparación correcta si es nullable
+            //    var sucursalIdNullable = sucursalIdProp.ClrType == typeof(Guid)
+            //        ? (System.Linq.Expressions.Expression)System.Linq.Expressions.Expression.Convert(sucursalIdExpr, typeof(Guid?))
+            //        : (System.Linq.Expressions.Expression)sucursalIdExpr;
 
-                var isEqual = System.Linq.Expressions.Expression.Equal(sucursalIdNullable, currentSucursalIdExpr);
-                var sucursalFilter = System.Linq.Expressions.Expression.OrElse(isNoRestriction, isEqual);
+            //    var isEqual = System.Linq.Expressions.Expression.Equal(sucursalIdNullable, currentSucursalIdExpr);
+            //    var sucursalFilter = System.Linq.Expressions.Expression.OrElse(isNoRestriction, isEqual);
 
-                filterBody = filterBody == null ? sucursalFilter : System.Linq.Expressions.Expression.AndAlso(filterBody, sucursalFilter);
-            }
+            //    filterBody = filterBody == null ? sucursalFilter : System.Linq.Expressions.Expression.AndAlso(filterBody, sucursalFilter);
+            //}
 
             // 3. Aplicar Excepción para el Usuario Master (Ve todo) y Sellar Filtro
             if (filterBody != null)

@@ -26,7 +26,7 @@
             <h5 class="m-0 fw-bold"><i class="ti ti-list me-2 text-primary"></i>Órdenes de Compra Emitidas</h5>
         </div>
         <div class="card-body">
-            <table id="purchaseTable" class="table table-striped dt-responsive mb-0">
+            <table id="purchaseTable" class="table table-striped table-hover dt-responsive">
                 <thead class="thead-sm text-uppercase fs-xxs">
                     <tr>
                         <th  class="text-center">Fecha</th>
@@ -51,7 +51,7 @@
                         };
 
                         <tr>
-                            <td class="text-date">@item.Fecha.ToString("dd/MM/yyyy")</td>
+                             <td>@item.Fecha.ToString("dd/MM/yyyy")</td>
                             <td class="text-numeric fw-bold text-primary">@item.NumeroOrden</td>
                             <td class="fw-semibold">@item.Proveedor.RazonSocial</td>
                             <td >@item.Moneda</td>

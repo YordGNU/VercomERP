@@ -92,7 +92,7 @@ public class AuthService : IAuthService
         var roles = await GetRolesAsync();
 
         var entidades = isMaster
-            ? await _context.Entidads.IgnoreQueryFilters().OrderBy(e => e.RazonSocial).ToListAsync()
+            ? await _context.Entidads.IgnoreQueryFilters().OrderBy(e => e.NombreComercial).ToListAsync()
             : new List<Entidad>();
 
         return new UserFormViewModel
@@ -102,7 +102,7 @@ public class AuthService : IAuthService
                 await _context.Empleados.Where(e => e.Estado == "ACTIVO").ToListAsync(), "Id", "NombreCompleto"),
             Sucursales = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(
                 await _context.Sucursals.Where(s => s.Activo).ToListAsync(), "Id", "Nombre"),
-            Entidades = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(entidades, "Id", "RazonSocial"),
+            Entidades = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(entidades, "Id", "NombreComercial"),
             RolesDisponibles = roles.Select(r => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
             {
                 Value = r.Id.ToString(),
@@ -398,7 +398,7 @@ public class AuthService : IAuthService
             new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
             new Claim("FullName", usuario.NombreCompleto),
             new Claim("EntidadId", usuario.EntidadId.ToString()),
-            new Claim("EntidadNombre", usuario.Entidad.RazonSocial),
+            new Claim("EntidadNombre", usuario.Entidad.NombreComercial),
             new Claim("SucursalId", usuario.SucursalId?.ToString() ?? ""),
             new Claim("MustChangePassword", usuario.DebeCambiarPass.ToString())
         };

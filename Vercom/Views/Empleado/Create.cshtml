@@ -78,11 +78,11 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label asp-for="Empleado.SucursalId" class="form-label">Sucursal / Unidad Organizativa</label>
-                                <select asp-for="Empleado.SucursalId" name="Empleado.SucursalId" class="form-control form-select w-100" asp-items="Model.Sucursales" required></select>
+                                <select asp-for="Empleado.SucursalId" name="Empleado.SucursalId" class="form-control form-select w-100 select2" asp-items="Model.Sucursales" required></select>
                             </div>
                             <div class="col-md-6">
                                 <label asp-for="Empleado.CargoId" class="form-label">Cargo (Nomenclador de Ocupaciones)</label>
-                                <select asp-for="Empleado.CargoId" name="Empleado.CargoId" class="form-control form-select w-100" asp-items="Model.Cargos" required></select>
+                                <select asp-for="Empleado.CargoId" name="Empleado.CargoId" class="form-control form-select w-100 select2" asp-items="Model.Cargos" required></select>
                             </div>
                             <div class="col-md-6">
                                 <label asp-for="Empleado.NivelEscolaridad" class="form-label">Nivel de Escolaridad</label>

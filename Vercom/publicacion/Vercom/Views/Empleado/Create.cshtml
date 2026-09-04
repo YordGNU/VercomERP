@@ -78,11 +78,11 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label asp-for="Empleado.SucursalId" class="form-label">Sucursal / Unidad Organizativa</label>
-                                <select asp-for="Empleado.SucursalId" name="Empleado.SucursalId" class="form-control form-select w-100" asp-items="Model.Sucursales" required></select>
+                                <select asp-for="Empleado.SucursalId" name="Empleado.SucursalId" class="form-control form-select w-100 select2" asp-items="Model.Sucursales" required></select>
                             </div>
                             <div class="col-md-6">
                                 <label asp-for="Empleado.CargoId" class="form-label">Cargo (Nomenclador de Ocupaciones)</label>
-                                <select asp-for="Empleado.CargoId" name="Empleado.CargoId" class="form-control form-select w-100" asp-items="Model.Cargos" required></select>
+                                <select asp-for="Empleado.CargoId" name="Empleado.CargoId" class="form-control form-select w-100 select2" asp-items="Model.Cargos" required></select>
                             </div>
                             <div class="col-md-6">
                                 <label asp-for="Empleado.NivelEscolaridad" class="form-label">Nivel de Escolaridad</label>
@@ -92,6 +92,10 @@
                                     <option value="PREUNIVERSITARIO">Preuniversitario</option>
                                     <option value="SECUNDARIA">Secundaria Básica</option>
                                 </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Empleado.Calificacion" class="form-label">Calificación / Título</label>
+                                <input asp-for="Empleado.Calificacion" name="Empleado.Calificacion" class="form-control w-100" placeholder="Ej: Lic. en Contabilidad" />
                             </div>
                             <div class="col-md-6">
                                 <label asp-for="Empleado.FechaIngreso" class="form-label">Fecha de Alta en Entidad</label>

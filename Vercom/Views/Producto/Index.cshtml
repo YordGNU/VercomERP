@@ -54,7 +54,7 @@
             </div>       
         </div>
         <div class="card-body">
-            <table id="productsTable" class="table table-striped dt-responsive mb-0">
+            <table id="productsTable" class="table table-striped table-hover dt-responsive">
                      <thead class="thead-sm text-uppercase fs-xxs">
                     <tr>
                         <th>
@@ -95,7 +95,7 @@
                                 </div>
                             </td>
                             <td><span class="small text-muted">@item.Familia?.Nombre</span></td>
-                            <td class="text-center small fw-bold">@item.UnidadMedida.Codigo</td>
+                            <td small fw-bold">@item.UnidadMedida.Codigo</td>
                             <td class="text-numeric fw-bold text-success">@item.PrecioVentaActual?.ToString("N2")</td>
                             <td ><span class="badge @typeClass">@item.Tipo</span></td>
                             <td >

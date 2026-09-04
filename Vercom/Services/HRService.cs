@@ -22,7 +22,7 @@ public interface IHRService
 
     // Gestión de Contratos (RF-20)
     Task<EmployeeContractViewModel> GetContractCreateContextAsync(Guid employeeId);
-    Task<(bool Succeeded, string Message)> AddContractAsync(ContratoLaboral contract);
+    Task<(bool Succeeded, string Message)> AddContractAsync(ContratoLaboral contract, IFormFile? document);
 
     // Gestión de Certificados Médicos (RF-21)
     Task<MedicalCertificateViewModel> GetMedicalCertificateCreateContextAsync(Guid employeeId);
@@ -37,13 +37,13 @@ public interface IHRService
     Task<Cargo?> GetCargoByIdAsync(Guid id);
     Task<(bool Succeeded, string Message)> CreateCargoAsync(Cargo cargo);
     Task<(bool Succeeded, string Message)> UpdateCargoAsync(Cargo cargo);
+    Task<(bool Succeeded, string Message)> DeleteCargoAsync(Guid id);
 
     // Gestión de Tipos de Ausencia
     Task<IEnumerable<TipoAusencium>> GetAbsenceTypesAsync();
     Task<(bool Succeeded, string Message)> CreateAbsenceTypeAsync(TipoAusencium type);
     Task<(bool Succeeded, string Message)> UpdateAbsenceTypeAsync(TipoAusencium type);
 
-    Task<PlantillaStatusViewModel> GetPlantillaStatusAsync();
     Task<PlantillaAprobadum?> GetPlantillaEntryByIdAsync(Guid id);
     Task<(bool Succeeded, string Message)> CreatePlantillaEntryAsync(PlantillaAprobadum entry);
     Task<(bool Succeeded, string Message)> UpdatePlantillaEntryAsync(PlantillaAprobadum entry);
@@ -56,22 +56,31 @@ public interface IHRService
     Task<(bool Succeeded, string Message)> AssignUtileAsync(UtileResponsabilidad utile);
     Task<(bool Succeeded, string Message)> ReturnUtileAsync(Guid id, DateOnly returnDate, string? observations);
 
+    // Gestión de Vacaciones
+    Task<(bool Succeeded, string Message)> RecordVacationEnjoymentAsync(Guid saldoId, decimal days, string? observations);
+
     // Baja Laboral (RF-21)
     Task<TerminateEmployeeViewModel> GetTerminationContextAsync(Guid id);
     Task<(bool Succeeded, string Message)> TerminateEmployeeAsync(Guid id, DateOnly terminationDate, string reason);
+    Task<EmpleadoExpedienteViewModel?> GetExpedienteAsync(Guid value);
+    Task<PlantillaStatusViewModel?> GetPlantillaStatusAsync(Guid? sucursalId, string? search);
 }
 
 public class HRService : IHRService
 {
     private readonly AppDbContext _context;
     private readonly IParametroSistemaService _paramService;
+    private readonly IAdminService _adminService;
     private readonly Security.IEntidadProvider _entidadProvider;
+    private readonly IWebHostEnvironment _environment;
 
-    public HRService(AppDbContext context, IParametroSistemaService paramService, Security.IEntidadProvider entidadProvider)
+    public HRService(AppDbContext context, IParametroSistemaService paramService, Security.IEntidadProvider entidadProvider, IWebHostEnvironment environment, IAdminService adminService)
     {
         _context = context;
         _paramService = paramService;
         _entidadProvider = entidadProvider;
+        _environment = environment;
+        _adminService = adminService;
     }
 
     public async Task<IEnumerable<Empleado>> GetEmployeesAsync(string? search = null, Guid? cargoId = null, Guid? sucursalId = null, string? estado = null, DateOnly? desde = null, DateOnly? hasta = null)
@@ -130,11 +139,17 @@ public class HRService : IHRService
 
     public async Task<EmployeeCreateViewModel> GetEmployeeCreateContextAsync(Empleado? existingEmployee = null)
     {
+        var cargos = await GetCargosAsync();
+        var cargos_select_list = new SelectList(cargos.Select(c => new { Id = c.Id, DisplayText = $"{c.Codigo} - {c.Nombre}" }), "Id", "DisplayText");
+
+        var sucursales = await _adminService.GetSucursalesAsync();
+        var sucursales_select_list = new SelectList(sucursales.Select(c => new { Id = c.Id, DisplayText = $"{c.Codigo} - {c.Nombre}" }), "Id", "DisplayText");
+
         return new EmployeeCreateViewModel
         {
             Empleado = existingEmployee ?? new Empleado { Estado = "ACTIVO", FechaIngreso = DateOnly.FromDateTime(DateTime.Now) },
-            Cargos = new SelectList(await _context.Cargos.OrderBy(c => c.Nombre).ToListAsync(), "Id", "Nombre"),
-            Sucursales = new SelectList(await _context.Sucursals.OrderBy(s => s.Nombre).ToListAsync(), "Id", "Nombre")
+            Cargos = cargos_select_list,
+            Sucursales = sucursales_select_list
         };
     }
 
@@ -190,8 +205,7 @@ public class HRService : IHRService
     {
         return await _context.SaldoVacaciones
             .Where(s => s.EmpleadoId == employeeId)
-            .Select(s => s.SaldoActual)
-            .FirstOrDefaultAsync() ?? 0;
+            .SumAsync(s => s.SaldoActual) ?? 0;
     }
 
     public async Task<List<ContratoLaboral>> GetEmployeeContractsAsync(Guid employeeId)
@@ -214,25 +228,69 @@ public class HRService : IHRService
         };
     }
 
-    public async Task<(bool Succeeded, string Message)> AddContractAsync(ContratoLaboral contract)
+    public async Task<(bool Succeeded, string Message)> AddContractAsync(ContratoLaboral contract, IFormFile? document)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            var previous = await _context.ContratoLaborals.Where(c => c.EmpleadoId == contract.EmpleadoId && c.Estado == "VIGENTE").ToListAsync();
+            // 1. Manejar archivo físico si existe
+            if (document != null)
+            {
+                var webRoot = _environment.WebRootPath;
+                if (string.IsNullOrEmpty(webRoot))
+                {
+                    webRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                }
+
+                var uploadsFolder = Path.Combine(webRoot, "uploads", "contracts");
+
+                try
+                {
+                    if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+                }
+                catch (Exception dirEx)
+                {
+                    return (false, "Error de permisos en el servidor: No se pudo crear la carpeta de adjuntos. " + dirEx.Message);
+                }
+
+                var extension = Path.GetExtension(document.FileName).ToLower();
+                var allowedExtensions = new[] { ".doc", ".docx", ".pdf" };
+                if (!allowedExtensions.Contains(extension))
+                    return (false, "Formato de archivo no permitido. Solo se aceptan documentos Word o PDF.");
+
+                var fileName = $"Contrato_{contract.EmpleadoId}_{DateTime.Now:yyyyMMddHHmmss}{extension}";
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await document.CopyToAsync(fileStream);
+                }
+
+                contract.DocumentoUrl = "/uploads/contracts/" + fileName;
+            }
+
+            // 2. Finalizar contratos previos
+            var previous = await _context.ContratoLaborals
+                .Where(c => c.EmpleadoId == contract.EmpleadoId && c.Estado == "VIGENTE")
+                .ToListAsync();
+
             foreach (var p in previous) p.Estado = "FINALIZADO";
 
-            contract.Id = Guid.NewGuid();
+            // 3. Registrar el nuevo contrato
+            if (contract.Id == Guid.Empty) contract.Id = Guid.NewGuid();
             contract.CreadoEn = DateTimeOffset.Now;
+            if (string.IsNullOrEmpty(contract.Estado)) contract.Estado = "VIGENTE";
+
             _context.ContratoLaborals.Add(contract);
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
-            return (true, "Contrato activado.");
+
+            return (true, document != null ? "Contrato registrado con documento digital." : "Contrato registrado exitosamente.");
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            return (false, ex.Message);
+            return (false, "Fallo crítico al guardar contrato: " + ex.Message);
         }
     }
 
@@ -424,6 +482,30 @@ public class HRService : IHRService
         catch (Exception ex) { return (false, ex.Message); }
     }
 
+    public async Task<(bool Succeeded, string Message)> DeleteCargoAsync(Guid id)
+    {
+        try
+        {
+            var cargo = await _context.Cargos
+                .Include(c => c.Empleados)
+                .Include(c => c.PlantillaAprobada)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (cargo == null) return (false, "Cargo no encontrado.");
+
+            if (cargo.Empleados.Any())
+                return (false, "No se puede eliminar el cargo porque tiene trabajadores vinculados.");
+
+            if (cargo.PlantillaAprobada.Any())
+                return (false, "No se puede eliminar el cargo porque tiene plazas aprobadas en plantilla.");
+
+            _context.Cargos.Remove(cargo);
+            await _context.SaveChangesAsync();
+            return (true, "Cargo eliminado correctamente.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
     public async Task<IEnumerable<TipoAusencium>> GetAbsenceTypesAsync()
     {
         return await _context.TipoAusencia.OrderBy(a => a.Nombre).ToListAsync();
@@ -451,40 +533,99 @@ public class HRService : IHRService
         catch (Exception ex) { return (false, ex.Message); }
     }
 
-    public async Task<PlantillaStatusViewModel> GetPlantillaStatusAsync()
+    public async Task<PlantillaStatusViewModel> GetPlantillaStatusAsync(Guid? sucursalId = null, string? search = null)
     {
         var entidadId = _entidadProvider.CurrentEntidadId;
+        var isMaster = _entidadProvider.IsMaster;
+        var hoy = DateOnly.FromDateTime(DateTime.Now);
 
-        var aprobadas = await _context.PlantillaAprobada
+        // ============================================================
+        // 1. Obtener plazas aprobadas (con filtros y vigencia)
+        // ============================================================
+        var aprobadasQuery = _context.PlantillaAprobada
             .Include(p => p.Cargo)
             .Include(p => p.Sucursal)
-            .ToListAsync();
+            .Include(p => p.Entidad)
+            .AsQueryable();
 
-        var cubiertas = await _context.ContratoLaborals
+        // Si es Master, ignorar filtros de entidad (ver todas)
+        if (!isMaster)
+            aprobadasQuery = aprobadasQuery.Where(p => p.EntidadId == entidadId);
+
+        // Filtrar por sucursal (si se proporciona)
+        if (sucursalId.HasValue)
+            aprobadasQuery = aprobadasQuery.Where(p => p.SucursalId == sucursalId.Value);
+
+        // Filtrar por búsqueda en nombre del cargo
+        if (!string.IsNullOrEmpty(search))
+            aprobadasQuery = aprobadasQuery.Where(p => p.Cargo.Nombre.Contains(search));
+
+        // Solo plazas vigentes (fecha actual dentro del rango)
+        aprobadasQuery = aprobadasQuery.Where(p => p.VigenteDesde <= hoy && (p.VigenteHasta == null || p.VigenteHasta >= hoy));
+
+        var aprobadas = await aprobadasQuery.ToListAsync();
+
+        // ============================================================
+        // 2. Obtener contratos vigentes (para contar cubiertas)
+        // ============================================================
+        var cubiertasQuery = _context.ContratoLaborals
             .Include(c => c.Empleado)
-            .Where(c => c.Estado == "VIGENTE")
+            .Where(c => c.Estado == "VIGENTE");
+
+        if (!isMaster)
+            cubiertasQuery = cubiertasQuery.Where(c => c.Empleado.EntidadId == entidadId);
+
+        // Agrupar por CargoId y SucursalId del empleado
+        var cubiertas = await cubiertasQuery
             .GroupBy(c => new { c.CargoId, c.Empleado.SucursalId })
             .Select(g => new { g.Key.CargoId, g.Key.SucursalId, Count = g.Count() })
             .ToListAsync();
 
-        var vm = new PlantillaStatusViewModel();
+        // ============================================================
+        // 3. Construir las filas del ViewModel
+        // ============================================================
+        var rows = new List<PlantillaRow>();
 
         foreach (var ap in aprobadas)
         {
-            var count = cubiertas.FirstOrDefault(c => c.CargoId == ap.CargoId && c.SucursalId == ap.SucursalId)?.Count ?? 0;
-            vm.Rows.Add(new PlantillaRow
+            var count = cubiertas
+                .FirstOrDefault(c => c.CargoId == ap.CargoId && c.SucursalId == ap.SucursalId)
+                ?.Count ?? 0;
+
+            rows.Add(new PlantillaRow
             {
                 Id = ap.Id,
-                Cargo = ap.Cargo.Nombre,
-                Sucursal = ap.Sucursal?.Nombre ?? "GLOBAL",
+                Cargo = ap.Cargo?.Codigo + " - " + ap.Cargo?.Nombre ?? "Sin cargo",
+                Sucursal = ap.Sucursal?.Codigo + " - " + ap.Sucursal?.Nombre ?? "GLOBAL",
+                EntidadNombre = ap.Entidad?.NombreComercial ?? "Desconocida",
                 Aprobadas = ap.PlazasAprobadas,
                 Cubiertas = count
             });
         }
 
-        return vm;
-    }
+        // ============================================================
+        // 4. Calcular totales
+        // ============================================================
+        var totalAprobadas = rows.Sum(r => r.Aprobadas);
+        var totalCubiertas = rows.Sum(r => r.Cubiertas);
+        var vacantes = totalAprobadas - totalCubiertas;
+        var porcentajeCobertura = totalAprobadas > 0
+            ? (decimal)totalCubiertas / totalAprobadas * 100
+            : 0;
 
+        // ============================================================
+        // 5. Crear y retornar el ViewModel
+        // ============================================================
+        return new PlantillaStatusViewModel
+        {
+            Rows = rows.OrderBy(r => r.Cargo).ThenBy(r => r.Sucursal).ToList(),
+            TotalPlazasAprobadas = totalAprobadas,
+            TotalPlazasCubiertas = totalCubiertas,
+            TotalVacantes = vacantes,
+            PorcentajeCoberturaTotal = decimal.Round(porcentajeCobertura, 2),
+            FechaCalculo = DateTime.Now
+        };
+    }
     public async Task<PlantillaAprobadum?> GetPlantillaEntryByIdAsync(Guid id)
     {
         return await _context.PlantillaAprobada
@@ -597,6 +738,23 @@ public class HRService : IHRService
         catch (Exception ex) { return (false, ex.Message); }
     }
 
+    public async Task<(bool Succeeded, string Message)> RecordVacationEnjoymentAsync(Guid saldoId, decimal days, string? observations)
+    {
+        try
+        {
+            var saldo = await _context.SaldoVacaciones.FindAsync(saldoId);
+            if (saldo == null) return (false, "Registro no encontrado.");
+
+            if (days <= 0) return (false, "Los días deben ser mayores que cero.");
+            if (days > saldo.SaldoActual) return (false, $"Saldo insuficiente ({saldo.SaldoActual:N1} disponibles).");
+
+            saldo.DiasDisfrutados += days;
+            await _context.SaveChangesAsync();
+            return (true, $"Se registraron {days} días de disfrute.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
     public async Task<TerminateEmployeeViewModel> GetTerminationContextAsync(Guid id)
     {
         var emp = await _context.Empleados
@@ -662,4 +820,68 @@ public class HRService : IHRService
             return (false, ex.Message);
         }
     }
+
+    public async Task<EmpleadoExpedienteViewModel> GetExpedienteAsync(Guid empleadoId)
+    {
+        // Cargar empleado con todas las relaciones necesarias
+        var empleado = await _context.Empleados
+            .Include(e => e.Cargo)
+            .Include(e => e.Sucursal)
+            .Include(e => e.ContratoLaborals)
+            .Include(e => e.RegistroAsistencia)
+                .ThenInclude(r => r.TipoAusencia)
+            .Include(e => e.CertificadoMedicos)
+            .Include(e => e.UtileResponsabilidades)
+            .FirstOrDefaultAsync(e => e.Id == empleadoId);
+
+        if (empleado == null)
+            throw new KeyNotFoundException($"Empleado {empleadoId} no encontrado.");
+
+        var hoy = DateOnly.FromDateTime(DateTime.Now);
+
+        // Calcular antigüedad
+        var antiguedad = hoy.Year - empleado.FechaIngreso.Year;
+        if (hoy < empleado.FechaIngreso.AddYears(antiguedad)) antiguedad--;
+
+        // Calcular edad
+        var edad = 0;
+        if (empleado.FechaNacimiento != null)
+        {
+            edad = hoy.Year - empleado.FechaNacimiento.Year;
+            if (hoy < empleado.FechaNacimiento.AddYears(edad)) edad--;
+        }
+
+        // Obtener saldo de vacaciones del año actual
+        var saldoVacaciones = await _context.SaldoVacaciones
+            .FirstOrDefaultAsync(s => s.EmpleadoId == empleadoId && s.Anio == hoy.Year);
+
+        // Obtener últimas nóminas (12 meses)
+        var nominas = await _context.NominaDetalles
+            .Include(n => n.PeriodoNomina)
+            .Where(n => n.EmpleadoId == empleadoId)
+            .OrderByDescending(n => n.PeriodoNomina.Anio)
+            .ThenByDescending(n => n.PeriodoNomina.Mes)
+            .Take(12)
+            .ToListAsync();
+
+        // Construir ViewModel
+        var vm = new EmpleadoExpedienteViewModel
+        {
+            Empleado = empleado,
+            AntiguedadAnios = antiguedad,
+            Edad = edad,
+            SaldoVacaciones = saldoVacaciones?.SaldoActual ?? 0,
+            ContratosVigentes = empleado.ContratoLaborals.Count(c => c.Estado == "VIGENTE"),
+            Contratos = empleado.ContratoLaborals.OrderByDescending(c => c.FechaInicio).ToList(),
+            Asistencias = empleado.RegistroAsistencia.OrderByDescending(a => a.Fecha).Take(30).ToList(),
+            Certificados = empleado.CertificadoMedicos.OrderByDescending(c => c.FechaInicio).ToList(),
+            Medios = empleado.UtileResponsabilidades.OrderByDescending(u => u.FechaEntrega).ToList(),
+            Nominas = nominas,
+            TotalContratos = empleado.ContratoLaborals.Count,
+            DiasVacacionesTomados = (int)(saldoVacaciones?.DiasDisfrutados ?? 0)
+        };
+
+        return vm;
+    }
+
 }

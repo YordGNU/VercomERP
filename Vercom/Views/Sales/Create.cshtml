@@ -48,7 +48,7 @@
                             </div>
                             <div class="col-md-4">
                                 <label asp-for="Invoice.AlmacenId" class="form-label fw-bold"></label>
-                                <select asp-for="Invoice.AlmacenId" class="form-control form-select w-100" asp-items="Model.Almacenes" required></select>
+                                <select asp-for="Invoice.AlmacenId" class="form-control form-select w-100 select2" asp-items="Model.Almacenes" required></select>
                                 <span asp-validation-for="Invoice.AlmacenId" class="text-danger small"></span>
                             </div>
                             <div class="col-md-4">
@@ -162,7 +162,7 @@
             const tbody = document.querySelector("#detailsTable tbody");
             const row = document.createElement("tr");
             row.innerHTML = `
-                <td class="ps-4">
+              <td>
                     <select name="Invoice.FacturaVentaDetalles[${rowCount}].ProductoId" class="form-control form-select w-100 select2" onchange="updatePrice(this, ${rowCount})" required>
                         <option value="">-- Buscar Artículo --</option>
                         ${parsedProductos.map(p => `<option value="${p.id}" data-price="${p.precioVentaActual}">${p.codigo} - ${p.nombre}</option>`).join('')}

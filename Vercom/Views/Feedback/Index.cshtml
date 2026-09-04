@@ -22,15 +22,15 @@
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table id="feedbackTable" class="table table-striped dt-responsive mb-0">
+                <table id="feedbackTable" class="table table-striped table-hover dt-responsive">
                 <thead class="thead-sm text-uppercase fs-xxs">
                         <tr>
                             <th class="ps-4">Fecha</th>
                             <th>Tipo</th>
                             <th>Empresa / Usuario</th>
                             <th>Mensaje</th>
-                            <th class="text-center">Estado</th>
-                            <th class="text-end pe-4">Acciones</th>
+                          <th>Estado</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -59,7 +59,7 @@
                                 <td >
                                     <span class="badge @(item.Estado == "PENDIENTE" ? "bg-warning" : "bg-success") px-3">@item.Estado</span>
                                 </td>
-                                <td class="text-end pe-4">
+                                <td>
                                     <div class="btn-list justify-content-end">
                                         <button type="button" class="btn btn-sm btn-icon btn-light rounded-circle"
                                                 onclick="showDetail('@item.Id', '@item.Tipo', '@item.Mensaje', '@item.MetadataTecnica')">

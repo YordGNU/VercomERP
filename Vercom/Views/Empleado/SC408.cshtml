@@ -65,10 +65,10 @@
                         @foreach (var row in Model)
                         {
                             <tr>
-                                <td class="text-center fw-bold border-dark font-monospace">@row.Periodo</td>
-                                <td class="text-center border-dark">@row.DiasTrabajados.ToString("N1")</td>
+                                <td fw-bold border-dark font-monospace">@row.Periodo</td>
+                                <td border-dark">@row.DiasTrabajados.ToString("N1")</td>
                                 <td class="text-end fw-bold border-dark pe-4">@row.SalarioDevengado.ToString("N2")</td>
-                                <td class="text-center border-dark">@row.TiempoServicioMeses</td>
+                                <td border-dark">@row.TiempoServicioMeses</td>
                             </tr>
                         }
                         @if (!Model.Any())
@@ -81,9 +81,9 @@
                     <tfoot class="fw-bold">
                         <tr class="bg-light">
                             <td class="text-end border-dark pe-3">TOTALES:</td>
-                            <td class="text-center border-dark">@Model.Sum(r => r.DiasTrabajados).ToString("N1")</td>
+                            <td border-dark">@Model.Sum(r => r.DiasTrabajados).ToString("N1")</td>
                             <td class="text-end border-dark pe-4 text-primary">@Model.Sum(r => r.SalarioDevengado).ToString("C")</td>
-                            <td class="text-center border-dark">-</td>
+                            <td border-dark">-</td>
                         </tr>
                     </tfoot>
                 </table>

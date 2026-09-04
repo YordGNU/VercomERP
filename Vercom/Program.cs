@@ -18,6 +18,7 @@ builder.Services.AddScoped<ITaxService, TaxService>();
 builder.Services.AddScoped<IFixedAssetService, FixedAssetService>();
 builder.Services.AddScoped<IReceivablesPayablesService, ReceivablesPayablesService>();
 builder.Services.AddScoped<IHRService, HRService>();
+builder.Services.AddScoped<IEmpleadoService, EmpleadoService>();
 builder.Services.AddScoped<IPayrollService, PayrollService>();
 builder.Services.AddScoped<IHRReportService, HRReportService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
@@ -86,6 +87,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthentication();

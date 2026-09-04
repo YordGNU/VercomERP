@@ -53,11 +53,11 @@
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-striped dt-responsive mb-0">
+                            <table class="table table-striped table-hover dt-responsive">
                             <thead class="thead-sm text-uppercase fs-xxs">
                                     <tr>
                                         <th class="ps-4">Material / Insumo</th>
-                                        <th class="text-end">Planificado</th>
+                                        <th>Planificado</th>
                                         <th class="text-center" width="220">Consumo Real (Ajuste)</th>
                                         <th width="100">U.M.</th>
                                         <th class="pe-4">Diferencia</th>
@@ -68,7 +68,7 @@
                                     @foreach (var c in Model.OrdenProduccionConsumos)
                                     {
                                         <tr>
-                                            <td class="ps-4">
+                                          <td>
                                                 <input type="hidden" name="actualConsumptions[@i].ProductoInsumoId" value="@c.ProductoInsumoId" />
                                                 <div class="fw-bold fs-13">@c.ProductoInsumo.Nombre</div>
                                                 <small class="text-muted tiny">COD: @c.ProductoInsumo.Codigo</small>

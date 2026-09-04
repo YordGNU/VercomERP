@@ -43,12 +43,12 @@
                     </a>
             </div>
             <div class="card-body">
-                <table id="asientosTable" class="table table-striped dt-responsive mb-0">
+                <table id="asientosTable" class="table table-striped table-hover dt-responsive">
                          <thead class="thead-sm text-uppercase fs-xxs">
                                 <tr>
                                    <th>Nº Comprobante</th>
                                    @if (isMaster) { <th>Entidad / Empresa</th> }
-                                   <th class="text-center">Fecha</th>
+                                 <th>Fecha</th>
                                    <th>Tipo</th>
                                    <th>Concepto / Glosa</th>
                                    <th>Debe ($)</th>
@@ -70,10 +70,10 @@
                                 <td class="text-numeric fw-bold text-primary">@item.NumeroComprobante.ToString("D8")</td>
                                 @if (isMaster) {
                                     <td>
-                                        <div class="fw-bold small text-uppercase">@item.Entidad?.RazonSocial</div>
+                                        <div class="fw-bold small text-uppercase">@item.Entidad?.NombreComercial</div>
                                     </td>
                                 }
-                                <td class="text-date">@item.Fecha.ToString("dd/MM/yyyy")</td>
+                                 <td>@item.Fecha.ToString("dd/MM/yyyy")</td>
                                 <td><span class="badge badge-soft-info">@(item.TipoComprobante?.Codigo ?? "AJ")</span></td>
                                 <td class="text-wrap small text-muted">@item.Concepto</td>
                                 <td class="text-numeric fw-bold">@item.TotalDebe.ToString("N2")</td>

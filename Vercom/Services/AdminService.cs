@@ -197,11 +197,11 @@ public class AdminService : IAdminService
             await InitializeEntidadDefaultsAsync(id);
 
             // 4. Notificar a Maestros
-            await _notificationService.NotifyMasterAsync("Nueva Entidad Activa", $"La S.U.R.L. {entidad.RazonSocial} ha sido aprobada y configurada.", "success");
+            await _notificationService.NotifyMasterAsync("Nueva Entidad Activa", $"La S.U.R.L. {entidad.NombreComercial} ha sido aprobada y configurada.", "success");
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
-            return (true, $"Entidad {entidad.RazonSocial} aprobada y configurada correctamente.");
+            return (true, $"Entidad {entidad.NombreComercial} aprobada y configurada correctamente.");
         }
         catch (Exception ex)
         {

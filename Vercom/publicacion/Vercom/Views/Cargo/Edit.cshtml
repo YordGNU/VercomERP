@@ -26,19 +26,37 @@
                     <h5 class="m-0 fw-bold"><i class="ti ti-briefcase me-2 text-primary"></i>Datos del Puesto</h5>
                 </div>
                 <div class="card-body p-4">
-                    <form asp-action="Create" class="row g-4">
+                    <form asp-action="Edit" class="row g-4">
+                        <input type="hidden" asp-for="Id" />
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
 
                         <div class="col-md-4">
                             <label class="form-label">Código del Cargo</label>
-                            <input asp-for="Codigo" class="form-control w-100 fw-bold text-primary" placeholder="ej: ADM-01" required />
-                            <span asp-validation-for="Codigo" class="text-danger small"></span>
+                            <input asp-for="Codigo" class="form-control w-100 fw-bold bg-light" readonly />
+                            <small class="text-muted tiny">Código no editable.</small>
                         </div>
 
                         <div class="col-md-8">
                             <label class="form-label">Nombre del Puesto</label>
                             <input asp-for="Nombre" class="form-control w-100" placeholder="Nombre descriptivo" required />
                             <span asp-validation-for="Nombre" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Categoría Ocupacional (MTSS)</label>
+                            <select asp-for="CategoriaOcupacional" class="form-select w-100" required>
+                                <option value="">-- Seleccione Categoría --</option>
+                                <option value="DIRIGENTE">Cuadro / Dirigente</option>
+                                <option value="TECNICO">Técnico</option>
+                                <option value="ADMINISTRATIVO">Administrativo</option>
+                                <option value="OPERARIO">Operario</option>
+                                <option value="SERVICIOS">Servicios</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Misión y Funciones del Puesto</label>
+                            <textarea asp-for="Funciones" class="form-control" rows="4">@Model.Funciones</textarea>
                         </div>
 
                         <div class="col-md-6">

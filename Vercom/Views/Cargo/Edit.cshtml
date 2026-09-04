@@ -42,6 +42,18 @@
                             <span asp-validation-for="Nombre" class="text-danger small"></span>
                         </div>
 
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Categoría Ocupacional (MTSS)</label>
+                            <select asp-for="CategoriaOcupacional" class="form-select w-100" required>
+                                <option value="">-- Seleccione Categoría --</option>
+                                <option value="DIRIGENTE">Cuadro / Dirigente</option>
+                                <option value="TECNICO">Técnico</option>
+                                <option value="ADMINISTRATIVO">Administrativo</option>
+                                <option value="OPERARIO">Operario</option>
+                                <option value="SERVICIOS">Servicios</option>
+                            </select>
+                        </div>
+
                         <div class="col-12">
                             <label class="form-label">Misión y Funciones del Puesto</label>
                             <textarea asp-for="Funciones" class="form-control" rows="4">@Model.Funciones</textarea>

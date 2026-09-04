@@ -94,9 +94,9 @@
                             <thead class="sticky-top bg-white shadow-sm">
                                 <tr>
                                     <th>Producto</th>
-                                    <th class="text-center">Existencia</th>
-                                    <th class="text-center">Costo PPP</th>
-                                    <th class="text-end">Valorizado</th>
+                                  <th>Existencia</th>
+                                  <th>Costo PPP</th>
+                                    <th>Valorizado</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -109,7 +109,7 @@
                                         <td >
                                             <span class="badge @(ex.Cantidad <= ex.StockMinimo ? "bg-danger" : "bg-success")">@ex.Cantidad.ToString("N2")</span>
                                         </td>
-                                        <td class="text-center small font-monospace">@ex.CostoPromedio.ToString("N4")</td>
+                                        <td small font-monospace">@ex.CostoPromedio.ToString("N4")</td>
                                         <td class="text-end fw-bold text-primary">
                                             @((ex.Cantidad * ex.CostoPromedio).ToString("C"))
                                         </td>

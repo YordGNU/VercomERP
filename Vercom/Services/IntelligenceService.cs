@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
+using Vercom.Security;
 using Vercom.ViewModels;
 
 namespace Vercom.Services;
@@ -25,21 +26,72 @@ public class IntelligenceService : IIntelligenceService
     private readonly AppDbContext _context;
     private readonly IAccountingService _accountingService;
     private readonly IInventoryService _inventoryService;
+    private readonly IEntidadProvider _entidadProvider;
 
-    public IntelligenceService(AppDbContext context, IAccountingService accountingService, IInventoryService inventoryService)
+    public IntelligenceService(AppDbContext context, IAccountingService accountingService, IInventoryService inventoryService, IEntidadProvider entidadProvider)
     {
         _context = context;
         _accountingService = accountingService;
         _inventoryService = inventoryService;
+        _entidadProvider = entidadProvider;
     }
 
     public async Task<DashboardViewModel> GetDashboardContextAsync(Guid entidadId)
     {
+        // ============================================================
+        // 1. CASO MASTER: Sin entidad asociada
+        // ============================================================
+        if (_entidadProvider.IsMaster)
+        {
+            return new DashboardViewModel
+            {
+                EsMaster = true,
+                Mensaje = "Usuario Master: No se requiere período fiscal. Seleccione una entidad para ver datos específicos.",
+                FechaCierreCaja = DateTime.Now.ToString("dd/MM/yyyy"),
+                PeriodoActual = "Consolidado - Master",
+                AlertasStock = new List<Existencium>(), // o cargar consolidado si existe
+                Liquidez = 0,
+                Rentabilidad = 0,
+                RotacionStock = 0
+            };
+        }
+
+        // ============================================================
+        // 2. CASO NORMAL: Usuario con entidad específica
+        // ============================================================
+        // Validar que la entidad exista antes de intentar crear el período
+        var entidadExiste = await _context.Entidads.AnyAsync(e => e.Id == entidadId);
+        if (!entidadExiste)
+        {
+            return new DashboardViewModel
+            {
+                EsMaster = false,
+                Mensaje = "La entidad asociada al usuario no existe en el sistema. Contacte al administrador.",
+                FechaCierreCaja = DateTime.Now.ToString("dd/MM/yyyy"),
+                PeriodoActual = DateTime.Now.ToString("MMMM yyyy"),
+                AlertasStock = new List<Existencium>()
+            };
+        }
+
         var period = await _accountingService.GetOrCreateActivePeriodAsync(entidadId, DateTime.Now);
         var periodId = period?.Id ?? Guid.Empty;
 
+        if (periodId == Guid.Empty)
+        {
+            return new DashboardViewModel
+            {
+                EsMaster = false,
+                Mensaje = "No se pudo obtener o crear un período contable activo.",
+                FechaCierreCaja = DateTime.Now.ToString("dd/MM/yyyy"),
+                PeriodoActual = DateTime.Now.ToString("MMMM yyyy"),
+                AlertasStock = new List<Existencium>()
+            };
+        }
+
+        // Calcular indicadores
         return new DashboardViewModel
         {
+            EsMaster = false,
             Liquidez = await CalculateLiquidityAsync(entidadId, periodId),
             Rentabilidad = await CalculateProfitabilityAsync(entidadId, periodId),
             RotacionStock = await CalculateInventoryTurnoverAsync(entidadId, periodId),
@@ -144,7 +196,7 @@ public class IntelligenceService : IIntelligenceService
         return new FinancialReportViewModel
         {
             ReportName = "Balance General",
-            EntityName = period?.Entidad?.RazonSocial ?? "N/A",
+            EntityName = period?.Entidad?.NombreComercial ?? "N/A",
             PeriodName = period != null ? $"{period.Mes}/{period.Anio}" : "N/A",
             Balance = statement
         };
@@ -172,7 +224,7 @@ public class IntelligenceService : IIntelligenceService
         return new FinancialReportViewModel
         {
             ReportName = "Estado de Resultados",
-            EntityName = period?.Entidad?.RazonSocial ?? "N/A",
+            EntityName = period?.Entidad?.NombreComercial ?? "N/A",
             PeriodName = period != null ? $"{period.Mes}/{period.Anio}" : "N/A",
             Resultados = results
         };

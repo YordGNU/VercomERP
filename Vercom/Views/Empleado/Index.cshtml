@@ -18,10 +18,8 @@
         }
     </div>
 </div>
-
 <div class="row">
-    @if (ViewBag.Stats != null)
-    {
+    @if (ViewBag.Stats != null)    {
         var stats = ViewBag.Stats as Vercom.Services.RRHHStatsViewModel;
         <div class="col-12 mb-4">
             <div class="row g-3">
@@ -100,7 +98,7 @@
                     </div>
                     <div class="col-lg-2">
                         <label class="form-label small fw-bold">Sucursal</label>
-                        <select name="sucursalId" class="form-select" asp-items="ViewBag.SucursalId">
+                        <select name="sucursalId" class="form-select select2" asp-items="ViewBag.SucursalId">
                             <option value="">-- Todas las Unidades --</option>
                         </select>
                     </div>

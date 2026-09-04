@@ -65,14 +65,14 @@
 
                                     <div class="col-md-6">
                                         <label asp-for="Usuario.SucursalId" class="form-label fw-bold"></label>
-                                        <select asp-for="Usuario.SucursalId" name="Usuario.SucursalId" class="form-select" asp-items="Model.Sucursales">
+                                        <select asp-for="Usuario.SucursalId" name="Usuario.SucursalId" class="form-select select2" asp-items="Model.Sucursales">
                                             <option value="">-- Acceso Global (Supervisión) --</option>
                                         </select>
                                     </div>
 
                                     <div class="col-md-6">
                                         <label asp-for="Usuario.EsEmpleadoId" class="form-label fw-bold"></label>
-                                        <select asp-for="Usuario.EsEmpleadoId" name="Usuario.EsEmpleadoId" class="form-select" asp-items="Model.Empleados">
+                                        <select asp-for="Usuario.EsEmpleadoId" name="Usuario.EsEmpleadoId" class="form-select select2" asp-items="Model.Empleados">
                                             <option value="">-- No vincular a RRHH --</option>
                                         </select>
                                     </div>

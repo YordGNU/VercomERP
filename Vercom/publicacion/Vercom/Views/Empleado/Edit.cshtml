@@ -83,11 +83,11 @@
                         <div class="row g-4">
                             <div class="col-md-6">
                                 <label asp-for="Empleado.SucursalId" class="form-label fw-bold">Unidad Organizativa</label>
-                                <select asp-for="Empleado.SucursalId" name="Empleado.SucursalId" class="form-select" asp-items="Model.Sucursales" required></select>
+                                <select asp-for="Empleado.SucursalId" name="Empleado.SucursalId" class="form-select select2" asp-items="Model.Sucursales" required></select>
                             </div>
                             <div class="col-md-6">
                                 <label asp-for="Empleado.CargoId" class="form-label fw-bold">Cargo / Ocupación</label>
-                                <select asp-for="Empleado.CargoId" name="Empleado.CargoId" class="form-select" asp-items="Model.Cargos" required></select>
+                                <select asp-for="Empleado.CargoId" name="Empleado.CargoId" class="form-select select2" asp-items="Model.Cargos" required></select>
                             </div>
                             <div class="col-md-4">
                                 <label asp-for="Empleado.Estado" class="form-label fw-bold">Estado</label>
@@ -105,6 +105,10 @@
                                     <option value="PREUNIVERSITARIO">Preuniversitario</option>
                                     <option value="SECUNDARIA">Secundaria</option>
                                 </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Empleado.Calificacion" class="form-label fw-bold">Calificación</label>
+                                <input asp-for="Empleado.Calificacion" name="Empleado.Calificacion" class="form-control" placeholder="Título obtenido" />
                             </div>
                             <div class="col-md-4">
                                 <label asp-for="Empleado.FechaIngreso" class="form-label fw-bold">Fecha Ingreso</label>

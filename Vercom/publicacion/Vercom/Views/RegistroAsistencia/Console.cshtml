@@ -19,19 +19,49 @@
     </div>
 </div>
 <div class="container-xxl">
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-3">
+            <form asp-action="Console" method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Fecha de Jornada</label>
+                    <input type="date" name="date" class="form-control" value="@Model.Date.ToString("yyyy-MM-dd")" onchange="this.form.submit()" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Unidad / Sucursal</label>
+                    <select name="sucursalId" class="form-select select2" asp-items="ViewBag.SucursalId" onchange="this.form.submit()">
+                        <option value="">-- Todas las Unidades --</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Cargo</label>
+                    <select name="cargoId" class="form-select select2" asp-items="ViewBag.CargoId" onchange="this.form.submit()">
+                        <option value="">-- Todos --</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Buscar por Nombre/CI</label>
+                    <div class="input-group">
+                        <input type="text" name="search" class="form-control" placeholder="Escriba aquí..." value="@ViewBag.CurrentSearch" />
+                        <button type="submit" class="btn btn-primary"><i class="ti ti-search"></i></button>
+                    </div>
+                </div>
+                <div class="col-md-1">
+                    <a asp-action="Console" class="btn btn-light w-100" title="Limpiar"><i class="ti ti-refresh"></i></a>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <form asp-action="SaveConsole" method="post">
         @Html.AntiForgeryToken()
         <input type="hidden" name="date" value="@Model.Date.ToString("yyyy-MM-dd")" />
         <div class="card shadow-sm border-0">
             <div class="card-header justify-content-between bg-light-subtle">
-                <h5 class="m-0 fw-bold"><i class="ti ti-users me-2 text-primary"></i>Listado de Plantilla Activa</h5>
-                <div class="text-end">
-                    <input type="date" class="form-control form-control-sm" id="jumpDate" value="@Model.Date.ToString("yyyy-MM-dd")" onchange="window.location.href='?date=' + this.value" />
-                </div>
+                <h5 class="m-0 fw-bold"><i class="ti ti-users me-2 text-primary"></i>Listado de Plantilla Activa (@Model.Rows.Count)</h5>
                </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-striped dt-responsive mb-0">
+                    <table class="table table-striped table-hover dt-responsive">
                     <thead class="thead-sm text-uppercase fs-xxs">
                             <tr>
                                 <th class="ps-4">Empleado</th>
@@ -47,7 +77,7 @@
                             {
                                 var row = Model.Rows[i];
                                 <tr>
-                                    <td class="ps-4">
+                                  <td>
                                         <input type="hidden" name="logs[@i].EmpleadoId" value="@row.EmpleadoId" />
                                         <input type="hidden" name="logs[@i].Fecha" value="@Model.Date.ToString("yyyy-MM-dd")" />
                                         <div class="fw-bold fs-13">@row.NombreCompleto</div>

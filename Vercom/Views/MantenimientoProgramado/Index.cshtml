@@ -27,15 +27,15 @@
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table id="maintenanceTable" class="table table-striped dt-responsive mb-0">
+                <table id="maintenanceTable" class="table table-striped table-hover dt-responsive">
                 <thead class="thead-sm text-uppercase fs-xxs">
                         <tr>
                             <th class="ps-4">Fecha Programada</th>
                             <th>Equipo / Maquinaria</th>
-                            <th class="text-center">Tipo de Intervención</th>
-                            <th class="text-center">Estado</th>
-                            <th class="text-end">Costo Est. ($)</th>
-                            <th class="text-end pe-4">Acciones</th>
+                          <th>Tipo de Intervención</th>
+                          <th>Estado</th>
+                            <th>Costo Est. ($)</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -45,7 +45,7 @@
                             var rowClass = isLate ? "bg-danger-subtle" : "";
 
                             <tr class="@rowClass">
-                                <td class="ps-4">
+                              <td>
                                     <div class="fw-bold @(isLate ? "text-danger" : "")">
                                         @item.FechaProgramada.ToString("dd/MM/yyyy")
                                         @if(isLate) { <i class="ti ti-alert-triangle ms-1" title="Mantenimiento Vencido"></i> }
@@ -70,7 +70,7 @@
                                     <span class="badge @statusClass px-3">@item.Estado</span>
                                 </td>
                                 <td class="text-end fw-bold">@(item.Costo?.ToString("N2") ?? "0.00")</td>
-                                <td class="text-end pe-4">
+                                <td>
                                     <div class="btn-list justify-content-end">
                                         <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-icon btn-light rounded-circle" title="Editar / Reportar Cierre">
                                             <i class="ti ti-edit"></i>

@@ -121,6 +121,23 @@ public static class SeedData
             new UsuarioRol { UsuarioId = admin.Id, RolId = adminRoleId, SucursalId = sucursalId, AsignadoEn = DateTimeOffset.UtcNow }
         });
 
+        // ======================================================================
+        // 7. CARGOS POR DEFECTO
+        // ======================================================================
+        var cargos = new List<Cargo>
+        {
+            new Cargo { Id = Guid.NewGuid(), EntidadId = entidadId, Codigo = "DIR-01", Nombre = "Director General", CategoriaOcupacional = "DIRIGENTE", Funciones = "Dirección y representación legal de la entidad.", SalarioEscalaMin = 8000, SalarioEscalaMax = 12000 },
+            new Cargo { Id = Guid.NewGuid(), EntidadId = entidadId, Codigo = "CONT-01", Nombre = "Especialista B en Contabilidad", CategoriaOcupacional = "TECNICO", Funciones = "Control económico y financiero de la entidad.", SalarioEscalaMin = 6500, SalarioEscalaMax = 8500 },
+            new Cargo { Id = Guid.NewGuid(), EntidadId = entidadId, Codigo = "OPER-01", Nombre = "Operario Integral", CategoriaOcupacional = "OPERARIO", Funciones = "Labores de producción y servicios generales.", SalarioEscalaMin = 4500, SalarioEscalaMax = 6000 }
+        };
+
+        foreach (var c in cargos)
+        {
+            if (!await context.Cargos.AnyAsync(x => x.EntidadId == entidadId && x.Codigo == c.Codigo))
+                context.Cargos.Add(c);
+        }
+        await context.SaveChangesAsync();
+
 
         // ======================================================================
         // 13. INDICADORES BI (CORREGIDO: CATEGORÍA)

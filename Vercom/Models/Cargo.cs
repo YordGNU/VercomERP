@@ -10,6 +10,8 @@ public partial class Cargo
 
     public string Nombre { get; set; } = null!;
 
+    public string? CategoriaOcupacional { get; set; }
+
     public string? Funciones { get; set; }
 
     public decimal? SalarioEscalaMin { get; set; }

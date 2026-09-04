@@ -1,29 +1,33 @@
-# Optimización de Localización de Personal - Walkthrough
+# Digitalización de Contratos Laborales (Word/PDF) - Walkthrough
 
-Se ha implementado un motor de filtrado avanzado en el módulo de Recursos Humanos para facilitar la gestión masiva de personal y la captación segmentada de asistencia.
+Se ha implementado la funcionalidad para adjuntar y consultar documentos físicos de contratos laborales directamente desde el expediente del empleado, profesionalizando la gestión documental del ERP Vercom Elite.
 
-## Mejoras de Usabilidad Implementadas
+## Funcionalidades Implementadas
 
-### 1. Búsqueda Avanzada de Expedientes
-Se rediseñó la cabecera de la lista de empleados para incluir una barra de herramientas de filtrado dinámico:
-- **Buscador Universal:** Permite localizar trabajadores por **Nombre, Apellidos o Carnet de Identidad** de forma instantánea.
-- **Filtros Organizativos:** Ahora es posible segmentar la lista por **Cargo** y **Sucursal/Unidad**, facilitando la revisión de grupos específicos.
-- **Gestión de Estados:** Selector para alternar entre personal **Activo** y **Bajas**, permitiendo auditar el histórico de la empresa.
+### 1. Subida Segura de Documentos
+El formulario de "Agregar Contrato" ha sido potenciado para permitir la carga de archivos:
+- **Formatos Permitidos:** Soporte para documentos de Microsoft Word (`.doc`, `.docx`) y archivos `.pdf`.
+- **Almacenamiento Organizado:** Los archivos se guardan en el servidor (`wwwroot/uploads/contracts/`) con nombres únicos que incluyen el ID del empleado y una marca de tiempo para evitar colisiones.
+- **Validación:** Control de tamaño (máximo 10MB) y validación de extensiones permitidas.
 
-### 2. Consola de Asistencia por Sucursal
-Se optimizó la consola de captación de jornada (`RegistroAsistencia/Console`) para operaciones multi-sucursal:
-- **Asignación Local:** Los jefes de unidad ahora pueden filtrar la consola para que solo muestre los trabajadores de su **Sucursal**, evitando errores de marcado en listas extensas.
-- **Segmentación por Cargo:** Permite cargar la asistencia por grupos ocupacionales (ej. solo "Operarios").
-- **Búsqueda en Consola:** Incluye un campo de búsqueda rápida para localizar a un trabajador específico sin navegar por toda la tabla.
+### 2. Acceso Centralizado desde el Expediente
+Se añadió una columna de acceso rápido en la pestaña de **Contratos** del expediente digital:
+- **Iconografía Dinámica:** El sistema detecta el tipo de archivo y muestra un icono diferenciado para Word o PDF.
+- **Descarga Directa:** Enlace seguro para abrir o descargar el documento oficial con un solo clic.
+- **Transparencia:** Los contratos registrados anteriormente que no poseen documento digital muestran un indicador claro de ausencia.
 
-## Resultados Técnicos
+### 3. Lógica de Servicio Blindada
+- **Integración Atómica:** El proceso de guardado del archivo y el registro en la base de datos se realiza de forma coordinada. Si el guardado del archivo falla, no se registra el contrato.
+- **Aislamiento Multi-tenancy:** Las rutas de los archivos están vinculadas a la identidad del contrato, respetando los filtros de seguridad de cada empresa.
+
+## Resultados de Gestión
 
 > [!SUCCESS]
-> **Eficiencia Operativa:** Se redujo drásticamente el tiempo necesario para localizar trabajadores en plantillas de gran tamaño.
+> **Expediente 360°:** El personal de RRHH ahora puede consultar el contrato legal firmado sin necesidad de recurrir al archivo físico en papel.
 
-> [!IMPORTANT]
-> **Aislamiento Multi-tenancy:** Los filtros respetan estrictamente el aislamiento de datos de cada entidad, permitiendo al Maestro filtrar globalmente y a los Administradores Locales gestionar su propia estructura.
+> [!TIP]
+> **Cumplimiento de Auditoría:** Esta mejora facilita los procesos de auditoría de la ONAT y el MTSS al proporcionar evidencia documental inmediata.
 
 ## Próximos Pasos
-- Evaluar la inclusión de filtros por "Tipo de Contrato" en el Index de Empleados.
-- Habilitar la exportación del listado filtrado a formato Excel para auditorías externas.
+- Implementar la previsualización de documentos Word directamente en el navegador sin necesidad de descarga.
+- Habilitar la subida de múltiples anexos (ej. Documento de Confidencialidad, Recibo de Útiles).

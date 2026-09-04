@@ -57,13 +57,13 @@
 
                             <div class="col-md-4">
                                 <label class="form-label fw-bold">Almacén de Insumos (Salida)</label>
-                                <select asp-for="Order.AlmacenInsumosId" name="Order.AlmacenInsumosId" class="form-control form-select w-100" asp-items="Model.Almacenes" required></select>
+                                <select asp-for="Order.AlmacenInsumosId" name="Order.AlmacenInsumosId" class="form-control form-select w-100 select2" asp-items="Model.Almacenes" required></select>
                                 <small class="text-muted tiny">Donde se rebajará la materia prima.</small>
                             </div>
 
                             <div class="col-md-4">
                                 <label class="form-label fw-bold">Almacén Destino (Entrada PT)</label>
-                                <select asp-for="Order.AlmacenProductoId" name="Order.AlmacenProductoId" class="form-control form-select w-100" asp-items="Model.Almacenes" required></select>
+                                <select asp-for="Order.AlmacenProductoId" name="Order.AlmacenProductoId" class="form-control form-select w-100 select2" asp-items="Model.Almacenes" required></select>
                                 <small class="text-muted tiny">Donde ingresará el producto terminado.</small>
                             </div>
                         </div>

@@ -177,8 +177,8 @@
                             <thead>
                                 <tr>
                                     <th>Producto</th>
-                                    <th class="text-center">Vence</th>
-                                    <th class="text-end">Lote</th>
+                                  <th>Vence</th>
+                                    <th>Lote</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -186,7 +186,7 @@
                                 {
                                     <tr>
                                         <td class="fw-bold">@alert.Producto.Nombre</td>
-                                        <td class="text-center text-danger fw-bold">@alert.FechaVencimiento?.ToString("dd/MM")</td>
+                                        <td text-danger fw-bold">@alert.FechaVencimiento?.ToString("dd/MM")</td>
                                         <td class="text-end font-monospace tiny">@alert.Lote</td>
                                     </tr>
                                 }

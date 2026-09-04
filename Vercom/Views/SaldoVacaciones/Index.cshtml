@@ -16,80 +16,77 @@
         </ol>
     </div>
 </div>
-<div class="container-xxl">
-    <div class="row row-cards">
-        @foreach (var item in Model)
-        {
-            var isCritical = item.SaldoActual > 30;
-            var isHigh = item.SaldoActual > 22;
-            var statusColor = isCritical ? "danger" : (isHigh ? "warning" : "success");
-            <div class="col-md-6 col-lg-4" data-saldo-id="@item.Id">
-                <div class="card card-sm shadow-sm border-0 h-100 transition-all hover-shadow">
-                    <div class="card-status-top bg-@statusColor"></div>
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div>
-                                <h4 class="fw-bold mb-0 empleado-nombre">@item.Empleado.Nombres @item.Empleado.Apellidos</h4>
-                                <small class="text-muted text-uppercase tiny fw-bold">Periodo Fiscal @item.Anio</small>
-                            </div>
-                            <div class="avatar bg-@statusColor-subtle text-@statusColor rounded-circle">
-                                <i class="ti ti-beach fs-20"></i>
-                            </div>
+<div class="row row-cards">
+    @foreach (var item in Model)
+    {
+        var isCritical = item.SaldoActual > 30;
+        var isHigh = item.SaldoActual > 22;
+        var statusColor = isCritical ? "danger" : (isHigh ? "warning" : "success");
+        <div class="col-md-6 col-lg-4" data-saldo-id="@item.Id">
+            <div class="card card-sm shadow-sm border-0 h-100 transition-all hover-shadow">
+                <div class="card-status-top bg-@statusColor"></div>
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h4 class="fw-bold mb-0 empleado-nombre">@item.Empleado.Nombres @item.Empleado.Apellidos</h4>
+                            <small class="text-muted text-uppercase tiny fw-bold">Periodo Fiscal @item.Anio</small>
                         </div>
-
-                        <div class="row text-center bg-light-subtle rounded-3 p-3 g-0 mb-4 border">
-                            <div class="col-4 border-end">
-                                <h3 class="mb-0 fw-bold dias-acumulados">@item.DiasAcumulados.ToString("N1")</h3>
-                                <small class="text-muted tiny fw-bold text-uppercase">Ganados</small>
-                            </div>
-                            <div class="col-4 border-end">
-                                <h3 class="mb-0 text-danger fw-bold dias-disfrutados">@item.DiasDisfrutados.ToString("N1")</h3>
-                                <small class="text-muted tiny fw-bold text-uppercase">Gozados</small>
-                            </div>
-                            <div class="col-4">
-                                <h3 class="mb-0 text-primary fw-bold saldo-actual">@(item.SaldoActual?.ToString("N1") ?? "0.0")</h3>
-                                <small class="text-muted tiny fw-bold text-uppercase">Saldo</small>
-                            </div>
+                        <div class="avatar bg-@statusColor-subtle text-@statusColor rounded-circle">
+                            <i class="ti ti-beach fs-48"></i>
                         </div>
+                    </div>
 
-                        @if (isCritical)
-                        {
-                            <div class="alert alert-danger py-2 px-3 small mb-3 border-0 alerta-critical">
-                                <i class="ti ti-alert-circle me-1"></i> <strong>ALERTA:</strong> Acumulado excede el límite legal de 30 días.
-                            </div>
-                        }
-
-                        <div class="d-grid gap-2">
-                            <button type="button" class="btn btn-sm btn-primary btn-registrar-disfrute"
-                                    data-id="@item.Id"
-                                    data-empleado="@item.Empleado.Nombres @item.Empleado.Apellidos"
-                                    data-saldo="@item.SaldoActual"
-                                    data-toggle="modal"
-                                    data-target="#modalDisfrute">
-                                <i class="ti ti-calendar me-1"></i> REGISTRAR DISFRUTE
-                            </button>
-                            <a asp-controller="Empleado" asp-action="File" asp-route-id="@item.EmpleadoId" class="btn btn-sm btn-outline-secondary">
-                                <i class="ti ti-user-search me-1"></i> EXPEDIENTE
-                            </a>
+                    <div class="row text-center bg-light-subtle rounded-3 p-3 g-0 mb-4 border">
+                        <div class="col-4 border-end">
+                            <h3 class="mb-0 fw-bold dias-acumulados">@item.DiasAcumulados.ToString("N1")</h3>
+                            <small class="text-muted tiny fw-bold text-uppercase">Ganados</small>
                         </div>
+                        <div class="col-4 border-end">
+                            <h3 class="mb-0 text-danger fw-bold dias-disfrutados">@item.DiasDisfrutados.ToString("N1")</h3>
+                            <small class="text-muted tiny fw-bold text-uppercase">Gozados</small>
+                        </div>
+                        <div class="col-4">
+                            <h3 class="mb-0 text-primary fw-bold saldo-actual">@(item.SaldoActual?.ToString("N1") ?? "0.0")</h3>
+                            <small class="text-muted tiny fw-bold text-uppercase">Saldo</small>
+                        </div>
+                    </div>
+
+                    @if (isCritical)
+                    {
+                        <div class="alert alert-danger py-2 px-3 small mb-3 border-0 alerta-critical">
+                            <i class="ti ti-alert-circle me-1"></i> <strong>ALERTA:</strong> Acumulado excede el límite legal de 30 días.
+                        </div>
+                    }
+
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-sm btn-primary btn-registrar-disfrute"
+                                data-id="@item.Id"
+                                data-empleado="@item.Empleado.Nombres @item.Empleado.Apellidos"
+                                data-saldo="@item.SaldoActual"
+                                data-toggle="modal"
+                                data-target="#modalDisfrute">
+                            <i class="ti ti-calendar me-1"></i> REGISTRAR DISFRUTE
+                        </button>
+                        <a asp-controller="Empleado" asp-action="File" asp-route-id="@item.EmpleadoId" class="btn btn-sm btn-outline-secondary">
+                            <i class="ti ti-user-search me-1"></i> EXPEDIENTE
+                        </a>
                     </div>
                 </div>
             </div>
-        }
+        </div>
+    }
 
-        @if (!Model.Any())
-        {
-            <div class="col-12 text-center py-5">
-                <div class="avatar avatar-xl bg-light text-muted rounded-circle mb-3 mx-auto">
-                    <i class="ti ti-calendar-cancel fs-48"></i>
-                </div>
-                <h3 class="fw-bold">Sin registros de saldos</h3>
-                <p class="text-muted small">Los saldos de vacaciones se calculan automáticamente con el cierre de nómina mensual.</p>
+    @if (!Model.Any())
+    {
+        <div class="col-12 text-center py-5">
+            <div class="avatar avatar-xl bg-light text-muted rounded-circle mb-3 mx-auto">
+                <i class="ti ti-calendar-cancel fs-48"></i>
             </div>
-        }
-    </div>
+            <h3 class="fw-bold">Sin registros de saldos</h3>
+            <p class="text-muted small">Los saldos de vacaciones se calculan automáticamente con el cierre de nómina mensual.</p>
+        </div>
+    }
 </div>
-
 <!-- ============================================================ -->
 <!-- MODAL PARA REGISTRAR DISFRUTE -->
 <!-- ============================================================ -->
@@ -243,7 +240,7 @@
                 );
 
                 $.ajax({
-                    url: '@Url.Action("RecordDisfrute", "Vacaciones")',
+                    url: '@Url.Action("RecordDisfrute", "SaldoVacaciones")',
                     type: 'POST',
                     data: formData,
                     success: function(response) {

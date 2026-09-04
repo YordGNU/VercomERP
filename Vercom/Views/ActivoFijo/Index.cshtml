@@ -27,17 +27,17 @@
             </div>
         </div>
         <div class="card-body">
-            <table id="assetsTable" class="table table-striped dt-responsive mb-0">
+            <table id="assetsTable" class="table table-striped table-hover dt-responsive">
                 <thead class="thead-sm text-uppercase fs-xxs">
                     <tr>
                         <th> Cód. Inventario</th>
                         <th>Descripción del Activo</th>
-                        <th class="text-center">F. Adquisición</th>
-                        <th class="text-end">Valor Inicial ($)</th>
-                        <th class="text-end">Deprec. Acum.</th>
-                        <th class="text-end">Valor Neto</th>
-                        <th class="text-center">Estado</th>
-                        <th class="text-end">Acciones</th>
+                      <th>F. Adquisición</th>
+                        <th>Valor Inicial ($)</th>
+                        <th>Deprec. Acum.</th>
+                        <th>Valor Neto</th>
+                      <th>Estado</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -55,7 +55,7 @@
                         <tr>
                             <td class="text-numeric fw-bold text-primary">@item.CodigoInventario</td>
                             <td class="fw-semibold">@item.Descripcion</td>
-                            <td class="text-date">@item.FechaAdquisicion.ToString("dd/MM/yyyy")</td>
+                             <td>@item.FechaAdquisicion.ToString("dd/MM/yyyy")</td>
                             <td class="text-numeric">@item.ValorAdquisicion.ToString("N2")</td>
                             <td class="text-numeric text-danger">-@item.DepreciacionAcumulada.ToString("N2")</td>
                             <td class="text-numeric fw-bold text-success">@valorNeto.ToString("N2")</td>

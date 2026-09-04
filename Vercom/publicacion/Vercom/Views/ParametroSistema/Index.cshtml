@@ -27,15 +27,15 @@
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table id="paramsTable" class="table table-striped dt-responsive mb-0">
+                <table id="paramsTable" class="table table-striped table-hover dt-responsive">
                 <thead class="thead-sm text-uppercase fs-xxs">
                         <tr>
                             <th class="ps-4">Código / Clave</th>
                             <th>Descripción</th>
-                            <th class="text-center">Valor Actual</th>
-                            <th class="text-center">Tipo</th>
-                            <th class="text-center">Vigente Desde</th>
-                            <th class="text-end pe-4">Acciones</th>
+                          <th>Valor Actual</th>
+                          <th>Tipo</th>
+                          <th>Vigente Desde</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -43,19 +43,19 @@
                         {
                             var isExpired = item.VigenteHasta != null && item.VigenteHasta < DateOnly.FromDateTime(DateTime.Now);
                             <tr>
-                                <td class="ps-4">
+                              <td>
                                     <code class="fw-bold fs-13 text-primary">@item.Codigo</code>
                                 </td>
                                 <td class="small">@item.Descripcion</td>
                                 <td >
                                     <span class="badge border border-primary text-primary px-3 py-1 fs-13">@item.Valor</span>
                                 </td>
-                                <td class="text-center small text-muted">@item.TipoDato</td>
-                                <td class="text-center small">
+                                <td small text-muted">@item.TipoDato</td>
+                                <td small">
                                     @item.VigenteDesde.ToString("dd/MM/yyyy")
                                     @if(isExpired) { <span class="badge bg-danger-subtle text-danger ms-1">CADUCADO</span> }
                                 </td>
-                                <td class="text-end pe-4">
+                                <td>
                                     <div class="btn-list justify-content-end">
                                         <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-icon btn-light rounded-circle">
                                             <i class="ti ti-edit"></i>

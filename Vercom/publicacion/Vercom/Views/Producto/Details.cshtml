@@ -105,9 +105,9 @@
                                     <thead>
                                         <tr>
                                             <th>Almacén / Depósito</th>
-                                            <th class="text-center">Stock</th>
-                                            <th class="text-center">Costo PPP</th>
-                                            <th class="text-center">Min / Max</th>
+                                          <th>Stock</th>
+                                          <th>Costo PPP</th>
+                                          <th>Min / Max</th>
                                             <th width="50"></th>
                                         </tr>
                                     </thead>
@@ -118,8 +118,8 @@
                                                 <td >
                                                     <span class="badge @(ex.Cantidad <= ex.StockMinimo ? "bg-danger" : "bg-success")">@ex.Cantidad.ToString("N2")</span>
                                                 </td>
-                                                <td class="text-center font-monospace">@ex.CostoPromedio.ToString("N4")</td>
-                                                <td class="text-center small text-muted">@ex.StockMinimo / @ex.StockMaximo</td>
+                                                <td font-monospace">@ex.CostoPromedio.ToString("N4")</td>
+                                                <td small text-muted">@ex.StockMinimo / @ex.StockMaximo</td>
                                                 <td class="pe-4">
                                                     <a asp-action="Movements" asp-route-productId="@Model.Id" asp-route-warehouseId="@ex.AlmacenId" class="btn btn-icon btn-sm btn-ghost-primary"><i class="ti ti-history"></i></a>
                                                 </td>
@@ -138,9 +138,9 @@
                                         <tr>
                                             <th class="ps-4">Nº de Lote</th>
                                             <th>Almacén</th>
-                                            <th class="text-center">Vencimiento</th>
-                                            <th class="text-end">Existencia</th>
-                                            <th class="text-center">Estado</th>
+                                          <th>Vencimiento</th>
+                                            <th>Existencia</th>
+                                          <th>Estado</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -149,9 +149,9 @@
                                             var isNear = lote.FechaVencimiento.HasValue && lote.FechaVencimiento < DateOnly.FromDateTime(DateTime.Now.AddDays(30));
 
                                             <tr>
-                                                <td class="ps-4"><code class="fw-bold">@lote.Lote</code></td>
+                                              <td><code class="fw-bold">@lote.Lote</code></td>
                                                 <td class="small">@lote.Almacen.Nombre</td>
-                                                <td class="text-center @(isExpired ? "text-danger fw-bold" : (isNear ? "text-warning fw-bold" : ""))">
+                                                <td @(isExpired ? "text-danger fw-bold" : (isNear ? "text-warning fw-bold" : ""))">
                                                     @(lote.FechaVencimiento?.ToString("dd/MM/yyyy") ?? "N/A")
                                                 </td>
                                                 <td class="text-end fw-bold">@lote.Cantidad.ToString("N2")</td>

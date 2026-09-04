@@ -59,14 +59,14 @@
 
                                     <div class="col-md-6">
                                         <label class="form-label fw-bold">Asignación de Sucursal</label>
-                                        <select asp-for="Usuario.SucursalId" name="Usuario.SucursalId" class="form-control form-select w-100" asp-items="Model.Sucursales">
+                                        <select asp-for="Usuario.SucursalId" name="Usuario.SucursalId" class="form-control form-select w-100 select2" asp-items="Model.Sucursales">
                                             <option value="">-- Acceso Global (Supervisión) --</option>
                                         </select>
                                     </div>
 
                                     <div class="col-md-6">
                                         <label class="form-label fw-bold">Vincular con Colaborador (RF-20)</label>
-                                        <select asp-for="Usuario.EsEmpleadoId" name="Usuario.EsEmpleadoId" class="form-control form-select w-100" asp-items="Model.Empleados">
+                                        <select asp-for="Usuario.EsEmpleadoId" name="Usuario.EsEmpleadoId" class="form-control form-select w-100 select2" asp-items="Model.Empleados">
                                             <option value="">-- No vincular a RRHH --</option>
                                         </select>
                                     </div>

@@ -28,7 +28,7 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label small fw-bold">Unidad / Sucursal</label>
-                    <select name="sucursalId" class="form-select" asp-items="ViewBag.SucursalId" onchange="this.form.submit()">
+                    <select name="sucursalId" class="form-select select2" asp-items="ViewBag.SucursalId" onchange="this.form.submit()">
                         <option value="">-- Todas las Unidades --</option>
                     </select>
                 </div>
@@ -61,7 +61,7 @@
                </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-striped dt-responsive mb-0">
+                    <table class="table table-striped table-hover dt-responsive">
                     <thead class="thead-sm text-uppercase fs-xxs">
                             <tr>
                                 <th class="ps-4">Empleado</th>
@@ -77,7 +77,7 @@
                             {
                                 var row = Model.Rows[i];
                                 <tr>
-                                    <td class="ps-4">
+                                  <td>
                                         <input type="hidden" name="logs[@i].EmpleadoId" value="@row.EmpleadoId" />
                                         <input type="hidden" name="logs[@i].Fecha" value="@Model.Date.ToString("yyyy-MM-dd")" />
                                         <div class="fw-bold fs-13">@row.NombreCompleto</div>

@@ -69,4 +69,13 @@ public class CargoController : Controller
         }
         return View(cargo);
     }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "RRHH.CARGO.ELIMINAR")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var result = await _hrService.DeleteCargoAsync(id);
+        return Json(new { success = result.Succeeded, message = result.Message });
+    }
 }

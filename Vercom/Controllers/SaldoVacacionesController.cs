@@ -8,11 +8,13 @@ namespace Vercom.Controllers;
 [Authorize]
 public class SaldoVacacionesController : Controller
 {
+    private readonly IHRService _hrService;
     private readonly IHRReportService _hrReportService;
     private readonly IEntidadProvider _entidadProvider;
 
-    public SaldoVacacionesController(IHRReportService hrReportService, IEntidadProvider entidadProvider)
+    public SaldoVacacionesController(IHRService hrService, IHRReportService hrReportService, IEntidadProvider entidadProvider)
     {
+        _hrService = hrService;
         _hrReportService = hrReportService;
         _entidadProvider = entidadProvider;
     }
@@ -30,11 +32,8 @@ public class SaldoVacacionesController : Controller
     [Authorize(Policy = "RRHH.EMPLEADO.EDITAR")]
     public async Task<IActionResult> RecordDisfrute(Guid id, decimal dias, string? observaciones)
     {
-        if (dias <= 0)
-            return Json(new { success = false, message = "Los días deben ser mayores que cero." });
+        var result = await _hrService.RecordVacationEnjoymentAsync(id, dias, observaciones);
 
-        var result = await _hrReportService.RegistrarDisfruteAsync(id, dias, observaciones);
-
-        return Json(new { success = result.Success, message = result.Message });
+        return Json(new { success = result.Succeeded, message = result.Message });
     }
 }

@@ -89,9 +89,9 @@
                             <thead>
                                 <tr>
                                     <th>Producto / Artículo</th>
-                                    <th class="text-center">Sistema</th>
-                                    <th class="text-center">Físico</th>
-                                    <th class="text-center">Diferencia</th>
+                                  <th>Sistema</th>
+                                  <th>Físico</th>
+                                  <th>Diferencia</th>
                                     <th>Observaciones</th>
                                 </tr>
                             </thead>
@@ -104,8 +104,8 @@
                                             <div class="fw-bold fs-13">@d.Producto.Nombre</div>
                                             <div class="text-muted tiny font-monospace">@d.Producto.Codigo</div>
                                         </td>
-                                        <td class="text-center fw-bold">@d.CantidadSistema.ToString("N2")</td>
-                                        <td class="text-center fw-bold text-primary">@(d.CantidadFisica?.ToString("N2") ?? "-")</td>
+                                        <td fw-bold">@d.CantidadSistema.ToString("N2")</td>
+                                        <td class="fw-bold text-primary">@(d.CantidadFisica?.ToString("N2") ?? "-")</td>
                                         <td >
                                             @if(d.CantidadFisica.HasValue) {
                                                 <span class="badge @(diff < 0 ? "bg-danger" : diff > 0 ? "bg-success" : "bg-light text-dark")">

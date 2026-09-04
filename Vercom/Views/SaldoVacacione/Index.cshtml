@@ -12,14 +12,14 @@
 <div class="row mt-4">
     <div class="card shadow-sm border-0">
         <div class="card-body">
-            <table id="dataTable" class="table table-striped dt-responsive mb-0">
+            <table id="dataTable" class="table table-striped table-hover dt-responsive">
                 <thead class="table-dark">
                     <tr>
                         <th>Trabajador</th>
                         <th>Año Fiscal</th>
-                        <th class="text-center">Días Acumulados</th>
-                        <th class="text-center">Días Disfrutados</th>
-                        <th class="text-center">Días Compensados</th>
+                      <th>Días Acumulados</th>
+                      <th>Días Disfrutados</th>
+                      <th>Días Compensados</th>
                         <th class="text-center bg-primary">SALDO ACTUAL</th>
                     </tr>
                 </thead>
@@ -32,7 +32,7 @@
                             <td >@item.DiasAcumulados.ToString("N2")</td>
                             <td >@item.DiasDisfrutados.ToString("N2")</td>
                             <td >@item.DiasCompensados.ToString("N2")</td>
-                            <td class="text-center fw-bold text-primary">@(item.SaldoActual?.ToString("N2") ?? "0.00")</td>
+                            <td class="fw-bold text-primary">@(item.SaldoActual?.ToString("N2") ?? "0.00")</td>
                         </tr>
                     }
                 </tbody>

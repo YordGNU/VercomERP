@@ -101,7 +101,7 @@
             const tbody = document.querySelector("#detailsTable tbody");
             const row = document.createElement("tr");
             row.innerHTML = `
-                <td class="ps-4">
+              <td>
                     <select name="Bom.ListaMaterialesDetalles[${rowCount}].ProductoInsumoId" class="form-select select2" required>
                         <option value="">-- Buscar Insumo --</option>
                         ${parsedInsumos.map(i => `<option value="${i.id}">${i.display}</option>`).join('')}

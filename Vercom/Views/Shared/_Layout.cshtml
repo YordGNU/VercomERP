@@ -11,6 +11,8 @@
     <link href="~/css/plugins/datatables/responsive.bootstrap5.min.css" rel="stylesheet" type="text/css">
     <!-- Toastr css -->
     <link href="~/css/plugins/toastr/toastr.min.css" rel="stylesheet" type="text/css">
+    <!-- Select2 css -->
+    <link href="~/css/plugins/select2/select2.min.css" rel="stylesheet" type="text/css">
     <!-- Theme Config Js -->
     <script src="~/js/config.js"></script>
     <!-- Vendor css -->
@@ -45,6 +47,8 @@
     <script src="~/js/plugins/datatables/responsive.bootstrap5.min.js"></script>
     <!-- Toastr js -->
     <script src="~/js/plugins/toastr/toastr.min.js"></script>
+    <!-- Select2 js -->
+    <script src="~/js/plugins/select2/select2.min.js"></script>
     <!-- Page js -->
     <script src="~/js/pages/datatables-ajax.js"></script>
 
@@ -108,6 +112,20 @@
             @if (TempData["Info"] != null) {
                 <text>toastr.info("@TempData["Info"]");</text>
             }
+
+            // Inicializar Select2 globalmente
+            $('.select2').each(function() {
+                $(this).select2({
+                    width: '100%',
+                    placeholder: $(this).data('placeholder') || '-- Seleccione --',
+                    allowClear: true,
+                    language: {
+                        noResults: function() { return "No se encontraron resultados"; },
+                        searching: function() { return "Buscando..."; }
+                    },
+                    dropdownParent: $(this).closest('.modal').length ? $(this).closest('.modal') : $(document).body
+                });
+            });
         });
     </script>
 

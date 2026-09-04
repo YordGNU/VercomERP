@@ -191,16 +191,15 @@
                                 <li class="side-nav-item"><a asp-controller="Nomina" asp-action="Index" class="side-nav-link">Nómina de Salarios</a></li>
                             }
                             <li class="side-nav-item"><a asp-controller="Utile" asp-action="Index" class="side-nav-link">Responsabilidad Material</a></li>
-
+                            <li class="side-nav-item"><a asp-controller="SaldoVacaciones" asp-action="Index" class="side-nav-link">Saldo de Vacaciones</a></li>
                             <li class="side-nav-title text-primary small mt-2">Configuración</li>
                             <li class="side-nav-item"><a asp-controller="Cargo" asp-action="Index" class="side-nav-link">Cargos y Ocupaciones</a></li>
-                            <li class="side-nav-item"><a asp-controller="ConceptoNomina" asp-action="Index" class="side-nav-link">Conceptos Salariales</a></li>
-                            <li class="side-nav-item"><a asp-controller="TipoAusencium" asp-action="Index" class="side-nav-link">Tipos de Ausencia</a></li>
                             @if (await PuedeAsync("RRHH.PLANTILLA.VER"))
                             {
-                                <li class="side-nav-item"><a asp-controller="PlantillaAprobadum" asp-action="Index" class="side-nav-link">Plantilla Cargos (RF-26)</a></li>
+                                <li class="side-nav-item"><a asp-controller="PlantillaAprobadum" asp-action="Index" class="side-nav-link">Plantilla y Plazas</a></li>
                             }
-                            <li class="side-nav-item"><a asp-controller="SaldoVacaciones" asp-action="Index" class="side-nav-link">Saldo de Vacaciones</a></li>
+                            <li class="side-nav-item"><a asp-controller="ConceptoNomina" asp-action="Index" class="side-nav-link">Conceptos Salariales</a></li>
+                            <li class="side-nav-item"><a asp-controller="TipoAusencium" asp-action="Index" class="side-nav-link">Tipos de Ausencia</a></li>                                         
                         </ul>
                     </div>
                 </li>

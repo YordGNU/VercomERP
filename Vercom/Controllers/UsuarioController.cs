@@ -48,15 +48,12 @@ public class UsuarioController : Controller
         var usuario = vm.Usuario;
         ModelState.Remove("Usuario.Entidad");
 
-        if (ModelState.IsValid)
+        var result = await _authService.CreateUserAsync(usuario, vm.Password ?? "", vm.SelectedRoles);
+        if (result.Succeeded)
         {
-            var result = await _authService.CreateUserAsync(usuario, vm.Password ?? "", vm.SelectedRoles);
-            if (result.Succeeded)
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            ModelState.AddModelError("", result.Message);
+            return RedirectToAction(nameof(Index));
         }
+        ModelState.AddModelError("", result.Message);
 
         var contextVm = await _authService.GetUserFormContextAsync(usuario);
         return View(contextVm);

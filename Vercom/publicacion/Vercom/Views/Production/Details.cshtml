@@ -125,9 +125,9 @@
                             <thead>
                                 <tr class="bg-light-subtle">
                                     <th class="ps-4">Componente</th>
-                                    <th class="text-end">Planificado</th>
-                                    <th class="text-end">Real Utilizado</th>
-                                    <th class="text-center">Eficiencia</th>
+                                    <th>Planificado</th>
+                                    <th>Real Utilizado</th>
+                                  <th>Eficiencia</th>
                                     <th width="50"></th>
                                 </tr>
                             </thead>
@@ -138,7 +138,7 @@
                                     var colorClass = (eficiencia < 90) ? "text-danger" : (eficiencia > 100 ? "text-success" : "text-primary");
 
                                     <tr>
-                                        <td class="ps-4">
+                                      <td>
                                             <div class="fw-bold fs-13">@c.ProductoInsumo.Nombre</div>
                                             <small class="text-muted tiny font-monospace">@c.ProductoInsumo.Codigo</small>
                                         </td>

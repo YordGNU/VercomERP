@@ -114,7 +114,7 @@
                             <th>Producto</th>
                             <th  class="text-center">Stock Actual</th>
                             <th  class="text-center">Mínimo</th>
-                            <th class="text-end">Acción</th>
+                            <th>Acción</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -125,7 +125,7 @@
                                 <tr>
                                     <td class="fw-bold">@alert.Producto.Nombre</td>
                                     <td ><span class="badge badge-soft-danger fs-13">@alert.Cantidad.ToString("N0")</span></td>
-                                    <td class="text-center text-muted">@alert.StockMinimo.ToString("N0")</td>
+                                    <td text-muted">@alert.StockMinimo.ToString("N0")</td>
                                     <td>
                                         <a asp-controller="Purchase" asp-action="Create" class="btn btn-sm btn-outline py-0 px-2 text-primary">Comprar</a>
                                     </td>
