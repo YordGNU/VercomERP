@@ -1,0 +1,65 @@
+@model IEnumerable<Vercom.Services.SC408Row>
+@{
+    ViewBag.Title = "Modelo Oficial SC-4-08";
+    var empName = ViewBag.EmployeeName;
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Registro de Salarios y Tiempo de Servicio</h4>
+    </div>
+    <div class="text-end">
+        <button class="btn btn-sm btn-outline-dark" onclick="window.print()"><i class="ti ti-printer me-1"></i> Imprimir Modelo Oficial</button>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="card shadow-none border">
+        <div class="card-header bg-white border-bottom text-center">
+            <h5 class="fw-bold mb-0">MODELO SC-4-08 (RES. MTSS)</h5>
+            <p class="small text-muted mb-0">EXPEDIENTE LABORAL ACUMULATIVO</p>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>Trabajador:</strong> @empName</p>
+                    <p class="mb-0"><strong>Entidad:</strong> @User.FindFirst("EntidadNombre")?.Value</p>
+                </div>
+            </div>
+            <table class="table table-bordered table-sm align-middle text-center">
+            <thead class="thead-sm text-uppercase fs-xxs">
+                    <tr>
+                        <th rowspan="2">Periodo (Mes/Año)</th>
+                        <th rowspan="2">Días Trabajados</th>
+                        <th colspan="2">Salarios Devengados ($)</th>
+                        <th rowspan="2">Tiempo Servicio (Meses Acum.)</th>
+                    </tr>
+                    <tr>
+                        <th>Mensual</th>
+                        <th>Acumulado Año</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        decimal cumul = 0;
+                    }
+                    @foreach (var row in Model)
+                    {
+                        cumul += row.SalarioDevengado;
+                        <tr>
+                            <td class="fw-bold">@row.Periodo</td>
+                            <td>@row.DiasTrabajados.ToString("N1")</td>
+                            <td>@row.SalarioDevengado.ToString("N2")</td>
+                            <td>@cumul.ToString("N2")</td>
+                            <td>@row.TiempoServicioMeses</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="alert alert-secondary py-2 small mt-4 d-print-none">
+        <i class="ti ti-info-circle me-1"></i> RF-25: Este modelo es obligatorio para el trámite de pensiones y jubilaciones según la Ley de Seguridad Social cubana.
+    </div>
+</div>

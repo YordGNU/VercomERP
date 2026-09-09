@@ -1,0 +1,102 @@
+@model IEnumerable<Vercom.Models.PosVentaPendiente>
+@{
+    ViewBag.Title = "Ventas Offline Pendientes";
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Monitor de Sincronización POS</h4>
+        <p class="text-muted small mb-0">Cola de operaciones recibidas desde terminales móviles en espera de procesamiento fiscal.</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Integración</a></li>
+            <li class="breadcrumb-item active">Pendientes</li>
+        </ol>
+        <span class="badge badge-soft-primary py-2 px-3">
+            <i class="ti ti-refresh me-1"></i> Actualización Automática (30s)
+        </span>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-light-subtle d-flex justify-content-between">
+            <h5 class="m-0 fw-bold"><i class="ti ti-cloud-sync me-2 text-primary"></i>Cola de Procesamiento</h5>
+            <div class="text-end small">
+                Pendientes: <span class="badge bg-warning text-white">@Model.Count(m => m.Estado == "PENDIENTE")</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="pendingSalesTable" class="table table-striped table-hover dt-responsive">
+                <thead class="thead-sm text-uppercase fs-xxs">
+                        <tr>
+                            <th class="ps-4">Terminal</th>
+                            <th>Fecha Venta Local</th>
+                            <th>Recibido en Servidor</th>
+                          <th>Intentos</th>
+                          <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.OrderByDescending(x => x.FechaRecibidoServidor))
+                        {
+                            var statusColor = item.Estado switch {
+                                "PROCESADA" => "success",
+                                "PENDIENTE" => "warning",
+                                "ERROR" => "danger",
+                                _ => "secondary"
+                            };
+
+                            <tr>
+                              <td>
+                                    <div class="fw-bold">@item.DispositivoPos.Nombre</div>
+                                    <small class="text-muted tiny">Key: @item.IdempotencyKey</small>
+                                </td>
+                                <td class="small">@item.FechaVentaLocal.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="small text-muted">@item.FechaRecibidoServidor.ToString("dd/MM HH:mm")</td>
+                                <td >
+                                    <span class="badge bg-light text-dark">@item.IntentosProcesamiento</span>
+                                </td>
+                                <td >
+                                    <span class="badge badge-soft-@statusColor px-3 py-1">@item.Estado</span>
+                                    @if(item.Estado == "ERROR") {
+                                        <i class="ti ti-info-circle text-danger ms-1" title="@item.MensajeError"></i>
+                                    }
+                                </td>
+                                <td>
+                                    @if(item.Estado == "PROCESADA" && item.FacturaId.HasValue) {
+                                        <a asp-controller="Sales" asp-action="Details" asp-route-id="@item.FacturaId" class="btn btn-sm btn-icon btn-light rounded-circle text-success" title="Ver Factura Generada">
+                                            <i class="ti ti-receipt"></i>
+                                        </a>
+                                    }
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-icon btn-light rounded-circle" title="Ver Payload JSON">
+                                        <i class="ti ti-braces"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#pendingSalesTable').DataTable({
+                language: { url: '/js/i18n/es-ES.json' },
+                order: [[2, 'desc']]
+            });
+        });
+    </script>
+}
+
+<style>
+    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
+</style>

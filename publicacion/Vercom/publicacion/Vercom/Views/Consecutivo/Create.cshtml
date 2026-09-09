@@ -1,0 +1,54 @@
+﻿@model Vercom.ViewModels.ConsecutivoFormViewModel
+@{
+    ViewBag.Title = Model.Title;
+}
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Registrar Consecutivo</h4>
+        <p class="text-muted small mb-0">Definición de estructura contable según normas oficiales (RF-10).</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-0">
+            <li class="breadcrumb-item"><a asp-action="Dashboard/Index">Vercom</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">Consecutivo</a></li>
+            <li class="breadcrumb-item active">Nuevo Consecutivo</li>
+        </ol>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header border-light justify-content-between">
+                <h4 class="card-title">Formulario de Creación</h4>
+            </div>
+            <div class="card-body">
+                <form class="row g-3" asp-action="Create">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="mb-3">
+                        <label asp-for="Consecutivo.TipoDocumento" class="form-label"></label>
+                        <select asp-for="Consecutivo.TipoDocumento" class="form-control" asp-items="Model.TipoDocumentos">
+                        </select>
+                        <span asp-validation-for="Consecutivo.TipoDocumento" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Consecutivo.UltimoNumero" class="form-label"></label>
+                        <input asp-for="Consecutivo.UltimoNumero" class="form-control" />
+                        <span asp-validation-for="Consecutivo.UltimoNumero" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Consecutivo.Serie" class="form-label"></label>
+                        <input asp-for="Consecutivo.Serie" class="form-control" />
+                        <span asp-validation-for="Consecutivo.Serie" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

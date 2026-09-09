@@ -8,7 +8,7 @@ namespace Vercom.Services;
 public interface ISalesService
 {
     // Lectura
-    Task<IEnumerable<FacturaVentum>> GetInvoicesAsync();
+    Task<IEnumerable<FacturaVentum>> GetInvoicesAsync(string? search = null, string? status = null, string? channel = null);
     Task<FacturaVentum?> GetInvoiceByIdAsync(Guid id);
     Task<SalesCreateViewModel> GetSalesCreateContextAsync(FacturaVentum? existingInvoice = null);
 
@@ -39,10 +39,22 @@ public class SalesService : ISalesService
         _entidadProvider = entidadProvider;
     }
 
-    public async Task<IEnumerable<FacturaVentum>> GetInvoicesAsync()
+    public async Task<IEnumerable<FacturaVentum>> GetInvoicesAsync(string? search = null, string? status = null, string? channel = null)
     {
-        return await _context.FacturaVenta
+        var query = _context.FacturaVenta
             .Include(f => f.Cliente)
+            .AsQueryable();
+
+        if (!string.IsNullOrEmpty(search))
+            query = query.Where(f => f.NumeroFactura.Contains(search) || f.Cliente.NombreRazonSocial.Contains(search));
+
+        if (!string.IsNullOrEmpty(status))
+            query = query.Where(f => f.Estado == status);
+
+        if (!string.IsNullOrEmpty(channel))
+            query = query.Where(f => f.CanalVenta == channel);
+
+        return await query
             .OrderByDescending(f => f.Fecha)
             .ToListAsync();
     }
@@ -117,9 +129,24 @@ public class SalesService : ISalesService
                     .FirstOrDefaultAsync(e => e.AlmacenId == invoice.AlmacenId && e.ProductoId == detail.ProductoId);
                 detail.CostoUnitarioVenta = stock?.CostoPromedio ?? 0;
 
-                // Cálculo de Impuesto Dinámico (RF-53)
-                var prod = await _context.Productos.FindAsync(detail.ProductoId);
-                if (prod != null && prod.AplicaImpuestoVentas)
+                // Cálculo de Impuesto Dinámico (RF-53) y Validación de Topes (RF-55)
+                var prod = await _context.Productos.Include(p => p.Familia).FirstOrDefaultAsync(p => p.Id == detail.ProductoId);
+                if (prod == null) return (false, $"Producto {detail.ProductoId} no encontrado.", null);
+
+                // --- RF-55: Validar Tope de Precio (MFP) ---
+                var today = DateOnly.FromDateTime(DateTime.Now);
+                var tope = await _context.TopePrecioMfps
+                    .Where(t => (t.ProductoId == prod.Id || t.FamiliaId == prod.FamiliaId)
+                                && t.VigenteDesde <= today && (t.VigenteHasta == null || t.VigenteHasta >= today))
+                    .OrderByDescending(t => t.ProductoId) // Priorizar tope por producto sobre familia
+                    .FirstOrDefaultAsync();
+
+                if (tope != null && detail.PrecioUnitario > tope.PrecioMaximo)
+                {
+                    return (false, $"ALERTA LEGAL: El precio de '{prod.Nombre}' ($ {detail.PrecioUnitario:N2}) excede el tope máximo permitido por el MFP ($ {tope.PrecioMaximo:N2}). Operación bloqueada.", null);
+                }
+
+                if (prod.AplicaImpuestoVentas)
                 {
                     var taxAmount = await _taxService.CalculateSalesTaxAsync(invoice.EntidadId, detail.PrecioUnitario * detail.Cantidad);
                     detail.ImpuestoPorcentaje = 10.0m; // Informativo

@@ -25,6 +25,16 @@ public class CargoController : Controller
     [Authorize(Policy = "RRHH.CARGO.CREAR")]
     public IActionResult Create() => View(new Cargo());
 
+
+    [HttpGet]
+    [Authorize(Policy = "RRHH.CARGO.VER")]
+    public async Task<IActionResult> GetScale(Guid id)
+    {
+        var cargo = await _hrService.GetCargoByIdAsync(id);
+        if (cargo == null) return NotFound();
+        return Json(new { min = cargo.SalarioEscalaMin, max = cargo.SalarioEscalaMax });
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Policy = "RRHH.CARGO.CREAR")]

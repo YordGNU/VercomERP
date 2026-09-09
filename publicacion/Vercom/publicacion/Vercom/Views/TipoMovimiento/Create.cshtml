@@ -1,0 +1,81 @@
+﻿@model Vercom.Models.TipoMovimiento
+@{
+    ViewBag.Title = "Nuevo Tipo de Movimiento";
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Definir Operación de Inventario</h4>
+        <p class="text-muted small mb-0">Configuración de la lógica contable y de stock para movimientos de almacén.</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Inventario</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">Configuración</a></li>
+            <li class="breadcrumb-item active">Nuevo</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light-subtle py-3">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-settings-automation me-2 text-primary"></i>Parámetros de la Operación</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Create" method="post" class="row g-4">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Código Interno</label>
+                            <input asp-for="Codigo" class="form-control fw-bold text-primary text-uppercase" placeholder="Ej: MERMA_EXT" required maxlength="30" />
+                            <span asp-validation-for="Codigo" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Nombre de la Operación</label>
+                            <input asp-for="Nombre" class="form-control" placeholder="Ej: Merma Extraordinaria" required maxlength="100" />
+                            <span asp-validation-for="Nombre" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Naturaleza</label>
+                            <select asp-for="Naturaleza" class="form-select" required>
+                                <option value="ENTRADA">ENTRADA (Suma Stock)</option>
+                                <option value="SALIDA">SALIDA (Resta Stock)</option>
+                                <option value="TRANSFERENCIA">TRANSFERENCIA (Mueve Stock)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 d-flex align-items-end">
+                            <div class="form-check form-switch p-3 bg-light rounded-3 w-100">
+                                <input class="form-check-input ms-0 me-2" type="checkbox" asp-for="AfectaCosto" checked>
+                                <label class="form-check-label fw-bold">Actualiza PPP</label>
+                                <p class="text-muted tiny mb-0 mt-1">¿Afecta el costo promedio?</p>
+                            </div>
+                        </div>
+
+                        <div class="col-12 d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <a asp-action="Index" class="btn btn-sm btn-outline-secondary px-4">CANCELAR</a>
+                            <button type="submit" class="btn btn-sm btn-primary px-5 py-2 shadow">
+                                <i class="ti ti-device-floppy me-1"></i> GUARDAR TIPO
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+
+<style>
+    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
+</style>

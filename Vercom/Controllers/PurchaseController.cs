@@ -19,9 +19,11 @@ public class PurchaseController : Controller
     }
 
     [Authorize(Policy = "COMERCIAL.ORDEN_COMPRA.VER")]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? search, string? status)
     {
-        var orders = await _purchaseService.GetPurchaseOrdersAsync();
+        var orders = await _purchaseService.GetPurchaseOrdersAsync(search, status);
+        ViewBag.CurrentSearch = search;
+        ViewBag.CurrentStatus = status;
         return View(orders);
     }
 

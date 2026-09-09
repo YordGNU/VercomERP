@@ -8,7 +8,7 @@ namespace Vercom.Services;
 public interface IPurchaseService
 {
     // Lectura
-    Task<IEnumerable<OrdenCompra>> GetPurchaseOrdersAsync();
+    Task<IEnumerable<OrdenCompra>> GetPurchaseOrdersAsync(string? search = null, string? status = null);
     Task<OrdenCompra?> GetPurchaseOrderByIdAsync(Guid id);
     Task<PurchaseOrderViewModel> GetPurchaseOrderCreateContextAsync(OrdenCompra? existing = null);
 
@@ -23,20 +23,34 @@ public class PurchaseService : IPurchaseService
     private readonly AppDbContext _context;
     private readonly IInventoryService _inventoryService;
     private readonly IContractService _contractService;
+    private readonly IAccountingService _accountingService;
+    private readonly IParametroSistemaService _paramService;
     private readonly Security.IEntidadProvider _entidadProvider;
 
-    public PurchaseService(AppDbContext context, IInventoryService inventoryService, IContractService _contractService, Security.IEntidadProvider entidadProvider)
+    public PurchaseService(AppDbContext context, IInventoryService inventoryService, IContractService _contractService,
+        IAccountingService accountingService, IParametroSistemaService paramService, Security.IEntidadProvider entidadProvider)
     {
         _context = context;
         _inventoryService = inventoryService;
         this._contractService = _contractService;
+        _accountingService = accountingService;
+        _paramService = paramService;
         _entidadProvider = entidadProvider;
     }
 
-    public async Task<IEnumerable<OrdenCompra>> GetPurchaseOrdersAsync()
+    public async Task<IEnumerable<OrdenCompra>> GetPurchaseOrdersAsync(string? search = null, string? status = null)
     {
-        return await _context.OrdenCompras
+        var query = _context.OrdenCompras
             .Include(o => o.Proveedor)
+            .AsQueryable();
+
+        if (!string.IsNullOrEmpty(search))
+            query = query.Where(o => o.NumeroOrden.Contains(search) || o.Proveedor.RazonSocial.Contains(search));
+
+        if (!string.IsNullOrEmpty(status))
+            query = query.Where(o => o.Estado == status);
+
+        return await query
             .OrderByDescending(o => o.Fecha)
             .ToListAsync();
     }
@@ -176,9 +190,88 @@ public class PurchaseService : IPurchaseService
 
             order.Estado = "RECIBIDA";
             await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
 
-            return (true, "Compra recibida, inventario actualizado y cuenta por pagar generada.");
+            // 4. Integración Contable de Compra (REC - Recepción)
+            var tipoComprobante = await _context.TipoComprobantes.FirstOrDefaultAsync(t => t.Codigo == "REC")
+                                ?? await _context.TipoComprobantes.FirstOrDefaultAsync(t => t.Codigo == "DIA");
+
+            if (tipoComprobante != null)
+            {
+                var period = await _context.PeriodoContables.FirstOrDefaultAsync(p => p.EntidadId == order.EntidadId && p.Anio == order.Fecha.Year && p.Mes == order.Fecha.Month);
+                if (period != null && period.Estado == "ABIERTO")
+                {
+                    var entry = new AsientoContable
+                    {
+                        Id = Guid.NewGuid(),
+                        EntidadId = order.EntidadId,
+                        PeriodoId = period.Id,
+                        Fecha = DateOnly.FromDateTime(DateTime.Now),
+                        Concepto = $"RECEPCIÓN DE COMPRA - ORDEN #{order.NumeroOrden} - PROV: {order.Proveedor.RazonSocial}",
+                        ModuloOrigen = "COMPRAS",
+                        DocumentoOrigenTipo = "ORDEN_COMPRA",
+                        DocumentoOrigenId = order.Id,
+                        TipoComprobanteId = tipoComprobante.Id,
+                        CreadoPor = userId,
+                        CreadoEn = DateTimeOffset.Now,
+                        Estado = "CONTABILIZADO"
+                    };
+
+                    // DEBE: Inventario (por cada producto o agrupado)
+                    // Para simplificar el piloto, agrupamos por cuenta de inventario
+                    var detailsGrouped = order.OrdenCompraDetalles
+                        .GroupBy(d => d.Producto.CuentaInventarioId)
+                        .ToList();
+
+                    foreach (var group in detailsGrouped)
+                    {
+                        var accountId = group.Key;
+                        if (accountId == null)
+                        {
+                            // Fallback a parámetro o cuenta genérica 183
+                            var ctaInv = await _paramService.ObtenerValorVigenteAsync(order.EntidadId, "CTA_INV_GENERICA") ?? "183.0010";
+                            var acc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaInv && c.EntidadId == order.EntidadId);
+                            accountId = acc?.Id;
+                        }
+
+                        if (accountId.HasValue)
+                        {
+                            entry.AsientoDetalles.Add(new AsientoDetalle
+                            {
+                                Id = Guid.NewGuid(),
+                                CuentaId = accountId.Value,
+                                Debe = group.Sum(d => d.CantidadSolicitada * d.PrecioUnitario),
+                                Haber = 0,
+                                Glosa = $"Entrada Almacén - OC {order.NumeroOrden}"
+                            });
+                        }
+                    }
+
+                    // HABER: Cuentas por Pagar (Proveedor)
+                    var ctaPasivo = await _paramService.ObtenerValorVigenteAsync(order.EntidadId, "CTA_CXP_PROVEEDORES") ?? "405.0020";
+                    var payableAcc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaPasivo && c.EntidadId == order.EntidadId);
+
+                    if (payableAcc != null)
+                    {
+                        entry.AsientoDetalles.Add(new AsientoDetalle
+                        {
+                            Id = Guid.NewGuid(),
+                            CuentaId = payableAcc.Id,
+                            Debe = 0,
+                            Haber = order.Total,
+                            Glosa = $"Obligación con Proveedor - {order.Proveedor.RazonSocial}"
+                        });
+                    }
+
+                    // Validar Partida Doble antes de registrar
+                    if (entry.AsientoDetalles.Any() && entry.AsientoDetalles.Sum(d => d.Debe) == entry.AsientoDetalles.Sum(d => d.Haber))
+                    {
+                        await _accountingService.CreateEntryAsync(entry);
+                    }
+                }
+            }
+
+            await transaction.CommitAsync();
+            return (true, "Compra recibida, inventario actualizado y obligación contable registrada.");
         }
         catch (Exception ex)
         {

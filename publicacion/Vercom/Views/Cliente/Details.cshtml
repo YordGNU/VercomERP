@@ -1,0 +1,204 @@
+@model Vercom.Models.Cliente
+@{
+    ViewBag.Title = "Ficha Comercial de Cliente";
+    var balance = Model.CuentaPorCobrars.Where(c => c.Estado != "PAGADA").Sum(c => c.SaldoPendiente);
+    var totalSales = Model.FacturaVenta.Where(f => f.Estado == "EMITIDA").Sum(f => f.Total);
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Cliente: @Model.NombreRazonSocial</h4>
+        <p class="text-muted small mb-0">Gestión de cartera, historial de facturación y límites de crédito.</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Comercial</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">Clientes</a></li>
+            <li class="breadcrumb-item active">Ficha</li>
+        </ol>
+        <div class="btn-list">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary">
+                <i class="ti ti-edit me-1"></i> MODIFICAR DATOS
+            </a>
+            <a asp-controller="Sales" asp-action="Create" asp-route-clienteId="@Model.Id" class="btn btn-sm btn-success shadow-sm">
+                <i class="ti ti-receipt me-1"></i> NUEVA VENTA
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <!-- Columna Izquierda: Perfil Financiero -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-status-top bg-primary"></div>
+                <div class="card-body text-center p-4">
+                    <div class="avatar avatar-xl bg-primary-subtle text-primary rounded-circle mb-3 mx-auto" style="width: 80px; height: 80px;">
+                        <i class="ti ti-user-star fs-40"></i>
+                    </div>
+                    <h3 class="fw-bold mb-1">@Model.NombreRazonSocial</h3>
+                    <code class="fs-13 text-primary fw-bold">NIT/CI: @Model.NitOCi</code>
+
+                    <div class="mt-4 pt-3 border-top">
+                        <div class="row g-2">
+                            <div class="col-12">
+                                <div class="bg-danger-subtle rounded py-3">
+                                    <div class="h2 fw-bold mb-0 text-danger">@balance.ToString("C")</div>
+                                    <div class="text-muted tiny fw-bold text-uppercase">SALDO PENDIENTE POR COBRAR</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light-subtle">
+                    <h5 class="m-0 fw-bold small text-uppercase">Condiciones Comerciales</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="text-muted tiny fw-bold text-uppercase d-block mb-1">Límite de Crédito</label>
+                        <h3 class="fw-bold m-0">@(Model.LimiteCredito.ToString("C") ?? "SIN LÍMITE")</h3>
+                    </div>
+                    <div class="progress progress-sm mb-3">
+                        @{
+                            var percent = (Model.LimiteCredito > 0) ? (balance / Model.LimiteCredito) * 100 : 0;
+                            var progressClass = percent > 90 ? "bg-danger" : percent > 70 ? "bg-warning" : "bg-success";
+                        }
+                        <div class="progress-bar @progressClass" style="width: @percent%"></div>
+                    </div>
+                    <hr class="my-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small text-muted fw-bold">Segmento:</span>
+                        <span class="badge badge-outline text-primary small">@Model.Segmento</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="small text-muted fw-bold">Tipo Persona:</span>
+                        <span class="small fw-bold">@Model.TipoPersona</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Derecha: Historial y Movimientos -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light-subtle d-flex justify-content-between align-items-center">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-history me-2 text-primary"></i>Resumen de Actividad</h5>
+                    <div class="text-end">
+                        <div class="small text-muted">Ventas Acumuladas: <strong class="text-dark">@totalSales.ToString("C")</strong></div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs nav-tabs-alt border-0" role="tablist">
+                        <li class="nav-item"><a class="nav-link active py-3 px-4 fw-bold" data-bs-toggle="tab" href="#tab-invoices">FACTURAS (@Model.FacturaVenta.Count)</a></li>
+                        <li class="nav-item"><a class="nav-link py-3 px-4 fw-bold" data-bs-toggle="tab" href="#tab-cxc">CUENTAS POR COBRAR</a></li>
+                        <li class="nav-item"><a class="nav-link py-3 px-4 fw-bold" data-bs-toggle="tab" href="#tab-contracts">CONTRATOS (@Model.ContratoEconomicos.Count)</a></li>
+                    </ul>
+                    <div class="tab-content border-top">
+                        <!-- Facturas -->
+                        <div class="tab-pane fade show active" id="tab-invoices">
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Nº Factura</th>
+                                            <th>Importe</th>
+                                          <th>Estado</th>
+                                            <th width="40"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach(var f in Model.FacturaVenta.OrderByDescending(x => x.Fecha).Take(10)) {
+                                            <tr>
+                                                <td class="small">@f.Fecha.ToString("dd/MM/yyyy")</td>
+                                                <td class="fw-bold">@f.Serie-@f.NumeroFactura</td>
+                                                <td class="text-end fw-bold">@f.Total.ToString("N2")</td>
+                                                <td >
+                                                    <span class="badge @(f.Estado == "EMITIDA" ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger") small">@f.Estado</span>
+                                                </td>
+                                                <td><a asp-controller="Sales" asp-action="Details" asp-route-id="@f.Id" class="btn btn-icon btn-sm btn-ghost-primary"><i class="ti ti-eye"></i></a></td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- Cuentas por Cobrar -->
+                        <div class="tab-pane fade" id="tab-cxc">
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Vencimiento</th>
+                                            <th>Monto Original</th>
+                                            <th>Saldo Pendiente</th>
+                                          <th>Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach(var cxc in Model.CuentaPorCobrars.Where(x => x.Estado != "PAGADA").OrderBy(x => x.FechaVencimiento)) {
+                                            <tr>
+                                                <td class="small @(cxc.FechaVencimiento < DateOnly.FromDateTime(DateTime.Now) ? "text-danger fw-bold" : "")">@cxc.FechaVencimiento.ToString("dd/MM/yyyy")</td>
+                                                <td class="small">@cxc.MontoOriginal.ToString("N2")</td>
+                                                <td class="text-end fw-bold text-danger">@cxc.SaldoPendiente.ToString("N2")</td>
+                                                <td ><span class="badge badge-soft-warning">@cxc.Estado</span></td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- Contratos -->
+                        <div class="tab-pane fade" id="tab-contracts">
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Nº Contrato</th>
+                                            <th>Vigencia</th>
+                                            <th>Monto Total</th>
+                                          <th>Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach(var con in Model.ContratoEconomicos.OrderByDescending(x => x.FechaFirma)) {
+                                            <tr>
+                                                <td class="fw-bold">@con.NumeroContrato</td>
+                                                <td class="small text-muted">@con.FechaInicio.ToString("dd/MM/yyyy") - @(con.FechaFin?.ToString("dd/MM/yyyy") ?? "Indefinido")</td>
+                                                <td>@(con.MontoTotal?.ToString("N2") ?? "-")</td>
+                                                <td ><span class="badge badge-soft-info">@con.Estado</span></td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 bg-light-subtle">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3 small text-uppercase">Información de Integración Contable</h5>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-dark text-white p-2 rounded me-3"><i class="ti ti-calculator"></i></div>
+                        <div>
+                            <div class="fw-bold text-dark">@Model.CuentaContable?.Codigo - @Model.CuentaContable?.Nombre</div>
+                            <div class="tiny text-muted">Cuenta auxiliar vinculada para el control de la deuda.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
+    .fs-13 { font-size: 0.8125rem; }
+</style>

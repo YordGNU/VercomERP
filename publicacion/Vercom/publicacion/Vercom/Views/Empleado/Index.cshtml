@@ -1,0 +1,203 @@
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@model IEnumerable<Vercom.Models.Empleado>
+@{
+    ViewBag.Title = "Plantilla de Empleados";
+}
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Expedientes del Personal</h4>
+        <p class="text-muted small mb-0">Gestión integral de la fuerza laboral y control de plantilla.</p>
+    </div>
+    <div class="text-end">
+        @if ((await AuthorizationService.AuthorizeAsync(User, "RRHH.EMPLEADO.CREAR")).Succeeded)
+        {
+            <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
+                <i class="ti ti-user-plus"></i> NUEVO INGRESO
+            </a>
+        }
+    </div>
+</div>
+<div class="row">
+    @if (ViewBag.Stats != null)    {
+        var stats = ViewBag.Stats as Vercom.Services.RRHHStatsViewModel;
+        <div class="col-12 mb-4">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="card card-sm shadow-sm border-0 bg-primary text-white">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar bg-white bg-opacity-20 text-white rounded me-3"><i class="ti ti-users fs-24"></i></div>
+                                <div>
+                                    <div class="font-weight-medium">@stats.TotalActivos</div>
+                                    <div class="text-white-50 tiny fw-bold text-uppercase">Trabajadores Activos</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card card-sm shadow-sm border-0">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar bg-info-subtle text-info rounded me-3"><i class="ti ti-report-money fs-24"></i></div>
+                                <div>
+                                    <div class="font-weight-medium">@stats.NominaProyectada.ToString("C0")</div>
+                                    <div class="text-muted tiny fw-bold text-uppercase">Costo Mensual Est.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card card-sm shadow-sm border-0 @(stats.ContratosVencer30Dias > 0 ? "border-start border-warning border-4" : "")">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar bg-warning-subtle text-warning rounded me-3"><i class="ti ti-calendar-clock fs-24"></i></div>
+                                <div>
+                                    <div class="font-weight-medium">@stats.ContratosVencer30Dias</div>
+                                    <div class="text-muted tiny fw-bold text-uppercase">Contratos por Vencer</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card card-sm shadow-sm border-0">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar bg-danger-subtle text-danger rounded me-3"><i class="ti ti-user-x fs-24"></i></div>
+                                <div>
+                                    <div class="font-weight-medium">@stats.TotalBajas</div>
+                                    <div class="text-muted tiny fw-bold text-uppercase">Bajas Acumuladas</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    <!-- Sección de Filtros -->
+    <div class="col-12 mb-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-3">
+                <form asp-action="Index" method="get" class="row g-3 align-items-end">
+                    <div class="col-lg-3">
+                        <label class="form-label small fw-bold">Buscar Trabajador</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="ti ti-search text-muted"></i></span>
+                            <input type="text" name="search" class="form-control border-start-0" placeholder="Nombre o CI..." value="@ViewBag.CurrentSearch" />
+                        </div>
+                    </div>
+                    <div class="col-lg-2">
+                        <label class="form-label small fw-bold">Cargo</label>
+                        <select name="cargoId" class="form-select select2" asp-items="ViewBag.CargoId">
+                            <option value="">-- Todos los Cargos --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2">
+                        <label class="form-label small fw-bold">Sucursal</label>
+                        <select name="sucursalId" class="form-select select2" asp-items="ViewBag.SucursalId">
+                            <option value="">-- Todas las Unidades --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2">
+                        <label class="form-label small fw-bold">Estado</label>
+                        <select name="estado" class="form-select">
+                            <!option value="" @(string.IsNullOrEmpty(ViewBag.CurrentEstado) ? "selected" : "")>-- Todos --</!option>
+                            <!option value="ACTIVO" @(ViewBag.CurrentEstado == "ACTIVO" ? "selected" : "")>ACTIVOS</!option>
+                            <!option value="BAJA" @(ViewBag.CurrentEstado == "BAJA" ? "selected" : "")>BAJAS</!option>
+                        </select>
+                    </div>
+                    <div class="col-lg-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="ti ti-adjustments-horizontal me-1"></i> FILTRAR
+                        </button>
+                        <a asp-action="Index" class="btn btn-light" title="Limpiar"><i class="ti ti-refresh"></i></a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div> 
+    <div class="row">
+        @foreach (var item in Model)
+        {
+            var isBaja = item.Estado == "BAJA";
+            <div class="col-xl-4 col-md-6 mb-4">
+                <div class="card h-100 transition-all hover-shadow">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="avatar-lg bg-primary-subtle text-primary rounded-3 d-flex align-items-center justify-content-center me-3" style="width: 54px; height: 54px;">
+                                <i class="ti ti-user fs-28"></i>
+                            </div>
+                            <div class="flex-grow-1 overflow-hidden">
+                                <h5 class="mb-1 text-truncate fw-bold">
+                                    <a asp-action="File" asp-route-id="@item.Id" class="text-dark text-decoration-none">@item.Nombres @item.Apellidos</a>
+                                </h5>
+                                <p class="text-primary mb-0 small fw-semibold text-uppercase">@item.Cargo.Nombre</p>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline py-1 px-2 border-0" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                    <li><a class="dropdown-item py-2" asp-action="File" asp-route-id="@item.Id"><i class="ti ti-folder me-2 text-primary"></i> Ver Expediente</a></li>
+                                    <li><a class="dropdown-item py-2" asp-action="Edit" asp-route-id="@item.Id"><i class="ti ti-edit me-2 text-info"></i> Editar Datos</a></li>
+                                    @if (!isBaja)
+                                    {
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item py-2 text-danger" asp-action="Terminate" asp-route-id="@item.Id"><i class="ti ti-user-x me-2"></i> Procesar Baja</a></li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="bg-light-subtle border rounded-3 p-3 mb-3">
+                            <div class="row g-0 text-center">
+                                <div class="col-6 border-end">
+                                    <span class="d-block tiny text-muted text-uppercase fw-bold">Identificación</span>
+                                    <span class="text-numeric small">@item.CarnetIdentidad</span>
+                                </div>
+                                <div class="col-6">
+                                    <span class="d-block tiny text-muted text-uppercase fw-bold">Fecha Ingreso</span>
+                                    <span class="small fw-semibold">@item.FechaIngreso.ToString("dd MMM yyyy")</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge @(isBaja ? "badge-soft-danger" : "badge-soft-success")">
+                                <i class="ti ti-circle-filled fs-8 me-1"></i> @item.Estado
+                            </span>
+                            <div class="small text-muted">
+                                <i class="ti ti-mail me-1"></i> @(item.Email ?? "No definido")
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (!Model.Any())
+        {
+            <div class="col-12 text-center py-5">
+                <div class="avatar-xl bg-light-subtle rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 100px; height: 100px;">
+                    <i class="ti ti-users-group fs-48 text-muted"></i>
+                </div>
+                <h3 class="fw-bold">No hay empleados registrados</h3>
+                <p class="text-muted">Comience dando de alta al personal para gestionar la nómina y asistencia.</p>
+                <a asp-action="Create" class="btn btn-sm btn-primary mt-3">DAR DE ALTA TRABAJADOR</a>
+            </div>
+        }
+    </div>
+</div>
+@section Styles{
+    <style>
+        .hover-shadow:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+        }
+
+        .tiny {
+            font-size: 0.65rem;
+            letter-spacing: 0.05em;
+        }
+    </style>
+}

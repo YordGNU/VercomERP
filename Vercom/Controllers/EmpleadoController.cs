@@ -73,20 +73,26 @@ public class EmpleadoController : Controller
     public async Task<IActionResult> Create(EmployeeCreateViewModel vm)
     {
         var empleado = vm.Empleado;
+        var contrato = vm.Contrato;
+        empleado.CargoId = contrato.CargoId;
 
-        // Limpiar validaciones de objetos de navegación
+        // Limpiar validaciones de objetos de navegación y campos automáticos
         ModelState.Remove("Empleado.Cargo");
         ModelState.Remove("Empleado.Entidad");
         ModelState.Remove("Empleado.Sucursal");
-
-        // Ignorar campos que se asignan en el servidor
         ModelState.Remove("Empleado.Id");
         ModelState.Remove("Empleado.EntidadId");
         ModelState.Remove("Empleado.CreadoEn");
 
+        ModelState.Remove("Contrato.Empleado");
+        ModelState.Remove("Contrato.Cargo");
+        ModelState.Remove("Contrato.Id");
+        ModelState.Remove("Contrato.CreadoEn");
+        ModelState.Remove("Contrato.EmpleadoId");
+
         if (ModelState.IsValid)
         {
-            var result = await _hrService.CreateEmployeeAsync(empleado);
+            var result = await _hrService.CreateEmployeeWithContractAsync(empleado, contrato, vm.DocumentoContrato);
             if (result.Succeeded)
             {
                 TempData["Success"] = result.Message;
@@ -104,6 +110,7 @@ public class EmpleadoController : Controller
 
         // Recargar listas para la vista en caso de error
         var contextVm = await _hrService.GetEmployeeCreateContextAsync(empleado);
+        contextVm.Contrato = contrato;
         return View(contextVm);
     }
 

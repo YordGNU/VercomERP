@@ -1,0 +1,92 @@
+@model IEnumerable<Vercom.Models.DevolucionVentum>
+@{
+    ViewBag.Title = "Devoluciones de Venta";
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Gestión de Devoluciones de Venta</h4>
+        <p class="text-muted small mb-0">Control de retornos de mercancía y ajustes de crédito a clientes.</p>
+    </div>
+    <div class="text-end">  
+        <a asp-action="Create" class="btn btn-sm btn-danger shadow-sm">
+            <i class="ti ti-arrow-back-up me-1"></i> NUEVA DEVOLUCIÓN
+        </a>
+    </div>
+</div>
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-light-subtle">
+        <h5 class="m-0 fw-bold"><i class="ti ti-history me-2 text-danger"></i>Historial de Incidencias Comerciales</h5>
+    </div>
+    <div class="card-body">
+        <table id="returnsTable" class="table table-striped table-hover dt-responsive">
+            <thead class="thead-sm text-uppercase fs-xxs">
+                <tr>
+                    <th class="ps-4">Fecha</th>
+                    <th>Nº Factura Orig.</th>
+                    <th>Motivo / Concepto</th>
+                    <th>Total Devuelto</th>
+                  <th>Contabilizado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="ps-4 small text-muted">@item.Fecha.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            <div class="fw-bold">@item.Factura.Serie-@item.Factura.NumeroFactura</div>
+                            <small class="text-muted tiny">Cliente: @item.Factura.Cliente.NombreRazonSocial</small>
+                        </td>
+                        <td class="small">
+                            <span class="badge border text-dark">@item.Motivo</span>
+                        </td>
+                        <td class="text-end fw-bold text-danger">
+                            @item.TotalDevuelto.ToString("C")
+                        </td>
+                        <td>
+                            @if (item.AsientoId.HasValue)
+                            {
+                                <i class="ti ti-circle-check-filled text-success" title="Asiento generado"></i>
+                            }
+                            else
+                            {
+                                <i class="ti ti-clock text-warning" title="Pendiente de integración"></i>
+                            }
+                        </td>
+                        <td>
+                            <div class="btn-list justify-content-end">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-icon btn-light rounded-circle">
+                                    <i class="ti ti-eye"></i>
+                                </a>
+                                @if (item.AsientoId.HasValue)
+                                {
+                                    <a asp-controller="AsientoContable" asp-action="Details" asp-route-id="@item.AsientoId" class="btn btn-sm btn-icon btn-light rounded-circle text-info">
+                                        <i class="ti ti-calculator"></i>
+                                    </a>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }              
+            </tbody>
+        </table>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#returnsTable').DataTable({
+                pageLength: 25,
+                language: { url: '@Url.Content("~/lib/i18n/es-ES.json")' },              
+                dom: '<"row align-items-center"<"col-md-6"l><"col-md-6"f>>rt<"row align-items-center"<"col-md-5"i><"col-md-7"p>>',
+                responsive: true,
+            });
+        });
+    </script>
+}
+
+<style>
+    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
+</style>

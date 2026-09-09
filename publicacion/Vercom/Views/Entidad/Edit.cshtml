@@ -1,0 +1,104 @@
+﻿@model Vercom.Models.Entidad
+@{
+    ViewBag.Title = "Editar Entidad";
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 text-primary">Modificar Datos Legales</h4>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <form asp-action="Edit" method="post">
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="CreadoEn" />
+
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h4 class="card-title mb-0">Formulario de Actualización</h4>
+                    </div>
+                    <div class="card-body">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+
+                        <div class="row g-3">
+                            <h5 class="text-primary mt-4 mb-2"><i class="ti ti-info-circle me-1"></i> Identidad Corporativa</h5>
+                            <div class="col-md-6">
+                                <label asp-for="RazonSocial" class="form-label fw-bold">Razón Social</label>
+                                <input asp-for="RazonSocial" class="form-control" required />
+                                <span asp-validation-for="RazonSocial" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="NombreComercial" class="form-label fw-bold">Nombre Comercial</label>
+                                <input asp-for="NombreComercial" class="form-control" />
+                            </div>
+
+                            <h5 class="text-primary mt-4 mb-2"><i class="ti ti-file-text me-1"></i> Datos Fiscales (ONAT/MFP)</h5>
+                            <div class="col-md-4">
+                                <label asp-for="Nit" class="form-label fw-bold">NIT</label>
+                                <input asp-for="Nit" class="form-control" placeholder="11 dígitos" required maxlength="11" />
+                                <span asp-validation-for="Nit" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="CodigoReeup" class="form-label fw-bold">Código REEUP</label>
+                                <input asp-for="CodigoReeup" class="form-control" />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="FormaJuridica" class="form-label fw-bold">Forma Jurídica</label>
+                                <select asp-for="FormaJuridica" class="form-select">
+                                    <option value="S.U.R.L.">S.U.R.L.</option>
+                                    <option value="COOPERATIVA">Cooperativa (CNA)</option>
+                                    <option value="ESTATAL">Empresa Estatal</option>
+                                    <option value="TCP">TCP / Trabajador Autónomo</option>
+                                </select>
+                            </div>
+
+                            <h5 class="text-primary mt-4 mb-2"><i class="ti ti-map-pin me-1"></i> Localización y Contacto</h5>
+                            <div class="col-md-12">
+                                <label asp-for="DireccionLegal" class="form-label fw-bold">Dirección Legal</label>
+                                <textarea asp-for="DireccionLegal" class="form-control" rows="2" required></textarea>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Municipio" class="form-label fw-bold">Municipio</label>
+                                <input asp-for="Municipio" class="form-control" />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Provincia" class="form-label fw-bold">Provincia</label>
+                                <input asp-for="Provincia" class="form-control" />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Telefono" class="form-label fw-bold">Teléfono</label>
+                                <input asp-for="Telefono" class="form-control" />
+                            </div>
+
+                            <h5 class="text-primary mt-4 mb-2"><i class="ti ti-settings me-1"></i> Configuración Base</h5>
+                            <div class="col-md-4">
+                                <label asp-for="MonedaBase" class="form-label fw-bold">Moneda de Contabilidad</label>
+                                <input asp-for="MonedaBase" class="form-control" value="CUP" readonly />
+                                <small class="text-muted">Las MiPyMES operan en CUP legalmente.</small>
+                            </div>
+                            <div class="col-md-4 mt-4">
+                                <div class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" asp-for="Activo">
+                                    <label class="form-check-label fw-bold" asp-for="Activo">Entidad Activa</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light d-flex justify-content-end gap-2">
+                        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="ti ti-device-floppy me-1"></i> GUARDAR CAMBIOS
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

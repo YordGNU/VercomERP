@@ -1,0 +1,112 @@
+﻿@using Vercom.Security
+@inject IEntidadProvider EntidadProvider
+@model Vercom.ViewModels.AsientoIndexViewModel
+@{
+    ViewBag.Title = Model.Title;
+    var isMaster = EntidadProvider.IsMaster;
+}
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+     <div class="flex-grow-1">
+         <h4 class="fs-sm text-uppercase fw-bold m-0">Libro Diario de Comprobantes</h4>
+         <p class="text-muted small mb-0">Registro cronológico de todas las operaciones económicas de la entidad.</p>
+     </div>
+     <div class="text-end">
+         <ol class="breadcrumb m-0 py-0">
+             <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>     
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Contabilidad</a></li>
+             <li class="breadcrumb-item active">Asiento contable</li>
+         </ol>
+     </div>
+</div>   
+<div class="card">
+    <div class="card-body">
+        <form method="get" class="row g-1 align-items-center">
+            <div class="col-auto">
+                <label class="form-label mb-0"><i class="ti ti-filter me-1"></i> Filtrar por Periodo:</label>
+                </div>
+                <div class="col-auto">
+                    <select name="periodId" class="form-control form-select-sm" onchange="this.form.submit()" asp-items="Model.Periods">
+                        <option value="">-- Periodo Actual --</option>
+                    </select>
+                </div>
+            <div class="col-grow"></div>
+        </form>
+     </div>
+</div>
+<div class="row justify-content-center">
+    <div class="col-xxl-12">
+        <div class="card">
+            <div class="card-header justify-content-between">
+                <h4 class="card-title"> Libro Diario de Comprobantes </h4>  
+                    <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
+                    <i class="ti ti-plus"></i> NUEVO ASIENTO MANUAL
+                    </a>
+            </div>
+            <div class="card-body">
+                <table id="asientosTable" class="table table-striped table-hover dt-responsive">
+                         <thead class="thead-sm text-uppercase fs-xxs">
+                                <tr>
+                                   <th>Nº Comprobante</th>
+                                   @if (isMaster) { <th>Entidad / Empresa</th> }
+                                 <th>Fecha</th>
+                                   <th>Tipo</th>
+                                   <th>Concepto / Glosa</th>
+                                   <th>Debe ($)</th>
+                                   <th>Haber ($)</th>
+                                   <th>Estado</th>
+                                   <th>Acciones</th>
+                                </tr>
+                           </thead>
+                           <tbody>
+                                @foreach (var item in Model.Entries)
+                                {
+                                    var statusClass = item.Estado switch {
+                                        "CONTABILIZADO" => "badge-soft-success",
+                                        "REVERTIDO" => "badge-soft-danger",
+                                        "BORRADOR" => "badge-soft-warning",
+                                        _ => "badge-soft-secondary"
+                                };
+                                <tr>
+                                <td class="text-numeric fw-bold text-primary">@item.NumeroComprobante.ToString("D8")</td>
+                                @if (isMaster) {
+                                    <td>
+                                        <div class="fw-bold small text-uppercase">@item.Entidad?.NombreComercial</div>
+                                    </td>
+                                }
+                                 <td>@item.Fecha.ToString("dd/MM/yyyy")</td>
+                                <td><span class="badge badge-soft-info">@(item.TipoComprobante?.Codigo ?? "AJ")</span></td>
+                                <td class="text-wrap small text-muted">@item.Concepto</td>
+                                <td class="text-numeric fw-bold">@item.TotalDebe.ToString("N2")</td>
+                                <td class="text-numeric fw-bold">@item.TotalHaber.ToString("N2")</td>
+                                <td><span class="badge @statusClass">@item.Estado</span></td>
+                                <td>
+                                   <div class="d-flex justify-content-end gap-1">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-light btn-icon btn-sm rounded-circle"title="Ver Detalles">
+                                            <i class="ti ti-eye"></i>
+                                        </a>
+                                        @if (item.Estado == "BORRADOR") {
+                                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline py-1 px-2 text-danger" title="Eliminar">
+                                                <i class="ti ti-trash"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                     </table>
+                    </div> <!-- end card-body-->
+                 </div> <!-- end card-->
+            </div>
+      </div>
+      @section Scripts {
+          <script>
+              $(document).ready(function () {
+                  $('#asientosTable').DataTable({
+                      language: { url: '@Url.Content("~/lib/i18n/es-ES.json")' },
+                      order: [[1, 'asc']],
+                      dom: '<"row align-items-center"<"col-md-6"l><"col-md-6"f>>rt<"row align-items-center"<"col-md-5"i><"col-md-7"p>>',
+                  });
+              });
+         </script>
+      }

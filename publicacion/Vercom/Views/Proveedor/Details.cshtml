@@ -1,0 +1,203 @@
+@model Vercom.Models.Proveedor
+@{
+    ViewBag.Title = "Ficha Comercial de Proveedor";
+    var balance = Model.CuentaPorPagars.Where(c => c.Estado != "PAGADA").Sum(c => c.SaldoPendiente);
+    var totalPurchases = Model.OrdenCompras.Where(o => o.Estado == "RECIBIDA").Sum(o => o.Total);
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Proveedor: @Model.RazonSocial</h4>
+        <p class="text-muted small mb-0">Gestión de abastecimiento, pasivos corrientes y acuerdos comerciales.</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Comercial</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">Proveedores</a></li>
+            <li class="breadcrumb-item active">Ficha</li>
+        </ol>
+        <div class="btn-list">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary">
+                <i class="ti ti-edit me-1"></i> MODIFICAR DATOS
+            </a>
+            <a asp-controller="Purchase" asp-action="Create" asp-route-proveedorId="@Model.Id" class="btn btn-sm btn-primary shadow-sm">
+                <i class="ti ti-shopping-cart-plus me-1"></i> NUEVA COMPRA
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <!-- Columna Izquierda: Perfil Financiero -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-status-top bg-dark"></div>
+                <div class="card-body text-center p-4">
+                    <div class="avatar avatar-xl bg-dark-subtle text-dark rounded-circle mb-3 mx-auto" style="width: 80px; height: 80px;">
+                        <i class="ti ti-truck-delivery fs-40"></i>
+                    </div>
+                    <h3 class="fw-bold mb-1">@Model.RazonSocial</h3>
+                    <code class="fs-13 text-dark fw-bold">NIT: @Model.Nit</code>
+
+                    <div class="mt-4 pt-3 border-top">
+                        <div class="row g-2">
+                            <div class="col-12">
+                                <div class="bg-dark bg-opacity-10 rounded py-3">
+                                    <div class="h2 fw-bold mb-0">@balance.ToString("C")</div>
+                                    <div class="text-muted tiny fw-bold text-uppercase">DEUDA TOTAL POR PAGAR</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light-subtle">
+                    <h5 class="m-0 fw-bold small text-uppercase">Datos de Contacto</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-vcenter card-table">
+                        <tbody>
+                            <tr>
+                                <td class="text-muted tiny fw-bold" width="100">TELÉFONO</td>
+                                <td class="small">@(Model.Telefono ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted tiny fw-bold">EMAIL</td>
+                                <td class="small">@(Model.Email ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted tiny fw-bold">CUENTA BANC.</td>
+                                <td class="small font-monospace">@(Model.CuentaBancaria ?? "N/A")</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="p-3 border-top">
+                        <label class="text-muted tiny fw-bold text-uppercase d-block mb-1">Dirección Legal</label>
+                        <p class="m-0 small">@(Model.Direccion ?? "No registrada")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Columna Derecha: Historial y Movimientos -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light-subtle d-flex justify-content-between align-items-center">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-history me-2 text-primary"></i>Actividad de Suministro</h5>
+                    <div class="text-end">
+                        <div class="small text-muted">Compras Recibidas: <strong class="text-dark">@totalPurchases.ToString("C")</strong></div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs nav-tabs-alt border-0" role="tablist">
+                        <li class="nav-item"><a class="nav-link active py-3 px-4 fw-bold" data-bs-toggle="tab" href="#tab-orders">ÓRDENES (@Model.OrdenCompras.Count)</a></li>
+                        <li class="nav-item"><a class="nav-link py-3 px-4 fw-bold" data-bs-toggle="tab" href="#tab-cxp">CUENTAS POR PAGAR</a></li>
+                        <li class="nav-item"><a class="nav-link py-3 px-4 fw-bold" data-bs-toggle="tab" href="#tab-contracts">CONTRATOS (@Model.ContratoEconomicos.Count)</a></li>
+                    </ul>
+                    <div class="tab-content border-top">
+                        <!-- Órdenes de Compra -->
+                        <div class="tab-pane fade show active" id="tab-orders">
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Nº Orden</th>
+                                            <th>Importe</th>
+                                          <th>Estado</th>
+                                            <th width="40"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach(var o in Model.OrdenCompras.OrderByDescending(x => x.Fecha).Take(10)) {
+                                            <tr>
+                                                <td class="small">@o.Fecha.ToString("dd/MM/yyyy")</td>
+                                                <td class="fw-bold">#@o.NumeroOrden</td>
+                                                <td class="text-end fw-bold">@o.Total.ToString("N2")</td>
+                                                <td >
+                                                    <span class="badge @(o.Estado == "RECIBIDA" ? "bg-success" : "bg-warning") small">@o.Estado</span>
+                                                </td>
+                                                <td><a asp-controller="Purchase" asp-action="Details" asp-route-id="@o.Id" class="btn btn-icon btn-sm btn-ghost-primary"><i class="ti ti-eye"></i></a></td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- Cuentas por Pagar -->
+                        <div class="tab-pane fade" id="tab-cxp">
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Vencimiento</th>
+                                            <th>Monto Original</th>
+                                            <th>Saldo Pendiente</th>
+                                          <th>Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach(var cxp in Model.CuentaPorPagars.Where(x => x.Estado != "PAGADA").OrderBy(x => x.FechaVencimiento)) {
+                                            <tr>
+                                                <td class="small @(cxp.FechaVencimiento < DateOnly.FromDateTime(DateTime.Now) ? "text-danger fw-bold" : "")">@cxp.FechaVencimiento.ToString("dd/MM/yyyy")</td>
+                                                <td class="small">@cxp.MontoOriginal.ToString("N2")</td>
+                                                <td class="text-end fw-bold text-danger">@cxp.SaldoPendiente.ToString("N2")</td>
+                                                <td ><span class="badge badge-soft-warning">@cxp.Estado</span></td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- Contratos -->
+                        <div class="tab-pane fade" id="tab-contracts">
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Nº Contrato</th>
+                                            <th>Vigencia</th>
+                                            <th>Monto Total</th>
+                                          <th>Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach(var con in Model.ContratoEconomicos.OrderByDescending(x => x.FechaFirma)) {
+                                            <tr>
+                                                <td class="fw-bold">@con.NumeroContrato</td>
+                                                <td class="small text-muted">@con.FechaInicio.ToString("dd/MM/yyyy") - @(con.FechaFin?.ToString("dd/MM/yyyy") ?? "Indefinido")</td>
+                                                <td>@(con.MontoTotal?.ToString("N2") ?? "-")</td>
+                                                <td ><span class="badge badge-soft-info">@con.Estado</span></td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 bg-light-subtle">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3 small text-uppercase">Integración Contable de Pasivos</h5>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-dark text-white p-2 rounded me-3"><i class="ti ti-calculator"></i></div>
+                        <div>
+                            <div class="fw-bold text-dark">@Model.CuentaContable?.Codigo - @Model.CuentaContable?.Nombre</div>
+                            <div class="tiny text-muted">Cuenta auxiliar vinculada para el control de la deuda con el proveedor.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
+    .fs-13 { font-size: 0.8125rem; }
+</style>

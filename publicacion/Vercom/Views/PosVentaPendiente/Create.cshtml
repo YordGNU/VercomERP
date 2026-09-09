@@ -1,0 +1,98 @@
+﻿@model Vercom.Models.PosVentaPendiente
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+
+
+<h4>PosVentaPendiente</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+       <div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Crear PosVentaPendiente</h4>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">PosVentaPendiente</a></li>
+            <li class="breadcrumb-item active">Crear</li>
+        </ol>
+    </div>
+</div>
+
+<div class="row">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                 <div class="card-header border-light justify-content-between">
+                    <h4 class="card-title">Formulario de Creación</h4>
+                </div>
+                <div class="card-body">
+<form class="row g-3" asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="mb-3">
+                <label asp-for="DispositivoPosId" class="form-label"></label>
+                <select asp-for="DispositivoPosId" class ="form-control" asp-items="ViewBag.DispositivoPosId"></select>
+            </div>
+            <div class="mb-3">
+                <label asp-for="SesionCajaPosId" class="form-label"></label>
+                <select asp-for="SesionCajaPosId" class ="form-control" asp-items="ViewBag.SesionCajaPosId"></select>
+            </div>
+            <div class="mb-3">
+                <label asp-for="IdempotencyKey" class="form-label"></label>
+                <input asp-for="IdempotencyKey" class="form-control" />
+                <span asp-validation-for="IdempotencyKey" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="PayloadJson" class="form-label"></label>
+                <input asp-for="PayloadJson" class="form-control" />
+                <span asp-validation-for="PayloadJson" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="FechaVentaLocal" class="form-label"></label>
+                <input asp-for="FechaVentaLocal" class="form-control" />
+                <span asp-validation-for="FechaVentaLocal" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="FacturaId" class="form-label"></label>
+                <input asp-for="FacturaId" class="form-control" />
+                <span asp-validation-for="FacturaId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="MensajeError" class="form-label"></label>
+                <input asp-for="MensajeError" class="form-control" />
+                <span asp-validation-for="MensajeError" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="IntentosProcesamiento" class="form-label"></label>
+                <input asp-for="IntentosProcesamiento" class="form-control" />
+                <span asp-validation-for="IntentosProcesamiento" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="ProcesadoEn" class="form-label"></label>
+                <input asp-for="ProcesadoEn" class="form-control" />
+                <span asp-validation-for="ProcesadoEn" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

@@ -88,6 +88,9 @@ public class IntelligenceService : IIntelligenceService
             };
         }
 
+        var today = DateOnly.FromDateTime(DateTime.Now);
+        var limitDate = today.AddDays(15);
+
         // Calcular indicadores
         return new DashboardViewModel
         {
@@ -99,7 +102,11 @@ public class IntelligenceService : IIntelligenceService
             PeriodoActual = DateTime.Now.ToString("MMMM yyyy"),
             TrendRentabilidad = await GetTrendDataAsync(entidadId, "RENTABILIDAD", 6),
             TrendLiquidez = await GetTrendDataAsync(entidadId, "LIQUIDEZ", 6),
-            AlertasStock = await _inventoryService.GetLowStockAlertsAsync(entidadId)
+            AlertasStock = await _inventoryService.GetLowStockAlertsAsync(entidadId),
+            ContratosVencer = await _context.ContratoEconomicos
+                .Include(c => c.Cliente).Include(c => c.Proveedor)
+                .Where(c => c.EntidadId == entidadId && c.Estado == "VIGENTE" && c.FechaFin != null && c.FechaFin <= limitDate)
+                .ToListAsync()
         };
     }
 

@@ -1,0 +1,151 @@
+﻿@model Vercom.ViewModels.AsientoCreateViewModel
+@{
+    ViewBag.Title = Model.Title;
+}
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">@Model.Title</h4>
+        <p class="text-muted small mb-0">Registro de comprobante de diario con validación de partida doble (RF-11).</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Contabilidad</a></li>
+            <li class="breadcrumb-item active">Nuevo Asiento</li>
+        </ol>
+    </div>
+</div>
+<form asp-action="Create" method="post" id="asientoForm">
+    @Html.AntiForgeryToken()
+    <div class="row">
+        <!-- Datos de Cabecera -->
+        <div class="col-lg-12">
+            <div class="card">
+                 <div class="card-header border-light justify-content-between">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-info-circle me-2 text-primary"></i>Datos Generales del Comprobante</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Fecha Contable</label>
+                            <input asp-for="Entry.Fecha" name="Entry.Fecha" type="date" class="form-control w-100" required />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Tipo de Comprobante</label>
+                            <select asp-for="Entry.TipoComprobanteId" name="Entry.TipoComprobanteId" class="form-control form-select w-100 select2" asp-items="Model.TiposComprobante" required></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Concepto o Glosa General</label>
+                            <input asp-for="Entry.Concepto" name="Entry.Concepto" class="form-control w-100" placeholder="Describa la operación..." required />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Tabla de Detalles -->
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header justify-content-between">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-list me-2 text-primary"></i>Detalle de Partidas</h5>
+                    <button type="button" class="btn btn-sm btn-outline" onclick="addRow()">
+                        <i class="ti ti-plus"></i> AÑADIR LÍNEA
+                    </button>
+                </div>
+                <div class="card-body">
+                    <table class="table mb-0" id="detailsTable">
+                        <thead class="thead-sm text-uppercase fs-xxs">
+                            <tr>
+                                <th>Cuenta Contable</th>
+                                <th>DEBE ($)</th>
+                                <th>HABER ($)</th>
+                                <th>Glosa Específica</th>
+                                <th width="60"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dinámico -->
+                        </tbody>
+                        <tfoot class="bg-light fw-bold" style="border-top: 2px solid var(--erp-border-color);">
+                            <tr>
+                                <td class="text-end p-3">SUMATORIAS TOTALES:</td>
+                                <td class="text-numeric p-3 text-primary" id="totalDebe">0.00</td>
+                                <td class="text-numeric p-3 text-primary" id="totalHaber">0.00</td>
+                                <td colspan="2" class="p-3">
+                                    <div id="statusDiff" class="badge w-100 py-2">Sin datos</div>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-3 mt-4 mb-5">
+                <a asp-action="Index" class="btn btn-sm btn-outline px-5">DESCARTAR</a>
+                <button type="submit" class="btn btn-sm btn-primary px-5 py-3 shadow" id="btnSubmit" disabled>
+                    <i class="ti ti-device-floppy"></i> REGISTRAR Y POSTEAR ASIENTO
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+@section Scripts {
+    <script>
+        let rowCount = 0;
+        const parsedCuentas = @Html.Raw(Json.Serialize(Model.CuentasDisponibles));
+
+        function addRow() {
+            const tbody = document.querySelector("#detailsTable tbody");
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>
+                    <select name="Entry.AsientoDetalles[${rowCount}].CuentaId" class="form-control form-select w-100 select2" required>
+                        <option value="">-- Seleccione Cuenta --</option>
+                        ${parsedCuentas.map(c => `<option value="${c.id}">${c.display}</option>`).join('')}
+                    </select>
+                </td>
+                <td><input name="Entry.AsientoDetalles[${rowCount}].Debe" type="number" step="0.01" class="form-control text-numeric w-100 input-debe" value="0.00" onchange="calculateTotals()" /></td>
+                <td><input name="Entry.AsientoDetalles[${rowCount}].Haber" type="number" step="0.01" class="form-control text-numeric w-100 input-haber" value="0.00" onchange="calculateTotals()" /></td>
+                <td><input name="Entry.AsientoDetalles[${rowCount}].Glosa" class="form-control w-100" placeholder="Detalle..." /></td>
+                <td >
+                    <button type="button" class="btn btn-sm text-danger border-0 bg-transparent" onclick="this.closest('tr').remove(); calculateTotals();">
+                        <i class="ti ti-trash fs-18"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+            rowCount++;
+            calculateTotals();
+        }
+
+        function calculateTotals() {
+            let totalDebe = 0;
+            let totalHaber = 0;
+
+            document.querySelectorAll(".input-debe").forEach(input => totalDebe += parseFloat(input.value || 0));
+            document.querySelectorAll(".input-haber").forEach(input => totalHaber += parseFloat(input.value || 0));
+
+            document.getElementById("totalDebe").innerText = totalDebe.toLocaleString('en-US', { minimumFractionDigits: 2 });
+            document.getElementById("totalHaber").innerText = totalHaber.toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+            const diff = Math.abs(totalDebe - totalHaber);
+            const isBalanced = diff < 0.01 && totalDebe > 0;
+            const statusDiv = document.getElementById("statusDiff");
+
+            if (isBalanced) {
+                statusDiv.innerText = "CUADRADO (OK)";
+                statusDiv.className = "badge badge-soft-success w-100 py-2 fw-bold";
+                document.getElementById("btnSubmit").disabled = false;
+            } else {
+                statusDiv.innerText = totalDebe === 0 ? "Faltan datos" : "DESCUADRADO: " + diff.toFixed(2);
+                statusDiv.className = "badge badge-soft-danger w-100 py-2 fw-bold";
+                document.getElementById("btnSubmit").disabled = true;
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            if (document.querySelectorAll("#detailsTable tbody tr").length === 0) {
+                addRow();
+                addRow();
+            }
+        });
+    </script>
+}

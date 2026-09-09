@@ -16,6 +16,7 @@ public interface IHRService
 
     // Escritura
     Task<(bool Succeeded, string Message)> CreateEmployeeAsync(Empleado empleado);
+    Task<(bool Succeeded, string Message)> CreateEmployeeWithContractAsync(Empleado empleado, ContratoLaboral contract, IFormFile? document);
     Task<(bool Succeeded, string Message)> UpdateEmployeeAsync(Empleado empleado);
     Task<List<Empleado>> GetActiveEmployeesAsync(Guid entidadId);
     Task<(bool Succeeded, string Message)> AccumulateMonthlyVacationsAsync(Guid entidadId, int year, int month, Guid userId);
@@ -73,14 +74,16 @@ public class HRService : IHRService
     private readonly IAdminService _adminService;
     private readonly Security.IEntidadProvider _entidadProvider;
     private readonly IWebHostEnvironment _environment;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public HRService(AppDbContext context, IParametroSistemaService paramService, Security.IEntidadProvider entidadProvider, IWebHostEnvironment environment, IAdminService adminService)
+    public HRService(AppDbContext context, IParametroSistemaService paramService, Security.IEntidadProvider entidadProvider, IWebHostEnvironment environment, IAdminService adminService, IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
         _paramService = paramService;
         _entidadProvider = entidadProvider;
         _environment = environment;
         _adminService = adminService;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<IEnumerable<Empleado>> GetEmployeesAsync(string? search = null, Guid? cargoId = null, Guid? sucursalId = null, string? estado = null, DateOnly? desde = null, DateOnly? hasta = null)
@@ -148,9 +151,47 @@ public class HRService : IHRService
         return new EmployeeCreateViewModel
         {
             Empleado = existingEmployee ?? new Empleado { Estado = "ACTIVO", FechaIngreso = DateOnly.FromDateTime(DateTime.Now) },
+            Contrato = new ContratoLaboral { FechaInicio = DateOnly.FromDateTime(DateTime.Now), Estado = "VIGENTE", JornadaHorasSemana = 44 },
             Cargos = cargos_select_list,
-            Sucursales = sucursales_select_list
+            Sucursales = sucursales_select_list,
+            TiposContrato = new SelectList(new[] { "PRUEBA", "DETERMINADO", "INDETERMINADO" })
         };
+    }
+
+    public async Task<(bool Succeeded, string Message)> CreateEmployeeWithContractAsync(Empleado empleado, ContratoLaboral contract, IFormFile? document)
+    {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            // --- Sincronización de Datos (Iteración 3) ---
+            // Asegurar que el empleado tenga el cargo y sucursal definidos en el contrato/formulario
+            if (empleado.CargoId == Guid.Empty && contract.CargoId != Guid.Empty)
+                empleado.CargoId = contract.CargoId;
+
+            if (empleado.SucursalId == null && contract.Empleado?.SucursalId != null)
+                empleado.SucursalId = contract.Empleado.SucursalId;
+
+            // 1. Crear Empleado
+            var empResult = await CreateEmployeeAsync(empleado);
+            if (!empResult.Succeeded) return empResult;
+
+            // 2. Vincular Contrato
+            contract.EmpleadoId = empleado.Id;
+            // Asegurar que el contrato tenga el cargo del empleado si no se especificó
+            if (contract.CargoId == Guid.Empty) contract.CargoId = empleado.CargoId;
+
+            var contractResult = await AddContractAsync(contract, document);
+            if (!contractResult.Succeeded) throw new Exception(contractResult.Message);
+
+            await transaction.CommitAsync();
+            return (true, "Expediente y primer contrato registrados correctamente.");
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            var innerMsg = ex.InnerException != null ? " | Detalle: " + ex.InnerException.Message : "";
+            return (false, "Error en registro unificado: " + ex.Message + innerMsg);
+        }
     }
 
     public async Task<(bool Succeeded, string Message)> CreateEmployeeAsync(Empleado empleado)
@@ -230,9 +271,27 @@ public class HRService : IHRService
 
     public async Task<(bool Succeeded, string Message)> AddContractAsync(ContratoLaboral contract, IFormFile? document)
     {
-        using var transaction = await _context.Database.BeginTransactionAsync();
+        using var transaction = _context.Database.CurrentTransaction == null ? await _context.Database.BeginTransactionAsync() : null;
         try
         {
+            // --- RF-26: Validar Cupo en Plantilla (Iteración 3) ---
+            // Si el contrato es nuevo (Id empty), validamos que haya plaza.
+            if (contract.Id == Guid.Empty)
+            {
+                var sucursalId = contract.Empleado?.SucursalId ?? (await _context.Empleados.FindAsync(contract.EmpleadoId))?.SucursalId;
+                var disponibles = await _context.PlantillaAprobada
+                    .Where(p => p.EntidadId == _entidadProvider.CurrentEntidadId && p.CargoId == contract.CargoId && p.SucursalId == sucursalId)
+                    .Select(p => p.PlazasAprobadas)
+                    .FirstOrDefaultAsync();
+
+                var cubiertas = await _context.ContratoLaborals.CountAsync(c => c.CargoId == contract.CargoId && c.Empleado.SucursalId == sucursalId && c.Estado == "VIGENTE");
+
+                if (disponibles > 0 && cubiertas >= disponibles)
+                {
+                    return (false, $"No hay plazas disponibles para este cargo en la sucursal seleccionada (Cupo: {disponibles}).");
+                }
+            }
+
             // 1. Manejar archivo físico si existe
             if (document != null)
             {
@@ -283,13 +342,14 @@ public class HRService : IHRService
 
             _context.ContratoLaborals.Add(contract);
             await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
+
+            if (transaction != null) await transaction.CommitAsync();
 
             return (true, document != null ? "Contrato registrado con documento digital." : "Contrato registrado exitosamente.");
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            if (transaction != null) await transaction.RollbackAsync();
             return (false, "Fallo crítico al guardar contrato: " + ex.Message);
         }
     }
@@ -306,7 +366,7 @@ public class HRService : IHRService
 
     public async Task<(bool Succeeded, string Message)> AddMedicalCertificateAsync(CertificadoMedico certificate)
     {
-        using var transaction = await _context.Database.BeginTransactionAsync();
+        using var transaction = _context.Database.CurrentTransaction == null ? await _context.Database.BeginTransactionAsync() : null;
         try
         {
             certificate.Id = Guid.NewGuid();
@@ -327,12 +387,12 @@ public class HRService : IHRService
             }
 
             await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
+            if (transaction != null) await transaction.CommitAsync();
             return (true, "Certificado y ausencias registradas.");
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            if (transaction != null) await transaction.RollbackAsync();
             return (false, ex.Message);
         }
     }
@@ -452,6 +512,7 @@ public class HRService : IHRService
     {
         return await _context.Cargos
             .Include(c => c.Empleados).ThenInclude(e => e.Sucursal)
+            .Include(c => c.PlantillaAprobada).ThenInclude(p => p.Sucursal)
             .FirstOrDefaultAsync(c => c.Id == id);
     }
 
@@ -595,6 +656,8 @@ public class HRService : IHRService
             rows.Add(new PlantillaRow
             {
                 Id = ap.Id,
+                CargoId = ap.CargoId,
+                SucursalId = ap.SucursalId,
                 Cargo = ap.Cargo?.Codigo + " - " + ap.Cargo?.Nombre ?? "Sin cargo",
                 Sucursal = ap.Sucursal?.Codigo + " - " + ap.Sucursal?.Nombre ?? "GLOBAL",
                 EntidadNombre = ap.Entidad?.NombreComercial ?? "Desconocida",
@@ -780,7 +843,7 @@ public class HRService : IHRService
 
     public async Task<(bool Succeeded, string Message)> TerminateEmployeeAsync(Guid id, DateOnly terminationDate, string reason)
     {
-        using var transaction = await _context.Database.BeginTransactionAsync();
+        using var transaction = _context.Database.CurrentTransaction == null ? await _context.Database.BeginTransactionAsync() : null;
         try
         {
             var emp = await _context.Empleados.FindAsync(id);
@@ -811,12 +874,12 @@ public class HRService : IHRService
             }
 
             await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
+            if (transaction != null) await transaction.CommitAsync();
             return (true, "Baja laboral procesada correctamente.");
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            if (transaction != null) await transaction.RollbackAsync();
             return (false, ex.Message);
         }
     }
@@ -824,7 +887,7 @@ public class HRService : IHRService
     public async Task<EmpleadoExpedienteViewModel> GetExpedienteAsync(Guid empleadoId)
     {
         // Cargar empleado con todas las relaciones necesarias
-        var empleado = await _context.Empleados
+        var query = _context.Empleados
             .Include(e => e.Cargo)
             .Include(e => e.Sucursal)
             .Include(e => e.ContratoLaborals)
@@ -832,10 +895,25 @@ public class HRService : IHRService
                 .ThenInclude(r => r.TipoAusencia)
             .Include(e => e.CertificadoMedicos)
             .Include(e => e.UtileResponsabilidades)
-            .FirstOrDefaultAsync(e => e.Id == empleadoId);
+            .AsQueryable();
+
+        var empleado = await query.FirstOrDefaultAsync(e => e.Id == empleadoId);
 
         if (empleado == null)
             throw new KeyNotFoundException($"Empleado {empleadoId} no encontrado.");
+
+        // --- RNF-20: Restricción de Privacidad Médica (Iteración 3) ---
+        // Si el usuario no tiene rol RRHH o ADMIN, ocultamos diagnósticos sensibles
+        var userRoles = _httpContextAccessor.HttpContext?.User.FindAll(System.Security.Claims.ClaimTypes.Role).Select(r => r.Value).ToList() ?? new List<string>();
+        bool canViewDiagnosis = userRoles.Contains("RRHH") || userRoles.Contains("ADMIN") || userRoles.Contains("DIRECCION") || userRoles.Contains("MASTER");
+
+        if (!canViewDiagnosis)
+        {
+            foreach (var cert in empleado.CertificadoMedicos)
+            {
+                cert.DiagnosticoCie = "[ACCESO RESTRINGIDO]";
+            }
+        }
 
         var hoy = DateOnly.FromDateTime(DateTime.Now);
 

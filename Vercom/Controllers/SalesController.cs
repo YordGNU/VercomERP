@@ -19,9 +19,12 @@ public class SalesController : Controller
     }
 
     [Authorize(Policy = "COMERCIAL.FACTURA_VENTA.VER")]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? search, string? status, string? channel)
     {
-        var invoices = await _salesService.GetInvoicesAsync();
+        var invoices = await _salesService.GetInvoicesAsync(search, status, channel);
+        ViewBag.CurrentSearch = search;
+        ViewBag.CurrentStatus = status;
+        ViewBag.CurrentChannel = channel;
         return View(invoices);
     }
 

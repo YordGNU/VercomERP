@@ -1,0 +1,692 @@
+@model Vercom.ViewModels.EmpleadoExpedienteViewModel
+@{
+    ViewBag.Title = "Expediente: " + Model.Empleado.Nombres;
+    var empleado = Model.Empleado;
+    var esActivo = empleado.Estado == "ACTIVO";
+    var esBaja = empleado.Estado == "BAJA";
+    var esLicencia = empleado.Estado == "LICENCIA";
+    var estadoColor = esBaja ? "danger" : (esLicencia ? "warning" : "success");
+}
+
+<!-- ============================================================ -->
+<!-- HEADER -->
+<!-- ============================================================ -->
+<div class="page-title-head d-flex align-items-center p-3 mb-4 bg-light rounded-3">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold d-flex align-items-center gap-2">
+            <i class="ti ti-user-circle text-primary"></i>
+            Expediente Digital: @empleado.Nombres @empleado.Apellidos
+        </h4>
+        <p class="text-muted small mb-0">Hoja de vida laboral, historial contractual y control de incidencias.</p>
+    </div>
+    <div class="text-end d-flex gap-2 flex-wrap">
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+            <i class="ti ti-arrow-left me-1"></i> Volver
+        </a>
+        <a asp-action="Edit" asp-route-id="@empleado.Id" class="btn btn-sm btn-outline-primary">
+            <i class="ti ti-edit me-1"></i> Editar
+        </a>
+        @if (esActivo)
+        {
+            <a asp-action="Terminate" asp-route-id="@empleado.Id" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Procesar baja de este empleado?')">
+                <i class="ti ti-user-x me-1"></i> Dar de Baja
+            </a>
+        }
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- NOTIFICACIONES -->
+<!-- ============================================================ -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="ti ti-check-circle me-1"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="ti ti-alert-circle me-1"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row">
+    <!-- ============================================================ -->
+    <!-- COLUMNA IZQUIERDA -->
+    <!-- ============================================================ -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 overflow-hidden">
+            <div class="card-status-top bg-@estadoColor"></div>
+            <div class="card-body p-4 text-center">
+                <div class="avatar-xl bg-@estadoColor-subtle text-@estadoColor rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 100px; height: 100px;">
+                    <i class="ti ti-user fs-48"></i>
+                </div>
+                <h4 class="fw-bold mb-1">@empleado.Nombres @empleado.Apellidos</h4>
+                <p class="text-primary fw-semibold mb-2">@(empleado.Cargo?.Nombre ?? "Sin cargo")</p>
+                <span class="badge @(esActivo ? "badge-soft-success" : (esLicencia ? "badge-soft-warning" : "badge-soft-danger")) py-2 px-4 fs-13">
+                    <i class="ti ti-circle-filled fs-8 me-1"></i> @empleado.Estado
+                </span>
+            </div>
+            <div class="bg-light-subtle border-top border-bottom p-0">
+                <ul class="list-group list-group-flush text-start">
+                    <li class="list-group-item bg-transparent d-flex justify-content-between py-2 px-4">
+                        <span class="text-muted small fw-bold text-uppercase"><i class="ti ti-id me-1"></i> CI:</span>
+                        <span class="text-numeric fw-bold font-monospace">@empleado.CarnetIdentidad</span>
+                    </li>
+                    <li class="list-group-item bg-transparent d-flex justify-content-between py-2 px-4">
+                        <span class="text-muted small fw-bold text-uppercase"><i class="ti ti-calendar me-1"></i> Ingreso:</span>
+                        <span class="fw-semibold">@empleado.FechaIngreso.ToString("dd/MM/yyyy")</span>
+                    </li>
+                    <li class="list-group-item bg-transparent d-flex justify-content-between py-2 px-4">
+                        <span class="text-muted small fw-bold text-uppercase"><i class="ti ti-calendar-time me-1"></i> Antigüedad:</span>
+                        <span class="fw-semibold">@Model.AntiguedadAnios años</span>
+                    </li>
+                    @if (Model.Edad > 0)
+                    {
+                        <li class="list-group-item bg-transparent d-flex justify-content-between py-2 px-4">
+                            <span class="text-muted small fw-bold text-uppercase"><i class="ti ti-cake me-1"></i> Edad:</span>
+                            <span class="fw-semibold">@Model.Edad años</span>
+                        </li>
+                    }
+                    <li class="list-group-item bg-transparent d-flex justify-content-between py-2 px-4">
+                        <span class="text-muted small fw-bold text-uppercase"><i class="ti ti-building me-1"></i> Unidad:</span>
+                        <span class="fw-semibold">@(empleado.Sucursal?.Nombre ?? "Central")</span>
+                    </li>
+                    <li class="list-group-item bg-transparent d-flex justify-content-between py-2 px-4">
+                        <span class="text-muted small fw-bold text-uppercase"><i class="ti ti-mail me-1"></i> Email:</span>
+                        <span class="fw-semibold">@(empleado.Email ?? "No definido")</span>
+                    </li>
+                    <li class="list-group-item bg-transparent d-flex justify-content-between py-2 px-4">
+                        <span class="text-muted small fw-bold text-uppercase"><i class="ti ti-file-text me-1"></i> Contratos:</span>
+                        <span class="fw-semibold">@Model.TotalContratos (@Model.ContratosVigentes vigentes)</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Saldo de Vacaciones -->
+        <div class="card bg-@estadoColor text-white border-0 shadow-lg mt-4">
+            <div class="card-body p-4 text-center">
+                <h6 class="text-white-50 small fw-bold text-uppercase mb-3">
+                    <i class="ti ti-beach me-1"></i> Saldo de Vacaciones
+                </h6>
+                <h1 class="display-4 fw-bold mb-1">@Model.SaldoVacaciones.ToString("N2")</h1>
+                <p class="mb-0 fw-semibold opacity-75">Días Disponibles (Cálculo 9.09%)</p>
+                <div class="progress mt-3" style="height: 6px;">
+                    @{
+                        var maxDias = 30;
+                        var porcentaje = Math.Min((Model.SaldoVacaciones / maxDias) * 100, 100);
+                    }
+                    <div class="progress-bar bg-light" style="width: @porcentaje%;" role="progressbar"></div>
+                </div>
+                <small class="text-white-50 d-block mt-2">Límite legal: 30 días</small>
+            </div>
+        </div>
+
+        <!-- Botones de acción rápida -->
+        <div class="d-grid gap-2 mt-4">
+            @if (esActivo)
+            {
+                <button type="button" class="btn btn-sm btn-success" id="btnRegistrarVacacion" data-empleado-id="@empleado.Id">
+                    <i class="ti ti-beach me-1"></i> Registrar Vacación
+                </button>
+                <button type="button" class="btn btn-sm btn-primary" id="btnRegistrarAsistencia" data-empleado-id="@empleado.Id">
+                    <i class="ti ti-clock me-1"></i> Registrar Asistencia
+                </button>
+            }
+            <a asp-action="SC408" asp-route-id="@empleado.Id" class="btn btn-sm btn-outline-secondary py-2 border-dashed">
+                <i class="ti ti-printer me-1"></i> Imprimir Modelo SC-4-08
+            </a>
+            <a asp-action="AddContract" asp-route-id="@empleado.Id" class="btn btn-sm btn-outline-info py-2">
+                <i class="ti ti-file-text me-1"></i> Nuevo Contrato
+            </a>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- COLUMNA DERECHA: TABS -->
+    <!-- ============================================================ -->
+    <div class="col-xxl-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <ul class="nav nav-tabs nav-justified nav-bordered nav-bordered-danger mb-3" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <a href="#tabContratos" data-bs-toggle="tab" class="nav-link active" role="tab">
+                            <i class="ti ti-file-type-doc me-1"></i>
+                            <span class="d-none d-md-inline">Contratos</span>
+                            <span class="badge bg-primary bg-opacity-10 text-primary ms-1">@Model.Contratos.Count</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a href="#tabAsistencia" data-bs-toggle="tab" class="nav-link" role="tab">
+                            <i class="ti ti-clock me-1"></i>
+                            <span class="d-none d-md-inline">Asistencia</span>
+                            <span class="badge bg-primary bg-opacity-10 text-primary ms-1">@Model.Asistencias.Count</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a href="#tabCertificados" data-bs-toggle="tab" class="nav-link" role="tab">
+                            <i class="ti ti-medical-cross me-1"></i>
+                            <span class="d-none d-md-inline">Certificados</span>
+                            <span class="badge bg-primary bg-opacity-10 text-primary ms-1">@Model.Certificados.Count</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a href="#tabMedios" data-bs-toggle="tab" class="nav-link" role="tab">
+                            <i class="ti ti-tools me-1"></i>
+                            <span class="d-none d-md-inline">Medios</span>
+                            <span class="badge bg-primary bg-opacity-10 text-primary ms-1">@Model.Medios.Count</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a href="#tabNomina" data-bs-toggle="tab" class="nav-link" role="tab">
+                            <i class="ti ti-report-money me-1"></i>
+                            <span class="d-none d-md-inline">Nómina</span>
+                            <span class="badge bg-primary bg-opacity-10 text-primary ms-1">@Model.Nominas.Count</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <!-- ============================================ -->
+                    <!-- TAB 1: CONTRATOS -->
+                    <!-- ============================================ -->
+                    <div class="tab-pane active show" id="tabContratos" role="tabpanel">
+                        <a asp-action="AddContract" asp-route-id="@Model.Empleado.Id" class="btn btn-sm btn-primary mb-1 float-end">
+                            <i class="ti ti-file-type-doc me-1"></i> Agregar contrato
+                        </a>
+                        @if (Model.Contratos.Any())
+                        {
+                            <table class="table table-striped table-hover dt-responsive" id="tablaContratos">
+                                <thead class="thead-sm text-uppercase fs-xxs bg-light">
+                                    <tr>
+                                        <th>Inicio</th>
+                                        <th>Fin</th>
+                                        <th>Modalidad</th>
+                                        <th>Salario</th>
+                                        <th>Doc.</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var c in Model.Contratos)
+                                    {
+                                        var vigente = c.Estado == "VIGENTE";
+                                        var hasDoc = !string.IsNullOrEmpty(c.DocumentoUrl);
+                                        <tr>
+                                             <td>@c.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                             <td>@(c.FechaFin?.ToString("dd/MM/yyyy") ?? "Indefinido")</td>
+                                            <td><span class="badge badge-soft-info">@c.TipoContrato</span></td>
+                                            <td class="text-numeric fw-bold text-success">@c.SalarioPactado.ToString("N2")</td>
+                                            <td class="text-center">
+                                                @if (hasDoc)
+                                                {
+                                                    var isPdf = c.DocumentoUrl.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
+                                                    <a href="@c.DocumentoUrl" target="_blank" class="btn btn-sm btn-icon btn-ghost-primary rounded-circle" title="Descargar Contrato">
+                                                        <i class="ti ti-file-@(isPdf ? "type-pdf" : "type-doc") fs-18"></i>
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted small">-</span>
+                                                }
+                                            </td>
+                                           <td>
+                                                <span class="badge @(vigente ? "badge-soft-success" : "badge-soft-secondary")">
+                                                    <i class="ti ti-circle-filled fs-8 me-1"></i> @c.Estado
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4 text-muted">
+                                <i class="ti ti-file-text fs-48 d-block mb-2"></i>
+                                <p>No hay contratos registrados para este empleado.</p>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- ============================================ -->
+                    <!-- TAB 2: ASISTENCIA -->
+                    <!-- ============================================ -->
+                    <div class="tab-pane" id="tabAsistencia" role="tabpanel">
+                        @if (Model.Asistencias.Any())
+                        {
+                            <table class="table table-striped table-hover dt-responsive" id="tablaAsistencia">
+                                <thead class="thead-sm text-uppercase fs-xxs bg-light">
+                                    <tr>
+                                      <th>Fecha</th>
+                                      <th>Entrada</th>
+                                      <th>Salida</th>
+                                      <th>Horas Extra</th>
+                                      <th>Incidencia</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var a in Model.Asistencias)
+                                    {
+                                        <tr>
+                                             <td>@a.Fecha.ToString("dd/MM/yyyy")</td>
+                                            <td font-monospace">@(a.HoraEntrada?.ToString(@"hh\:mm") ?? "-")</td>
+                                            <td font-monospace">@(a.HoraSalida?.ToString(@"hh\:mm") ?? "-")</td>
+                                            <td text-numeric text-primary">@a.HorasExtra.ToString("N1")</td>
+                                            <td>
+                                                @if (a.TipoAusencia != null)
+                                                {
+                                                    <span class="badge badge-soft-danger">@a.TipoAusencia.Nombre</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted small">Normal</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4 text-muted">
+                                <i class="ti ti-clock fs-48 d-block mb-2"></i>
+                                <p>No hay registros de asistencia disponibles.</p>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- ============================================ -->
+                    <!-- TAB 3: CERTIFICADOS MÉDICOS -->
+                    <!-- ============================================ -->
+                    <div class="tab-pane" id="tabCertificados" role="tabpanel">
+                        @if (Model.Certificados.Any())
+                        {
+                            <table class="table table-striped table-hover dt-responsive" id="tablaCertificados">
+                                <thead class="thead-sm text-uppercase fs-xxs bg-light">
+                                    <tr>
+                                      <th>Nº Certificado</th>
+                                      <th>Inicio</th>
+                                      <th>Fin</th>
+                                      <th>Días</th>
+                                      <th>Subsidio</th>
+                                      <th>Diagnóstico</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var cm in Model.Certificados)
+                                    {
+                                        <tr>
+                                            <td class="font-monospace text-primary fw-bold">@cm.NumeroCertificado</td>
+                                            <td>@cm.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                            <td>@cm.FechaFin.ToString("dd/MM/yyyy")</td>
+                                            <td fw-bold">@cm.Dias</td>
+                                            <td><span class="badge badge-soft-info">@cm.PorcentajeSubsidio%</span></td>
+                                            <td class="small">@cm.DiagnosticoCie</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4 text-muted">
+                                <i class="ti ti-file-medical fs-48 d-block mb-2"></i>
+                                <p>No hay certificados médicos registrados.</p>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- ============================================ -->
+                    <!-- TAB 4: MEDIOS -->
+                    <!-- ============================================ -->
+                    <div class="tab-pane" id="tabMedios" role="tabpanel">
+                        @if (Model.Medios.Any())
+                        {
+                            <table class="table table-striped table-hover dt-responsive" id="tablaMedios">
+                                <thead class="thead-sm text-uppercase fs-xxs bg-light">
+                                    <tr>
+                                        <th>Descripción</th>
+                                        <th>Nº Serie</th>
+                                      <th>Entrega</th>
+                                      <th>Estado</th>
+                                      <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var u in Model.Medios)
+                                    {
+                                        var isReturned = u.FechaDevolucion.HasValue;
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold">@u.Descripcion</div>
+                                                <small class="text-muted tiny">Código: @(u.NumeroSerie ?? "N/A")</small>
+                                            </td>
+                                            <td class="font-monospace small">@(u.NumeroSerie ?? "-")</td>
+                                             <td>@u.FechaEntrega.ToString("dd/MM/yyyy")</td>
+                                           <td>
+                                                @if (isReturned)
+                                                {
+                                                    <span class="badge bg-secondary-subtle text-secondary">
+                                                        <i class="ti ti-arrow-left me-1"></i> DEVUELTO
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-success-subtle text-success">
+                                                        <i class="ti ti-check me-1"></i> EN CUSTODIA
+                                                    </span>
+                                                }
+                                            </td>
+                                           <td>
+                                                @if (!isReturned)
+                                                {
+                                                    <button type="button" class="btn btn-sm btn-outline-danger btn-return-medio"
+                                                            data-id="@u.Id" data-desc="@u.Descripcion">
+                                                        <i class="ti ti-arrow-back"></i> Devolver
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted small">-</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4 text-muted">
+                                <i class="ti ti-tools fs-48 d-block mb-2"></i>
+                                <p>No hay medios asignados a este trabajador.</p>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- ============================================ -->
+                    <!-- TAB 5: NÓMINA -->
+                    <!-- ============================================ -->
+                    <div class="tab-pane" id="tabNomina" role="tabpanel">
+                        @if (Model.Nominas.Any())
+                        {
+                            <table class="table table-striped table-hover dt-responsive" id="tablaNomina">
+                                <thead class="thead-sm text-uppercase fs-xxs bg-light">
+                                    <tr>
+                                        <th>Período</th>
+                                        <th>Devengado</th>
+                                        <th>Deducciones</th>
+                                         <th>Neto</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var n in Model.Nominas)
+                                    {
+                                        <tr>
+                                            <td class="fw-semibold">@n.PeriodoNomina.Mes/@n.PeriodoNomina.Anio</td>
+                                            <td class="text-numeric text-success">@n.SalarioDevengado.ToString("N2")</td>
+                                            <td class="text-numeric text-danger">@n.TotalDeducciones.ToString("N2")</td>
+                                            <td class="text-numeric fw-bold text-primary">@n.SalarioNeto.ToString("N2")</td>
+                                            <td>
+                                                <span class="badge badge-soft-success">@n.PeriodoNomina.Estado</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4 text-muted">
+                                <i class="ti ti-report-money fs-48 d-block mb-2"></i>
+                                <p>No hay registros de nómina para este empleado.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODALES -->
+<!-- ============================================================ -->
+<div class="modal fade" id="modalVacacionEmpleado" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="ti ti-beach me-2"></i> Registrar Disfrute de Vacaciones</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalVacacionContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2">Cargando información...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAsistenciaEmpleado" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="ti ti-clock me-2"></i> Registrar Asistencia</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalAsistenciaContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2">Cargando formulario...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCRIPTS -->
+<!-- ============================================================ -->
+@section Scripts {
+    <script src="~/js/plugins/toastr/toastr.min.js"></script>
+    <link href="~/css/plugins/toastr/toastr.min.css" rel="stylesheet" />
+
+    <script>
+        toastr.options = {
+            closeButton: true,
+            progressBar: true,
+            positionClass: "toast-top-right",
+            timeOut: "5000",
+            extendedTimeOut: "2000"
+        };
+
+        $(document).ready(function () {
+            // ============================================================
+            // 1. DATATABLES
+            // ============================================================
+            $('#tablaContratos, #tablaAsistencia, #tablaCertificados, #tablaMedios, #tablaNomina').DataTable({
+                pageLength: 31,
+                language: { url: '@Url.Content("~/lib/i18n/es-ES.json")' },
+                order: [[1, 'asc']],
+                dom: '<"row align-items-center"<"col-md-6"l><"col-md-6"f>>rt<"row align-items-center"<"col-md-5"i><"col-md-7"p>>',
+                responsive: true,
+            });
+
+            // ============================================================
+            // 2. REGISTRAR VACACIÓN (llama al controlador que usa servicio)
+            // ============================================================
+            $('#btnRegistrarVacacion').on('click', function () {
+                var empleadoId = $(this).data('empleado-id');
+                var modal = $('#modalVacacionEmpleado');
+
+                modal.modal('show');
+                $('#modalVacacionContent').html(`
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2">Cargando información...</p>
+                    </div>
+                `);
+
+                $.ajax({
+                    url: '@Url.Action("GetSaldoVacacionesModal", "Vacaciones")',
+                    type: 'GET',
+                    data: { empleadoId: empleadoId },
+                    success: function (data) {
+                        $('#modalVacacionContent').html(data);
+                        initVacationForm();
+                    },
+                    error: function () {
+                        $('#modalVacacionContent').html(`
+                            <div class="alert alert-danger">
+                                <i class="ti ti-alert-circle me-1"></i> Error al cargar la información.
+                            </div>
+                        `);
+                    }
+                });
+            });
+
+            function initVacationForm() {
+                var form = $('#formDisfruteEmpleado');
+                if (!form.length) return;
+
+                form.off('submit').on('submit', function (e) {
+                    e.preventDefault();
+                    var diasInput = $('#diasDisfruteEmpleado');
+                    var dias = parseFloat(diasInput.val());
+                    var maxSaldo = parseFloat(diasInput.attr('max'));
+
+                    if (isNaN(dias) || dias <= 0) {
+                        toastr.warning('Ingrese un número válido de días (mínimo 0.5).');
+                        return;
+                    }
+                    if (dias > maxSaldo) {
+                        toastr.warning('No hay suficiente saldo. Disponible: ' + maxSaldo.toFixed(1) + ' días.');
+                        return;
+                    }
+
+                    var $btn = $('#btnGuardarDisfruteEmpleado');
+                    $btn.prop('disabled', true).html(
+                        '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Procesando...'
+                    );
+
+                    $.ajax({
+                        url: '@Url.Action("RegistrarVacacion", "Empleado")',
+                        type: 'POST',
+                        data: form.serialize(),
+                        success: function (response) {
+                            if (response.success) {
+                                toastr.success(response.message);
+                                setTimeout(function () {
+                                    $('#modalVacacionEmpleado').modal('hide');
+                                    location.reload();
+                                }, 1500);
+                            } else {
+                                toastr.error(response.message);
+                                $btn.prop('disabled', false).html(
+                                    '<i class="ti ti-check me-1"></i> Registrar Disfrute'
+                                );
+                            }
+                        },
+                        error: function () {
+                            toastr.error('Error al registrar el disfrute.');
+                            $btn.prop('disabled', false).html(
+                                '<i class="ti ti-check me-1"></i> Registrar Disfrute'
+                            );
+                        }
+                    });
+                });
+            }
+
+            // ============================================================
+            // 3. REGISTRAR ASISTENCIA (llama al controlador que usa servicio)
+            // ============================================================
+            $('#btnRegistrarAsistencia').on('click', function () {
+                var empleadoId = $(this).data('empleado-id');
+                var modal = $('#modalAsistenciaEmpleado');
+
+                modal.modal('show');
+                $('#modalAsistenciaContent').html(`
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2">Cargando formulario...</p>
+                    </div>
+                `);
+
+                $.ajax({
+                    url: '@Url.Action("GetRegistrarAsistenciaModal", "RegistroAsistencia")',
+                    type: 'GET',
+                    data: { empleadoId: empleadoId },
+                    success: function (data) {
+                        $('#modalAsistenciaContent').html(data);
+                    },
+                    error: function () {
+                        $('#modalAsistenciaContent').html(`
+                            <div class="alert alert-danger">
+                                <i class="ti ti-alert-circle me-1"></i> Error al cargar el formulario.
+                            </div>
+                        `);
+                    }
+                });
+            });
+
+            // ============================================================
+            // 4. DEVOLVER MEDIO (llama al controlador que usa servicio)
+            // ============================================================
+            $('.btn-return-medio').on('click', function () {
+                var id = $(this).data('id');
+                var desc = $(this).data('desc');
+                var $btn = $(this);
+
+                Swal.fire({
+                    title: 'Registrar Devolución',
+                    text: `¿Confirmar la devolución del medio: ${desc}?`,
+                    icon: 'question',
+                    input: 'textarea',
+                    inputPlaceholder: 'Observaciones sobre el estado de devolución...',
+                    showCancelButton: true,
+                    confirmButtonText: 'PROCESAR DEVOLUCIÓN',
+                    cancelButtonText: 'CANCELAR',
+                    confirmButtonColor: '#0d6efd'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        var formData = new FormData();
+                        formData.append("id", id);
+                        formData.append("returnDate", new Date().toISOString().split('T')[0]);
+                        formData.append("observations", result.value || '');
+                        formData.append("__RequestVerificationToken", $('input[name="__RequestVerificationToken"]').val());
+
+                        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+                        fetch('@Url.Action("DevolverMedio", "Empleado")', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                toastr.success(data.message);
+                                setTimeout(function () { location.reload(); }, 1000);
+                            } else {
+                                toastr.error(data.message);
+                                $btn.prop('disabled', false).html('<i class="ti ti-arrow-back"></i> Devolver');
+                            }
+                        })
+                        .catch(() => {
+                            toastr.error('Error al procesar la devolución.');
+                            $btn.prop('disabled', false).html('<i class="ti ti-arrow-back"></i> Devolver');
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+}

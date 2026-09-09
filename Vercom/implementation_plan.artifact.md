@@ -1,44 +1,43 @@
-# Plan: Funcionalidad de Subida de Contratos (Word/PDF)
+# Plan: Integración de Iteración 3 — RRHH e Inmutabilidad
 
-Este plan detalla la implementación para permitir que los usuarios suban el documento físico del contrato (Word o PDF) al registrar un nuevo contrato laboral, permitiendo su consulta posterior desde el expediente del empleado.
+Este plan detalla la incorporación de las mejoras de la "Iteración 3" al módulo de Recursos Humanos, centrándose en la exactitud del cálculo salarial (horas extra e IRP), la inmutabilidad de los datos históricos (RNF-22) y el control de plazas (RF-26).
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Almacenamiento de Archivos:** Los contratos se guardarán en la carpeta `wwwroot/uploads/contracts/`. Es necesario asegurar que el servidor IIS tenga permisos de escritura en este directorio.
-> **Formatos Soportados:** Se permitirá la subida de archivos `.doc`, `.docx` y `.pdf`.
+> **Inmutabilidad de Nómina:** Se activarán disparadores (triggers) en la base de datos que impedirán CUALQUIER edición o eliminación de detalles de nómina una vez que el periodo esté en estado `CONTABILIZADA` o `PAGADA`.
+> **Cambio en Cálculo de IRP:** El Impuesto sobre Ingresos Personales ahora se calculará sobre el excedente de un umbral exento (ej: 2,500 CUP), aplicando una tasa porcentual configurada.
+> **Recargo de Horas Extra:** Se aplicará un recargo porcentual (ej: 25%) sobre el valor de la hora normal para el cálculo de horas extraordinarias.
 
 ## Cambios Propuestos
 
-### 1. Capa de Servicios
+### 1. Base de Datos (Seguridad e Integridad)
+#### [MODIFY] [rrhh.nomina_detalle / rrhh.nomina_detalle_concepto]
+- Ejecutar script `103_iteracion3_rrhh.sql` para instalar los triggers de bloqueo.
+- Provisionar los nuevos parámetros legales: `TASA_RECARGO_HORA_EXTRA`, `UMBRAL_EXENTO_IMP_INGRESOS_PERS`, `TASA_IMP_INGRESOS_PERS`.
+
+### 2. Capa de Servicios (Lógica de Negocio)
+#### [MODIFY] [PayrollService.cs](file:///C:/Users/Usuario/source/repos/Vercom/Vercom/Services/PayrollService.cs)
+- **`CalculatePayrollAsync`**:
+    - Implementar el cálculo de Horas Extra con recargo dinámico.
+    - Implementar el cálculo de IRP con umbral exento.
+    - Registrar conceptos de aportes patronales (SS e Impuesto FT) para transparencia contable.
+- **`ApprovePayrollAsync`**:
+    - Ajustar el asiento contable para que el DEBE (Gasto Total) sea igual al HABER (Neto + Retenciones + Aportes), asegurando el cuadre automático.
+
 #### [MODIFY] [HRService.cs](file:///C:/Users/Usuario/source/repos/Vercom/Vercom/Services/HRService.cs)
-- Inyectar `IWebHostEnvironment` para obtener la ruta física del servidor.
-- Actualizar la firma de `AddContractAsync` para aceptar un objeto `IFormFile`.
-- Implementar la lógica de guardado:
-    - Validar que el archivo sea un documento válido.
-    - Generar un nombre de archivo único (ej: `Contrato_[EmpleadoId]_[Timestamp].docx`).
-    - Guardar en disco y registrar la ruta relativa en el campo `DocumentoUrl` del modelo.
+- **`AddContractAsync`**: Integrar `ValidarPlazaDisponibleAsync` para impedir contrataciones si no hay cupo en la plantilla aprobada (RF-26).
+- **`GetExpedienteAsync`**: Implementar restricción de acceso a diagnósticos médicos basada en roles (RRHH/Dirección) (RNF-20).
 
-### 2. Controlador de Empleados
-#### [MODIFY] [EmpleadoController.cs](file:///C:/Users/Usuario/source/repos/Vercom/Vercom/Controllers/EmpleadoController.cs)
-- Actualizar la acción `AddContract` (POST) para recibir el parámetro `IFormFile document`.
-- Pasar el archivo al servicio de RRHH.
-
-### 3. Vistas de Usuario (UI)
-#### [MODIFY] `Views/Empleado/AddContract.cshtml`
-- Modificar el `<form>` para soportar subida de archivos (`enctype="multipart/form-data"`).
-- Reemplazar el campo de texto de "Referencia" por un input de tipo `file`.
-
-#### [MODIFY] [File.cshtml](file:///C:/Users/Usuario/source/repos/Vercom/Vercom/Views/Empleado/File.cshtml)
-- En la tabla de contratos, añadir una columna de "Acciones" o "Documento".
-- Mostrar un icono de descarga (Word o PDF) si el contrato tiene un archivo adjunto.
+### 3. Interfaz de Usuario (Feedback)
+- Actualizar la visualización de la boleta de pago para mostrar el desglose de IRP (Base imponible vs. Impuesto).
 
 ## Plan de Verificación
 
-1.  **Subida de Archivo:** Registrar un contrato subiendo un archivo `.docx`. Verificar que se guarda en la carpeta de uploads.
-2.  **Consulta desde Expediente:** Entrar al expediente del empleado y comprobar que aparece el enlace de descarga.
-3.  **Descarga/Apertura:** Hacer clic en el enlace y confirmar que el navegador abre o descarga el documento correctamente.
+1.  **Validación de Bloqueo:** Intentar editar una nómina ya contabilizada vía base de datos o aplicación. El sistema debe lanzar un error 51022.
+2.  **Cálculo de IRP:** Verificar que un salario de 3,000 CUP con umbral de 2,500 genere un impuesto del 3% solo sobre los 500 CUP de exceso.
+3.  **Control de Plazas:** Intentar dar un alta en un cargo/sucursal que tenga 0 plazas disponibles. El sistema debe bloquear la operación.
 
 ---
 
-**¿Deseas que proceda con esta implementación?**
+**¿Deseas que proceda con la integración de la Iteración 3?**

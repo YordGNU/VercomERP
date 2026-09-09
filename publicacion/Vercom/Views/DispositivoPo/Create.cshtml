@@ -1,0 +1,100 @@
+﻿@model Vercom.ViewModels.DispositivoPosFormViewModel
+@{
+    ViewBag.Title = "Registrar Terminal POS";
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Alta de Dispositivo de Venta</h4>
+        <p class="text-muted small mb-0">Configuración de hardware y vinculación de caja para operaciones de campo.</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Ventas</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">Terminales</a></li>
+            <li class="breadcrumb-item active">Nueva</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light-subtle py-3">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-device-mobile me-2 text-primary"></i>Configuración de Terminal</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Create" method="post" class="row g-4">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Código Interno</label>
+                            <input asp-for="Dispositivo.Codigo" name="Dispositivo.Codigo" class="form-control fw-bold text-primary text-uppercase" placeholder="Ej: POS-01" required maxlength="30" />
+                            <span asp-validation-for="Dispositivo.Codigo" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-9">
+                            <label class="form-label fw-bold">Nombre del Dispositivo / Ubicación</label>
+                            <input asp-for="Dispositivo.Nombre" name="Dispositivo.Nombre" class="form-control" placeholder="Ej: Tablet Ventas Matanzas" required maxlength="100" />
+                            <span asp-validation-for="Dispositivo.Nombre" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Sucursal Responsable</label>
+                            <select asp-for="Dispositivo.SucursalId" name="Dispositivo.SucursalId" class="form-control form-select w-100 select2" asp-items="Model.Sucursales" required>
+                                <option value="">-- Seleccione Sucursal --</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Caja Asociada (Tesorería)</label>
+                            <select asp-for="Dispositivo.CajaId" name="Dispositivo.CajaId" class="form-control form-select w-100 select2" asp-items="ViewBag.CajaId" required>
+                                <option value="">-- Seleccione Arca de Fondos --</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Identificador de Hardware (UUID/IMEI)</label>
+                            <input asp-for="Dispositivo.IdentificadorHardware" name="Dispositivo.IdentificadorHardware" class="form-control font-monospace" placeholder="ID único del dispositivo físico" maxlength="100" />
+                            <small class="text-muted">Se utiliza para el blindaje de seguridad y evitar clones de terminales.</small>
+                        </div>
+
+                        <div class="col-12 mt-4 pt-3 border-top">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch p-3 bg-light rounded-3">
+                                        <input class="form-check-input ms-0 me-2" type="checkbox" asp-for="Dispositivo.Estado" value="ACTIVO" checked>
+                                        <label class="form-check-label fw-bold text-success">Habilitar Sincronización Cloud</label>
+                                        <p class="text-muted tiny mb-0 mt-1">Permite recibir ventas offline desde este dispositivo.</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Versión de App Requerida</label>
+                                    <input asp-for="Dispositivo.VersionAppPos" name="Dispositivo.VersionAppPos" class="form-control" value="1.0.0" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <a asp-action="Index" class="btn btn-sm btn-outline-secondary px-4">CANCELAR</a>
+                            <button type="submit" class="btn btn-sm btn-primary px-5 py-2 shadow">
+                                <i class="ti ti-device-floppy me-1"></i> REGISTRAR TERMINAL
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+
+<style>
+    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
+</style>

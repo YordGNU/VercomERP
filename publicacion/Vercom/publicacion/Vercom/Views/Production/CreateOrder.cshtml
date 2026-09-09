@@ -1,0 +1,100 @@
+@model Vercom.ViewModels.ProductionOrderViewModel
+@{
+    ViewBag.Title = Model.Title;
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">@Model.Title</h4>
+        <p class="text-muted small mb-0">Planificación técnica de lotes industriales basados en estructuras BOM vigentes.</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Producción</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">Monitor</a></li>
+            <li class="breadcrumb-item active">Nueva Orden</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <form asp-action="CreateOrder" method="post">
+        @Html.AntiForgeryToken()
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-light-subtle">
+                        <h5 class="m-0 fw-bold"><i class="ti ti-settings me-2 text-primary"></i>Planificación de Lote de Trabajo (RF-44)</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-4 shadow-sm"></div>
+
+                        <div class="row g-4">
+                            <div class="col-md-8">
+                                <label class="form-label fw-bold">Producto Final a Elaborar</label>
+                                <select asp-for="Order.ProductoTerminadoId" name="Order.ProductoTerminadoId" class="form-control form-select w-100 select2" asp-items="Model.ProductosElaborados" required>
+                                    <option value="">-- Seleccione un producto con BOM activa --</option>
+                                </select>
+                                <div class="mt-2 text-muted small">
+                                    <i class="ti ti-info-circle me-1"></i> El sistema buscará automáticamente la Lista de Materiales (BOM) marcada como <strong>VIGENTE</strong>.
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Meta Planificada (Cantidad)</label>
+                                <div class="input-group">
+                                    <input asp-for="Order.CantidadPlanificada" name="Order.CantidadPlanificada" type="number" step="0.0001" class="form-control fw-bold text-center fs-5" required />
+                                    <span class="input-group-text bg-light fw-bold">UND</span>
+                                </div>
+                                <span asp-validation-for="Order.CantidadPlanificada" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Fecha de Inicio Estimada</label>
+                                <input asp-for="Order.FechaInicioPlan" name="Order.FechaInicioPlan" type="date" class="form-control" required />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Almacén de Insumos (Salida)</label>
+                                <select asp-for="Order.AlmacenInsumosId" name="Order.AlmacenInsumosId" class="form-control form-select w-100 select2" asp-items="Model.Almacenes" required></select>
+                                <small class="text-muted tiny">Donde se rebajará la materia prima.</small>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Almacén Destino (Entrada PT)</label>
+                                <select asp-for="Order.AlmacenProductoId" name="Order.AlmacenProductoId" class="form-control form-select w-100 select2" asp-items="Model.Almacenes" required></select>
+                                <small class="text-muted tiny">Donde ingresará el producto terminado.</small>
+                            </div>
+                        </div>
+
+                        <div class="col-12 d-flex justify-content-end gap-2 mt-5 pt-3 border-top">
+                            <a asp-action="Index" class="btn btn-sm btn-outline-secondary px-4">CANCELAR</a>
+                            <button type="submit" class="btn btn-sm btn-primary px-5 py-2 shadow">
+                                <i class="ti ti-player-play me-1"></i> PLANIFICAR Y GENERAR ORDEN
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-secondary border-0 shadow-sm rounded-3 py-3">
+                    <div class="d-flex align-items-center">
+                        <i class="ti ti-shield-check fs-32 me-3 opacity-50"></i>
+                        <div>
+                            <h6 class="fw-bold mb-1">Integridad de Inventario (Push Model)</h6>
+                            <p class="mb-0 small">Al iniciar la ejecución de esta orden, el sistema realizará el descuento automático de los materiales del almacén de insumos según la norma técnica configurada.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+
+<style>
+    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
+</style>

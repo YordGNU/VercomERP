@@ -1,0 +1,87 @@
+@model Vercom.Models.ListaMateriale
+@{
+    ViewBag.Title = "Detalle de Estructura (BOM)";
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Explosión de Materiales: @Model.ProductoTerminado.Nombre</h4>
+        <p class="text-muted small mb-0">Requerimientos teóricos de insumos y mermas estimadas para la producción.</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Producción</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">BOM</a></li>
+            <li class="breadcrumb-item active">Detalle</li>
+        </ol>
+        <div class="btn-list">
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                <i class="ti ti-arrow-left me-1"></i> VOLVER
+            </a>
+            @if (Model.Activa) {
+                <span class="badge bg-success-subtle text-success p-2 px-3 border border-success border-opacity-25"><i class="ti ti-check me-1"></i>ESTRUCTURA VIGENTE</span>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light-subtle">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-components me-2 text-primary"></i>Detalle de la Composición (v.@Model.Version)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table table-hover mb-0">
+                        <thead class="thead-sm text-uppercase fs-xxs">
+                                <tr>
+                                    <th class="ps-4">Insumo / Materia Prima</th>
+                                    <th  class="text-center">Cant. Neta</th>
+                                  <th>U.M.</th>
+                                    <th  class="text-center">Merma Est. (%)</th>
+                                    <th>Cant. Bruta Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var det in Model.ListaMaterialesDetalles)
+                                {
+                                   // var totalBruta = det.QuantityBruta(); // Asumiendo que implementamos esta lógica en el modelo o la calculamos aquí
+                                    <tr>
+                                      <td>
+                                            <div class="fw-bold fs-13">@det.ProductoInsumo.Nombre</div>
+                                            <small class="text-muted tiny font-monospace">@det.ProductoInsumo.Codigo</small>
+                                        </td>
+                                        <td fw-bold">@det.CantidadRequerida.ToString("N4")</td>
+                                        <td small"><span class="badge bg-light">@det.ProductoInsumo.UnidadMedida.Codigo</span></td>
+                                        <td >
+                                            <span class="text-danger fw-bold">@det.PorcentajeMerma.ToString("N2")%</span>
+                                        </td>
+                                        <td class="text-end pe-4 fw-bold text-primary">
+                                            @((det.CantidadRequerida * (1 + (det.PorcentajeMerma / 100))).ToString("N4"))
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-light-subtle border-top p-4">
+                    <div class="d-flex align-items-center">
+                        <i class="ti ti-info-circle fs-32 me-3 text-info opacity-50"></i>
+                        <p class="text-muted small mb-0">
+                            <strong>Nota Técnica:</strong> Estas cantidades representan los requerimientos para producir **exactamente 1 unidad** de @Model.ProductoTerminado.Nombre. Al generar una Orden de Producción, el sistema escalará estos valores automáticamente.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
+    .fs-13 { font-size: 0.8125rem; }
+</style>

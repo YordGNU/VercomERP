@@ -1,0 +1,136 @@
+﻿@model Vercom.Models.AsientoContable
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+
+
+<h4>AsientoContable</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+       <div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Editar AsientoContable</h4>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">AsientoContable</a></li>
+            <li class="breadcrumb-item active">Editar</li>
+        </ol>
+    </div>
+</div>
+
+<div class="row">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                 <div class="card-header border-light justify-content-between">
+                    <h4 class="card-title">Formulario de Edición</h4>
+                </div>
+                <div class="card-body">
+<form class="row g-3" asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="mb-3">
+                <label asp-for="EntidadId" class="form-label"></label>
+                <input asp-for="EntidadId" class="form-control" />
+                <span asp-validation-for="EntidadId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="SucursalId" class="form-label"></label>
+                <input asp-for="SucursalId" class="form-control" />
+                <span asp-validation-for="SucursalId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="PeriodoId" class="form-label"></label>
+                <select asp-for="PeriodoId" class="form-control" asp-items="ViewBag.PeriodoId"></select>
+                <span asp-validation-for="PeriodoId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="TipoComprobanteId" class="form-label"></label>
+                <select asp-for="TipoComprobanteId" class="form-control" asp-items="ViewBag.TipoComprobanteId"></select>
+                <span asp-validation-for="TipoComprobanteId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="NumeroComprobante" class="form-label"></label>
+                <input asp-for="NumeroComprobante" class="form-control" />
+                <span asp-validation-for="NumeroComprobante" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Fecha" class="form-label"></label>
+                <input asp-for="Fecha" class="form-control" />
+                <span asp-validation-for="Fecha" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Concepto" class="form-label"></label>
+                <input asp-for="Concepto" class="form-control" />
+                <span asp-validation-for="Concepto" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="ModuloOrigen" class="form-label"></label>
+                <input asp-for="ModuloOrigen" class="form-control" />
+                <span asp-validation-for="ModuloOrigen" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="DocumentoOrigenTipo" class="form-label"></label>
+                <input asp-for="DocumentoOrigenTipo" class="form-control" />
+                <span asp-validation-for="DocumentoOrigenTipo" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="DocumentoOrigenId" class="form-label"></label>
+                <input asp-for="DocumentoOrigenId" class="form-control" />
+                <span asp-validation-for="DocumentoOrigenId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="TotalDebe" class="form-label"></label>
+                <input asp-for="TotalDebe" class="form-control" />
+                <span asp-validation-for="TotalDebe" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="TotalHaber" class="form-label"></label>
+                <input asp-for="TotalHaber" class="form-control" />
+                <span asp-validation-for="TotalHaber" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Estado" class="form-label"></label>
+                <input asp-for="Estado" class="form-control" />
+                <span asp-validation-for="Estado" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="AsientoReversionId" class="form-label"></label>
+                <select asp-for="AsientoReversionId" class="form-control" asp-items="ViewBag.AsientoReversionId"></select>
+                <span asp-validation-for="AsientoReversionId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="CreadoPor" class="form-label"></label>
+                <input asp-for="CreadoPor" class="form-control" />
+                <span asp-validation-for="CreadoPor" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="CreadoEn" class="form-label"></label>
+                <input asp-for="CreadoEn" class="form-control" />
+                <span asp-validation-for="CreadoEn" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

@@ -1,0 +1,63 @@
+@model Vercom.ViewModels.MedicalCertificateViewModel
+@{
+    ViewBag.Title = Model.Title;
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">@Model.Title</h4>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light-subtle">
+                    <h5 class="card-title mb-0">Subsidio por Enfermedad: <span class="text-primary">@Model.NombreEmpleado</span></h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="AddMedicalCertificate" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+                        <input type="hidden" asp-for="Certificado.EmpleadoId" name="Certificado.EmpleadoId" />
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="Certificado.NumeroCertificado" class="form-label fw-bold">Número de Certificado</label>
+                                <input asp-for="Certificado.NumeroCertificado" name="Certificado.NumeroCertificado" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Certificado.DiagnosticoCie" class="form-label fw-bold">Diagnóstico (CIE)</label>
+                                <input asp-for="Certificado.DiagnosticoCie" name="Certificado.DiagnosticoCie" class="form-control" placeholder="Ej: J00" />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label asp-for="Certificado.FechaInicio" class="form-label fw-bold">Desde</label>
+                                <input asp-for="Certificado.FechaInicio" name="Certificado.FechaInicio" type="date" class="form-control" required />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Certificado.FechaFin" class="form-label fw-bold">Hasta</label>
+                                <input asp-for="Certificado.FechaFin" name="Certificado.FechaFin" type="date" class="form-control" required />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Certificado.PorcentajeSubsidio" class="form-label fw-bold">% Subsidio</label>
+                                <input asp-for="Certificado.PorcentajeSubsidio" name="Certificado.PorcentajeSubsidio" type="number" class="form-control text-center" value="100" />
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                            <a asp-action="File" asp-route-id="@Model.Certificado.EmpleadoId" class="btn btn-outline-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-danger px-5">
+                                <i class="ti ti-heart-rate-monitor me-1"></i> REGISTRAR SUBSIDIO
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-4 py-2 small border-0 shadow-sm">
+                <i class="ti ti-info-circle me-1"></i> RF-21: Al guardar este certificado, se generarán automáticamente las ausencias remuneradas en la consola de asistencia para los días indicados.
+            </div>
+        </div>
+    </div>
+</div>

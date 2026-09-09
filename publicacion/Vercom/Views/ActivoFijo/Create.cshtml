@@ -1,0 +1,139 @@
+﻿@model Vercom.ViewModels.AssetFormViewModel
+@{
+    ViewBag.Title = Model.Title;
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">@Model.Title</h4>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Contabilidad</a></li>
+            <li class="breadcrumb-item active">Alta de Activo</li>
+        </ol>
+    </div>
+</div>
+<div class="row mt-4">
+    <form asp-action="Create" method="post">
+        <div class="row">
+            <!-- Datos del Activo -->
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-light-subtle">
+                        <h5 class="card-title mb-0">Especificaciones Técnicas (RF-14)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div asp-validation-summary="All" class="alert alert-danger py-2 small"></div>
+
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label asp-for="Asset.CodigoInventario" class="form-label fw-bold">Código de Inventario</label>
+                                <input asp-for="Asset.CodigoInventario" name="Asset.CodigoInventario" class="form-control" placeholder="ej: AF-2026-001" required />
+                            </div>
+                            <div class="col-md-8">
+                                <label asp-for="Asset.Descripcion" class="form-label fw-bold">Descripción / Nombre del Activo</label>
+                                <input asp-for="Asset.Descripcion" name="Asset.Descripcion" class="form-control" required />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Asset.SucursalId" class="form-label fw-bold">Ubicación / Sucursal</label>
+                                <select asp-for="Asset.SucursalId" name="Asset.SucursalId" class="form-select select2" asp-items="Model.Sucursales" required></select>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Asset.FechaAdquisicion" class="form-label fw-bold">Fecha de Adquisición</label>
+                                <input asp-for="Asset.FechaAdquisicion" name="Asset.FechaAdquisicion" type="date" class="form-control" required />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label asp-for="Asset.ValorAdquisicion" class="form-label fw-bold">Valor de Adquisición ($)</label>
+                                <input asp-for="Asset.ValorAdquisicion" name="Asset.ValorAdquisicion" type="number" step="0.01" class="form-control text-end" required />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Asset.ValorResidual" class="form-label fw-bold">Valor Residual ($)</label>
+                                <input asp-for="Asset.ValorResidual" name="Asset.ValorResidual" type="number" step="0.01" class="form-control text-end" value="0.00" />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Asset.VidaUtilMeses" class="form-label fw-bold">Vida Útil (Meses)</label>
+                                <input asp-for="Asset.VidaUtilMeses" name="Asset.VidaUtilMeses" type="number" class="form-control text-center" value="60" required />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuración Contable -->
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-light-subtle">
+                        <h5 class="card-title mb-0">Imputación Contable (Depreciación)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label asp-for="Asset.CuentaActivoId" class="form-label fw-bold small">Cuenta del Activo</label>
+                                <select asp-for="Asset.CuentaActivoId" name="Asset.CuentaActivoId" class="form-select select2" asp-items="Model.CuentasActivo" required></select>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Asset.CuentaDepreciacionId" class="form-label fw-bold small">Cta. Dep. Acumulada</label>
+                                <select asp-for="Asset.CuentaDepreciacionId" name="Asset.CuentaDepreciacionId" class="form-select select2" asp-items="Model.CuentasDepreciacion" required></select>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Asset.CuentaGastoDepId" class="form-label fw-bold small">Cta. Gasto Depreciación</label>
+                                <select asp-for="Asset.CuentaGastoDepId" name="Asset.CuentaGastoDepId" class="form-select select2" asp-items="Model.CuentasGasto" required></select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen de Depreciación -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-info">
+                    <div class="card-header bg-info text-white">
+                        <h4 class="card-title mb-0">Proyección de Cuota</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center py-3">
+                            <h6 class="text-muted text-uppercase small">Depreciación Mensual</h6>
+                            <h2 class="fw-bold text-info" id="lblCuotaMensual">$ 0.00</h2>
+                            <p class="small text-muted mb-0">Tasa Anual: <span id="lblTasaAnual">0.00</span>%</p>
+                        </div>
+                        <hr>
+                        <ul class="list-unstyled small">
+                            <li class="mb-2"><i class="ti ti-check text-success me-1"></i> Método: Línea Recta</li>
+                            <li class="mb-2"><i class="ti ti-check text-success me-1"></i> Base Depreciable: <span id="lblBaseDep">$ 0.00</span></li>
+                        </ul>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="ti ti-device-floppy me-1"></i> REGISTRAR ALTA
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function calculateDep() {
+            const valor = parseFloat(document.getElementsByName('Asset.ValorAdquisicion')[0].value || 0);
+            const residual = parseFloat(document.getElementsByName('Asset.ValorResidual')[0].value || 0);
+            const meses = parseInt(document.getElementsByName('Asset.VidaUtilMeses')[0].value || 1);
+
+            const baseDep = valor - residual;
+            const cuota = baseDep / meses;
+            const tasaAnual = (meses > 0) ? (12 / meses * 100) : 0;
+
+            document.getElementById('lblCuotaMensual').innerText = cuota.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+            document.getElementById('lblBaseDep').innerText = baseDep.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+            document.getElementById('lblTasaAnual').innerText = tasaAnual.toFixed(2);
+        }
+
+        document.querySelectorAll('input').forEach(i => i.addEventListener('input', calculateDep));
+        document.addEventListener('DOMContentLoaded', calculateDep);
+    </script>
+}

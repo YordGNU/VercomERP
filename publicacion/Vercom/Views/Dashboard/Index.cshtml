@@ -1,0 +1,241 @@
+@model Vercom.ViewModels.DashboardViewModel
+@{
+    ViewBag.Title = "Panel de Control";
+}
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Centro de Mando Vercom Elite</h4>
+        <p class="text-muted small mb-0">Indicadores clave de rendimiento y monitoreo operativo en tiempo real.</p>
+    </div>
+    <div class="text-end">
+        <span class="badge badge-soft-info py-2 px-3">
+            <i class="ti ti-calendar me-1"></i> Periodo Actual: @Model.PeriodoActual
+        </span>
+    </div>
+</div>
+<!-- Fila 1: KPIs Principales (Estilo Odoo/NetSuite) -->
+<div class="row row-cols-xxl-4 row-cols-md-3 align-items-center g-1" id="bloque-resumen">
+    <div class="col">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h2 class="mb-1 fw-bold text-primary">@Model.Liquidez.ToString("N2")</h2>
+                        <p class="text-muted mb-0 small text-uppercase fw-bold letter-spacing-1">Liquidez Corriente</p>
+                    </div>
+                    <div class="avatar-md bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                        <i class="ti ti-cash fs-24"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h2 class="mb-1 fw-bold text-success">@Model.Rentabilidad.ToString("N1")%</h2>
+                        <p class="text-muted mb-0 small text-uppercase fw-bold letter-spacing-1">Margen Neto</p>
+                    </div>
+                    <div class="avatar-md bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                        <i class="ti ti-chart-pie fs-24"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h2 class="mb-1 fw-bold text-info">@Model.RotacionStock.ToString("N1")</h2>
+                        <p class="text-muted mb-0 small text-uppercase fw-bold letter-spacing-1">Rotación Stock</p>
+                    </div>
+                    <div class="avatar-md bg-info bg-opacity-10 text-info rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                        <i class="ti ti-refresh fs-24"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h2 class="mb-1 fw-bold text-warning">@Model.FechaCierreCaja</h2>
+                        <p class="text-muted mb-0 small text-uppercase fw-bold letter-spacing-1">Último Cierre</p>
+                    </div>
+                    <div class="avatar-md bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                        <i class="ti ti-lock fs-24"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Fila 2: Gráficos BI -->
+<div class="row row-cols-xxl-2 row-cols-md-6 align-items-center g-1">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header border-0 bg-transparent pt-4 px-4">
+                <h5 class="m-0 fw-bold"><i class="ti ti-trending-up me-2 text-success"></i>Tendencia de Rentabilidad</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="profitTrendChart" height="280"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header border-0 bg-transparent pt-4 px-4">
+                <h5 class="m-0 fw-bold"><i class="ti ti-chart-bar me-2 text-primary"></i>Índice de Liquidez Mensual</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="liquidityTrendChart" height="280"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Fila 3: Alertas y Acciones Rápidas -->
+<div class="row g-1">
+    <div class="col-lg-8">
+        <div class="card">
+             <div class="card-header border-light justify-content-between">
+                <h5 class="m-0 fw-bold text-danger"><i class="ti ti-alert-triangle me-2"></i>Alertas Críticas de Inventario</h5>
+                <a asp-controller="Inventory" asp-action="LowStock" class="btn btn-sm btn-outline">Ver Todo</a>
+            </div>
+            <div class="card-body">
+                <table class="table mb-0">
+                    <thead class="thead-sm text-uppercase fs-xxs">
+                        <tr>
+                            <th>Producto</th>
+                            <th  class="text-center">Stock Actual</th>
+                            <th  class="text-center">Mínimo</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.AlertasStock.Any())
+                        {
+                            @foreach (var alert in Model.AlertasStock)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@alert.Producto.Nombre</td>
+                                    <td ><span class="badge badge-soft-danger fs-13">@alert.Cantidad.ToString("N0")</span></td>
+                                    <td text-muted">@alert.StockMinimo.ToString("N0")</td>
+                                    <td>
+                                        <a asp-controller="Purchase" asp-action="Create" class="btn btn-sm btn-outline py-0 px-2 text-primary">Comprar</a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center py-5 text-muted small">
+                                    <i class="ti ti-circle-check fs-32 d-block mb-2 text-success opacity-50"></i>
+                                    Niveles de stock óptimos en todos los almacenes.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card bg-primary text-white border-0 shadow-lg">
+            <div class="card-header border-white border-opacity-10 bg-transparent text-white pt-4 px-4">
+                <h5 class="m-0 fw-bold">Operaciones Rápidas</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="d-grid gap-3">
+                    <a asp-controller="Sales" asp-action="Create" class="btn btn-light fw-bold py-3 text-primary d-flex align-items-center justify-content-between">
+                        <span><i class="ti ti-plus me-2"></i>Nueva Factura de Venta</span>
+                        <i class="ti ti-chevron-right"></i>
+                    </a>
+                    <a asp-controller="Inventory" asp-action="CreateMovement" class="btn btn-light bg-opacity-10 border-white border-opacity-25 text-white fw-bold py-3 d-flex align-items-center justify-content-between">
+                        <span><i class="ti ti-transfer-in me-2"></i>Entrada de Almacén</span>
+                        <i class="ti ti-chevron-right"></i>
+                    </a>
+                    <a asp-controller="AsientoContable" asp-action="Create" class="btn btn-light bg-opacity-10 border-white border-opacity-25 text-white fw-bold py-3 d-flex align-items-center justify-content-between">
+                        <span><i class="ti ti-calculator me-2"></i>Registrar Asiento</span>
+                        <i class="ti ti-chevron-right"></i>
+                    </a>
+                </div>
+                <div class="mt-4 pt-3 border-top border-white border-opacity-10 text-center">
+                    <p class="small text-white-50 mb-0">Acceso rápido a los documentos primarios de la S.U.R.L.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="~/js/plugins/chartjs/chart.js"></script>
+    <script>
+        const ctxProfit = document.getElementById('profitTrendChart').getContext('2d');
+        const profitData = @Html.Raw(Json.Serialize(Model.TrendRentabilidad));
+        new Chart(ctxProfit, {
+            type: 'line',
+            data: {
+                labels: ['M-5', 'M-4', 'M-3', 'M-2', 'M-1', 'Actual'],
+                datasets: [{
+                    label: 'Rentabilidad (%)',
+                    data: profitData,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                    pointBackgroundColor: '#10b981',
+                    pointBorderColor: '#fff',
+                    pointHoverRadius: 6,
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { display: false }, ticks: { display: true } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        const ctxLiq = document.getElementById('liquidityTrendChart').getContext('2d');
+        const liqData = @Html.Raw(Json.Serialize(Model.TrendLiquidez));
+
+        new Chart(ctxLiq, {
+            type: 'bar',
+            data: {
+                labels: ['M-5', 'M-4', 'M-3', 'M-2', 'M-1', 'Actual'],
+                datasets: [{
+                    label: 'Liquidez (Veces)',
+                    data: liqData,
+                    backgroundColor: '#3b82f6',
+                    hoverBackgroundColor: '#2563eb',
+                    borderRadius: 8,
+                    barThickness: 30
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { display: true, color: '#f1f5f9' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    </script>
+}
+
+<style>
+    .letter-spacing-1 { letter-spacing: 0.05rem; }
+    .fs-13 { font-size: 0.8125rem; }
+</style>

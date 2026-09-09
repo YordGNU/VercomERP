@@ -1,0 +1,89 @@
+@model IEnumerable<Vercom.Models.DispositivoPo>
+@{
+    ViewBag.Title = "Dispositivos POS";
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Gestión de Terminales de Venta (POS)</h4>
+        <p class="text-muted small mb-0">Administración de hardware, licencias y sincronización de dispositivos móviles.</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Ventas</a></li>
+            <li class="breadcrumb-item active">Terminales</li>
+        </ol>
+        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
+            <i class="ti ti-device-laptop me-1"></i> REGISTRAR DISPOSITIVO
+        </a>
+    </div>
+</div>
+
+<div class="container-xxl mt-4">
+    <div class="row row-cards">
+        @foreach (var item in Model)
+        {
+            var isOnline = item.UltimaSincronizacion.HasValue && item.UltimaSincronizacion.Value > DateTimeOffset.Now.AddMinutes(-30);
+            var statusColor = item.Estado == "ACTIVO" ? (isOnline ? "success" : "warning") : "danger";
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card card-sm shadow-sm border-0 h-100">
+                    <div class="card-status-top bg-@statusColor"></div>
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div class="bg-@statusColor-subtle text-@statusColor p-3 rounded-circle">
+                                <i class="ti ti-device-mobile fs-28"></i>
+                            </div>
+                            <span class="badge badge-soft-@statusColor px-3 py-1">
+                                @(isOnline ? "ONLINE" : (item.Estado == "ACTIVO" ? "DESCONECTADO" : "BLOQUEADO"))
+                            </span>
+                        </div>
+
+                        <h4 class="fw-bold mb-1">@item.Nombre</h4>
+                        <code class="text-primary tiny fw-bold">CÓDIGO: @item.Codigo</code>
+
+                        <div class="bg-light-subtle rounded-3 p-3 mt-4 mb-4 border border-dashed small">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted tiny fw-bold">SINCRO:</span>
+                                <span class="fw-bold">@(item.UltimaSincronizacion?.ToString("dd MMM, HH:mm") ?? "Nunca")</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted tiny fw-bold">APP VER:</span>
+                                <span class="small">v@(item.VersionAppPos ?? "1.0.0")</span>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary w-100">DETALLES</a>
+                                </div>
+                                <div class="col-6">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary w-100">CONFIGURAR</a>
+                                </div>
+                            </div>
+                            <a asp-controller="PosVentaPendiente" asp-action="Index" asp-route-deviceId="@item.Id" class="btn btn-sm btn-ghost-primary">
+                                <i class="ti ti-cloud-download me-1"></i> VER VENTAS PENDIENTES
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        @if (!Model.Any()) {
+            <div class="col-12 text-center py-5">
+                <div class="avatar avatar-xl bg-light-subtle text-muted rounded-circle mb-3 mx-auto">
+                    <i class="ti ti-devices fs-48"></i>
+                </div>
+                <h3 class="fw-bold">No hay terminales registradas</h3>
+                <p class="text-muted">Inscriba los dispositivos móviles para comenzar a facturar desde el terreno.</p>
+                <a asp-action="Create" class="btn btn-primary mt-2">REGISTRAR DISPOSITIVO</a>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
+</style>

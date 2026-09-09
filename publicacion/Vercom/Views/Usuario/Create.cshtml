@@ -1,0 +1,127 @@
+﻿@using Vercom.Security
+@inject IEntidadProvider EntidadProvider
+@model Vercom.ViewModels.UserFormViewModel
+@{
+    ViewBag.Title = Model.Title;
+    var isMaster = EntidadProvider.IsMaster;
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">@Model.Title</h4>
+        <p class="text-muted small mb-0">Gestión de accesos y perfiles de seguridad (RF-02).</p>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-4 shadow-sm"></div>
+
+                <div class="row">
+                    <!-- Columna Izquierda: Datos de Cuenta -->
+                    <div class="col-lg-7">
+                        <div class="card shadow-sm border-0 mb-4">
+                            <div class="card-header bg-light-subtle py-3">
+                                <h5 class="m-0 fw-bold"><i class="ti ti-user-plus me-2 text-primary"></i>Datos de Acceso</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="row g-4">
+                                    <div class="col-md-6">
+                                        <label asp-for="Usuario.NombreUsuario" class="form-label fw-bold"></label>
+                                        <input asp-for="Usuario.NombreUsuario" name="Usuario.NombreUsuario" class="form-control" placeholder="ej: jsmith" required />
+                                        <span asp-validation-for="Usuario.NombreUsuario" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="password" class="form-label fw-bold">Contraseña Inicial</label>
+                                        <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" required />
+                                        <small class="text-muted tiny">Se obligará a cambiarla al primer ingreso.</small>
+                                    </div>
+
+                                    <div class="col-md-12">
+                                        <label asp-for="Usuario.NombreCompleto" class="form-label fw-bold"></label>
+                                        <input asp-for="Usuario.NombreCompleto" name="Usuario.NombreCompleto" class="form-control" placeholder="ej: Juan Pérez" required />
+                                        <span asp-validation-for="Usuario.NombreCompleto" class="text-danger small"></span>
+                                    </div>
+
+                                    <div class="col-md-12">
+                                        <label asp-for="Usuario.Email" class="form-label fw-bold"></label>
+                                        <input asp-for="Usuario.Email" name="Usuario.Email" type="email" class="form-control" placeholder="usuario@empresa.cu" />
+                                        <span asp-validation-for="Usuario.Email" class="text-danger small"></span>
+                                    </div>
+
+                                    @if (isMaster)
+                                    {
+                                        <div class="col-md-12">
+                                            <label asp-for="Usuario.EntidadId" class="form-label fw-bold">Asignar a Entidad</label>
+                                            <select asp-for="Usuario.EntidadId" name="Usuario.EntidadId" class="form-select select2" asp-items="Model.Entidades">
+                                                <option value="">-- Seleccionar Empresa --</option>
+                                            </select>
+                                            <small class="text-muted tiny">Solo el Maestro puede crear usuarios para otras entidades.</small>
+                                        </div>
+                                    }
+
+                                    <div class="col-md-6">
+                                        <label asp-for="Usuario.SucursalId" class="form-label fw-bold"></label>
+                                        <select asp-for="Usuario.SucursalId" name="Usuario.SucursalId" class="form-select select2" asp-items="Model.Sucursales">
+                                            <option value="">-- Acceso Global (Supervisión) --</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label asp-for="Usuario.EsEmpleadoId" class="form-label fw-bold"></label>
+                                        <select asp-for="Usuario.EsEmpleadoId" name="Usuario.EsEmpleadoId" class="form-select select2" asp-items="Model.Empleados">
+                                            <option value="">-- No vincular a RRHH --</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Columna Derecha: Roles y Estado -->
+                    <div class="col-lg-5">
+                        <div class="card shadow-sm border-0 mb-4">
+                            <div class="card-header bg-light-subtle py-3">
+                                <h5 class="m-0 fw-bold"><i class="ti ti-shield-lock me-2 text-primary"></i>Perfiles y Permisos</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <label class="form-label fw-bold mb-3">Roles Asignados</label>
+                                <div class="bg-light-subtle rounded-3 p-3 border border-dashed mb-4" style="max-height: 300px; overflow-y: auto;">
+                                    @foreach (var role in Model.RolesDisponibles)
+                                    {
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" name="SelectedRoles" value="@role.Value" id="role_@role.Value" @(role.Disabled ? "disabled" : "")>
+                                            <label class="form-check-label @(role.Disabled ? "text-muted" : "fw-semibold")" for="role_@role.Value">
+                                                @role.Text
+                                                @if (role.Disabled) { <small class="ms-1 tiny">(Protegido)</small> }
+                                            </label>
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="form-check form-switch p-3 bg-light rounded-3 mb-0">
+                                    <input class="form-check-input ms-0 me-2" type="checkbox" asp-for="Usuario.Activo" name="Usuario.Activo" checked>
+                                    <label class="form-check-label fw-bold" asp-for="Usuario.Activo">Usuario con Acceso Activo</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-3">
+                            <button type="submit" class="btn btn-primary py-3 shadow">
+                                <i class="ti ti-device-floppy me-1"></i> REGISTRAR USUARIO
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">CANCELAR</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

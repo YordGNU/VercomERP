@@ -1,0 +1,86 @@
+﻿@model Vercom.Models.RecepcionCompra
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+
+
+<h4>RecepcionCompra</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+       <div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Editar RecepcionCompra</h4>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">RecepcionCompra</a></li>
+            <li class="breadcrumb-item active">Editar</li>
+        </ol>
+    </div>
+</div>
+
+<div class="row">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                 <div class="card-header border-light justify-content-between">
+                    <h4 class="card-title">Formulario de Edición</h4>
+                </div>
+                <div class="card-body">
+<form class="row g-3" asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="mb-3">
+                <label asp-for="OrdenCompraId" class="form-label"></label>
+                <select asp-for="OrdenCompraId" class="form-control" asp-items="ViewBag.OrdenCompraId"></select>
+                <span asp-validation-for="OrdenCompraId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="MovimientoInventarioId" class="form-label"></label>
+                <input asp-for="MovimientoInventarioId" class="form-control" />
+                <span asp-validation-for="MovimientoInventarioId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="CuentaPorPagarId" class="form-label"></label>
+                <input asp-for="CuentaPorPagarId" class="form-control" />
+                <span asp-validation-for="CuentaPorPagarId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Fecha" class="form-label"></label>
+                <input asp-for="Fecha" class="form-control" />
+                <span asp-validation-for="Fecha" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="NumeroInformeRecepcion" class="form-label"></label>
+                <input asp-for="NumeroInformeRecepcion" class="form-control" />
+                <span asp-validation-for="NumeroInformeRecepcion" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="RecibidoPor" class="form-label"></label>
+                <input asp-for="RecibidoPor" class="form-control" />
+                <span asp-validation-for="RecibidoPor" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

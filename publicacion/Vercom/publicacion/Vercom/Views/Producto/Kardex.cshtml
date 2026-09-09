@@ -1,0 +1,89 @@
+@model IEnumerable<Vercom.ViewModels.KardexRowViewModel>
+@{
+    var product = ViewBag.Product as Vercom.Models.Producto;
+    ViewBag.Title = "Kardex de Producto: " + product?.Nombre;
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Reporte de Kardex: @product?.Nombre</h4>
+        <p class="text-muted small mb-0">Trazabilidad histórica de movimientos, saldos y costos del artículo.</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Inventario</a></li>
+            <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@product?.Id">Ficha Técnica</a></li>
+            <li class="breadcrumb-item active">Kardex</li>
+        </ol>
+        <button onclick="window.print()" class="btn btn-sm btn-light">
+            <i class="ti ti-printer me-1"></i> IMPRIMIR REPORTE
+        </button>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-light-subtle d-flex justify-content-between align-items-center">
+            <h5 class="m-0 fw-bold"><i class="ti ti-history me-2 text-primary"></i>Hoja de Movimiento Auxiliar</h5>
+            <div class="small">
+                <span class="text-muted">Unidad de Medida:</span> <strong class="text-dark">@product?.UnidadMedida.Nombre</strong>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table table-hover mb-0">
+                    <thead class="table-dark text-uppercase fs-xxs">
+                        <tr>
+                            <th class="ps-4">Fecha/Hora</th>
+                            <th>Operación</th>
+                            <th>Documento</th>
+                            <th>Almacén</th>
+                            <th>Lote</th>
+                            <th>Entrada</th>
+                            <th>Salida</th>
+                            <th class="text-end bg-primary bg-opacity-10 text-primary pe-4">Saldo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model)
+                        {
+                            <tr>
+                                <td class="ps-4 small text-muted">@row.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    <span class="fw-bold">@row.TipoMovimiento</span>
+                                </td>
+                                <td><code class="small fw-bold">@row.Documento</code></td>
+                                <td class="small">@row.Almacen</td>
+                                <td class="small font-monospace">@(row.Lote ?? "-")</td>
+                                <td class="text-end text-success">@(row.Entrada > 0 ? row.Entrada.ToString("N2") : "-")</td>
+                                <td class="text-end text-danger">@(row.Salida > 0 ? row.Salida.ToString("N2") : "-")</td>
+                                <td class="text-end pe-4 fw-bold bg-primary bg-opacity-10 text-primary">@row.Saldo.ToString("N2")</td>
+                            </tr>
+                        }
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center py-5 text-muted">No se registran movimientos históricos para este producto.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-secondary border-0 shadow-sm rounded-3 mt-4 py-3">
+        <div class="d-flex align-items-center">
+            <i class="ti ti-info-circle fs-32 me-3 opacity-50"></i>
+            <div>
+                <h6 class="fw-bold mb-1">Nota de Auditoría</h6>
+                <p class="mb-0 small">Este reporte se genera en tiempo real recorriendo la bitácora de movimientos. Cumple con los requisitos de control interno para la justificación de saldos en balance.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .fs-xxs { font-size: 0.65rem; }
+</style>

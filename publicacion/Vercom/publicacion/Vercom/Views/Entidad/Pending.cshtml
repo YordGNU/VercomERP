@@ -1,0 +1,72 @@
+@model IEnumerable<Vercom.Models.Entidad>
+@{
+    ViewBag.Title = "Entidades Pendientes de Aprobación";
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Solicitudes de Registro de Entidades</h4>
+        <p class="text-muted small mb-0">Gestión de nuevas empresas solicitando acceso al ecosistema ERP (Control Maestro).</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Maestro</a></li>
+            <li class="breadcrumb-item active">Pendientes</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        @foreach (var item in Model)
+        {
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm border-warning-subtle">
+                    <div class="card-status-top bg-warning"></div>
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="avatar bg-warning-subtle text-warning rounded me-3">
+                                <i class="ti ti-building-community fs-24"></i>
+                            </div>
+                            <div>
+                                <h4 class="m-0 fw-bold">@item.RazonSocial</h4>
+                                <small class="text-muted text-uppercase">NIT: @item.Nit</small>
+                            </div>
+                        </div>
+
+                        <div class="bg-light p-3 rounded mb-4">
+                            <p class="small mb-1"><i class="ti ti-map-pin me-1"></i> @item.DireccionLegal</p>
+                            <p class="small mb-0"><i class="ti ti-calendar-time me-1"></i> Solicitado el: @item.CreadoEn.ToString("dd MMM yyyy HH:mm")</p>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <form asp-action="Approve" method="post" class="flex-fill">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit" class="btn btn-success w-100 py-2">
+                                    <i class="ti ti-check me-1"></i> APROBAR Y CONFIGURAR
+                                </button>
+                            </form>
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-secondary py-2 px-3">
+                                <i class="ti ti-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (!Model.Any())
+        {
+            <div class="col-12 text-center py-5">
+                <div class="avatar avatar-xl bg-light text-muted rounded-circle mb-4">
+                    <i class="ti ti-inbox fs-48"></i>
+                </div>
+                <h3>No hay solicitudes pendientes</h3>
+                <p class="text-muted">Todas las empresas registradas están actualmente activas o procesadas.</p>
+                <a asp-action="Index" class="btn btn-sm btn-outline mt-3">VER TODAS LAS ENTIDADES</a>
+            </div>
+        }
+    </div>
+</div>

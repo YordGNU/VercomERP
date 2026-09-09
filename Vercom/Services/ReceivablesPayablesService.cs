@@ -25,11 +25,13 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
 {
     private readonly AppDbContext _context;
     private readonly IAccountingService _accountingService;
+    private readonly IParametroSistemaService _paramService;
 
-    public ReceivablesPayablesService(AppDbContext context, IAccountingService accountingService)
+    public ReceivablesPayablesService(AppDbContext context, IAccountingService accountingService, IParametroSistemaService paramService)
     {
         _context = context;
         _accountingService = accountingService;
+        _paramService = paramService;
     }
 
     public async Task<List<AgingReportRow>> GetReceivablesAgingAsync(Guid entidadId)
@@ -98,20 +100,22 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
             };
 
             // Debe: Caja o Banco
-            var cashAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "101" && c.EntidadId == cxc.EntidadId);
-            if (cashAccount == null) throw new Exception("Cuenta de caja no configurada.");
+            var ctaCaja = await _paramService.ObtenerValorVigenteAsync(cxc.EntidadId, "CTA_CAJA_MN") ?? "101";
+            var cashAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaCaja && c.EntidadId == cxc.EntidadId);
+            if (cashAccount == null) return (false, "Error de Configuración: La cuenta de caja no está definida.");
 
             entry.AsientoDetalles.Add(new AsientoDetalle
             {
                 Id = Guid.NewGuid(),
                 CuentaId = cashAccount.Id,
                 Debe = amount,
-                Glosa = $"Cobro CxC {cxc.Id}"
+                Glosa = $"Cobro Factura CxC"
             });
 
             // Haber: Cuentas por Cobrar
-            var cxcAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "201" && c.EntidadId == cxc.EntidadId);
-            if (cxcAccount == null) throw new Exception("Cuenta de CxC no configurada.");
+            var ctaCxC = await _paramService.ObtenerValorVigenteAsync(cxc.EntidadId, "CTA_CXC_CLIENTES") ?? "135";
+            var cxcAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaCxC && c.EntidadId == cxc.EntidadId);
+            if (cxcAccount == null) return (false, "Error de Configuración: La cuenta de clientes no está definida.");
 
             entry.AsientoDetalles.Add(new AsientoDetalle
             {
@@ -174,8 +178,9 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
             };
 
             // Debe: Cuentas por Pagar
-            var cxpAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "401" && c.EntidadId == cxp.EntidadId);
-            if (cxpAccount == null) throw new Exception("Cuenta de CxP no configurada.");
+            var ctaCxP = await _paramService.ObtenerValorVigenteAsync(cxp.EntidadId, "CTA_CXP_PROVEEDORES") ?? "405";
+            var cxpAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaCxP && c.EntidadId == cxp.EntidadId);
+            if (cxpAccount == null) return (false, "Error de Configuración: La cuenta de proveedores no está definida.");
 
             entry.AsientoDetalles.Add(new AsientoDetalle
             {
@@ -186,8 +191,9 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
             });
 
             // Haber: Caja o Banco
-            var cashAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "101" && c.EntidadId == cxp.EntidadId);
-            if (cashAccount == null) throw new Exception("Cuenta de caja no configurada.");
+            var ctaCaja = await _paramService.ObtenerValorVigenteAsync(cxp.EntidadId, "CTA_CAJA_MN") ?? "101";
+            var cashAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaCaja && c.EntidadId == cxp.EntidadId);
+            if (cashAccount == null) return (false, "Error de Configuración: La cuenta de caja no está definida.");
 
             entry.AsientoDetalles.Add(new AsientoDetalle
             {

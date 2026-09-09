@@ -1,0 +1,110 @@
+﻿@model Vercom.Models.DeclaracionJuradum
+@{
+    ViewBag.Title = "Generar Declaración Jurada";
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Cumplimiento Fiscal: Nueva DJ</h4>
+        <p class="text-muted small mb-0">Declaración de base imponible y determinación de tributos para la ONAT.</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Finanzas</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">Fiscalidad</a></li>
+            <li class="breadcrumb-item active">Generar</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <form asp-action="Create" method="post">
+        @Html.AntiForgeryToken()
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-light-subtle py-3">
+                        <h5 class="m-0 fw-bold"><i class="ti ti-file-certificate me-2 text-primary"></i>Configuración de la Obligación</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-4 shadow-sm"></div>
+
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Tipo de Tributo / Impuesto</label>
+                                <select asp-for="TipoObligacionId" class="form-control form-select w-100" asp-items="ViewBag.TipoObligacionId" required>
+                                    <option value="">-- Seleccionar Obligación --</option>
+                                </select>
+                                <small class="text-muted tiny">Ej: Impuesto sobre Ventas, Utilidades, Fuerza de Trabajo.</small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Periodo Contable Aplicable</label>
+                                <select asp-for="PeriodoId" class="form-control form-select w-100" asp-items="ViewBag.PeriodoId" required>
+                                    <option value="">-- Seleccionar Periodo --</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Número de DJ (Folio)</label>
+                                <input asp-for="NumeroDj" class="form-control fw-bold font-monospace" placeholder="Ej: DJ-08-2026-001" required />
+                                <span asp-validation-for="NumeroDj" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Base Imponible ($)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">$</span>
+                                    <input asp-for="BaseImponible" class="form-control text-end fw-bold" placeholder="0.00" step="0.01" required />
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Impuesto Calculado ($)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-primary-subtle text-primary">$</span>
+                                    <input asp-for="MontoCalculado" class="form-control text-end fw-bold text-primary" placeholder="0.00" step="0.01" required />
+                                </div>
+                                <small class="text-muted tiny">Monto neto a pagar tras bonificaciones.</small>
+                            </div>
+
+                            <div class="col-md-6 mt-4 pt-3 border-top">
+                                <label class="form-label fw-bold">Fecha Límite de Pago</label>
+                                <input asp-for="FechaLimite" type="date" class="form-control" required />
+                            </div>
+
+                            <div class="col-md-6 mt-4 pt-3 border-top">
+                                <label class="form-label fw-bold">Fecha Efectiva de Presentación</label>
+                                <input asp-for="FechaPresentacion" type="date" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                            </div>
+                        </div>
+
+                        <div class="col-12 d-flex justify-content-end gap-2 mt-5 pt-3 border-top">
+                            <a asp-action="Index" class="btn btn-sm btn-outline-secondary px-4">CANCELAR</a>
+                            <button type="submit" class="btn btn-sm btn-primary px-5 py-2 shadow">
+                                <i class="ti ti-device-floppy me-1"></i> GENERAR Y CONTABILIZAR DJ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card bg-dark text-white border-0 shadow-sm">
+                    <div class="card-body p-4 d-flex align-items-center">
+                        <div class="avatar bg-white bg-opacity-10 text-white me-3">
+                            <i class="ti ti-shield-check fs-24"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1">Integridad Contable Fiscal</h5>
+                            <p class="mb-0 small opacity-75">La generación de esta DJ creará automáticamente un asiento de provisión en el Libro Diario y un registro en Cuentas por Pagar para el seguimiento del desembolso.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

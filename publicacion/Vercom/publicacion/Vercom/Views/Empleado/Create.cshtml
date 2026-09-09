@@ -1,0 +1,149 @@
+﻿@model Vercom.ViewModels.EmployeeCreateViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">@Model.Title</h4>
+        <p class="text-muted small mb-0">Alta formal de trabajador en el sistema de gestión de capital humano (RF-20).</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">RRHH</a></li>
+            <li class="breadcrumb-item active">Alta Empleado</li>
+        </ol>
+    </div>
+</div>
+
+<div class="row">
+    <form asp-action="Create" method="post">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="All" class="alert alert-danger py-2 small border-0 mb-4 shadow-sm"></div>
+        <input type="hidden" asp-for="Empleado.Estado" name="Empleado.Estado" value="ACTIVO" />
+
+        <div class="row">
+            <!-- Columna Izquierda: Datos Personales -->
+            <div class="col-lg-8">
+                <div class="card">
+                     <div class="card-header border-light justify-content-between">
+                        <h5 class="m-0 fw-bold"><i class="ti ti-id-badge me-2 text-primary"></i>Información Identificativa</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label asp-for="Empleado.CarnetIdentidad" class="form-label">Carnet de Identidad</label>
+                                <input asp-for="Empleado.CarnetIdentidad" name="Empleado.CarnetIdentidad" class="form-control w-100" maxlength="11" minlength="11" placeholder="Ej: 900512..." required />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Empleado.Nombres" class="form-label">Nombres</label>
+                                <input asp-for="Empleado.Nombres" name="Empleado.Nombres" class="form-control w-100" required />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Empleado.Apellidos" class="form-label">Apellidos</label>
+                                <input asp-for="Empleado.Apellidos" name="Empleado.Apellidos" class="form-control w-100" required />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label asp-for="Empleado.FechaNacimiento" class="form-label">Fecha de Nacimiento</label>
+                                <input asp-for="Empleado.FechaNacimiento" name="Empleado.FechaNacimiento" class="form-control w-100" type="date" required />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Empleado.Sexo" class="form-label">Sexo</label>
+                                <select asp-for="Empleado.Sexo" name="Empleado.Sexo" class="form-control form-select w-100" required>
+                                    <option value="">-- Seleccione --</option>
+                                    <option value="M">Masculino</option>
+                                    <option value="F">Femenino</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Empleado.Telefono" class="form-label">Teléfono de Contacto</label>
+                                <input asp-for="Empleado.Telefono" name="Empleado.Telefono" class="form-control w-100" placeholder="+53 5xxx xxxx" />
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Empleado.Direccion" class="form-label">Dirección Particular Residencia</label>
+                                <textarea asp-for="Empleado.Direccion" name="Empleado.Direccion" class="form-control w-100" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                     <div class="card-header border-light justify-content-between">
+                        <h5 class="m-0 fw-bold"><i class="ti ti-briefcase me-2 text-primary"></i>Ubicación y Perfil Laboral</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="Empleado.SucursalId" class="form-label">Sucursal / Unidad Organizativa</label>
+                                <select asp-for="Empleado.SucursalId" name="Empleado.SucursalId" class="form-control form-select w-100 select2" asp-items="Model.Sucursales" required></select>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Empleado.CargoId" class="form-label">Cargo (Nomenclador de Ocupaciones)</label>
+                                <select asp-for="Empleado.CargoId" name="Empleado.CargoId" class="form-control form-select w-100 select2" asp-items="Model.Cargos" required></select>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Empleado.NivelEscolaridad" class="form-label">Nivel de Escolaridad</label>
+                                <select asp-for="Empleado.NivelEscolaridad" name="Empleado.NivelEscolaridad" class="form-control form-select w-100">
+                                    <option value="UNIVERSITARIO">Universitario / Superior</option>
+                                    <option value="TECNICO_MEDIO">Técnico Medio / Superior</option>
+                                    <option value="PREUNIVERSITARIO">Preuniversitario</option>
+                                    <option value="SECUNDARIA">Secundaria Básica</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Empleado.Calificacion" class="form-label">Calificación / Título</label>
+                                <input asp-for="Empleado.Calificacion" name="Empleado.Calificacion" class="form-control w-100" placeholder="Ej: Lic. en Contabilidad" />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Empleado.FechaIngreso" class="form-label">Fecha de Alta en Entidad</label>
+                                <input asp-for="Empleado.FechaIngreso" name="Empleado.FechaIngreso" class="form-control w-100" type="date" required />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna Derecha: Configuración Bancaria y Resumen -->
+            <div class="col-lg-4">
+                <div class="card border-info">
+                    <div class="card-header bg-info-subtle border-info border-opacity-10">
+                        <h5 class="m-0 fw-bold text-info"><i class="ti ti-credit-card me-2"></i>Bancarización</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="Empleado.CuentaBancariaPago" class="form-label">Cuenta para Pago de Salarios</label>
+                            <input asp-for="Empleado.CuentaBancariaPago" name="Empleado.CuentaBancariaPago" class="form-control text-numeric w-100" placeholder="92xx xxxx xxxx xxxx" />
+                            <small class="text-muted italic">Número de tarjeta o cuenta magnética.</small>
+                        </div>
+                        <div class="mb-0">
+                            <label asp-for="Empleado.Email" class="form-label">Correo Institucional</label>
+                            <input asp-for="Empleado.Email" name="Empleado.Email" type="email" class="form-control w-100" placeholder="usuario@empresa.cu" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-lg bg-light-subtle">
+                    <div class="card-body p-4 text-center">
+                        <i class="ti ti-circle-check fs-48 text-success mb-3"></i>
+                        <h4 class="fw-bold">Confirmar Registro</h4>
+                        <p class="text-muted small">Al guardar, se creará el expediente del trabajador y se habilitará para nómina y asistencia.</p>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-sm btn-primary py-3">
+                                <i class="ti ti-device-floppy"></i> GUARDAR EXPEDIENTE
+                            </button>
+                            <a asp-action="Index" class="btn btn-sm btn-outline">DESCARTAR CAMBIOS</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

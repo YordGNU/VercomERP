@@ -1,0 +1,83 @@
+﻿@model Vercom.Models.ParametroSistema
+@{
+    ViewBag.Title = "Nuevo Parámetro del Sistema";
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Definir Variable de Configuración</h4>
+        <p class="text-muted small mb-0">Creación de parámetros de entorno, tasas fiscales y reglas de negocio dinámicas.</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Sistema</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">Parámetros</a></li>
+            <li class="breadcrumb-item active">Nuevo</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light-subtle py-3">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-settings-cog me-2 text-primary"></i>Datos del Parámetro</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Create" method="post" class="row g-4">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Código / Clave Técnica</label>
+                            <input asp-for="Codigo" class="form-control fw-bold text-primary text-uppercase" placeholder="Ej: TASA_VENTA_MINORISTA" required maxlength="80" />
+                            <small class="text-muted">Utilizado por el motor del ERP para cálculos automáticos.</small>
+                            <span asp-validation-for="Codigo" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Descripción Operativa</label>
+                            <input asp-for="Descripcion" class="form-control" placeholder="Ej: Porcentaje de impuesto sobre ventas..." required />
+                            <span asp-validation-for="Descripcion" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Valor del Parámetro</label>
+                            <input asp-for="Valor" class="form-control fw-bold" placeholder="Ej: 0.10" required />
+                            <span asp-validation-for="Valor" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Tipo de Dato</label>
+                            <select asp-for="TipoDato" class="form-select" required>
+                                <option value="STRING">Texto (String)</option>
+                                <option value="NUMERIC">Numérico (Decimal)</option>
+                                <option value="BOOLEAN">Lógico (Booleano)</option>
+                                <option value="DATE">Fecha (Date)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Vigente Hasta (Opcional)</label>
+                            <input asp-for="VigenteHasta" type="date" class="form-control" />
+                            <small class="text-muted">Deje en blanco si la vigencia es indefinida.</small>
+                        </div>
+
+                        <div class="col-12 d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <a asp-action="Index" class="btn btn-sm btn-outline-secondary px-4">CANCELAR</a>
+                            <button type="submit" class="btn btn-sm btn-primary px-5 py-2 shadow">
+                                <i class="ti ti-device-floppy me-1"></i> ACTIVAR PARÁMETRO
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

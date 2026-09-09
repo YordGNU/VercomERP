@@ -1,0 +1,74 @@
+﻿@model Vercom.ViewModels.CentroCostoFormViewModel
+@{
+    ViewData["Title"] = "Crear Centro de Costo";
+}
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Crear Centro de Costo</h4>
+        <p class="text-muted small mb-0">Imputación analítica de gastos por unidad organizativa.</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Contabilidad</a></li>
+            <li class="breadcrumb-item active">Centros de Costo</li>
+        </ol>
+    </div>
+</div>
+
+<div class="row">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-chart-dots me-2 text-primary"></i>Formulario de Registro</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Create" class="row g-4">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Código Interno</label>
+                            <input asp-for="CentroCosto.Codigo" name="CentroCosto.Codigo" class="form-control w-100 fw-bold text-primary" placeholder="ej: CC-01" required />
+                            <span asp-validation-for="CentroCosto.Codigo" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-8">
+                            <label class="form-label">Nombre descriptivo</label>
+                            <input asp-for="CentroCosto.Nombre" name="CentroCosto.Nombre" class="form-control w-100" placeholder="Nombre del centro de costo" required />
+                            <span asp-validation-for="CentroCosto.Nombre" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Sucursal Asociada</label>
+                            <select asp-for="CentroCosto.SucursalId" name="CentroCosto.SucursalId" class="form-control form-select w-100 select2" asp-items="Model.Sucursales">
+                                <option value="">-- Uso Global / Corporativo --</option>
+                            </select>
+                            <span asp-validation-for="CentroCosto.SucursalId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6 d-flex align-items-end pb-2">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" asp-for="CentroCosto.Activo" name="CentroCosto.Activo" checked>
+                                <label class="form-check-label fw-bold">Centro Operativo</label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <a asp-action="Index" class="btn btn-sm btn-outline px-4">CANCELAR</a>
+                            <button type="submit" class="btn btn-sm btn-primary px-5 py-2 shadow">
+                                <i class="ti ti-device-floppy me-1"></i> GUARDAR CENTRO
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

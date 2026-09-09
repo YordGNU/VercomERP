@@ -1,11 +1,25 @@
-# Tareas: Implementación de Subida de Contratos (Word/PDF)
+# Tareas: Integración de Iteración 3 — RRHH e Inmutabilidad
 
-- [x] Modificar `IHRService` y `HRService` para soportar subida de archivos.
-    - [x] Inyectar `IWebHostEnvironment`.
-    - [x] Actualizar firma de `AddContractAsync`.
-    - [x] Implementar lógica de guardado físico de archivos (con fallback de ruta).
-- [x] Actualizar `EmpleadoController.AddContract` (POST) para recibir el archivo de forma explícita.
-- [x] Rediseñar vista `Views/Empleado/AddContract.cshtml` con campo de tipo `file` y limpieza de nombres.
-- [x] Actualizar vista `Views/Empleado/File.cshtml` para mostrar enlaces de descarga.
-- [x] Verificar creación de carpeta de destino y permisos.
-- [x] Habilitar `UseStaticFiles()` en `Program.cs` para servir los documentos.
+## 1. Base de Datos (Seguridad y Parámetros)
+- [x] Ejecutar script `103_iteracion3_rrhh.sql` para triggers de inmutabilidad.
+- [x] Insertar nuevos parámetros legales:
+    - [x] `TASA_RECARGO_HORA_EXTRA` (25%)
+    - [x] `UMBRAL_EXENTO_IMP_INGRESOS_PERS` (2500)
+    - [x] `TASA_IMP_INGRESOS_PERS` (3%)
+
+## 2. Lógica de Nómina (PayrollService)
+- [x] Refactorizar `CalculatePayrollAsync`:
+    - [x] Implementar cálculo de horas extra con recargo.
+    - [x] Implementar cálculo de IRP con umbral exento.
+    - [x] Registrar aportes patronales como conceptos de nómina.
+- [x] Ajustar `ApprovePayrollAsync` para asegurar cuadre contable (DEBE = Gasto + Aportes).
+
+## 3. Gestión de Plantilla y Privacidad (HRService)
+- [x] Integrar validación de plazas disponibles en `AddContractAsync`.
+- [x] Implementar restricción de acceso a diagnósticos en `GetExpedienteAsync`.
+
+## 4. Verificación
+- [x] Validar inmutabilidad (intentar editar nómina aprobada).
+- [x] Probar cálculo de IRP sobre excedente.
+- [x] Validar bloqueo de contrato por falta de plazas.
+- [x] Generar Walkthrough de la Iteración 3 finalizado.

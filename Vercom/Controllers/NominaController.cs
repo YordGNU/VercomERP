@@ -9,11 +9,13 @@ namespace Vercom.Controllers;
 public class NominaController : Controller
 {
     private readonly IPayrollService _payrollService;
+    private readonly IAdminService _adminService;
     private readonly IEntidadProvider _entidadProvider;
 
-    public NominaController(IPayrollService payrollService, IEntidadProvider entidadProvider)
+    public NominaController(IPayrollService payrollService, IAdminService adminService, IEntidadProvider entidadProvider)
     {
         _payrollService = payrollService;
+        _adminService = adminService;
         _entidadProvider = entidadProvider;
     }
 
@@ -21,6 +23,7 @@ public class NominaController : Controller
     public async Task<IActionResult> Index()
     {
         var vm = await _payrollService.GetPayrollIndexContextAsync();
+        ViewBag.SucursalId = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(await _adminService.GetSucursalesAsync(), "Id", "Nombre");
         return View(vm);
     }
 
@@ -29,6 +32,14 @@ public class NominaController : Controller
     {
         var vm = await _payrollService.GetPayrollDetailsContextAsync(id);
         if (vm == null) return NotFound();
+        return View(vm);
+    }
+
+    [HttpGet]
+    [Authorize(Policy = "RRHH.NOMINA.VER")]
+    public async Task<IActionResult> Preview(short anio, short mes, Guid? sucursalId)
+    {
+        var vm = await _payrollService.GetPayrollPreviewAsync(_entidadProvider.CurrentEntidadId, anio, mes, sucursalId);
         return View(vm);
     }
 

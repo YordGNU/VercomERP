@@ -14,6 +14,8 @@ public class PlantillaStatusViewModel
 public class PlantillaRow
 {
     public Guid Id { get; set; }
+    public Guid CargoId { get; set; }
+    public Guid? SucursalId { get; set; }
     public string Cargo { get; set; } = string.Empty;
     public string Sucursal { get; set; } = string.Empty;
     public string EntidadNombre { get; set; } = string.Empty;

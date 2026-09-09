@@ -1,0 +1,74 @@
+﻿@model Vercom.ViewModels.AlmacenFormViewModel
+@{
+    ViewBag.Title = Model.Title;
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">@Model.Title</h4>
+        <p class="text-muted small mb-0">Habilitación de nuevas áreas de almacenamiento y puntos de despacho.</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Inventario</a></li>
+            <li class="breadcrumb-item active">Nuevo Almacén</li>
+        </ol>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light-subtle">
+                    <h5 class="card-title mb-0">Definición de Almacén / Depósito</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post" class="row g-3">
+                        <div asp-validation-summary="All" class="alert alert-danger py-2 small"></div>
+
+                        <div class="col-md-4">
+                            <label asp-for="Almacen.Codigo" class="form-label fw-bold">Código Interno</label>
+                            <input asp-for="Almacen.Codigo" name="Almacen.Codigo" class="form-control" placeholder="ej: BOD-01" required />
+                        </div>
+                        <div class="col-md-8">
+                            <label asp-for="Almacen.Nombre" class="form-label fw-bold">Nombre del Almacén</label>
+                            <input asp-for="Almacen.Nombre" name="Almacen.Nombre" class="form-control" required />
+                        </div>
+
+                        <div class="col-md-12">
+                            <label asp-for="Almacen.SucursalId" class="form-label fw-bold">Sucursal Responsable</label>
+                            <select asp-for="Almacen.SucursalId" name="Almacen.SucursalId" class="form-select select2" asp-items="Model.Sucursales" required></select>
+                        </div>
+
+                        <div class="col-md-6 d-flex align-items-center">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" asp-for="Almacen.EsPuntoVenta" name="Almacen.EsPuntoVenta">
+                                <label class="form-check-label fw-bold" asp-for="Almacen.EsPuntoVenta">Habilitar como Punto de Venta (POS)</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 d-flex align-items-center">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" asp-for="Almacen.Activo" name="Almacen.Activo" checked>
+                                <label class="form-check-label fw-bold" asp-for="Almacen.Activo">Almacén Activo</label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <a asp-action="Index" class="btn btn-outline-secondary">Descartar</a>
+                            <button type="submit" class="btn btn-primary px-5">
+                                <i class="ti ti-device-floppy me-1"></i> GUARDAR ALMACÉN
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

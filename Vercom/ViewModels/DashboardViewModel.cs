@@ -13,6 +13,7 @@ public class DashboardViewModel
     public List<decimal> TrendLiquidez { get; set; } = new();
 
     public List<Existencium> AlertasStock { get; set; } = new();
+    public List<ContratoEconomico> ContratosVencer { get; set; } = new();
 
     public string PeriodoActual { get; set; } = string.Empty;
     public bool EsMaster { get; internal set; }

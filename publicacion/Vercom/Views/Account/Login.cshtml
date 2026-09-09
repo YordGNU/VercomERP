@@ -1,0 +1,67 @@
+@{
+    ViewData["Title"] = "Iniciar Sesión";
+    Layout = "_LayoutAuth";
+}
+
+<div class="card p-4">
+    <div class="text-center mb-4">
+        <img src="~/css/images/logo.svg" alt="Vercom" style="height: 50px;" class="mb-3">
+        <h2 class="fw-bold">Vercom Elite</h2>
+        <p class="text-muted">Inicia sesión en tu cuenta operativa</p>
+    </div>
+
+    <form asp-action="Login" method="post">
+        <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+
+        <div class="mb-3">
+            <label class="form-label small fw-bold">Usuario</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light"><i class="ti ti-user fs-18"></i></span>
+                <input type="text" name="username" class="form-control" placeholder="nombre.usuario" required autofocus />
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <div class="d-flex justify-content-between">
+                <label class="form-label small fw-bold">Contraseña</label>
+                <a href="javascript:void(0);" class="text-muted small">¿Olvidó su clave?</a>
+            </div>
+            <div class="input-group">
+                <span class="input-group-text bg-light"><i class="ti ti-lock fs-18"></i></span>
+                <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" required />
+                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                    <i class="ti ti-eye fs-18"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="mb-3 form-check">
+            <input type="checkbox" name="rememberMe" class="form-check-input" id="rememberMe" value="true">
+            <label class="form-check-label small" for="rememberMe">Recordarme en este equipo</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">ENTRAR AL SISTEMA</button>
+    </form>
+
+    <div class="mt-4 text-center">
+        <p class="small text-muted">&copy; 2026 Tierra Prometida S.U.R.L.</p>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const pwd = document.getElementById('password');
+            const icon = this.querySelector('i');
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+                icon.classList.replace('ti-eye', 'ti-eye-off');
+            } else {
+                pwd.type = 'password';
+                icon.classList.replace('ti-eye-off', 'ti-eye');
+            }
+        });
+    </script>
+}

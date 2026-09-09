@@ -1,33 +1,41 @@
-# Digitalización de Contratos Laborales (Word/PDF) - Walkthrough
+# Integración de la Iteración 3: RRHH e Inmutabilidad de Datos - Walkthrough
 
-Se ha implementado la funcionalidad para adjuntar y consultar documentos físicos de contratos laborales directamente desde el expediente del empleado, profesionalizando la gestión documental del ERP Vercom Elite.
+Se ha completado la actualización del módulo de Recursos Humanos siguiendo las directrices de la **Iteración 3**, centrada en la seguridad del historial salarial, el cumplimiento fiscal de precisión y la eficiencia en el alta de personal.
 
-## Funcionalidades Implementadas
+## Mejoras de Seguridad y Cumplimiento
 
-### 1. Subida Segura de Documentos
-El formulario de "Agregar Contrato" ha sido potenciado para permitir la carga de archivos:
-- **Formatos Permitidos:** Soporte para documentos de Microsoft Word (`.doc`, `.docx`) y archivos `.pdf`.
-- **Almacenamiento Organizado:** Los archivos se guardan en el servidor (`wwwroot/uploads/contracts/`) con nombres únicos que incluyen el ID del empleado y una marca de tiempo para evitar colisiones.
-- **Validación:** Control de tamaño (máximo 10MB) y validación de extensiones permitidas.
+### 1. Blindaje Inmutable (RNF-22)
+Se han instalado disparadores (**Triggers**) de nivel de base de datos en las tablas de nómina:
+- **Protección de Auditoría:** Una vez que una nómina se marca como `CONTABILIZADA` o `PAGADA`, el sistema bloquea cualquier intento de edición o eliminación de sus detalles o conceptos.
+- **Integridad de Salarios:** Esto garantiza que el historial salarial sea inalterable con fines probatorios laborales ante el MTSS.
 
-### 2. Acceso Centralizado desde el Expediente
-Se añadió una columna de acceso rápido en la pestaña de **Contratos** del expediente digital:
-- **Iconografía Dinámica:** El sistema detecta el tipo de archivo y muestra un icono diferenciado para Word o PDF.
-- **Descarga Directa:** Enlace seguro para abrir o descargar el documento oficial con un solo clic.
-- **Transparencia:** Los contratos registrados anteriormente que no poseen documento digital muestran un indicador claro de ausencia.
+### 2. Cálculo Fiscal de Precisión (RF-23)
+Se refactorizó el motor de cálculo para alinearlo con las normas vigentes de las MIPYMES:
+- **ISP/IRP Inteligente:** El Impuesto sobre Ingresos Personales ahora se calcula aplicando la tasa del 3% solo sobre el excedente del **Umbral Exento** (configurado en 2,500 CUP por defecto).
+- **Horas Extra Proporcionales:** Se implementó el recargo legal del 25% sobre el valor real de la hora trabajada, basado en la jornada semanal pactada.
+- **Cuadre Contable Automático:** El asiento de aprobación ahora incluye todas las retenciones y aportes patronales (12.5% SS y 5% Fuerza de Trabajo), asegurando la partida doble exacta en el Diario.
 
-### 3. Lógica de Servicio Blindada
-- **Integración Atómica:** El proceso de guardado del archivo y el registro en la base de datos se realiza de forma coordinada. Si el guardado del archivo falla, no se registra el contrato.
-- **Aislamiento Multi-tenancy:** Las rutas de los archivos están vinculadas a la identidad del contrato, respetando los filtros de seguridad de cada empresa.
+## Optimizaciones para el Especialista
 
-## Resultados de Gestión
+### 3. Control de Plazas (Staffing) en Tiempo Real
+- **Candado de Contratación:** Al intentar registrar un nuevo contrato (ya sea en el Alta 360° o individualmente), el sistema verifica automáticamente la **Plantilla Aprobada**. Si no hay plazas disponibles para ese cargo en la sucursal, la operación se bloquea para evitar el sobregiro de nómina.
+
+### 4. Privacidad de Diagnósticos Médicos (RNF-20)
+- **Restricción de Acceso:** En el expediente digital, el diagnóstico CIE de los certificados médicos ahora se oculta automáticamente para usuarios sin roles de RRHH, Dirección o Admin, cumpliendo con la confidencialidad de datos sensibles.
+
+### 5. Asistente de Alta 360° (UX)
+- Se corrigió el flujo de autocompletado por Carnet de Identidad.
+- Se añadió la sugerencia de **Email Institucional** dinámico.
+- Se implementó la visualización de **Escalas Salariales** al seleccionar el cargo para guiar la negociación del contrato.
+
+## Resultados Técnicos
 
 > [!SUCCESS]
-> **Expediente 360°:** El personal de RRHH ahora puede consultar el contrato legal firmado sin necesidad de recurrir al archivo físico en papel.
+> **Auditabilidad Total:** El módulo ahora cumple con los requisitos de la Contraloría (CGR) respecto a la inmutabilidad de los registros financieros de personal.
 
-> [!TIP]
-> **Cumplimiento de Auditoría:** Esta mejora facilita los procesos de auditoría de la ONAT y el MTSS al proporcionar evidencia documental inmediata.
+> [!IMPORTANT]
+> **Ajuste de Parámetros:** Se recomienda revisar periódicamente los valores de `UMBRAL_EXENTO_IMP_INGRESOS_PERS` y `TASA_RECARGO_HORA_EXTRA` en la configuración del sistema ante posibles cambios legislativos.
 
 ## Próximos Pasos
-- Implementar la previsualización de documentos Word directamente en el navegador sin necesidad de descarga.
-- Habilitar la subida de múltiples anexos (ej. Documento de Confidencialidad, Recibo de Útiles).
+- Implementar el reporte de "Aportes al Presupuesto" consolidado por tipo de impuesto.
+- Habilitar la generación de transferencias masivas de pago.

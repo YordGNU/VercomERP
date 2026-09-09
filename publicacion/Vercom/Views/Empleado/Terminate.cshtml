@@ -1,0 +1,65 @@
+@model Vercom.ViewModels.TerminateEmployeeViewModel
+@{
+    ViewBag.Title = Model.Title;
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 text-danger">Baja Laboral y Liquidación</h4>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-danger border-opacity-25 shadow-sm">
+                <div class="card-header bg-danger bg-opacity-10">
+                    <h5 class="card-title mb-0 text-danger">Resumen de Cierre de Expediente</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="small text-muted text-uppercase fw-bold">Trabajador</label>
+                            <h4 class="fw-bold">@Model.NombreCompleto</h4>
+                            <p class="text-muted small">@Model.Cargo | Ingreso: @Model.FechaIngreso.ToString("dd/MM/yyyy")</p>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <label class="small text-muted text-uppercase fw-bold">Saldo de Vacaciones</label>
+                            <h3 class="text-primary fw-bold">@Model.VacacionesPendientes.ToString("N2") Días</h3>
+                            <p class="text-success small fw-bold">Estimado: @Model.EstimadoLiquidacion.ToString("C")</p>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <form asp-action="Terminate" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="EmpleadoId" value="@Model.EmpleadoId" />
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Fecha de Baja Efectiva</label>
+                                <input type="date" name="FechaBaja" value="@Model.FechaBaja.ToString("yyyy-MM-dd")" class="form-control" required />
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold">Motivo de la Baja (RF-21)</label>
+                                <textarea name="MotivoBaja" class="form-control" rows="3" placeholder="Ej: Renuncia voluntaria, Fin de contrato, etc." required></textarea>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning mt-4 py-2 small">
+                            <i class="ti ti-alert-triangle me-1"></i> <strong>IMPORTANTE:</strong> Al procesar la baja, el trabajador dejará de aparecer en la consola de asistencia y se marcarán sus vacaciones como "Liquidadas/Compensadas".
+                        </div>
+
+                        <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                            <a asp-action="File" asp-route-id="@Model.EmpleadoId" class="btn btn-outline-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-danger btn-lg px-5">
+                                <i class="ti ti-user-x me-1"></i> CONFIRMAR BAJA DEFINITIVA
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

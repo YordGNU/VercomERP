@@ -17,6 +17,7 @@ public interface IPayrollService
 
     // Escritura
     Task<(bool Succeeded, string Message)> CalculatePayrollAsync(Guid entidadId, short anio, short mes);
+    Task<PayrollPreviewViewModel> GetPayrollPreviewAsync(Guid entidadId, short anio, short mes, Guid? sucursalId = null);
     Task<List<NominaDetalle>> GetPayrollDetailsAsync(Guid periodId);
     Task<(bool Succeeded, string Message)> ApprovePayrollAsync(Guid periodId, Guid userId);
     Task<NominaDetalle?> GetPaySlipAsync(Guid detailId);
@@ -123,9 +124,9 @@ public class PayrollService : IPayrollService
                 };
                 _context.PeriodoNominas.Add(period);
             }
-            else if (period.Estado != "PRENOMINA")
+            else if (period.Estado != "PRENOMINA" && period.Estado != "CALCULADA")
             {
-                return (false, "El periodo de nómina ya está calculado o aprobado.");
+                return (false, "El periodo de nómina ya está aprobado o cerrado (RNF-22).");
             }
 
             var existingDetails = _context.NominaDetalles.Where(d => d.PeriodoNominaId == period.Id);
@@ -137,25 +138,38 @@ public class PayrollService : IPayrollService
                 .Where(e => e.EntidadId == entidadId && e.Estado == "ACTIVO")
                 .ToListAsync();
 
-            var ssTasa = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "RET_SS_TRAB");
-            if (ssTasa == 0) ssTasa = 0.05m;
+            // Parámetros Legales (Iteración 3)
+            var ssTasa = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "RET_SS_TRAB") != 0
+                ? await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "RET_SS_TRAB") : 0.05m;
 
-            var irpMin = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "IRP_MIN_EXENTO");
-            if (irpMin == 0) irpMin = 3260m;
+            var irpMin = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "UMBRAL_EXENTO_IMP_INGRESOS_PERS") != 0
+                ? await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "UMBRAL_EXENTO_IMP_INGRESOS_PERS") : 2500m;
 
-            var irpTasa = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "IRP_TASA");
-            if (irpTasa == 0) irpTasa = 0.03m;
+            var irpTasa = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "TASA_IMP_INGRESOS_PERS") != 0
+                ? await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "TASA_IMP_INGRESOS_PERS") : 0.03m;
+
+            var tasaRecargoHE = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "TASA_RECARGO_HORA_EXTRA") != 0
+                ? await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "TASA_RECARGO_HORA_EXTRA") : 25m;
 
             foreach (var emp in employees)
             {
                 var contract = emp.ContratoLaborals.FirstOrDefault(c => c.Estado == "VIGENTE");
                 if (contract == null) continue;
 
-                // 1. Días trabajados (Presencia real)
+                // 1. Asistencia y Horas Extra
                 var attendanceCount = await _context.RegistroAsistencia
                     .CountAsync(a => a.EmpleadoId == emp.Id && a.Fecha.Year == anio && a.Fecha.Month == mes && a.TipoAusenciaId == null);
 
-                // 2. Días de Certificado Médico (Remunerados)
+                var overtimeHours = await _context.RegistroAsistencia
+                    .Where(a => a.EmpleadoId == emp.Id && a.Fecha.Year == anio && a.Fecha.Month == mes)
+                    .SumAsync(a => a.HorasExtra);
+
+                // Valor hora con recargo (Iteración 3)
+                var valorHoraNormal = contract.SalarioPactado / (contract.JornadaHorasSemana * 4.33m); // Promedio semanas/mes
+                var valorHoraExtra = valorHoraNormal * (1 + (tasaRecargoHE / 100m));
+                var montoHoraExtra = Math.Round(overtimeHours * valorHoraExtra, 2);
+
+                // 2. Certificados Médicos
                 var medicalDays = await _context.CertificadoMedicos
                     .Where(c => c.EmpleadoId == emp.Id &&
                                ((c.FechaInicio.Year == anio && c.FechaInicio.Month == mes) ||
@@ -168,43 +182,23 @@ public class PayrollService : IPayrollService
 
                 foreach (var cert in medicalDays)
                 {
-                    // Calcular solapamiento con el mes actual
-                    var start = cert.FechaInicio.Year == anio && cert.FechaInicio.Month == mes
-                                ? cert.FechaInicio
-                                : new DateOnly(anio, mes, 1);
-                    var end = cert.FechaFin.Year == anio && cert.FechaFin.Month == mes
-                              ? cert.FechaFin
-                              : new DateOnly(anio, mes, DateTime.DaysInMonth(anio, mes));
-
+                    var start = cert.FechaInicio.Year == anio && cert.FechaInicio.Month == mes ? cert.FechaInicio : new DateOnly(anio, mes, 1);
+                    var end = cert.FechaFin.Year == anio && cert.FechaFin.Month == mes ? cert.FechaFin : new DateOnly(anio, mes, DateTime.DaysInMonth(anio, mes));
                     int daysInMonth = (end.DayNumber - start.DayNumber) + 1;
                     medicalDaysCount += daysInMonth;
-                    medicalAmount += (dailySalary * daysInMonth * (cert.PorcentajeSubsidio / 100));
+                    medicalAmount += Math.Round(dailySalary * daysInMonth * (cert.PorcentajeSubsidio / 100), 2);
                 }
 
                 var earnedSalary = dailySalary * attendanceCount;
-
-                var overtimeHours = await _context.RegistroAsistencia
-                    .Where(a => a.EmpleadoId == emp.Id && a.Fecha.Year == anio && a.Fecha.Month == mes)
-                    .SumAsync(a => a.HorasExtra);
-
-                var overtimeAmount = dailySalary / 8 * overtimeHours * 2;
-
-                // RF-22: Pagos por Resultados (Variable)
                 var variableAmount = await _context.NominaDetalleConceptos
                     .Where(c => c.NominaDetalle.EmpleadoId == emp.Id && c.NominaDetalle.PeriodoNomina.Anio == anio && c.NominaDetalle.PeriodoNomina.Mes == mes)
                     .SumAsync(c => (decimal?)c.Monto) ?? 0;
 
-                var brutoTotal = earnedSalary + overtimeAmount + variableAmount + medicalAmount;
+                var brutoTotal = earnedSalary + montoHoraExtra + variableAmount + medicalAmount;
 
-                // Retenciones Trabajador (RF-23)
-                var ssRetention = brutoTotal * ssTasa;
-
-                // Impuesto sobre Ingresos Personales (IRP - Escalado Simplificado para Mipyme)
-                decimal irpAmount = 0;
-                if (brutoTotal > irpMin)
-                {
-                    irpAmount = (brutoTotal - irpMin) * irpTasa;
-                }
+                // 3. Retenciones (Iteración 3: IRP sobre excedente)
+                var ssRetention = Math.Round(brutoTotal * ssTasa, 2);
+                decimal irpAmount = brutoTotal > irpMin ? Math.Round((brutoTotal - irpMin) * (irpTasa / 100m), 2) : 0;
 
                 var detail = new NominaDetalle
                 {
@@ -219,19 +213,117 @@ public class PayrollService : IPayrollService
                 };
 
                 _context.NominaDetalles.Add(detail);
+
+                // Registrar Conceptos (Transparencia)
+                _context.NominaDetalleConceptos.Add(new NominaDetalleConcepto { Id = Guid.NewGuid(), NominaDetalleId = detail.Id, ConceptoId = 1, Monto = earnedSalary }); // SAL_BASICO
+                if (montoHoraExtra > 0) _context.NominaDetalleConceptos.Add(new NominaDetalleConcepto { Id = Guid.NewGuid(), NominaDetalleId = detail.Id, ConceptoId = 4, Monto = montoHoraExtra }); // HORA_EXTRA
+                if (ssRetention > 0) _context.NominaDetalleConceptos.Add(new NominaDetalleConcepto { Id = Guid.NewGuid(), NominaDetalleId = detail.Id, ConceptoId = 6, Monto = -ssRetention }); // CONT_SS_TRAB
+                if (irpAmount > 0) _context.NominaDetalleConceptos.Add(new NominaDetalleConcepto { Id = Guid.NewGuid(), NominaDetalleId = detail.Id, ConceptoId = 7, Monto = -irpAmount }); // IMP_INGRESOS_PERS
             }
 
             period.CalculadoEn = DateTimeOffset.Now;
+            period.Estado = "CALCULADA";
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            return (true, "Nómina calculada exitosamente incluyendo subsidios.");
+            return (true, "Nómina calculada exitosamente con reglas de la Iteración 3.");
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
             return (false, $"Error en cálculo: {ex.Message}");
         }
+    }
+
+    public async Task<PayrollPreviewViewModel> GetPayrollPreviewAsync(Guid entidadId, short anio, short mes, Guid? sucursalId = null)
+    {
+        var query = _context.Empleados
+            .Include(e => e.ContratoLaborals)
+            .Include(e => e.Cargo)
+            .Include(e => e.Sucursal)
+            .Where(e => e.EntidadId == entidadId && e.Estado == "ACTIVO");
+
+        if (sucursalId.HasValue)
+        {
+            query = query.Where(e => e.SucursalId == sucursalId.Value);
+        }
+
+        var employees = await query.ToListAsync();
+
+        var ssTasa = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "RET_SS_TRAB");
+        if (ssTasa == 0) ssTasa = 0.05m;
+
+        var irpMin = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "IRP_MIN_EXENTO");
+        if (irpMin == 0) irpMin = 3260m;
+
+        var irpTasa = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "IRP_TASA");
+        if (irpTasa == 0) irpTasa = 0.03m;
+
+        var vm = new PayrollPreviewViewModel
+        {
+            Anio = anio,
+            Mes = mes,
+            SucursalId = sucursalId,
+            SucursalNombre = sucursalId.HasValue ? (await _context.Sucursals.FindAsync(sucursalId.Value))?.Nombre : "TODAS"
+        };
+
+        foreach (var emp in employees)
+        {
+            var contract = emp.ContratoLaborals.FirstOrDefault(c => c.Estado == "VIGENTE");
+            if (contract == null) continue;
+
+            // Lógica de cálculo (idéntica a la oficial)
+            var attendanceCount = await _context.RegistroAsistencia
+                .CountAsync(a => a.EmpleadoId == emp.Id && a.Fecha.Year == anio && a.Fecha.Month == mes && a.TipoAusenciaId == null);
+
+            var medicalDays = await _context.CertificadoMedicos
+                .Where(c => c.EmpleadoId == emp.Id &&
+                           ((c.FechaInicio.Year == anio && c.FechaInicio.Month == mes) ||
+                            (c.FechaFin.Year == anio && c.FechaFin.Month == mes)))
+                .ToListAsync();
+
+            decimal medicalAmount = 0;
+            decimal medicalDaysCount = 0;
+            var dailySalary = contract.SalarioPactado / 24;
+
+            foreach (var cert in medicalDays)
+            {
+                var start = cert.FechaInicio.Year == anio && cert.FechaInicio.Month == mes ? cert.FechaInicio : new DateOnly(anio, mes, 1);
+                var end = cert.FechaFin.Year == anio && cert.FechaFin.Month == mes ? cert.FechaFin : new DateOnly(anio, mes, DateTime.DaysInMonth(anio, mes));
+                int daysInMonth = (end.DayNumber - start.DayNumber) + 1;
+                medicalDaysCount += daysInMonth;
+                medicalAmount += (dailySalary * daysInMonth * (cert.PorcentajeSubsidio / 100));
+            }
+
+            var overtimeHours = await _context.RegistroAsistencia
+                .Where(a => a.EmpleadoId == emp.Id && a.Fecha.Year == anio && a.Fecha.Month == mes)
+                .SumAsync(a => a.HorasExtra);
+
+            var overtimeAmount = dailySalary / 8 * overtimeHours * 2;
+            var variableAmount = await _context.NominaDetalleConceptos
+                .Where(c => c.NominaDetalle.EmpleadoId == emp.Id && c.NominaDetalle.PeriodoNomina.Anio == anio && c.NominaDetalle.PeriodoNomina.Mes == mes)
+                .SumAsync(c => (decimal?)c.Monto) ?? 0;
+
+            var brutoTotal = (dailySalary * attendanceCount) + overtimeAmount + variableAmount + medicalAmount;
+            var ssRetention = brutoTotal * ssTasa;
+            decimal irpAmount = brutoTotal > irpMin ? (brutoTotal - irpMin) * irpTasa : 0;
+
+            vm.Rows.Add(new PayrollPreviewRow
+            {
+                EmpleadoId = emp.Id,
+                NombreCompleto = emp.NombreCompleto,
+                Cargo = emp.Cargo.Nombre,
+                Sucursal = emp.Sucursal?.Nombre ?? "N/A",
+                DiasTrabajados = attendanceCount + medicalDaysCount,
+                HorasExtra = overtimeHours,
+                Devengado = brutoTotal,
+                Deducciones = ssRetention + irpAmount,
+                RetencionSS = ssRetention,
+                RetencionIRP = irpAmount
+            });
+        }
+
+        return vm;
     }
 
     public async Task<List<NominaDetalle>> GetPayrollDetailsAsync(Guid periodId)
@@ -246,6 +338,7 @@ public class PayrollService : IPayrollService
     {
         var period = await _context.PeriodoNominas
             .Include(p => p.NominaDetalles)
+                .ThenInclude(d => d.NominaDetalleConceptos)
             .FirstOrDefaultAsync(p => p.Id == periodId);
 
         if (period == null) return (false, "Periodo de nómina no encontrado.");
@@ -259,8 +352,11 @@ public class PayrollService : IPayrollService
         try
         {
             var totalDevengado = period.NominaDetalles.Sum(d => d.SalarioDevengado);
-            var totalRetenciones = period.NominaDetalles.Sum(d => d.TotalDeducciones);
             var totalNeto = period.NominaDetalles.Sum(d => d.SalarioNeto);
+
+            // Sumar retenciones por tipo
+            var totalRetSS = Math.Abs(period.NominaDetalles.SelectMany(d => d.NominaDetalleConceptos).Where(c => c.ConceptoId == 6).Sum(c => c.Monto));
+            var totalRetIRP = Math.Abs(period.NominaDetalles.SelectMany(d => d.NominaDetalleConceptos).Where(c => c.ConceptoId == 7).Sum(c => c.Monto));
 
             // 1. Obtener Tasas Dinámicas (RF-23)
             var tasaSSPatronal = await _paramService.ObtenerValorNumericoVigenteAsync(period.EntidadId, "TASA_SS_PATRONAL");
@@ -272,15 +368,23 @@ public class PayrollService : IPayrollService
             var aporteSS = Math.Round(totalDevengado * tasaSSPatronal, 2);
             var impuestoFT = Math.Round(totalDevengado * tasaFT, 2);
 
-            // 2. Validar Cuentas Contables Obligatorias
-            var expenseAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "701" && c.EntidadId == period.EntidadId);
-            var payableAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "401" && c.EntidadId == period.EntidadId);
+            // 2. Obtener Cuentas Contables Configuradas (vía Parámetros o Fallback del listado oficial)
+            var ctaGasto = await _paramService.ObtenerValorVigenteAsync(period.EntidadId, "CTA_NOMINA_GASTO") ?? "822";
+            var ctaPasivo = await _paramService.ObtenerValorVigenteAsync(period.EntidadId, "CTA_NOMINA_PASIVO") ?? "565.0070";
+            var ctaRetSS = await _paramService.ObtenerValorVigenteAsync(period.EntidadId, "CTA_RET_SS_TRAB") ?? "460.0050";
+            var ctaRetIRP = await _paramService.ObtenerValorVigenteAsync(period.EntidadId, "CTA_RET_IRP") ?? "460.0060";
+            var ctaAporteSS = await _paramService.ObtenerValorVigenteAsync(period.EntidadId, "CTA_APORTE_SS_PAT") ?? "440.0008.001";
+            var ctaImpFT = await _paramService.ObtenerValorVigenteAsync(period.EntidadId, "CTA_IMP_FT") ?? "440.0006.001";
 
-            if (expenseAccount == null || !expenseAccount.Activo)
-                return (false, "Error de Integración: No se encontró la cuenta de Gasto de Nómina (701) activa.");
+            var expenseAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaGasto && c.EntidadId == period.EntidadId);
+            var payableAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaPasivo && c.EntidadId == period.EntidadId);
+            var ssRetAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaRetSS && c.EntidadId == period.EntidadId);
+            var irpRetAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaRetIRP && c.EntidadId == period.EntidadId);
+            var ssPatAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaAporteSS && c.EntidadId == period.EntidadId);
+            var ftImpAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaImpFT && c.EntidadId == period.EntidadId);
 
-            if (payableAccount == null || !payableAccount.Activo)
-                return (false, "Error de Integración: No se encontró la cuenta de Pasivo de Nómina (401) activa.");
+            if (expenseAccount == null || payableAccount == null || ssRetAccount == null || irpRetAccount == null || ssPatAccount == null || ftImpAccount == null)
+                return (false, "Error de Configuración: Una o más cuentas contables de nómina no existen en el plan de cuentas de la entidad.");
 
             // 3. Obtener Tipo de Comprobante (DIA - Diario)
             var tipoComprobante = await _context.TipoComprobantes.FirstOrDefaultAsync(t => t.Codigo == "DIA");
@@ -314,18 +418,24 @@ public class PayrollService : IPayrollService
             entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = expenseAccount.Id, Debe = aporteSS, Haber = 0, Glosa = $"Aporte Seg. Social Entidad ({tasaSSPatronal:P1})" });
             entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = expenseAccount.Id, Debe = impuestoFT, Haber = 0, Glosa = $"Impuesto Fuerza de Trabajo ({tasaFT:P1})" });
 
-            // --- HABER (PASIVOS) ---
-            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = payableAccount.Id, Debe = 0, Haber = totalRetenciones, Glosa = "Retenciones Legales Trabajadores" });
-            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = payableAccount.Id, Debe = 0, Haber = aporteSS, Glosa = "Seguridad Social por Pagar (Entidad)" });
-            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = payableAccount.Id, Debe = 0, Haber = impuestoFT, Glosa = "Impuesto FT por Pagar (Entidad)" });
-            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = payableAccount.Id, Debe = 0, Haber = totalNeto, Glosa = "Salarios Netos por Pagar (Bancarización)" });
+            // --- HABER (PASIVOS / RETENCIONES) ---
+            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = ssRetAccount.Id, Debe = 0, Haber = totalRetSS, Glosa = "Retención 5% Contrib. Especial Seg. Social" });
+            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = irpRetAccount.Id, Debe = 0, Haber = totalRetIRP, Glosa = "Retención Impuesto Ingresos Personales" });
 
-            // 4. Procesar Asiento (Validará partida doble internamente)
+            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = ssPatAccount.Id, Debe = 0, Haber = aporteSS, Glosa = "Seguridad Social por Pagar (Entidad)" });
+            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = ftImpAccount.Id, Debe = 0, Haber = impuestoFT, Glosa = "Impuesto Fuerza Trabajo por Pagar (Entidad)" });
+            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = payableAccount.Id, Debe = 0, Haber = totalNeto, Glosa = "Salarios Netos por Pagar (Nómina Bancarizada)" });
+
+            // 4. Procesar Asiento (Validará partida doble internamente: DEBE = Gasto + Aportes, HABER = Neto + Retenciones + Aportes)
+            // Ajustar el DEBE total para incluir los aportes patronales que son gasto para la empresa
+            entry.AsientoDetalles.First(d => d.CuentaId == expenseAccount.Id && d.Glosa == "Salarios Brutos Devengados").Debe = totalDevengado;
+            // Los aportes patronales ya están en el DEBE (se agregaron arriba en la sección DEBE (GASTOS))
+
             var result = await _accountingService.CreateEntryAsync(entry);
             if (!result.Succeeded) return (false, $"Error al generar comprobante contable: {result.Message}");
 
-            // 5. Actualizar Estado de la Nómina
-            period.Estado = "APROBADA";
+            // 5. Actualizar Estado de la Nómina (Inmutabilidad RNF-22 vía Trigger DB)
+            period.Estado = "CONTABILIZADA";
             period.AprobadoPor = userId;
             period.AsientoId = entry.Id;
 

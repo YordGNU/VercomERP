@@ -1,0 +1,75 @@
+@model IEnumerable<Vercom.Models.AnalisisDesviacion>
+@{
+    ViewBag.Title = "Análisis de Eficiencia";
+}
+
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 text-danger">Desviaciones de Producción</h4>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="row">
+        <!-- Resumen Estadístico -->
+        <div class="col-md-3">
+            <div class="card bg-danger-subtle border-0">
+                <div class="card-body text-center">
+                    <h5 class="text-danger small fw-bold">Ineficiencia Total</h5>
+                    <h2 class="fw-bold">@Model.Where(d => d.Desviacion > 0).Sum(d => d.Desviacion)?.ToString("C")</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success-subtle border-0">
+                <div class="card-body text-center">
+                    <h5 class="text-success small fw-bold">Ahorro Total</h5>
+                    <h2 class="fw-bold">@Math.Abs(Model.Where(d => d.Desviacion < 0).Sum(d => d.Desviacion) ?? 0).ToString("C")</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-body">
+            <table class="table table-hover align-middle">
+            <thead class="thead-sm text-uppercase fs-xxs">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Orden / Producto</th>
+                        <th>Costo Estándar</th>
+                        <th>Costo Real</th>
+                        <th>Desviación ($)</th>
+                      <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        var impactColor = item.Desviacion > 0 ? "text-danger" : "text-success";
+                        var impactIcon = item.Desviacion > 0 ? "ti-trending-up" : "ti-trending-down";
+
+                        <tr>
+                            <td class="small">@item.AnalizadoEn.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                <div class="fw-bold">@item.OrdenProduccion.NumeroOrden</div>
+                                <small class="text-muted">@item.OrdenProduccion.ProductoTerminado.Nombre</small>
+                            </td>
+                            <td>@item.CostoEstandar.ToString("C")</td>
+                            <td>@item.CostoReal.ToString("C")</td>
+                            <td class="text-end fw-bold @impactColor">
+                                <i class="ti @impactIcon me-1"></i>
+                                @item.Desviacion?.ToString("N2")
+                            </td>
+                            <td >
+                                <span class="badge @(item.Desviacion > 0 ? "bg-danger" : "bg-success")">
+                                    @(item.Desviacion > 0 ? "EXCESO" : "EFICIENTE")
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

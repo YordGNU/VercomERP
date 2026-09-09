@@ -1,0 +1,86 @@
+﻿@model Vercom.Models.RegistroSalarioTiempoServicio
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+
+
+<h4>RegistroSalarioTiempoServicio</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+       <div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">Editar RegistroSalarioTiempoServicio</h4>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">RegistroSalarioTiempoServicio</a></li>
+            <li class="breadcrumb-item active">Editar</li>
+        </ol>
+    </div>
+</div>
+
+<div class="row">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                 <div class="card-header border-light justify-content-between">
+                    <h4 class="card-title">Formulario de Edición</h4>
+                </div>
+                <div class="card-body">
+<form class="row g-3" asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="mb-3">
+                <label asp-for="EmpleadoId" class="form-label"></label>
+                <select asp-for="EmpleadoId" class="form-control" asp-items="ViewBag.EmpleadoId"></select>
+                <span asp-validation-for="EmpleadoId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Anio" class="form-label"></label>
+                <input asp-for="Anio" class="form-control" />
+                <span asp-validation-for="Anio" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Mes" class="form-label"></label>
+                <input asp-for="Mes" class="form-control" />
+                <span asp-validation-for="Mes" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="DiasTrabajados" class="form-label"></label>
+                <input asp-for="DiasTrabajados" class="form-control" />
+                <span asp-validation-for="DiasTrabajados" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="SalarioDevengado" class="form-label"></label>
+                <input asp-for="SalarioDevengado" class="form-control" />
+                <span asp-validation-for="SalarioDevengado" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="TiempoServicioAcumuladoMeses" class="form-label"></label>
+                <input asp-for="TiempoServicioAcumuladoMeses" class="form-control" />
+                <span asp-validation-for="TiempoServicioAcumuladoMeses" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

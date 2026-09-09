@@ -1,0 +1,160 @@
+@model Vercom.Models.FichaCosto
+@{
+    ViewBag.Title = "Ficha de Costo v." + Model.Version;
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Ingeniería de Costos: @Model.Producto.Nombre</h4>
+        <p class="text-muted small mb-0">Estructura detallada según metodología del MFP para el cálculo de precios.</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Producción</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">Fichas</a></li>
+            <li class="breadcrumb-item active">Detalle</li>
+        </ol>
+        <div class="btn-list">
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                <i class="ti ti-arrow-left me-1"></i> VOLVER
+            </a>
+            <button onclick="window.print()" class="btn btn-sm btn-light">
+                <i class="ti ti-printer me-1"></i> IMPRIMIR FICHA
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row">
+        <!-- Resumen de Costos -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-status-top bg-primary"></div>
+                <div class="card-body p-4 text-center">
+                    <h5 class="text-primary text-uppercase small fw-bold mb-3">Costo Total Unitario</h5>
+                    <h1 class="display-5 fw-bold text-primary mb-1">@Model.CostoTotalUnitario?.ToString("C")</h1>
+                    <p class="text-muted small">CUP por @Model.Producto.UnidadMedida.Nombre</p>
+                    <hr class="my-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="small text-muted fw-bold">MARGEN DE UTILIDAD:</span>
+                        <span class="h4 m-0 fw-bold text-success">@Model.MargenPorcentaje%</span>
+                    </div>
+                    <div class="bg-primary-subtle rounded-3 p-3">
+                        <span class="text-muted tiny fw-bold text-uppercase d-block mb-1">Precio de Venta Sugerido</span>
+                        <h2 class="fw-bold text-dark m-0">@Model.PrecioSugerido?.ToString("C")</h2>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light-subtle">
+                    <h5 class="m-0 fw-bold small text-uppercase">Metadatos de Ingeniería</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-vcenter card-table small">
+                        <tbody>
+                            <tr>
+                                <td class="text-muted fw-bold">VERSIÓN</td>
+                                <td><span class="badge border">v.@Model.Version</span></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted fw-bold">ESTADO</td>
+                                <td><span class="badge @(Model.Estado == "VIGENTE" ? "bg-success" : "bg-secondary")">@Model.Estado</span></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted fw-bold">VIGENCIA</td>
+                                <td>Desde: @Model.VigenteDesde.ToString("dd/MM/yyyy")</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted fw-bold">SISTEMA</td>
+                                <td class="tiny font-monospace">@Model.Id</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Desglose Metodológico MFP -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light-subtle">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-chart-pie me-2 text-primary"></i>Estructura del Costo (Metodología MFP)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table mb-0">
+                        <thead class="thead-sm text-uppercase fs-xxs">
+                                <tr>
+                                    <th>Componente de Gasto</th>
+                                    <th>Importe Unitario</th>
+                                    <th  class="text-center">Participación</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="fw-bold ps-4">1. Materias Primas y Materiales</td>
+                                    <td class="text-end fw-bold">@Model.CostoMateriaPrima.ToString("N4")</td>
+                                    <td >
+                                        <div class="progress progress-xs mb-1">
+                                            @{ var mpPerc = (Model.CostoMateriaPrima / Model.CostoTotalUnitario * 100) ?? 0; }
+                                            <div class="progress-bar bg-primary" style="width: @mpPerc.ToString("N0")%"></div>
+                                        </div>
+                                        <small class="text-muted">@mpPerc.ToString("N1")%</small>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold ps-4">2. Mano de Obra Directa</td>
+                                    <td class="text-end fw-bold">@Model.CostoManoObra.ToString("N4")</td>
+                                    <td >
+                                        <div class="progress progress-xs mb-1">
+                                            @{ var moPerc = (Model.CostoManoObra / Model.CostoTotalUnitario * 100) ?? 0; }
+                                            <div class="progress-bar bg-info" style="width: @moPerc.ToString("N0")%"></div>
+                                        </div>
+                                        <small class="text-muted">@moPerc.ToString("N1")%</small>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold ps-4">3. Gastos Indirectos de Fabricación (GIF)</td>
+                                    <td class="text-end fw-bold">@Model.GastosIndirectos.ToString("N4")</td>
+                                    <td >
+                                        <div class="progress progress-xs mb-1">
+                                            @{ var gifPerc = (Model.GastosIndirectos / Model.CostoTotalUnitario * 100) ?? 0; }
+                                            <div class="progress-bar bg-warning" style="width: @gifPerc.ToString("N0")%"></div>
+                                        </div>
+                                        <small class="text-muted">@gifPerc.ToString("N1")%</small>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="table-dark fs-15">
+                                <tr>
+                                  <td>COSTO TOTAL DE PRODUCCIÓN</td>
+                                    <td class="text-end fw-bold">@Model.CostoTotalUnitario?.ToString("N4")</td>
+                                    <td >100.0%</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerta Informativa -->
+            <div class="alert alert-info border-0 shadow-sm rounded-3">
+                <div class="d-flex align-items-center">
+                    <i class="ti ti-bulb fs-32 me-3 opacity-50"></i>
+                    <div>
+                        <h6 class="fw-bold mb-1">Información de Producción</h6>
+                        <p class="mb-0 small">Esta ficha se utiliza como base para calcular desviaciones reales en las Órdenes de Producción y valorizar las entradas de almacén de productos terminados.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
+    .fs-15 { font-size: 1rem; }
+</style>

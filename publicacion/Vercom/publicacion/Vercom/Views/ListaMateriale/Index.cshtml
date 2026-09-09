@@ -1,0 +1,88 @@
+@model IEnumerable<Vercom.Models.ListaMateriale>
+@{
+    ViewBag.Title = "Lista de Materiales (BOM)";
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Ingeniería: Estructura de Productos (BOM)</h4>
+        <p class="text-muted small mb-0">Definición de composición y requerimientos de insumos para la fabricación.</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Producción</a></li>
+            <li class="breadcrumb-item active">BOM</li>
+        </ol>
+        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
+            <i class="ti ti-binary me-1"></i> NUEVA DEFINICIÓN DE INSUMOS
+        </a>
+    </div>
+</div>
+
+<div class="container-xxl mt-4">
+    <div class="row row-cards">
+        @foreach (var item in Model)
+        {
+            <div class="col-md-6 col-xl-4">
+                <div class="card card-sm shadow-sm border-0 border-top border-primary border-3">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h4 class="card-title fw-bold mb-1">@item.ProductoTerminado.Nombre</h4>
+                                <span class="badge @(item.Activa ? "badge-soft-success" : "badge-soft-secondary") px-3">
+                                    <i class="ti ti-circle-filled me-1"></i> @(item.Activa ? "VERSIÓN ACTIVA" : "HISTÓRICA")
+                                </span>
+                            </div>
+                            <div class="avatar bg-primary-subtle text-primary rounded">
+                                <i class="ti ti-assembly fs-24"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-light-subtle rounded-3 p-3 mb-4 border border-dashed">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted small fw-bold">VERSIÓN:</span>
+                                <span class="fw-bold">v.@item.Version</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted small fw-bold">DEFINIDA EL:</span>
+                                <span class="small">@item.CreadoEn.ToString("dd MMM yyyy")</span>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
+                                <i class="ti ti-list me-1"></i> VER EXPLOSIÓN DE MATERIALES
+                            </a>
+                            @if(item.Activa) {
+                                <a asp-controller="Production" asp-action="CreateOrder" asp-route-productId="@item.ProductoTerminadoId" class="btn btn-sm btn-ghost-primary">
+                                    <i class="ti ti-player-play me-1"></i> GENERAR ORDEN DE TRABAJO
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (!Model.Any())
+        {
+            <div class="col-12 text-center py-5">
+                <div class="avatar avatar-xl bg-light-subtle text-muted rounded-circle mb-3 mx-auto">
+                    <i class="ti ti-binary fs-48"></i>
+                </div>
+                <h3 class="fw-bold">No hay estructuras definidas</h3>
+                <p class="text-muted">Empiece definiendo la composición de sus productos elaborados para controlar el consumo de insumos.</p>
+                <a asp-action="Create" class="btn btn-primary mt-3">CREAR MI PRIMERA BOM</a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Inicializar DataTables si fuera necesario en el futuro para esta vista
+        });
+    </script>
+}

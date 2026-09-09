@@ -1,0 +1,127 @@
+@model IEnumerable<Vercom.Models.MantenimientoProgramado>
+@{
+    ViewBag.Title = "Plan de Mantenimiento";
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Planificación de Mantenimientos Preventivos</h4>
+        <p class="text-muted small mb-0">Control de paradas programadas y reparaciones para garantizar la continuidad operativa.</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Producción</a></li>
+            <li class="breadcrumb-item active">Mantenimiento</li>
+        </ol>
+        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
+            <i class="ti ti-calendar-plus me-1"></i> NUEVA PROGRAMACIÓN
+        </a>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-light-subtle d-flex justify-content-between align-items-center">
+            <h5 class="m-0 fw-bold"><i class="ti ti-calendar-time me-2 text-primary"></i>Calendario de Intervenciones Técnicas</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="maintenanceTable" class="table table-striped table-hover dt-responsive">
+                <thead class="thead-sm text-uppercase fs-xxs">
+                        <tr>
+                            <th class="ps-4">Fecha Programada</th>
+                            <th>Equipo / Maquinaria</th>
+                          <th>Tipo de Intervención</th>
+                          <th>Estado</th>
+                            <th>Costo Est. ($)</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.OrderBy(m => m.FechaProgramada))
+                        {
+                            var isLate = item.FechaProgramada < DateOnly.FromDateTime(DateTime.Now) && item.Estado == "PROGRAMADO";
+                            var rowClass = isLate ? "bg-danger-subtle" : "";
+
+                            <tr class="@rowClass">
+                              <td>
+                                    <div class="fw-bold @(isLate ? "text-danger" : "")">
+                                        @item.FechaProgramada.ToString("dd/MM/yyyy")
+                                        @if(isLate) { <i class="ti ti-alert-triangle ms-1" title="Mantenimiento Vencido"></i> }
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold fs-13">@item.Equipo.Nombre</div>
+                                    <small class="text-muted tiny text-uppercase">COD: @item.Equipo.Codigo</small>
+                                </td>
+                                <td >
+                                    <span class="badge border border-primary text-primary small">@item.Tipo</span>
+                                </td>
+                                <td >
+                                    @{
+                                        var statusClass = item.Estado switch {
+                                            "EJECUTADO" => "bg-success-subtle text-success",
+                                            "PROGRAMADO" => "bg-warning-subtle text-warning",
+                                            "CANCELADO" => "bg-danger-subtle text-danger",
+                                            _ => "bg-light"
+                                        };
+                                    }
+                                    <span class="badge @statusClass px-3">@item.Estado</span>
+                                </td>
+                                <td class="text-end fw-bold">@(item.Costo?.ToString("N2") ?? "0.00")</td>
+                                <td>
+                                    <div class="btn-list justify-content-end">
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-icon btn-light rounded-circle" title="Editar / Reportar Cierre">
+                                            <i class="ti ti-edit"></i>
+                                        </a>
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-icon btn-light rounded-circle">
+                                            <i class="ti ti-eye"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted small">
+                                    <i class="ti ti-calendar-off fs-40 d-block mb-2 opacity-50"></i>
+                                    No hay mantenimientos programados para el periodo actual.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    @if(Model.Any(m => m.FechaProgramada < DateOnly.FromDateTime(DateTime.Now) && m.Estado == "PROGRAMADO")) {
+        <div class="alert alert-danger border-0 shadow-sm rounded-3 mt-4">
+            <div class="d-flex align-items-center">
+                <i class="ti ti-alert-octagon-filled fs-32 me-3 opacity-50"></i>
+                <div>
+                    <h6 class="fw-bold mb-1">Alertas de Mantenimiento Críticas</h6>
+                    <p class="mb-0 small">Se han detectado equipos con fechas de mantenimiento preventivo vencidas. La falta de intervención puede afectar la vida útil de los activos y la eficiencia de la planta.</p>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#maintenanceTable').DataTable({
+                language: { url: '/js/i18n/es-ES.json' },
+                order: [[0, 'asc']]
+            });
+        });
+    </script>
+}
+
+<style>
+    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
+    .fs-13 { font-size: 0.8125rem; }
+</style>

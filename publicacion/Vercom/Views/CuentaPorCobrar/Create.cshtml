@@ -1,0 +1,96 @@
+﻿@model Vercom.Models.CuentaPorCobrar
+@{
+    ViewBag.Title = "Alta de Cuenta por Cobrar";
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Registrar Deuda de Cliente</h4>
+        <p class="text-muted small mb-0">Carga manual de saldos pendientes o créditos comerciales extraordinarios.</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Finanzas</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">CxC</a></li>
+            <li class="breadcrumb-item active">Nueva</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-xxl">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light-subtle py-3">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-report-money me-2 text-primary"></i>Datos del Título de Crédito</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Create" method="post" class="row g-4">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Cliente Deudor</label>
+                            <select asp-for="ClienteId" class="form-control form-select w-100 select2" asp-items="ViewBag.ClienteId" required>
+                                <option value="">-- Buscar en Cartera de Clientes --</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Tipo de Documento Origen</label>
+                            <select asp-for="DocumentoOrigenTipo" class="form-select" required>
+                                <option value="FACTURA">Factura de Venta</option>
+                                <option value="CONTRATO">Saldo de Contrato</option>
+                                <option value="AJUSTE">Ajuste de Saldo</option>
+                                <option value="OTROS">Otros Títulos</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Referencia / Nº Documento</label>
+                            <input asp-for="DocumentoOrigenId" name="DocumentoOrigenId" class="form-control" placeholder="Ej: FAC-001" required />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Fecha de Emisión</label>
+                            <input asp-for="FechaEmision" type="date" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Fecha de Vencimiento</label>
+                            <input asp-for="FechaVencimiento" type="date" class="form-control" value="@DateTime.Now.AddDays(30).ToString("yyyy-MM-dd")" required />
+                        </div>
+
+                        <div class="col-md-6 mt-4 pt-3 border-top">
+                            <label class="form-label fw-bold">Monto Original ($)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input asp-for="MontoOriginal" class="form-control fw-bold text-end" placeholder="0.00" step="0.01" required />
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mt-4 pt-3 border-top">
+                            <label class="form-label fw-bold">Saldo Pendiente Actual ($)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">$</span>
+                                <input asp-for="SaldoPendiente" class="form-control fw-bold text-primary text-end" placeholder="0.00" step="0.01" required />
+                            </div>
+                        </div>
+
+                        <div class="col-12 d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <a asp-action="Index" class="btn btn-sm btn-outline-secondary px-4">CANCELAR</a>
+                            <button type="submit" class="btn btn-sm btn-primary px-5 py-2 shadow">
+                                <i class="ti ti-device-floppy me-1"></i> GUARDAR CUENTA
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

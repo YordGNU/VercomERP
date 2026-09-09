@@ -1,0 +1,81 @@
+﻿@model Vercom.Models.ConceptoNomina
+@{
+    ViewData["Title"] = "Create";
+}
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Crear Concepto de Nómina</h4>
+        <p class="text-muted small mb-0">Parametrización de cálculos salariales y deducciones fiscales.</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">RRHH</a></li>
+            <li class="breadcrumb-item active">Conceptos</li>
+        </ol>
+    </div>
+</div>
+<div class="row">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm">
+                 <div class="card-header border-light justify-content-between">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-settings me-2 text-primary"></i>Configuración del Concepto</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Create" class="row g-4">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">Código</label>
+                            <input asp-for="Codigo" class="form-control w-100 fw-bold text-primary" placeholder="Ej: SAL_BAS" required />
+                            <span asp-validation-for="Codigo" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-9">
+                            <label class="form-label">Nombre del Concepto</label>
+                            <input asp-for="Nombre" class="form-control w-100" placeholder="Ej: Salario Básico" required />
+                            <span asp-validation-for="Nombre" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Tipo de Movimiento</label>
+                            <select asp-for="Tipo" class="form-control form-select w-100" required>
+                                <option value="DEVENGO">Devengo (Suma)</option>
+                                <option value="DEDUCCION">Deducción (Resta)</option>
+                                <option value="APORTE_PATRONAL">Aporte Patronal</option>
+                            </select>
+                            <span asp-validation-for="Tipo" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-8">
+                            <label class="form-label">Cuenta Contable de Imputación</label>
+                            <select asp-for="CuentaContableId" class="form-control form-select w-100 select2" asp-items="ViewBag.CuentaContableId">
+                                <option value="">-- Seleccionar Cuenta --</option>
+                            </select>
+                            <span asp-validation-for="CuentaContableId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Fórmula de Cálculo (Opcional)</label>
+                            <textarea asp-for="Formula" class="form-control w-100 font-monospace" rows="3" placeholder="Ej: (SALARIO / 190.6) * HORAS_EXTRAS"></textarea>
+                            <small class="text-muted italic">Use variables del sistema para cálculos dinámicos.</small>
+                            <span asp-validation-for="Formula" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12 d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <a asp-action="Index" class="btn btn-sm btn-outline px-4">CANCELAR</a>
+                            <button type="submit" class="btn btn-sm btn-primary px-5 py-2 shadow">
+                                <i class="ti ti-device-floppy me-1"></i> GUARDAR CONCEPTO
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+
