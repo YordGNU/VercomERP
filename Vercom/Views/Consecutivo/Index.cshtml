@@ -5,8 +5,8 @@
 }
 <div class="page-title-head d-flex align-items-center p-3 mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Control de numeración</h4>
-        <p class="text-muted small mb-0">Control de numeración por tipo de documento (Consecutivo).</p>
+        <h4 class="page-main-title m-0 fw-bold">Control de numeraciï¿½n</h4>
+        <p class="text-muted small mb-0">Control de numeraciï¿½n por tipo de documento (Consecutivo).</p>
     </div>
     <div class="text-end">
         <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
@@ -28,14 +28,14 @@
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline py-1 px-2 border-0" data-bs-toggle="dropdown" aria-expanded="false"><i class="ti ti-dots-vertical"></i></button>
                             <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="">
-                                <li><a asp-action="Details" asp-route-id="@item.Id" class="dropdown-item py-2"><i class="ti ti-list-search me-1"></i> Ver movimientos</a></li>
+                                <li><a asp-action="Details" asp-route-id="@item.Id" class="dropdown-item py-2"><i class="ti ti-list-search me-1"></i> Ver detalle</a></li>
                                 <li><a asp-action="Edit" asp-route-id="@item.Id" class="dropdown-item py-2"><i class="ti ti-edit me-2 text-info"></i> Editar Datos</a></li>
                             </ul>
                         </div>
                     </div>
                     <div class="text-center py-3 bg-light-subtle border rounded-3 mb-2">
                         <h2 class="fw-bold text-success mb-0 text-numeric">@item.UltimoNumero</h2>
-                        <p class="small text-muted text-uppercase mb-0 fw-bold">Ultimo número</p>
+                        <p class="small text-muted text-uppercase mb-0 fw-bold">Ultimo nï¿½mero</p>
                     </div>
                     <div class="bg-light-subtle border rounded-3 p-1 mb-2">
                         <div class="row g-0 text-center">
@@ -55,8 +55,8 @@
             <div class="avatar-xl bg-light-subtle rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 100px; height: 100px;">
                 <i class="ti ti-cash fs-48 text-muted"></i>
             </div>
-            <h3 class="fw-bold">No hay cajas configuradas</h3>
-            <p class="text-muted">Inicie la configuración de tesorería registrando su primera caja física.</p>
+            <h3 class="fw-bold">No hay consecutivos configurados</h3>
+            <p class="text-muted">Configure la numeraciÃ³n de documentos registrando el primer consecutivo.</p>
             <a asp-action="Create" class="btn btn-sm btn-primary mt-3">CONFIGURAR CONSECUTIVO</a>
         </div>
     }

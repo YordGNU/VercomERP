@@ -40,6 +40,8 @@ public partial class Empleado
 
     public string Estado { get; set; } = null!;
 
+    public Guid? TurnoTrabajoId { get; set; }
+
     public DateTimeOffset CreadoEn { get; set; }
 
     public string NombreCompleto => $"{Apellidos}, {Nombres}";
@@ -63,6 +65,8 @@ public partial class Empleado
     public virtual ICollection<UtileResponsabilidad> UtileResponsabilidades { get; set; } = new List<UtileResponsabilidad>();
 
     public virtual Sucursal? Sucursal { get; set; }
+
+    public virtual TurnoTrabajo? TurnoTrabajo { get; set; }
 
     public virtual ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
 }

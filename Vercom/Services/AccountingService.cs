@@ -48,12 +48,14 @@ public class AccountingService : IAccountingService
     private readonly AppDbContext _context;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly Security.IEntidadProvider _entidadProvider;
+    private readonly IConsecutivoService _consecutivoService;
 
-    public AccountingService(AppDbContext context, IServiceScopeFactory scopeFactory, Security.IEntidadProvider entidadProvider)
+    public AccountingService(AppDbContext context, IServiceScopeFactory scopeFactory, Security.IEntidadProvider entidadProvider, IConsecutivoService consecutivoService)
     {
         _context = context;
         _scopeFactory = scopeFactory;
         _entidadProvider = entidadProvider;
+        _consecutivoService = consecutivoService;
     }
 
     public async Task<IEnumerable<PeriodoContable>> GetPeriodsAsync()
@@ -266,48 +268,64 @@ public class AccountingService : IAccountingService
 
     public async Task<(bool Succeeded, string Message, AsientoContable? Entry)> CreateEntryAsync(AsientoContable entry)
     {
-        // 1. Validar cuadre (Partida Doble)
-        var totalDebe = entry.AsientoDetalles.Sum(d => d.Debe);
-        var totalHaber = entry.AsientoDetalles.Sum(d => d.Haber);
-
-        if (totalDebe != totalHaber)
-            return (false, $"El asiento está descuadrado. Debe: {totalDebe}, Haber: {totalHaber}", null);
-
-        if (totalDebe == 0)
-            return (false, "El asiento no puede tener totales en cero.", null);
-
-        // 2. Validar Periodo
-        var period = await GetOrCreateActivePeriodAsync(entry.EntidadId, entry.Fecha.ToDateTime(TimeOnly.MinValue));
-        if (period == null || period.Estado != "ABIERTO") return (false, "El periodo contable para esta fecha no existe o está cerrado.", null);
-
-        entry.PeriodoId = period.Id;
-        entry.TotalDebe = totalDebe;
-        entry.TotalHaber = totalHaber;
-        entry.Estado = "BORRADOR";
-        entry.CreadoEn = DateTimeOffset.Now;
-
-        // 3. Generar número consecutivo si no existe
-        if (entry.NumeroComprobante == 0)
+        // Si el llamador ya abrió una transacción se reutiliza; de lo contrario se gestiona una propia
+        // para garantizar que el número de consecutivo (RNF-51) y el asiento se persistan atómicamente.
+        var ownsTransaction = _context.Database.CurrentTransaction == null;
+        var transaction = ownsTransaction ? await _context.Database.BeginTransactionAsync() : null;
+        try
         {
-            var lastNum = await _context.AsientoContables
-                .Where(a => a.EntidadId == entry.EntidadId && a.TipoComprobanteId == entry.TipoComprobanteId)
-                .OrderByDescending(a => a.NumeroComprobante)
-                .Select(a => a.NumeroComprobante)
-                .FirstOrDefaultAsync();
-            entry.NumeroComprobante = lastNum + 1;
+            // 1. Validar cuadre (Partida Doble)
+            var totalDebe = entry.AsientoDetalles.Sum(d => d.Debe);
+            var totalHaber = entry.AsientoDetalles.Sum(d => d.Haber);
+
+            if (totalDebe != totalHaber)
+                return (false, $"El asiento está descuadrado. Debe: {totalDebe}, Haber: {totalHaber}", null);
+
+            if (totalDebe == 0)
+                return (false, "El asiento no puede tener totales en cero.", null);
+
+            // 2. Validar Periodo
+            var period = await GetOrCreateActivePeriodAsync(entry.EntidadId, entry.Fecha.ToDateTime(TimeOnly.MinValue));
+            if (period == null || period.Estado != "ABIERTO") return (false, "El periodo contable para esta fecha no existe o está cerrado.", null);
+
+            entry.PeriodoId = period.Id;
+            entry.TotalDebe = totalDebe;
+            entry.TotalHaber = totalHaber;
+            entry.Estado = "BORRADOR";
+            entry.CreadoEn = DateTimeOffset.Now;
+
+            // 3. Generar número consecutivo seguro (RNF-51) si no viene asignado
+            if (entry.NumeroComprobante == 0)
+            {
+                entry.NumeroComprobante = await _consecutivoService.ObtenerSiguienteNumeroLongAsync(
+                    entry.EntidadId,
+                    null, // numeración central por entidad (comportamiento previo del MAX+1)
+                    Vercom.Helpers.DocumentoTipo.AsientoContable,
+                    entry.TipoComprobanteId.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            }
+
+            _context.AsientoContables.Add(entry);
+
+            // RF-11: Asegurar numeración de líneas correlativa para evitar errores de clave duplicada
+            short index = 1;
+            foreach (var det in entry.AsientoDetalles)
+            {
+                det.Linea = index++;
+            }
+
+            await _context.SaveChangesAsync();
+            if (ownsTransaction) await transaction!.CommitAsync();
+            return (true, "Asiento creado exitosamente.", entry);
         }
-
-        _context.AsientoContables.Add(entry);
-
-        // RF-11: Asegurar numeración de líneas correlativa para evitar errores de clave duplicada
-        short index = 1;
-        foreach (var det in entry.AsientoDetalles)
+        catch (Exception ex)
         {
-            det.Linea = index++;
+            if (ownsTransaction) await transaction!.RollbackAsync();
+            return (false, ex.Message, null);
         }
-
-        await _context.SaveChangesAsync();
-        return (true, "Asiento creado exitosamente.", entry);
+        finally
+        {
+            if (transaction != null) await transaction.DisposeAsync();
+        }
     }
 
     public async Task<(bool Succeeded, string Message)> PostEntryAsync(Guid entryId)

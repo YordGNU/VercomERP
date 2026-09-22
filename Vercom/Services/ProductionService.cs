@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Vercom.Helpers;
 using Vercom.Models;
 using Vercom.ViewModels;
 
@@ -46,6 +47,7 @@ public interface IProductionService
     Task<IEnumerable<PlanProduccion>> GetProductionPlansAsync();
     Task<PlanProduccionFormViewModel> GetPlanFormContextAsync(PlanProduccion? existing = null);
     Task<(bool Succeeded, string Message)> CreatePlanAsync(PlanProduccion plan);
+    Task<PlanProduccion> GenerateSuggestedPlanAsync(Guid entidadId, short year, short month);
 
     // Escritura Producción
     // Gestión de Fichas de Costo (RF-40)
@@ -65,13 +67,15 @@ public class ProductionService : IProductionService
     private readonly IInventoryService _inventoryService;
     private readonly IAccountingService _accountingService;
     private readonly Security.IEntidadProvider _entidadProvider;
+    private readonly IConsecutivoService _consecutivoService;
 
-    public ProductionService(AppDbContext context, IInventoryService inventoryService, IAccountingService accountingService, Security.IEntidadProvider entidadProvider)
+    public ProductionService(AppDbContext context, IInventoryService inventoryService, IAccountingService accountingService, Security.IEntidadProvider entidadProvider, IConsecutivoService consecutivoService)
     {
         _context = context;
         _inventoryService = inventoryService;
         _accountingService = accountingService;
         _entidadProvider = entidadProvider;
+        _consecutivoService = consecutivoService;
     }
 
     public async Task<IEnumerable<OrdenProduccion>> GetOrdersAsync()
@@ -385,10 +389,52 @@ public class ProductionService : IProductionService
         catch (Exception ex) { return (false, ex.Message); }
     }
 
+    public async Task<PlanProduccion> GenerateSuggestedPlanAsync(Guid entidadId, short year, short month)
+    {
+        var plan = new PlanProduccion
+        {
+            Id = Guid.NewGuid(),
+            EntidadId = entidadId,
+            Anio = year,
+            Mes = month,
+            Estado = "SUGERIDO",
+            CreadoEn = DateTimeOffset.Now
+        };
+
+        // Obtener productos que están por debajo del stock mínimo (Existencia <= StockMinimo)
+        var stockAlerts = await _inventoryService.GetLowStockAlertsAsync(entidadId);
+
+        foreach (var alert in stockAlerts)
+        {
+            // Solo sugerir productos de tipo ELABORADO o TERMINADO (producibles)
+            if (alert.Producto.Tipo == "ELABORADO" || alert.Producto.Tipo == "TERMINADO")
+            {
+                // Sugerir completar hasta el Stock Máximo (o el doble del mínimo si no hay máximo)
+                var sugerencia = (alert.StockMaximo ?? (alert.StockMinimo * 2)) - alert.Cantidad;
+
+                if (sugerencia > 0)
+                {
+                    plan.PlanProduccionDetalles.Add(new PlanProduccionDetalle
+                    {
+                        Id = Guid.NewGuid(),
+                        PlanId = plan.Id,
+                        ProductoId = alert.ProductoId,
+                        Producto = alert.Producto,
+                        CantidadPlanificada = sugerencia,
+                        CantidadEjecutada = 0
+                    });
+                }
+            }
+        }
+
+        return plan;
+    }
+
     public async Task<(bool Succeeded, string Message, OrdenProduccion? Order)> CreateProductionOrderAsync(OrdenProduccion order)
     {
         order.Id = Guid.NewGuid();
-        order.NumeroOrden = $"OP-{DateTime.Now:yyyyMMdd}-{new Random().Next(100, 999)}";
+        var numeroOp = await _consecutivoService.ObtenerSiguienteNumeroAsync(order.EntidadId, null, DocumentoTipo.OrdenProduccion, "A");
+        order.NumeroOrden = $"OP-{numeroOp}";
         order.Estado = "PLANIFICADA";
         order.CreadoEn = DateTimeOffset.Now;
 
@@ -434,13 +480,15 @@ public class ProductionService : IProductionService
             if (order == null) return (false, "Orden no encontrada.");
             if (order.Estado != "PLANIFICADA") return (false, "La orden no está en estado planificado.");
 
+            decimal totalCostConsumed = 0;
+
             // RF-41: Consumo automático al iniciar (PUSH)
             foreach (var item in order.OrdenProduccionConsumos)
             {
                 var movSalida = new MovimientoInventario
                 {
                     EntidadId = order.EntidadId,
-                    TipoMovimientoId = 6, // PRO: Consumo Producción
+                    TipoMovimientoId = await _inventoryService.EnsureMovementTypeAsync("CONSUMO_PRODUCCION"),
                     NumeroDocumento = order.NumeroOrden,
                     AlmacenOrigenId = order.AlmacenInsumosId,
                     Fecha = DateTimeOffset.Now,
@@ -450,7 +498,7 @@ public class ProductionService : IProductionService
                     CreadoPor = userId
                 };
 
-                // Obtener costo actual para la salida
+                // Obtener costo actual para la salida (PPP)
                 var stock = await _context.Existencia
                     .FirstOrDefaultAsync(e => e.AlmacenId == order.AlmacenInsumosId && e.ProductoId == item.ProductoInsumoId);
 
@@ -458,24 +506,64 @@ public class ProductionService : IProductionService
                 {
                     Id = Guid.NewGuid(),
                     ProductoId = item.ProductoInsumoId,
-                    Cantidad = item.CantidadPlanificada,
+                    Cantidad = item.CantidadReal, // Asegurar normalización
                     CostoUnitario = stock?.CostoPromedio ?? 0
                 });
 
-                // RF-41: Registrar el costo unitario capturado en el detalle del consumo para el cálculo final
-                item.CostoUnitario = stock?.CostoPromedio ?? 0;
-
                 var invResult = await _inventoryService.ProcessMovementAsync(movSalida);
                 if (!invResult.Succeeded) throw new Exception($"Stock insuficiente para insumo: {invResult.Message}");
+
+                // Registrar el costo unitario real capturado tras el movimiento
+                item.CostoUnitario = invResult.Movement!.MovimientoInventarioDetalles.First().CostoUnitario ?? 0;
+                totalCostConsumed += (item.CantidadPlanificada * item.CostoUnitario.Value);
+            }
+
+            // --- INTEGRACIÓN CONTABLE CONSUMO (Iteración 4) ---
+            if (totalCostConsumed > 0)
+            {
+                var period = await _accountingService.GetOrCreateActivePeriodAsync(order.EntidadId, DateTime.Now);
+                if (period != null && period.Estado == "ABIERTO")
+                {
+                    var tipoDIA = await _context.TipoComprobantes.FirstOrDefaultAsync(t => t.Codigo == "DIA");
+
+                    var entry = new AsientoContable
+                    {
+                        Id = Guid.NewGuid(),
+                        EntidadId = order.EntidadId,
+                        PeriodoId = period.Id,
+                        Fecha = DateOnly.FromDateTime(DateTime.Now),
+                        Concepto = $"CONSUMO MATERIALES OP #{order.NumeroOrden}",
+                        ModuloOrigen = "PRODUCCION",
+                        DocumentoOrigenTipo = "ORDEN_PRODUCCION",
+                        DocumentoOrigenId = order.Id,
+                        TipoComprobanteId = tipoDIA?.Id ?? 0,
+                        CreadoPor = userId,
+                        CreadoEn = DateTimeOffset.Now,
+                        Estado = "CONTABILIZADO"
+                    };
+
+                    var ctaWip = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "185" && c.EntidadId == order.EntidadId); // WIP
+                    var ctaInsumos = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "183" && c.EntidadId == order.EntidadId); // Insumos
+
+                    if (ctaWip != null && ctaInsumos != null)
+                    {
+                        entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = ctaWip.Id, Debe = totalCostConsumed, Glosa = "Carga a Producción en Proceso" });
+                        entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = ctaInsumos.Id, Haber = totalCostConsumed, Glosa = "Salida de Materia Prima" });
+
+                        var res = await _accountingService.CreateEntryAsync(entry);
+                        if (res.Succeeded) order.AsientoConsumoId = entry.Id;
+                    }
+                }
             }
 
             order.Estado = "EN_PROCESO";
             order.FechaInicioReal = DateTimeOffset.Now;
+            order.CostoRealTotal = totalCostConsumed; // Acumular base de costo
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            return (true, "Producción iniciada y materiales consumidos.");
+            return (true, "Producción iniciada y materiales contabilizados en WIP.");
         }
         catch (Exception ex)
         {
@@ -497,44 +585,33 @@ public class ProductionService : IProductionService
             if (order == null) return (false, "Orden no encontrada.");
             if (order.Estado != "EN_PROCESO") return (false, "La orden no está en proceso.");
 
-            order.CantidadProducida = actualQuantity;
-            order.FechaFinReal = DateTimeOffset.Now;
-            order.Estado = "FINALIZADA";
+            decimal costMateriaPrimaReal = 0;
 
-            decimal costRealTotal = 0;
-
-            // 1. Ajustar desviaciones de consumo (si las hay)
+            // 1. Ajustar desviaciones de consumo
             foreach (var consumption in actualConsumptions)
             {
                 var stored = order.OrdenProduccionConsumos.First(c => c.ProductoInsumoId == consumption.ProductoInsumoId);
 
-                // Si consumió MÁS de lo planificado, generar movimiento extra de salida
-                if (consumption.CantidadReal > stored.CantidadPlanificada)
-                {
-                    var extra = consumption.CantidadReal - stored.CantidadPlanificada;
-                    // (Lógica de movimiento extra aquí si se desea precisión total en tiempo real)
-                }
-
+                // Si consumió MÁS de lo planificado, generar movimiento extra de salida (Simplificación)
                 stored.CantidadReal = consumption.CantidadReal;
-                costRealTotal += (stored.CantidadReal * (stored.CostoUnitario ?? 0));
+                costMateriaPrimaReal += (stored.CantidadReal * (stored.CostoUnitario ?? 0));
             }
 
-            // 2. Sumar costos fijos de la ficha
+            // 2. Sumar costos fijos de la ficha (MO y GIF)
+            decimal costFijosReal = 0;
             if (order.FichaCosto != null)
             {
-                var moTotal = order.FichaCosto.CostoManoObra * actualQuantity;
-                var gifTotal = order.FichaCosto.GastosIndirectos * actualQuantity;
-                costRealTotal += (moTotal + gifTotal);
+                costFijosReal = (order.FichaCosto.CostoManoObra + order.FichaCosto.GastosIndirectos) * actualQuantity;
             }
 
-            order.CostoRealTotal = costRealTotal;
-            var finalUnitCost = actualQuantity > 0 ? costRealTotal / actualQuantity : 0;
+            decimal costTotalReal = costMateriaPrimaReal + costFijosReal;
+            var finalUnitCost = actualQuantity > 0 ? Math.Round(costTotalReal / actualQuantity, 2) : 0;
 
             // 3. Entrada de Producto Terminado (RF-42)
             var movEntrada = new MovimientoInventario
             {
                 EntidadId = order.EntidadId,
-                TipoMovimientoId = 1, // REC: Entrada
+                TipoMovimientoId = await _inventoryService.EnsureMovementTypeAsync("ENTRADA_PRODUCCION"),
                 NumeroDocumento = order.NumeroOrden,
                 AlmacenDestinoId = order.AlmacenProductoId,
                 Fecha = DateTimeOffset.Now,
@@ -552,24 +629,95 @@ public class ProductionService : IProductionService
                 CostoUnitario = finalUnitCost
             });
 
-            await _inventoryService.ProcessMovementAsync(movEntrada);
+            var invResult = await _inventoryService.ProcessMovementAsync(movEntrada);
+            if (!invResult.Succeeded) throw new Exception($"Error al ingresar producto: {invResult.Message}");
+
+            // --- INTEGRACIÓN CONTABLE TERMINACIÓN (Iteración 4) ---
+            if (costTotalReal > 0)
+            {
+                var period = await _accountingService.GetOrCreateActivePeriodAsync(order.EntidadId, DateTime.Now);
+                if (period != null && period.Estado == "ABIERTO")
+                {
+                    var tipoDIA = await _context.TipoComprobantes.FirstOrDefaultAsync(t => t.Codigo == "DIA");
+                    var entry = new AsientoContable
+                    {
+                        Id = Guid.NewGuid(),
+                        EntidadId = order.EntidadId,
+                        PeriodoId = period.Id,
+                        Fecha = DateOnly.FromDateTime(DateTime.Now),
+                        Concepto = $"TERMINACIÓN OP #{order.NumeroOrden}",
+                        ModuloOrigen = "PRODUCCION",
+                        DocumentoOrigenTipo = "ORDEN_PRODUCCION",
+                        DocumentoOrigenId = order.Id,
+                        TipoComprobanteId = tipoDIA?.Id ?? 0,
+                        CreadoPor = userId,
+                        CreadoEn = DateTimeOffset.Now,
+                        Estado = "CONTABILIZADO"
+                    };
+
+                    var ctaTerminados = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "188" && c.EntidadId == order.EntidadId); // Terminados
+                    var ctaWip = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "185" && c.EntidadId == order.EntidadId); // WIP
+
+                    if (ctaTerminados != null && ctaWip != null)
+                    {
+                        entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = ctaTerminados.Id, Debe = costTotalReal, Glosa = "Entrada de Producto Terminado" });
+                        entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = ctaWip.Id, Haber = costTotalReal, Glosa = "Cierre de Producción en Proceso" });
+
+                        var res = await _accountingService.CreateEntryAsync(entry);
+                        if (res.Succeeded) order.AsientoTerminadoId = entry.Id;
+                    }
+                }
+            }
 
             // 4. Análisis de Desviaciones (RF-43)
-            var stdCostUnit = order.FichaCosto?.CostoTotalUnitario ?? 0;
-            _context.AnalisisDesviacions.Add(new AnalisisDesviacion
+            if (order.FichaCosto != null)
             {
-                Id = Guid.NewGuid(),
-                OrdenProduccionId = order.Id,
-                Componente = "TOTAL",
-                CostoEstandar = stdCostUnit * actualQuantity,
-                CostoReal = costRealTotal,
-                AnalizadoEn = DateTimeOffset.Now
-            });
+                // Desviación Materia Prima
+                _context.AnalisisDesviacions.Add(new AnalisisDesviacion
+                {
+                    Id = Guid.NewGuid(),
+                    OrdenProduccionId = order.Id,
+                    Componente = "MATERIA_PRIMA",
+                    CostoEstandar = order.FichaCosto.CostoMateriaPrima * actualQuantity,
+                    CostoReal = costMateriaPrimaReal,
+                    AnalizadoEn = DateTimeOffset.Now
+                });
+
+                // Desviación Total
+                _context.AnalisisDesviacions.Add(new AnalisisDesviacion
+                {
+                    Id = Guid.NewGuid(),
+                    OrdenProduccionId = order.Id,
+                    Componente = "TOTAL",
+                    CostoEstandar = (decimal)(order.FichaCosto.CostoTotalUnitario * actualQuantity),
+                    CostoReal = costTotalReal,
+                    AnalizadoEn = DateTimeOffset.Now
+                });
+            }
+
+            // --- ACTUALIZACIÓN DE PLAN DE PRODUCCIÓN (Iteración 7) ---
+            var planLine = await _context.PlanProduccionDetalles
+                .Include(d => d.Plan)
+                .FirstOrDefaultAsync(d => d.Plan.EntidadId == order.EntidadId
+                                       && d.Plan.Anio == DateTime.Now.Year
+                                       && d.Plan.Mes == DateTime.Now.Month
+                                       && d.Plan.Estado == "APROBADO"
+                                       && d.ProductoId == order.ProductoTerminadoId);
+
+            if (planLine != null)
+            {
+                planLine.CantidadEjecutada += actualQuantity;
+            }
+
+            order.CantidadProducida = actualQuantity;
+            order.FechaFinReal = DateTimeOffset.Now;
+            order.Estado = "FINALIZADA";
+            order.CostoRealTotal = costTotalReal;
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            return (true, $"Producción sellada. Costo Real: {finalUnitCost:C}.");
+            return (true, $"Producción sellada. Costo Unitario Real: {finalUnitCost:C}. Contabilizado 188 <-> 185.");
         }
         catch (Exception ex)
         {

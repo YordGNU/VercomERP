@@ -16,7 +16,7 @@
     </div>
 </div>
 <div class="row">
-    <form asp-action="Create" method="post">
+    <form asp-action="Create" method="post" id="createAccountForm">
         @Html.AntiForgeryToken()
         <div asp-validation-summary="All" class="alert alert-danger py-2 small border-0 mb-4 shadow-sm"></div>
 
@@ -92,4 +92,9 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            window.SubmitAjaxForm('createAccountForm');
+        });
+    </script>
 }

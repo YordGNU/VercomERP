@@ -57,10 +57,18 @@ public class CashBankService : ICashBankService
 
     public async Task<CajaFormViewModel> GetCajaFormContextAsync(Caja? existing = null)
     {
+        var entidadId = _entidadProvider.CurrentEntidadId;
+        var cuentasContables = await _context.CuentaContables
+            .Where(c => c.EntidadId == entidadId && c.Activo && c.AceptaMovimiento && c.Clase == "ACTIVO"
+                       && (c.Codigo.StartsWith("101") || c.Codigo.StartsWith("102")))
+            .OrderBy(c => c.Codigo)
+            .Select(c => new { c.Id, Display = $"{c.Codigo} - {c.Nombre}" })
+            .ToListAsync();
+
         return new CajaFormViewModel
         {
             Caja = existing ?? new Caja { Activa = true },
-            CuentasContables = new SelectList(await _context.CuentaContables.Where(c => c.Activo && c.AceptaMovimiento).ToListAsync(), "Id", "Nombre"),
+            CuentasContables = new SelectList(cuentasContables, "Id", "Display"),
             Sucursales = new SelectList(await _context.Sucursals.Where(s => s.Activo).ToListAsync(), "Id", "Nombre")
         };
     }
@@ -107,10 +115,18 @@ public class CashBankService : ICashBankService
 
     public async Task<BankAccountFormViewModel> GetBankAccountFormContextAsync(CuentaBancarium? existing = null)
     {
+        var entidadId = _entidadProvider.CurrentEntidadId;
+        var cuentasContables = await _context.CuentaContables
+            .Where(c => c.EntidadId == entidadId && c.Activo && c.AceptaMovimiento && c.Clase == "ACTIVO"
+                       && (c.Codigo.StartsWith("109") || c.Codigo.StartsWith("111")))
+            .OrderBy(c => c.Codigo)
+            .Select(c => new { c.Id, Display = $"{c.Codigo} - {c.Nombre}" })
+            .ToListAsync();
+
         return new BankAccountFormViewModel
         {
             BankAccount = existing ?? new CuentaBancarium { Activa = true },
-            CuentasContables = new SelectList(await _context.CuentaContables.Where(c => c.Activo && c.AceptaMovimiento).ToListAsync(), "Id", "Nombre")
+            CuentasContables = new SelectList(cuentasContables, "Id", "Display")
         };
     }
 

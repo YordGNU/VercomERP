@@ -42,11 +42,15 @@ public class UtileController : Controller
         if (ModelState.IsValid)
         {
             var result = await _hrService.AssignUtileAsync(utile);
-            if (result.Succeeded) return RedirectToAction("File", "Empleado", new { id = utile.EmpleadoId });
-            ModelState.AddModelError("", result.Message);
+            if (result.Succeeded)
+            {
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action("File", "Empleado", new { id = utile.EmpleadoId }) });
+            }
+            return Json(new { success = false, message = result.Message });
         }
-        ViewBag.EmpleadoId = new SelectList(await _hrService.GetEmployeesAsync(), "Id", "NombreCompleto", utile.EmpleadoId);
-        return View(utile);
+
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Errores de validación.", errors = errorList });
     }
 
     [HttpPost]

@@ -16,10 +16,11 @@ public class ProveedorController : Controller
     }
 
     [Authorize(Policy = "COMERCIAL.PROVEEDOR.VER")]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? search, string? tipoPersona, string? estado, int page = 1)
     {
-        var providers = await _commercialService.GetProvidersAsync();
-        return View(providers);
+        bool? activo = estado switch { "activa" => true, "inactiva" => false, _ => null };
+        var vm = await _commercialService.GetProviderIndexAsync(search, tipoPersona, activo, page);
+        return View(vm);
     }
 
     [Authorize(Policy = "COMERCIAL.PROVEEDOR.VER")]
@@ -49,11 +50,15 @@ public class ProveedorController : Controller
         if (ModelState.IsValid)
         {
             var result = await _commercialService.CreateProviderAsync(provider);
-            if (result.Succeeded) return RedirectToAction(nameof(Index));
-            ModelState.AddModelError("", result.Message);
+            if (result.Succeeded)
+            {
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
+            }
+            return Json(new { success = false, message = result.Message });
         }
-        var contextVm = await _commercialService.GetProviderFormContextAsync(provider);
-        return View(contextVm);
+
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Verifique los datos del proveedor.", errors = errorList });
     }
 
     [Authorize(Policy = "COMERCIAL.PROVEEDOR.EDITAR")]
@@ -80,10 +85,14 @@ public class ProveedorController : Controller
         if (ModelState.IsValid)
         {
             var result = await _commercialService.UpdateProviderAsync(provider);
-            if (result.Succeeded) return RedirectToAction(nameof(Index));
-            ModelState.AddModelError("", result.Message);
+            if (result.Succeeded)
+            {
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
+            }
+            return Json(new { success = false, message = result.Message });
         }
-        var contextVm = await _commercialService.GetProviderFormContextAsync(provider);
-        return View(contextVm);
+
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Errores de validación.", errors = errorList });
     }
 }

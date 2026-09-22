@@ -19,4 +19,5 @@ public partial class WebhookEntrega
     public DateTimeOffset EnviadoEn { get; set; }
 
     public virtual WebhookSuscripcion Suscripcion { get; set; } = null!;
+    public string MensajeError { get; internal set; }
 }

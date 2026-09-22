@@ -73,17 +73,21 @@ public class HRService : IHRService
     private readonly IParametroSistemaService _paramService;
     private readonly IAdminService _adminService;
     private readonly Security.IEntidadProvider _entidadProvider;
+    private readonly IFileStorageService _fileStorage;
     private readonly IWebHostEnvironment _environment;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ILogger<HRService> _logger;
 
-    public HRService(AppDbContext context, IParametroSistemaService paramService, Security.IEntidadProvider entidadProvider, IWebHostEnvironment environment, IAdminService adminService, IHttpContextAccessor httpContextAccessor)
+    public HRService(AppDbContext context, IParametroSistemaService paramService, Security.IEntidadProvider entidadProvider, IWebHostEnvironment environment, IAdminService adminService, IHttpContextAccessor httpContextAccessor, IFileStorageService fileStorageService, ILogger<HRService> logger)
     {
         _context = context;
         _paramService = paramService;
         _entidadProvider = entidadProvider;
         _environment = environment;
+        _fileStorage = fileStorageService;
         _adminService = adminService;
         _httpContextAccessor = httpContextAccessor;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<Empleado>> GetEmployeesAsync(string? search = null, Guid? cargoId = null, Guid? sucursalId = null, string? estado = null, DateOnly? desde = null, DateOnly? hasta = null)
@@ -148,48 +152,67 @@ public class HRService : IHRService
         var sucursales = await _adminService.GetSucursalesAsync();
         var sucursales_select_list = new SelectList(sucursales.Select(c => new { Id = c.Id, DisplayText = $"{c.Codigo} - {c.Nombre}" }), "Id", "DisplayText");
 
+        var turnos = await _context.TurnoTrabajos
+            .Where(t => t.Activo)
+            .OrderBy(t => t.HoraEntrada)
+            .ToListAsync();
+        var turnos_select_list = new SelectList(
+            turnos.Select(t => new { t.Id, DisplayText = $"{t.Nombre} ({t.HoraEntrada:HH:mm} - {t.HoraSalida:HH:mm})" }),
+            "Id", "DisplayText");
+
         return new EmployeeCreateViewModel
         {
             Empleado = existingEmployee ?? new Empleado { Estado = "ACTIVO", FechaIngreso = DateOnly.FromDateTime(DateTime.Now) },
             Contrato = new ContratoLaboral { FechaInicio = DateOnly.FromDateTime(DateTime.Now), Estado = "VIGENTE", JornadaHorasSemana = 44 },
             Cargos = cargos_select_list,
             Sucursales = sucursales_select_list,
-            TiposContrato = new SelectList(new[] { "PRUEBA", "DETERMINADO", "INDETERMINADO" })
+            TiposContrato = new SelectList(new[] { "PRUEBA", "DETERMINADO", "INDETERMINADO" }),
+            Turnos = turnos_select_list
         };
     }
 
     public async Task<(bool Succeeded, string Message)> CreateEmployeeWithContractAsync(Empleado empleado, ContratoLaboral contract, IFormFile? document)
     {
+        // Limpiar navegación para evitar conflictos con EF (Iteración 3)
+        contract.Empleado = null;
+        contract.Cargo = null;
+
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            // --- Sincronización de Datos (Iteración 3) ---
-            // Asegurar que el empleado tenga el cargo y sucursal definidos en el contrato/formulario
+            // --- Sincronización de Datos ---
             if (empleado.CargoId == Guid.Empty && contract.CargoId != Guid.Empty)
                 empleado.CargoId = contract.CargoId;
 
-            if (empleado.SucursalId == null && contract.Empleado?.SucursalId != null)
-                empleado.SucursalId = contract.Empleado.SucursalId;
-
             // 1. Crear Empleado
             var empResult = await CreateEmployeeAsync(empleado);
-            if (!empResult.Succeeded) return empResult;
+            if (!empResult.Succeeded)
+            {
+                await transaction.RollbackAsync();
+                return empResult;
+            }
 
             // 2. Vincular Contrato
             contract.EmpleadoId = empleado.Id;
-            // Asegurar que el contrato tenga el cargo del empleado si no se especificó
             if (contract.CargoId == Guid.Empty) contract.CargoId = empleado.CargoId;
 
             var contractResult = await AddContractAsync(contract, document);
-            if (!contractResult.Succeeded) throw new Exception(contractResult.Message);
+            if (!contractResult.Succeeded)
+            {
+                await transaction.RollbackAsync();
+                return contractResult;
+            }
 
             await transaction.CommitAsync();
             return (true, "Expediente y primer contrato registrados correctamente.");
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            if (_context.Database.CurrentTransaction != null)
+                await transaction.RollbackAsync();
+
             var innerMsg = ex.InnerException != null ? " | Detalle: " + ex.InnerException.Message : "";
+            _logger.LogError(ex, "Fallo en registro unificado de empleado {CI}", empleado.CarnetIdentidad);
             return (false, "Error en registro unificado: " + ex.Message + innerMsg);
         }
     }
@@ -260,31 +283,78 @@ public class HRService : IHRService
     public async Task<EmployeeContractViewModel> GetContractCreateContextAsync(Guid employeeId)
     {
         var emp = await _context.Empleados.FindAsync(employeeId);
+        if (emp == null)
+        {
+            return new EmployeeContractViewModel
+            {
+                NombreEmpleado = "Desconocido",
+                Contrato = new ContratoLaboral
+                {
+                    EmpleadoId = employeeId,
+                    FechaInicio = DateOnly.FromDateTime(DateTime.Now),
+                    Estado = "VIGENTE"
+                },
+                Cargos = new SelectList(Enumerable.Empty<object>(), "Id", "DisplayText"),
+                TiposContrato = new SelectList(new[] { "PRUEBA", "DETERMINADO", "INDETERMINADO" })
+            };
+        }
+
+        var nuevoContrato = new ContratoLaboral
+        {
+            EmpleadoId = employeeId,
+            CargoId = emp.CargoId,
+            FechaInicio = DateOnly.FromDateTime(DateTime.Now),
+            Estado = "VIGENTE"
+        };
+
+        var cargos = await _context.Cargos
+            .Where(c => c.EntidadId == emp.EntidadId)
+            .OrderBy(c => c.Codigo)
+            .Select(c => new
+            {
+                c.Id,
+                DisplayText = c.Codigo + " - " + c.Nombre
+            })
+            .ToListAsync();
+
         return new EmployeeContractViewModel
         {
-            NombreEmpleado = emp != null ? $"{emp.Apellidos}, {emp.Nombres}" : "Desconocido",
-            Contrato = new ContratoLaboral { EmpleadoId = employeeId, FechaInicio = DateOnly.FromDateTime(DateTime.Now), Estado = "VIGENTE" },
-            Cargos = new SelectList(await _context.Cargos.ToListAsync(), "Id", "Nombre"),
+            NombreEmpleado = $"{emp.Apellidos}, {emp.Nombres}",
+            Contrato = nuevoContrato,
+            Cargos = new SelectList(cargos, "Id", "DisplayText", emp.CargoId),
             TiposContrato = new SelectList(new[] { "PRUEBA", "DETERMINADO", "INDETERMINADO" })
         };
     }
 
     public async Task<(bool Succeeded, string Message)> AddContractAsync(ContratoLaboral contract, IFormFile? document)
     {
-        using var transaction = _context.Database.CurrentTransaction == null ? await _context.Database.BeginTransactionAsync() : null;
+        using var transaction = _context.Database.CurrentTransaction == null
+            ? await _context.Database.BeginTransactionAsync()
+            : null;
+
+        string? uploadedRelativePath = null; // Para limpiar si falla la transacción
+
         try
         {
-            // --- RF-26: Validar Cupo en Plantilla (Iteración 3) ---
-            // Si el contrato es nuevo (Id empty), validamos que haya plaza.
+            // ============================================================
+            // 1. VALIDACIÓN DE CUPO EN PLANTILLA (RF-26)
+            // ============================================================
             if (contract.Id == Guid.Empty)
             {
-                var sucursalId = contract.Empleado?.SucursalId ?? (await _context.Empleados.FindAsync(contract.EmpleadoId))?.SucursalId;
+                var sucursalId = contract.Empleado?.SucursalId
+                    ?? (await _context.Empleados.FindAsync(contract.EmpleadoId))?.SucursalId;
+
                 var disponibles = await _context.PlantillaAprobada
-                    .Where(p => p.EntidadId == _entidadProvider.CurrentEntidadId && p.CargoId == contract.CargoId && p.SucursalId == sucursalId)
+                    .Where(p => p.EntidadId == _entidadProvider.CurrentEntidadId
+                             && p.CargoId == contract.CargoId
+                             && p.SucursalId == sucursalId)
                     .Select(p => p.PlazasAprobadas)
                     .FirstOrDefaultAsync();
 
-                var cubiertas = await _context.ContratoLaborals.CountAsync(c => c.CargoId == contract.CargoId && c.Empleado.SucursalId == sucursalId && c.Estado == "VIGENTE");
+                var cubiertas = await _context.ContratoLaborals
+                    .CountAsync(c => c.CargoId == contract.CargoId
+                                  && c.Empleado.SucursalId == sucursalId
+                                  && c.Estado == "VIGENTE");
 
                 if (disponibles > 0 && cubiertas >= disponibles)
                 {
@@ -292,65 +362,85 @@ public class HRService : IHRService
                 }
             }
 
-            // 1. Manejar archivo físico si existe
-            if (document != null)
+            // ============================================================
+            // 2. GUARDAR DOCUMENTO ADJUNTO (usando el servicio)
+            // ============================================================
+            if (document != null && document.Length > 0)
             {
-                var webRoot = _environment.WebRootPath;
-                if (string.IsNullOrEmpty(webRoot))
-                {
-                    webRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-                }
+                var uploadResult = await _fileStorage.SaveFileAsync(
+                    file: document,
+                    subFolder: "contracts",
+                    prefix: $"contrato_{contract.EmpleadoId}");
 
-                var uploadsFolder = Path.Combine(webRoot, "uploads", "contracts");
+                if (!uploadResult.Success)
+                    return (false, uploadResult.Message);
 
-                try
-                {
-                    if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-                }
-                catch (Exception dirEx)
-                {
-                    return (false, "Error de permisos en el servidor: No se pudo crear la carpeta de adjuntos. " + dirEx.Message);
-                }
+                contract.DocumentoUrl = uploadResult.RelativePath;
+                uploadedRelativePath = uploadResult.RelativePath;
 
-                var extension = Path.GetExtension(document.FileName).ToLower();
-                var allowedExtensions = new[] { ".doc", ".docx", ".pdf" };
-                if (!allowedExtensions.Contains(extension))
-                    return (false, "Formato de archivo no permitido. Solo se aceptan documentos Word o PDF.");
-
-                var fileName = $"Contrato_{contract.EmpleadoId}_{DateTime.Now:yyyyMMddHHmmss}{extension}";
-                var filePath = Path.Combine(uploadsFolder, fileName);
-
-                using (var fileStream = new FileStream(filePath, FileMode.Create))
-                {
-                    await document.CopyToAsync(fileStream);
-                }
-
-                contract.DocumentoUrl = "/uploads/contracts/" + fileName;
+                _logger.LogInformation(
+                    "Documento de contrato subido: {Path} para empleado {EmpleadoId}",
+                    uploadedRelativePath, contract.EmpleadoId);
             }
 
-            // 2. Finalizar contratos previos
+            // ============================================================
+            // 3. FINALIZAR CONTRATOS PREVIOS
+            // ============================================================
             var previous = await _context.ContratoLaborals
                 .Where(c => c.EmpleadoId == contract.EmpleadoId && c.Estado == "VIGENTE")
                 .ToListAsync();
 
-            foreach (var p in previous) p.Estado = "FINALIZADO";
+            foreach (var p in previous)
+                p.Estado = "FINALIZADO";
 
-            // 3. Registrar el nuevo contrato
-            if (contract.Id == Guid.Empty) contract.Id = Guid.NewGuid();
+            // ============================================================
+            // 4. REGISTRAR EL NUEVO CONTRATO
+            // ============================================================
+            if (contract.Id == Guid.Empty)
+                contract.Id = Guid.NewGuid();
+
             contract.CreadoEn = DateTimeOffset.Now;
-            if (string.IsNullOrEmpty(contract.Estado)) contract.Estado = "VIGENTE";
+
+            if (string.IsNullOrEmpty(contract.Estado))
+                contract.Estado = "VIGENTE";
 
             _context.ContratoLaborals.Add(contract);
             await _context.SaveChangesAsync();
 
-            if (transaction != null) await transaction.CommitAsync();
 
-            return (true, document != null ? "Contrato registrado con documento digital." : "Contrato registrado exitosamente.");
+            if (transaction != null)
+                await transaction.CommitAsync();
+
+            return (true, document != null
+                ? "Contrato registrado con documento digital."
+                : "Contrato registrado exitosamente.");
+        }
+        catch (DbUpdateException dbEx)
+        {
+            if (transaction != null)
+                await transaction.RollbackAsync();
+
+            if (uploadedRelativePath != null)
+                await _fileStorage.DeleteFileAsync(uploadedRelativePath);
+
+            var innerMsg = dbEx.InnerException?.Message ?? dbEx.Message;
+            if (dbEx.InnerException?.InnerException != null)
+                innerMsg += " | Sub-detalle: " + dbEx.InnerException.InnerException.Message;
+
+            _logger.LogError(dbEx, "Error de BD al guardar contrato para empleado {EmpleadoId}", contract.EmpleadoId);
+            return (false, "Error de base de datos: " + innerMsg);
         }
         catch (Exception ex)
         {
-            if (transaction != null) await transaction.RollbackAsync();
-            return (false, "Fallo crítico al guardar contrato: " + ex.Message);
+            if (transaction != null)
+                await transaction.RollbackAsync();
+
+            if (uploadedRelativePath != null)
+                await _fileStorage.DeleteFileAsync(uploadedRelativePath);
+
+            var errorDetail = ex.InnerException?.Message ?? ex.Message;
+            _logger.LogError(ex, "Error inesperado al guardar contrato para empleado {EmpleadoId}", contract.EmpleadoId);
+            return (false, "Fallo crítico al guardar contrato: " + errorDetail);
         }
     }
 
@@ -432,6 +522,7 @@ public class HRService : IHRService
 
         var query = _context.Empleados
             .Include(e => e.Cargo)
+            .Include(e => e.TurnoTrabajo)
             .Where(e => e.Estado == "ACTIVO")
             .AsQueryable();
 
@@ -454,41 +545,127 @@ public class HRService : IHRService
         var employeeIds = employees.Select(e => e.Id).ToList();
 
         var records = await _context.RegistroAsistencia
+            .Include(a => a.TurnoTrabajo)
             .Where(a => a.Fecha == targetDate && employeeIds.Contains(a.EmpleadoId))
             .ToDictionaryAsync(a => a.EmpleadoId);
+
+        var certificados = await _context.CertificadoMedicos
+            .Where(c => employeeIds.Contains(c.EmpleadoId) && c.FechaInicio <= targetDate && c.FechaFin >= targetDate)
+            .ToListAsync();
+        var certificadoPorEmpleado = certificados
+            .GroupBy(c => c.EmpleadoId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(c => c.FechaInicio).First());
+
+        var tiposAusencia = await _context.TipoAusencia.OrderBy(t => t.Nombre).ToListAsync();
+        var incapacidad = tiposAusencia.FirstOrDefault(t => t.Codigo == "05");
 
         return new AttendanceConsoleViewModel
         {
             Date = targetDate,
-            TiposAusencia = await _context.TipoAusencia.ToListAsync(),
-            Rows = employees.Select(e => new AttendanceRow
+            TiposAusencia = tiposAusencia,
+            IncapacidadTipoAusenciaId = incapacidad?.Id,
+            Rows = employees.Select(e =>
             {
-                EmpleadoId = e.Id,
-                NombreCompleto = $"{e.Apellidos}, {e.Nombres}",
-                Cargo = e.Cargo.Nombre,
-                Record = records.ContainsKey(e.Id) ? records[e.Id] : new RegistroAsistencium
+                var isNew = !records.TryGetValue(e.Id, out var record);
+                record ??= new RegistroAsistencium { EmpleadoId = e.Id, Fecha = targetDate };
+
+                var turno = record.TurnoTrabajo ?? e.TurnoTrabajo;
+
+                if (isNew && record.TipoAusenciaId == null)
+                {
+                    record.TurnoTrabajoId = turno?.Id;
+                    record.HoraEntrada = turno?.HoraEntrada ?? new TimeOnly(8, 0);
+                    record.HoraSalida = turno?.HoraSalida ?? new TimeOnly(17, 0);
+                }
+
+                var certificado = certificadoPorEmpleado.GetValueOrDefault(e.Id);
+                var esIncapacidad = certificado != null && incapacidad != null;
+                if (esIncapacidad)
+                {
+                    record.TipoAusenciaId = incapacidad!.Id;
+                    record.HoraEntrada = null;
+                    record.HoraSalida = null;
+                }
+
+                var (retardo, temprana) = esIncapacidad
+                    ? (null, null)
+                    : ComputeJornadaMetrics(turno, targetDate, record.HoraEntrada, record.HoraSalida);
+
+                return new AttendanceRow
                 {
                     EmpleadoId = e.Id,
-                    Fecha = targetDate,
-                    HoraEntrada = new TimeOnly(8, 0),
-                    HoraSalida = new TimeOnly(17, 0)
-                }
+                    NombreCompleto = $"{e.Apellidos}, {e.Nombres}",
+                    Cargo = e.Cargo.Nombre,
+                    TurnoTrabajoId = turno?.Id,
+                    TurnoNombre = turno?.Nombre,
+                    TurnoHoraEntrada = turno?.HoraEntrada,
+                    TurnoHoraSalida = turno?.HoraSalida,
+                    EsNocturno = turno?.EsNocturno ?? false,
+                    RetardoMinutos = retardo,
+                    SalidaTempranaMinutos = temprana,
+                    EsIncapacidad = esIncapacidad,
+                    PorcentajeSubsidio = certificado?.PorcentajeSubsidio,
+                    Record = record
+                };
             }).ToList()
         };
+    }
+
+    private static (int? Retardo, int? SalidaTemprana) ComputeJornadaMetrics(TurnoTrabajo? turno, DateOnly fecha, TimeOnly? entrada, TimeOnly? salida)
+    {
+        if (turno == null) return (null, null);
+
+        var crossesMidnight = turno.HoraSalida <= turno.HoraEntrada;
+        var scheduledIn = fecha.ToDateTime(turno.HoraEntrada);
+        var scheduledOut = fecha.ToDateTime(turno.HoraSalida);
+        if (crossesMidnight) scheduledOut = scheduledOut.AddDays(1);
+
+        int? retardo = null;
+        if (entrada.HasValue)
+        {
+            var lateMinutes = (fecha.ToDateTime(entrada.Value) - scheduledIn).TotalMinutes;
+            retardo = lateMinutes > turno.ToleranciaMinutos ? (int)Math.Round(lateMinutes) : 0;
+        }
+
+        int? temprana = null;
+        if (salida.HasValue)
+        {
+            var actualOut = fecha.ToDateTime(salida.Value);
+            if (crossesMidnight && salida.Value <= turno.HoraEntrada) actualOut = actualOut.AddDays(1);
+            var earlyMinutes = (scheduledOut - actualOut).TotalMinutes;
+            temprana = earlyMinutes > 0 ? (int)Math.Round(earlyMinutes) : 0;
+        }
+
+        return (retardo, temprana);
     }
 
     public async Task<(bool Succeeded, string Message)> SaveAttendanceConsoleAsync(List<RegistroAsistencium> logs, Guid userId)
     {
         try
         {
+            if (logs == null || logs.Count == 0) return (true, "Sin cambios que guardar.");
+
+            var turnoIds = logs.Where(l => l.TurnoTrabajoId.HasValue).Select(l => l.TurnoTrabajoId!.Value).Distinct().ToList();
+            var turnos = await _context.TurnoTrabajos
+                .Where(t => turnoIds.Contains(t.Id))
+                .ToDictionaryAsync(t => t.Id);
+
             foreach (var log in logs)
             {
+                var turno = log.TurnoTrabajoId.HasValue && turnos.TryGetValue(log.TurnoTrabajoId.Value, out var t) ? t : null;
+                var (retardo, temprana) = ComputeJornadaMetrics(turno, log.Fecha, log.HoraEntrada, log.HoraSalida);
+                log.RetardoMinutos = retardo;
+                log.SalidaTempranaMinutos = temprana;
+
                 var existing = await _context.RegistroAsistencia.FirstOrDefaultAsync(a => a.EmpleadoId == log.EmpleadoId && a.Fecha == log.Fecha);
                 if (existing != null)
                 {
                     existing.HoraEntrada = log.HoraEntrada; existing.HoraSalida = log.HoraSalida;
                     existing.HorasExtra = log.HorasExtra; existing.TipoAusenciaId = log.TipoAusenciaId;
                     existing.Observaciones = log.Observaciones;
+                    existing.TurnoTrabajoId = log.TurnoTrabajoId;
+                    existing.RetardoMinutos = log.RetardoMinutos;
+                    existing.SalidaTempranaMinutos = log.SalidaTempranaMinutos;
                 }
                 else
                 {

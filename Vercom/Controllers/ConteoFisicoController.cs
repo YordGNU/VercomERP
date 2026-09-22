@@ -42,9 +42,11 @@ public class ConteoFisicoController : Controller
     public async Task<IActionResult> Start(Guid almacenId)
     {
         var result = await _warehouseService.StartPhysicalCountAsync(almacenId, _entidadProvider.CurrentUsuarioId);
-        if (result.Succeeded) return RedirectToAction(nameof(Details), new { id = result.Count?.Id });
+        if (result.Succeeded)
+        {
+            return Json(new { success = true, message = "Conteo iniciado correctamente.", redirectUrl = Url.Action(nameof(Details), new { id = result.Count?.Id }) });
+        }
 
-        TempData["Error"] = result.Message;
-        return RedirectToAction(nameof(Index));
+        return Json(new { success = false, message = result.Message });
     }
 }

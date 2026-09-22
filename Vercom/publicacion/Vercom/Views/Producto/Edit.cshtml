@@ -18,8 +18,8 @@
     </div>
 </div>
 
-<div class="container-xxl">
-    <form asp-action="Edit" method="post">
+<div class="row">
+    <form asp-action="Edit" method="post" id="editProductForm">
         @Html.AntiForgeryToken()
         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-4 shadow-sm"></div>
         <input type="hidden" asp-for="Producto.Id" name="Producto.Id" />
@@ -114,7 +114,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label asp-for="Producto.CuentaInventarioId" class="control-label fw-bold"></label>
-                                            <select asp-for="Producto.CuentaInventarioId" asp-items="Model.CuentasInventario" class="form-control select2-cuenta">
+                                            <select asp-for="Producto.CuentaInventarioId" asp-items="Model.CuentasInventario" class="form-control select2">
                                                 <option value="">-- Seleccionar --</option>
                                             </select>
                                             <span asp-validation-for="Producto.CuentaInventarioId" class="text-danger"></span>
@@ -123,7 +123,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label asp-for="Producto.CuentaCostoVentaId" class="control-label fw-bold"></label>
-                                            <select asp-for="Producto.CuentaCostoVentaId" asp-items="Model.CuentasCostoVenta" class="form-control select2-cuenta">
+                                            <select asp-for="Producto.CuentaCostoVentaId" asp-items="Model.CuentasCostoVenta" class="form-control select2">
                                                 <option value="">-- Seleccionar --</option>
                                             </select>
                                             <span asp-validation-for="Producto.CuentaCostoVentaId" class="text-danger"></span>
@@ -132,7 +132,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label asp-for="Producto.CuentaIngresoId" class="control-label fw-bold"></label>
-                                            <select asp-for="Producto.CuentaIngresoId" asp-items="Model.CuentasIngresos" class="form-control select2-cuenta">
+                                            <select asp-for="Producto.CuentaIngresoId" asp-items="Model.CuentasIngresos" class="form-control select2">
                                                 <option value="">-- Seleccionar --</option>
                                             </select>
                                             <span asp-validation-for="Producto.CuentaIngresoId" class="text-danger"></span>
@@ -157,4 +157,26 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            window.SubmitAjaxForm('editProductForm');
+
+            var cuentasPorTipo = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CuentasPorTipo));
+            function setCuenta(selector, id) {
+                var $select = $(selector);
+                if (id && $select.find('option[value="' + id + '"]').length) {
+                    $select.val(id).trigger('change');
+                } else {
+                    $select.val('').trigger('change');
+                }
+            }
+            $('#Producto_Tipo').on('change', function() {
+                var cuentas = cuentasPorTipo[$(this).val()];
+                if (!cuentas) return;
+                setCuenta('#Producto_CuentaInventarioId', cuentas.InventarioId);
+                setCuenta('#Producto_CuentaCostoVentaId', cuentas.CostoVentaId);
+                setCuenta('#Producto_CuentaIngresoId', cuentas.IngresoId);
+            });
+        });
+    </script>
 }

@@ -41,11 +41,15 @@ public class FamiliaProductoController : Controller
         if (ModelState.IsValid)
         {
             var result = await _inventoryService.CreateFamilyAsync(familia);
-            if (result.Succeeded) return RedirectToAction(nameof(Index));
-            ModelState.AddModelError("", result.Message);
+            if (result.Succeeded)
+            {
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
+            }
+            return Json(new { success = false, message = result.Message });
         }
-        var contextVm = await _inventoryService.GetFamilyFormContextAsync(familia);
-        return View(contextVm);
+
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Errores de validación.", errors = errorList });
     }
 
     [Authorize(Policy = "INVENTARIO.FAMILIA.CREAR")]
@@ -73,10 +77,35 @@ public class FamiliaProductoController : Controller
         if (ModelState.IsValid)
         {
             var result = await _inventoryService.UpdateFamilyAsync(familia);
-            if (result.Succeeded) return RedirectToAction(nameof(Index));
-            ModelState.AddModelError("", result.Message);
+            if (result.Succeeded)
+            {
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
+            }
+            return Json(new { success = false, message = result.Message });
         }
-        var contextVm = await _inventoryService.GetFamilyFormContextAsync(familia);
-        return View(contextVm);
+
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Errores de validación.", errors = errorList });
+    }
+
+    [HttpGet]
+    [Authorize(Policy = "INVENTARIO.FAMILIA.VER")]
+    public async Task<IActionResult> Details(Guid id)
+    {
+        var viewModel = await _inventoryService.GetFamilyByIdAsync(id);
+
+        if (viewModel == null)
+            return NotFound();
+
+        return View(viewModel);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "INVENTARIO.FAMILIA.ELIMINAR")]
+    public async Task<IActionResult> Delete([FromBody] DeleteRequest request)
+    {
+        var result = await _inventoryService.DeleteFamiliaAsync(request.Id);
+        return Json(new { success = result.Succeeded, message = result.Message });
     }
 }

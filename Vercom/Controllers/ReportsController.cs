@@ -12,12 +12,15 @@ public class ReportsController : Controller
 {
     private readonly IIntelligenceService _intelligenceService;
     private readonly IAccountingService _accountingService;
+    private readonly IExportService _exportService;
     private readonly IEntidadProvider _entidadProvider;
 
-    public ReportsController(IIntelligenceService intelligenceService, IAccountingService accountingService, IEntidadProvider entidadProvider)
+    public ReportsController(IIntelligenceService intelligenceService, IAccountingService accountingService,
+        IExportService exportService, IEntidadProvider entidadProvider)
     {
         _intelligenceService = intelligenceService;
         _accountingService = accountingService;
+        _exportService = exportService;
         _entidadProvider = entidadProvider;
     }
 
@@ -40,5 +43,20 @@ public class ReportsController : Controller
             : await _intelligenceService.GetEstadoResultadosContextAsync(_entidadProvider.CurrentEntidadId, periodId);
 
         return View("FinancialReport", vm);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportFinancialStatement(Guid periodId, string type)
+    {
+        var vm = type == "BALANCE"
+            ? await _intelligenceService.GetBalanceGeneralContextAsync(_entidadProvider.CurrentEntidadId, periodId)
+            : await _intelligenceService.GetEstadoResultadosContextAsync(_entidadProvider.CurrentEntidadId, periodId);
+
+        var data = type == "BALANCE"
+            ? vm.Balance.Activos.Concat(vm.Balance.Pasivos).Concat(vm.Balance.Patrimonio)
+            : vm.Resultados;
+
+        var csv = _exportService.ExportToCsv(data);
+        return File(csv, "text/csv", $"Reporte_{type}_{vm.PeriodName.Replace("/", "_")}.csv");
     }
 }

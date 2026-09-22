@@ -41,10 +41,14 @@ public class PlanProduccionController : Controller
         if (ModelState.IsValid)
         {
             var result = await _productionService.CreatePlanAsync(plan);
-            if (result.Succeeded) return RedirectToAction(nameof(Index));
-            ModelState.AddModelError("", result.Message);
+            if (result.Succeeded)
+            {
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
+            }
+            return Json(new { success = false, message = result.Message });
         }
-        var contextVm = await _productionService.GetPlanFormContextAsync(plan);
-        return View(contextVm);
+
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Errores de validación.", errors = errorList });
     }
 }

@@ -9,8 +9,8 @@
     <link rel="shortcut icon" href="assets/images/favicon.ico">
     <!-- Datatables css -->
     <link href="~/css/plugins/datatables/responsive.bootstrap5.min.css" rel="stylesheet" type="text/css">
-    <!-- Toastr css -->
-    <link href="~/css/plugins/toastr/toastr.min.css" rel="stylesheet" type="text/css">
+    <!-- SweetAlert2 -->
+    <script src="~/js/plugins/sweetalert/sweetalert2@11.js"></script>
     <!-- Select2 css -->
     <link href="~/css/plugins/select2/select2.min.css" rel="stylesheet" type="text/css">
     <!-- Theme Config Js -->
@@ -19,6 +19,15 @@
     <link href="~/css/vendors.min.css" rel="stylesheet" type="text/css">
     <!-- App css -->
     <link href="~/css/app.min.css" rel="stylesheet" type="text/css">
+    <!-- SweetAlert2 Fixes -->
+    <link rel="stylesheet" href="~/css/plugins/sweetalert/sweetalert2.min.css">
+    <style>
+        .swal2-container { z-index: 10000 !important; }
+        /* Evitar que el tema rompa el checkmark de éxito */
+        .swal2-icon.swal2-success .swal2-success-ring { box-sizing: content-box !important; }
+        .swal2-icon.swal2-success [class^='swal2-success-line'] { box-sizing: content-box !important; }
+        .swal2-toast { box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important; border: 1px solid rgba(0,0,0,0.05) !important; }
+    </style>
     @if (IsSectionDefined("Styles"))
     {
         @RenderSection("Styles", required: false)
@@ -45,16 +54,93 @@
     <script src="~/js/plugins/datatables/dataTables.bootstrap5.min.js"></script>
     <script src="~/js/plugins/datatables/dataTables.responsive.min.js"></script>
     <script src="~/js/plugins/datatables/responsive.bootstrap5.min.js"></script>
-    <!-- Toastr js -->
-    <script src="~/js/plugins/toastr/toastr.min.js"></script>
     <!-- Select2 js -->
     <script src="~/js/plugins/select2/select2.min.js"></script>
     <!-- Page js -->
     <script src="~/js/pages/datatables-ajax.js"></script>
 
     <!-- SignalR Client -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script src="~/js/signalr.min.js"></script>
     <script>
+        // Función global para notificaciones modernas
+        window.SwalAlert = function(type, message, title = '') {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 4000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            });
+
+            Toast.fire({
+                icon: type,
+                title: title || (type.charAt(0).toUpperCase() + type.slice(1)),
+                text: message
+            });
+        };
+
+        // Motor AJAX Universal para Formularios
+        window.SubmitAjaxForm = function(formId, callback = null) {
+            const $form = $('#' + formId);
+            if (!$form.length) return;
+
+            $form.on('submit', function(e) {
+                e.preventDefault();
+
+                // Validar si jquery validation está presente
+                if ($form.data('validator') && !$form.valid()) return;
+
+                const $btn = $form.find('button[type="submit"]');
+                const originalHtml = $btn.html();
+
+                $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Procesando...');
+
+                const formData = new FormData(this);
+
+                $.ajax({
+                    url: $form.attr('action'),
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(res) {
+                        if (res.success) {
+                            window.SwalAlert('success', res.message);
+                            if (callback) {
+                                callback(res);
+                            } else if (res.redirectUrl) {
+                                setTimeout(() => window.location.href = res.redirectUrl, 1500);
+                            }
+                        } else {
+                            $btn.prop('disabled', false).html(originalHtml);
+
+                            let errorContent = res.message;
+                            if (res.errors && res.errors.length > 0) {
+                                errorContent += '<ul class="text-start mt-3 small">' +
+                                    res.errors.map(e => `<li>${e}</li>`).join('') +
+                                    '</ul>';
+                            }
+
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error en la operación',
+                                html: errorContent,
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                    },
+                    error: function() {
+                        $btn.prop('disabled', false).html(originalHtml);
+                        window.SwalAlert('error', 'Ocurrió un error inesperado en el servidor.');
+                    }
+                });
+            });
+        };
+
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("/notificationHub")
             .withAutomaticReconnect()
@@ -88,35 +174,82 @@
                 container.insertAdjacentHTML('afterbegin', item);
             }
 
-            // 3. Mostrar Toast si existe Toastr
-            if (typeof toastr !== 'undefined') {
-                toastr[data.type](data.message, data.title);
-            }
+            // 3. Mostrar SweetAlert Toast
+            window.SwalAlert(data.type, data.message, data.title);
         });
 
-        connection.start().catch(err => console.error("SignalR Error:", err));
+            connection.start().catch(err => console.error("SignalR Error:", err));
+
+        // Carga inicial: contador pendientes + últimas 5 desde BD
+        (function cargarNotificacionesIniciales() {
+            const container = document.getElementById("notification-stock");
+            const countEl = document.getElementById("notification-count");
+
+            fetch('/Notificacion/Contador')
+                .then(r => r.ok ? r.json() : null)
+                .then(data => {
+                    if (countEl && data) {
+                        countEl.innerText = data.pendientes;
+                    }
+                });
+
+            fetch('/Notificacion/Ultimas?n=5')
+                .then(r => r.ok ? r.json() : null)
+                .then(data => {
+                    if (!container) return;
+                    container.innerHTML = '';
+                    if (!data || data.length === 0) {
+                        container.innerHTML = '<div class="dropdown-item py-3 text-center text-muted small">Sin notificaciones</div>';
+                        return;
+                    }
+                    data.forEach(item => {
+                        const badge = item.tipo === 'success' ? 'success' :
+                                     item.tipo === 'danger' ? 'danger' :
+                                     item.tipo === 'warning' ? 'warning' : 'info';
+                        const row = `
+                            <div class="dropdown-item d-flex py-3 border-bottom border-light">
+                                <div class="avatar-xs bg-${badge}-subtle text-${badge} rounded-circle me-3 d-flex align-items-center justify-content-center" style="width:32px; height:32px;">
+                                    <i class="ti ti-bell"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 fw-bold ${item.leida ? 'fw-normal' : ''}">${item.titulo}</h6>
+                                    <p class="mb-0 small text-muted">${item.mensaje}</p>
+                                    <small class="tiny text-muted mt-1 d-block">${item.tiempo}</small>
+                                </div>
+                            </div>`;
+                        container.insertAdjacentHTML('beforeend', row);
+                    });
+                });
+        })();
     </script>
 
     <!-- TempData Notifications -->
     <script>
         $(document).ready(function() {
             @if (TempData["Success"] != null) {
-                <text>toastr.success("@TempData["Success"]");</text>
+                <text>window.SwalAlert('success', "@TempData["Success"]");</text>
             }
             @if (TempData["Error"] != null) {
-                <text>toastr.error("@TempData["Error"]");</text>
+                <text>
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error en la operación',
+                        text: "@TempData["Error"]",
+                        confirmButtonColor: '#3085d6'
+                    });
+                </text>
             }
             @if (TempData["Warning"] != null) {
-                <text>toastr.warning("@TempData["Warning"]");</text>
+                <text>window.SwalAlert('warning', "@TempData["Warning"]");</text>
             }
             @if (TempData["Info"] != null) {
-                <text>toastr.info("@TempData["Info"]");</text>
+                <text>window.SwalAlert('info', "@TempData["Info"]");</text>
             }
 
             // Inicializar Select2 globalmente
-            $('.select2').each(function() {
+            $('.select2, .select2-cuenta').each(function() {
                 $(this).select2({
-                    width: '100%',
+                    width: '100%',              
                     placeholder: $(this).data('placeholder') || '-- Seleccione --',
                     allowClear: true,
                     language: {

@@ -25,7 +25,8 @@
                     <h5 class="m-0 fw-bold"><i class="ti ti-scale me-2 text-primary"></i>Datos de la Magnitud</h5>
                 </div>
                 <div class="card-body p-4">
-                    <form asp-action="Create" method="post" class="row g-4">
+                    <form asp-action="Create" method="post" class="row g-4" id="createUnitForm">
+                        @Html.AntiForgeryToken()
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
 
                         <div class="col-md-4">
@@ -63,4 +64,9 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            window.SubmitAjaxForm('createUnitForm');
+        });
+    </script>
 }

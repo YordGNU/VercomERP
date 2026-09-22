@@ -1,0 +1,152 @@
+@model IEnumerable<Vercom.Models.Sucursal>
+@{
+    ViewBag.Title = "Mapa de Sucursales";
+    var itemsJson = System.Text.Json.JsonSerializer.Serialize(Model.Select(s => new
+    {
+        id = s.Id,
+        nombre = s.Nombre,
+        codigo = s.Codigo,
+        tipo = s.Tipo ?? "SIN TIPO",
+        direccion = s.Direccion,
+        municipio = s.Municipio,
+        provincia = s.Provincia,
+        telefono = s.Telefono,
+        activo = s.Activo,
+        lat = s.Latitud,
+        lng = s.Longitud
+    }));
+}
+
+
+<link href="~/ccs/plugins/leaflet/leaflet.css" />
+<style>
+    #mapa { height: calc(100vh - 220px); min-height: 420px; border-radius: .75rem; z-index: 1; }
+    .leaflet-container { font-family: inherit; }
+    .map-panel .list-group-item { cursor: pointer; }
+    .map-panel .list-group-item:hover { background: #f1f5f9; }
+</style>
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Mapa de Sucursales</h4>
+        <p class="text-muted small mb-0">Ubicación geográfica de almacenes, tiendas, oficinas y áreas de producción.</p>
+    </div>
+    <div class="text-end">
+        <a asp-action="Index" class="btn btn-light shadow-sm"><i class="ti ti-arrow-left me-1"></i> Volver al listado</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-2">
+                <div id="mapa"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 map-panel">
+            <div class="card-header py-2">
+                <h6 class="mb-0 fw-bold"><i class="ti ti-directions me-1"></i> Sucursales (@Model.Count(s => s.Latitud.HasValue && s.Longitud.HasValue))</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush" style="max-height: calc(100vh - 320px); overflow-y: auto;">
+                    @foreach (var s in Model.Where(x => x.Latitud.HasValue && x.Longitud.HasValue))
+                    {
+                        <button type="button" class="list-group-item list-group-item-action py-2 border-0 sucursal-item"
+                                data-lat="@s.Latitud" data-lng="@s.Longitud">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="fw-semibold small">@s.Nombre</span>
+                                    <div class="text-muted small">
+                                        <code>@s.Codigo</code>
+                                        @if (!string.IsNullOrWhiteSpace(s.Municipio))
+                                        {
+                                            <span> &middot; @s.Municipio@(string.IsNullOrWhiteSpace(s.Provincia) ? "" : ", " + s.Provincia)</span>
+                                        }
+                                    </div>
+                                </div>
+                                <span class="badge @(s.Activo ? "badge-soft-success" : "badge-soft-danger")">@(s.Activo ? "ACTIVA" : "INACTIVA")</span>
+                            </div>
+                        </button>
+                    }
+                    @if (Model.Any(x => !x.Latitud.HasValue || !x.Longitud.HasValue))
+                    {
+                        <div class="text-muted small px-3 pt-3">@Model.Count(x => !x.Latitud.HasValue || !x.Longitud.HasValue) sucursales sin coordenadas:</div>
+                        foreach (var s in Model.Where(x => !x.Latitud.HasValue || !x.Longitud.HasValue))
+                        {
+                            <div class="list-group-item py-1 border-0 text-muted small"><i class="ti ti-map-pin-off me-1"></i>@s.Nombre</div>
+                        }
+                    }
+                    @if (!Model.Any())
+                    {
+                        <div class="text-center text-muted py-5">
+                            <i class="ti ti-building fs-40"></i>
+                            <p class="mt-2 mb-0">No hay sucursales registradas.</p>
+                            <a asp-action="Create" class="btn btn-sm btn-primary mt-2">Crear sucursal</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="~/js/plugins/leaflet/leaflet.js"></script>
+<script>
+    (function () {
+        var items = @Html.Raw(itemsJson);
+
+        if (typeof L === 'undefined') {
+            document.getElementById('mapa').innerHTML =
+                '<div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted">' +
+                '<i class="ti ti-cloud-off fs-40 mb-2"></i>' +
+                'No se pudo cargar el mapa. Verifique la conexión a Internet y recargue la página.</div>';
+            return;
+        }
+
+        var map = L.map('mapa');
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        var markers = [];
+        items.forEach(function (s) {
+            if (!s.lat || !s.lng) return;
+            var marker = L.marker([Number(s.lat), Number(s.lng)]).addTo(map);
+            var tipo = (s.tipo || 'SIN TIPO');
+            var ubicacion = [s.municipio, s.provincia].filter(Boolean).join(', ');
+            var html =
+                '<div style="min-width:220px">' +
+                '<div class="fw-bold mb-1">' + s.nombre + ' <code>' + (s.codigo || '') + '</code></div>' +
+                '<div><span class="badge bg-light border text-uppercase text-muted">' + tipo + '</span> ' +
+                (s.activo ? '<span class="badge text-bg-success">ACTIVA</span>' : '<span class="badge text-bg-secondary">INACTIVA</span>') + '</div>' +
+                (s.direccion ? '<div class="small text-muted mt-1"><i class="ti ti-map-pin"></i> ' + s.direccion + '</div>' : '') +
+                (ubicacion ? '<div class="small text-muted"><i class="ti ti-building"></i> ' + ubicacion + '</div>' : '') +
+                (s.telefono ? '<div class="small text-muted"><i class="ti ti-phone"></i> ' + s.telefono + '</div>' : '') +
+                '</div>';
+            marker.bindPopup(html);
+            markers.push({ marker: marker, lat: Number(s.lat), lng: Number(s.lng) });
+        });
+
+        if (markers.length) {
+            var group = L.featureGroup(markers.map(function (m) { return m.marker; })).addTo(map);
+            map.fitBounds(group.getBounds().pad(0.15));
+        } else {
+            map.setView([21.5, -77.8], 7);
+        }
+
+        document.querySelectorAll('.sucursal-item').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var lat = Number(btn.dataset.lat);
+                var lng = Number(btn.dataset.lng);
+                var match = markers.find(function (m) { return m.lat === lat && m.lng === lng; });
+                if (match) {
+                    map.flyTo([lat, lng], 14);
+                    match.marker.openPopup();
+                }
+            });
+        });
+    })();
+</script>

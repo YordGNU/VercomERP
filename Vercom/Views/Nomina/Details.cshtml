@@ -13,7 +13,7 @@
         <a asp-action="Index" class="btn btn-sm btn-outline"><i class="ti ti-arrow-left"></i> VOLVER</a>
         @if (Model.Periodo.Estado == "PRENOMINA")
         {
-            <form asp-action="Approve" method="post">
+            <form asp-action="Approve" method="post" id="approvePayrollForm">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="id" value="@Model.Periodo.Id" />
                 <button type="submit" class="btn btn-sm btn-primary shadow-sm bg-success">
@@ -29,6 +29,14 @@
         }
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            window.SubmitAjaxForm('approvePayrollForm');
+        });
+    </script>
+}
 
 <div class="row">
     <!-- Resumen de Costo para la Entidad (Carga Impositiva) -->
@@ -123,3 +131,11 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            window.SubmitAjaxForm('approvePayrollForm');
+        });
+    </script>
+}

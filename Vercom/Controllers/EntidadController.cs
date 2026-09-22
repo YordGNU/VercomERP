@@ -109,10 +109,12 @@ public class EntidadController : Controller
             var result = await _adminService.UpdateEntidadAsync(entidad);
             if (result.Succeeded)
             {
-                return RedirectToAction(nameof(Details), new { id = entidad.Id });
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Details), new { id = entidad.Id }) });
             }
-            ModelState.AddModelError("", result.Message);
+            return Json(new { success = false, message = result.Message });
         }
-        return View(entidad);
+
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Errores de validación.", errors = errorList });
     }
 }

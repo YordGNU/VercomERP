@@ -18,8 +18,8 @@
     </div>
 </div>
 
-<div class="container-xxl">
-    <form asp-action="Create" method="post">
+<div class="row">
+    <form asp-action="Create" method="post" id="createCostSheetForm">
         @Html.AntiForgeryToken()
         <div class="row">
             <div class="col-lg-8">
@@ -132,7 +132,10 @@
         }
 
         document.querySelectorAll('input').forEach(i => i.addEventListener('input', calculate));
-        document.addEventListener('DOMContentLoaded', calculate);
+        document.addEventListener('DOMContentLoaded', () => {
+            calculate();
+            window.SubmitAjaxForm('createCostSheetForm');
+        });
     </script>
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

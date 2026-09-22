@@ -19,9 +19,12 @@ public class ContratoEconomicoController : Controller
     }
 
     [Authorize(Policy = "COMERCIAL.CONTRATO.VER")]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? search, string? type, string? status)
     {
-        var contracts = await _commercialService.GetContractsAsync();
+        var contracts = await _commercialService.GetContractsAsync(search, type, status);
+        ViewBag.CurrentSearch = search;
+        ViewBag.CurrentType = type;
+        ViewBag.CurrentStatus = status;
         return View(contracts);
     }
 
@@ -47,6 +50,9 @@ public class ContratoEconomicoController : Controller
     public async Task<IActionResult> Create(EconomicContractViewModel vm)
     {
         var contract = vm.Contract;
+        var document = vm.DocumentoContrato;
+        var fecha = DateOnly.FromDateTime(DateTime.Now);
+        if (contract.FechaFin < fecha) contract.Estado = "VENCIDO";
 
         ModelState.Remove("Contract.Entidad");
         ModelState.Remove("Contract.Cliente");
@@ -56,13 +62,16 @@ public class ContratoEconomicoController : Controller
         if (ModelState.IsValid)
         {
             contract.EntidadId = _entidadProvider.CurrentEntidadId;
-            var result = await _commercialService.CreateContractAsync(contract);
-            if (result.Succeeded) return RedirectToAction(nameof(Index));
-            ModelState.AddModelError("", result.Message);
+            var result = await _commercialService.CreateContractAsync(contract, document);
+            if (result.Succeeded)
+            {
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
+            }
+            return Json(new { success = false, message = result.Message });
         }
 
-        var contextVm = await _commercialService.GetContractFormContextAsync(contract);
-        return View(contextVm);
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Errores de validación.", errors = errorList });
     }
 
     [Authorize(Policy = "COMERCIAL.CONTRATO.EDITAR")]
@@ -93,11 +102,14 @@ public class ContratoEconomicoController : Controller
         {
             contract.EntidadId = _entidadProvider.CurrentEntidadId;
             var result = await _commercialService.UpdateContractAsync(contract);
-            if (result.Succeeded) return RedirectToAction(nameof(Index));
-            ModelState.AddModelError("", result.Message);
+            if (result.Succeeded)
+            {
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
+            }
+            return Json(new { success = false, message = result.Message });
         }
 
-        var contextVm = await _commercialService.GetContractFormContextAsync(contract);
-        return View(contextVm);
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Errores de validación.", errors = errorList });
     }
 }

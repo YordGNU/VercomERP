@@ -1,0 +1,117 @@
+@model Vercom.Models.PosVentaPendiente
+@{
+    ViewBag.Title = "Inspección de Venta Offline";
+    var statusColor = Model.Estado switch
+    {
+        "PROCESADA" => "success",
+        "PENDIENTE" => "warning",
+        "ERROR" => "danger",
+        _ => "secondary"
+    };
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Operación Offline: @Model.IdempotencyKey</h4>
+        <p class="text-muted small mb-0">Inspección técnica del payload recibido desde la terminal @Model.DispositivoPos.Nombre.</p>
+    </div>
+    <div class="text-end">
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+            <i class="ti ti-arrow-left me-1"></i> VOLVER
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-light-subtle">
+                <h5 class="m-0 fw-bold">Estado de Sincro</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <span class="badge badge-soft-@statusColor fs-14 py-2 px-4">@Model.Estado</span>
+                </div>
+
+                <div class="small">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Terminal:</span>
+                        <span class="fw-bold">@Model.DispositivoPos.Nombre</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Fecha Local:</span>
+                        <span class="fw-bold">@Model.FechaVentaLocal.ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Recibido en Cloud:</span>
+                        <span class="fw-bold">@Model.FechaRecibidoServidor.ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Intentos:</span>
+                        <span class="fw-bold">@Model.IntentosProcesamiento / 5</span>
+                    </div>
+                </div>
+
+                @if (Model.Estado == "ERROR")
+                {
+                    <div class="alert alert-danger border-0 mt-4 mb-0 small">
+                        <h6 class="fw-bold"><i class="ti ti-alert-circle me-1"></i> Detalle del Fallo:</h6>
+                        <p class="mb-0">@Model.MensajeError</p>
+                    </div>
+                }
+
+                @if (Model.Estado == "PENDIENTE" || Model.Estado == "ERROR")
+                {
+                    <div class="d-grid mt-4">
+                        <form asp-action="Process" method="post" id="processRetryForm">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="ti ti-refresh me-1"></i> REINTENTAR PROCESAMIENTO
+                            </button>
+                        </form>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <h5 class="m-0 fw-bold"><i class="ti ti-braces me-2"></i>Payload Original (JSON)</h5>
+                <button type="button" class="btn btn-sm btn-outline-light" onclick="copyToClipboard()">
+                    <i class="ti ti-copy me-1"></i> COPIAR
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <pre class="m-0 p-4 bg-light text-primary border-0 rounded-0" style="max-height: 500px; overflow-y: auto;"><code id="jsonPayload">@Model.PayloadJson</code></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Formatear JSON para lectura
+            try {
+                const rawJson = $('#jsonPayload').text();
+                const obj = JSON.parse(rawJson);
+                const formatted = JSON.stringify(obj, null, 4);
+                $('#jsonPayload').text(formatted);
+            } catch (e) {
+                console.warn("Payload no es JSON válido o ya está formateado.");
+            }
+
+            window.SubmitAjaxForm('processRetryForm');
+        });
+
+        function copyToClipboard() {
+            const text = $('#jsonPayload').text();
+            navigator.clipboard.writeText(text).then(() => {
+                window.SwalAlert('success', 'JSON copiado al portapapeles.');
+            });
+        }
+    </script>
+}

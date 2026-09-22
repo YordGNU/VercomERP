@@ -60,14 +60,13 @@ public class ActivoFijoController : Controller
             var result = await _assetService.CreateAssetAsync(asset);
             if (result.Succeeded)
             {
-                TempData["Success"] = result.Message;
-                return RedirectToAction(nameof(Index));
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
             }
-            ModelState.AddModelError("", result.Message);
+            return Json(new { success = false, message = result.Message });
         }
 
-        var contextVm = await _assetService.GetAssetFormContextAsync(asset);
-        return View(contextVm);
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Errores de validación.", errors = errorList });
     }
 
     [Authorize(Policy = "CONTABILIDAD.ACTIVO_FIJO.EDITAR")]
@@ -100,14 +99,13 @@ public class ActivoFijoController : Controller
             var result = await _assetService.UpdateAssetAsync(asset);
             if (result.Succeeded)
             {
-                TempData["Success"] = result.Message;
-                return RedirectToAction(nameof(Index));
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
             }
-            ModelState.AddModelError("", result.Message);
+            return Json(new { success = false, message = result.Message });
         }
 
-        var contextVm = await _assetService.GetAssetFormContextAsync(asset);
-        return View(contextVm);
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Errores de validación.", errors = errorList });
     }
 
     [Authorize(Policy = "CONTABILIDAD.ACTIVO_FIJO.ELIMINAR")]

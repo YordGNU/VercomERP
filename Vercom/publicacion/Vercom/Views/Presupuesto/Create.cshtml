@@ -1,75 +1,73 @@
-﻿@model Vercom.Models.Presupuesto
-
+﻿@model Vercom.ViewModels.PresupuestoFormViewModel
 @{
-    ViewData["Title"] = "Create";
+    ViewBag.Title = "Nuevo Presupuesto";
 }
 
-
-
-<h4>Presupuesto</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-       <div class="page-title-head d-flex align-items-center p-3 mb-4">
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Crear Presupuesto</h4>
+        <h4 class="page-main-title m-0 fw-bold">Planificación Financiera</h4>
+        <p class="text-muted small mb-0">Definición de metas de ingresos y techos de gasto para el periodo fiscal (RF-19).</p>
     </div>
     <div class="text-end">
         <ol class="breadcrumb m-0 py-0">
             <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Presupuesto</a></li>
-            <li class="breadcrumb-item active">Crear</li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Contabilidad</a></li>
+            <li class="breadcrumb-item active">Nuevo Presupuesto</li>
         </ol>
     </div>
 </div>
 
 <div class="row">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                 <div class="card-header border-light justify-content-between">
-                    <h4 class="card-title">Formulario de Creación</h4>
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0">
+                 <div class="card-header bg-light-subtle py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="m-0 fw-bold text-primary"><i class="ti ti-report-money me-2"></i>Cabecera de Planificación</h5>
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                        <i class="ti ti-arrow-left me-1"></i> VOLVER
+                    </a>
                 </div>
-                <div class="card-body">
-<form class="row g-3" asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="mb-3">
-                <label asp-for="EntidadId" class="form-label"></label>
-                <input asp-for="EntidadId" class="form-control" />
-                <span asp-validation-for="EntidadId" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Anio" class="form-label"></label>
-                <input asp-for="Anio" class="form-control" />
-                <span asp-validation-for="Anio" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Nombre" class="form-label"></label>
-                <input asp-for="Nombre" class="form-control" />
-                <span asp-validation-for="Nombre" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="AprobadoPor" class="form-label"></label>
-                <input asp-for="AprobadoPor" class="form-control" />
-                <span asp-validation-for="AprobadoPor" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <button type="submit" class="btn btn-primary">Guardar</button>
-            </div>
-        </form>
+                <div class="card-body p-4">
+                    <form asp-action="Create" method="post" id="createBudgetForm" class="row g-4">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Año Fiscal</label>
+                            <input asp-for="Presupuesto.Anio" name="Presupuesto.Anio" class="form-control fw-bold text-center text-primary" type="number" required />
+                            <span asp-validation-for="Presupuesto.Anio" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold">Nombre del Plan</label>
+                            <input asp-for="Presupuesto.Nombre" name="Presupuesto.Nombre" class="form-control" placeholder="Ej: Presupuesto Operativo Anual 2026" required maxlength="150" />
+                            <span asp-validation-for="Presupuesto.Nombre" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="alert alert-info border-0 py-3 mb-0 small">
+                                <i class="ti ti-info-circle-filled me-1"></i> Una vez creado, podrá definir las partidas específicas para cada cuenta del mayor.
+                            </div>
+                        </div>
+
+                        <div class="col-12 d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <a asp-action="Index" class="btn btn-sm btn-outline px-4">CANCELAR</a>
+                            <button type="submit" class="btn btn-sm btn-primary px-5 py-2 shadow">
+                                <i class="ti ti-device-floppy me-1"></i> INICIAR PLANIFICACIÓN
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
-    </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            window.SubmitAjaxForm('createBudgetForm');
+        });
+    </script>
 }
-

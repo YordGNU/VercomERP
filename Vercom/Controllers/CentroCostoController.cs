@@ -55,13 +55,16 @@ public class CentroCostoController : Controller
         if (ModelState.IsValid)
         {
             var result = await _accountingService.UpdateCostCenterAsync(centroCosto);
-            if (result.Succeeded) return RedirectToAction(nameof(Index));
-            ModelState.AddModelError("", result.Message);
+            if (result.Succeeded)
+            {
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
+            }
+            return Json(new { success = false, message = result.Message });
         }
-        var contextVm = await _accountingService.GetCostCenterFormContextAsync(centroCosto);
-        return View(contextVm);
-    }
 
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Errores de validación.", errors = errorList });
+    }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -75,10 +78,14 @@ public class CentroCostoController : Controller
         if (ModelState.IsValid)
         {
             var result = await _accountingService.CreateCostCenterAsync(item);
-            if (result.Succeeded) return RedirectToAction(nameof(Index));
-            ModelState.AddModelError("", result.Message);
+            if (result.Succeeded)
+            {
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
+            }
+            return Json(new { success = false, message = result.Message });
         }
-        var contextVm = await _accountingService.GetCostCenterFormContextAsync(item);
-        return View(contextVm);
+
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Errores de validación.", errors = errorList });
     }
 }

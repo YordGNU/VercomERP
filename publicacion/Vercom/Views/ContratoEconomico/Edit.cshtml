@@ -5,24 +5,27 @@
 
 <div class="page-title-head d-flex align-items-center p-3 mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Modificar Contrato Económico</h4>
-        <p class="text-muted small mb-0">Contrato #@Model.Contract.NumeroContrato</p>
+        <h4 class="page-main-title m-0 fw-bold">Gestión de Contratos Económicos</h4>
+        <p class="text-muted small mb-0">Actualización de convenios B2B y términos legales (RF-50).</p>
     </div>
     <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
             <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
             <li class="breadcrumb-item"><a href="javascript: void(0);">Comercial</a></li>
-            <li class="breadcrumb-item active">Editar Contrato</li>
+            <li class="breadcrumb-item active">Contratos</li>
         </ol>
     </div>
 </div>
 
-<div class="row">
+<div class="container-xxl">
     <div class="row justify-content-center">
         <div class="col-lg-10">
-            <div class="card shadow-sm">
-                 <div class="card-header border-light justify-content-between">
-                    <h5 class="m-0 fw-bold"><i class="ti ti-edit me-2 text-primary"></i>Actualización de Términos</h5>
+            <div class="card shadow-sm border-0">
+                 <div class="card-header bg-light-subtle py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="m-0 fw-bold text-primary"><i class="ti ti-file-certificate me-2"></i>Editando Contrato: @Model.Contract.NumeroContrato</h5>
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                        <i class="ti ti-arrow-left me-1"></i> VOLVER
+                    </a>
                 </div>
                 <div class="card-body p-4">
                     <form asp-action="Edit" class="row g-4">
@@ -31,86 +34,87 @@
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
 
                         <div class="col-md-4">
-                            <label class="form-label">Tipo de Contraparte</label>
-                            <select asp-for="Contract.TerceroTipo" name="Contract.TerceroTipo" class="form-control form-select w-100" id="terceroTipo" required>
-                                <option value="CLIENTE">Cliente</option>
-                                <option value="PROVEEDOR">Proveedor</option>
+                            <label class="form-label fw-bold">Tipo de Contraparte</label>
+                            <select asp-for="Contract.TerceroTipo" name="Contract.TerceroTipo" class="form-select w-100 fw-bold" id="terceroTipo" required>
+                                <option value="CLIENTE">CLIENTE (VENTAS)</option>
+                                <option value="PROVEEDOR">PROVEEDOR (COMPRAS)</option>
                             </select>
                             <span asp-validation-for="Contract.TerceroTipo" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-8" id="divCliente">
-                            <label class="form-label">Seleccionar Cliente</label>
-                            <select asp-for="Contract.ClienteId" name="Contract.ClienteId" class="form-control form-select w-100 select2" asp-items="Model.Clientes">
-                                <option value="">-- Seleccionar Cliente --</option>
+                            <label class="form-label fw-bold">Buscar Cliente</label>
+                            <select asp-for="Contract.ClienteId" name="Contract.ClienteId" class="form-select select2" asp-items="Model.Clientes">
+                                <option value="">-- SELECCIONAR CLIENTE --</option>
                             </select>
                         </div>
 
                         <div class="col-md-8" id="divProveedor" style="display:none;">
-                            <label class="form-label">Seleccionar Proveedor</label>
-                            <select asp-for="Contract.ProveedorId" name="Contract.ProveedorId" class="form-control form-select w-100 select2" asp-items="Model.Proveedores">
-                                <option value="">-- Seleccionar Proveedor --</option>
+                            <label class="form-label fw-bold">Buscar Proveedor</label>
+                            <select asp-for="Contract.ProveedorId" name="Contract.ProveedorId" class="form-select select2" asp-items="Model.Proveedores">
+                                <option value="">-- SELECCIONAR PROVEEDOR --</option>
                             </select>
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label">Número de Contrato</label>
-                            <input asp-for="Contract.NumeroContrato" name="Contract.NumeroContrato" class="form-control w-100 fw-bold text-primary" required />
+                            <label class="form-label fw-bold">Número de Contrato (Legal)</label>
+                            <input asp-for="Contract.NumeroContrato" name="Contract.NumeroContrato" class="form-control fw-bold text-primary" required />
                             <span asp-validation-for="Contract.NumeroContrato" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-8">
-                            <label class="form-label">Objeto del Contrato</label>
-                            <input asp-for="Contract.Objeto" name="Contract.Objeto" class="form-control w-100" required />
+                            <label class="form-label fw-bold">Objeto del Contrato</label>
+                            <input asp-for="Contract.Objeto" name="Contract.Objeto" class="form-control" required />
                             <span asp-validation-for="Contract.Objeto" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label">Fecha de Firma</label>
-                            <input asp-for="Contract.FechaFirma" name="Contract.FechaFirma" class="form-control w-100" type="date" required />
+                            <label class="form-label fw-bold">Fecha de Firma</label>
+                            <input asp-for="Contract.FechaFirma" name="Contract.FechaFirma" class="form-control" type="date" required />
                             <span asp-validation-for="Contract.FechaFirma" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label">Fecha Inicio Vigencia</label>
-                            <input asp-for="Contract.FechaInicio" name="Contract.FechaInicio" class="form-control w-100" type="date" required />
+                            <label class="form-label fw-bold">Fecha Inicio Vigencia</label>
+                            <input asp-for="Contract.FechaInicio" name="Contract.FechaInicio" class="form-control" type="date" required />
                             <span asp-validation-for="Contract.FechaInicio" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label">Fecha Vencimiento</label>
-                            <input asp-for="Contract.FechaFin" name="Contract.FechaFin" class="form-control w-100" type="date" />
+                            <label class="form-label fw-bold">Fecha Vencimiento</label>
+                            <input asp-for="Contract.FechaFin" name="Contract.FechaFin" class="form-control" type="date" />
                             <span asp-validation-for="Contract.FechaFin" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label">Estado del Contrato</label>
-                            <select asp-for="Contract.Estado" name="Contract.Estado" class="form-control form-select w-100">
+                            <label class="form-label fw-bold">Monto Total Pactado ($)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">$</span>
+                                <input asp-for="Contract.MontoTotal" name="Contract.MontoTotal" class="form-control text-end" type="number" step="0.01" />
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Estado del Contrato</label>
+                            <select asp-for="Contract.Estado" name="Contract.Estado" class="form-select fw-bold">
                                 <option value="VIGENTE">VIGENTE</option>
                                 <option value="VENCIDO">VENCIDO</option>
                                 <option value="RESCINDIDO">RESCINDIDO</option>
                             </select>
-                            <span asp-validation-for="Contract.Estado" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label">Monto Total Pactado ($)</label>
+                            <label class="form-label fw-bold">Documento Digital (URL)</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0">$</span>
-                                <input asp-for="Contract.MontoTotal" name="Contract.MontoTotal" class="form-control w-grow" type="number" step="0.01" />
+                                <span class="input-group-text"><i class="ti ti-link"></i></span>
+                                <input asp-for="Contract.DocumentoUrl" name="Contract.DocumentoUrl" class="form-control" placeholder="https://..." />
                             </div>
-                            <span asp-validation-for="Contract.MontoTotal" class="text-danger small"></span>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">Documento Digital (URL)</label>
-                            <input asp-for="Contract.DocumentoUrl" name="Contract.DocumentoUrl" class="form-control w-100" />
                         </div>
 
                         <div class="col-12 d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                            <a asp-action="Index" class="btn btn-sm btn-outline px-4">CANCELAR</a>
-                            <button type="submit" class="btn btn-sm btn-primary px-5 py-2 shadow">
-                                <i class="ti ti-device-floppy me-1"></i> GUARDAR CAMBIOS
+                            <a asp-action="Index" class="btn btn-outline-secondary px-4">CANCELAR</a>
+                            <button type="submit" class="btn btn-primary px-5 shadow">
+                                <i class="ti ti-device-floppy me-1"></i> ACTUALIZAR CONTRATO
                             </button>
                         </div>
                     </form>

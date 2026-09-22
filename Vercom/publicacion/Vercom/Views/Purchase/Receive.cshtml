@@ -3,77 +3,118 @@
     ViewBag.Title = "Recepción de Mercancía";
 }
 
-<div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 text-success">Reportar Entrada de Almacén</h4>
+        <h4 class="page-main-title m-0 fw-bold text-success"><i class="ti ti-package-import me-2"></i>Informe de Recepción de Mercancía</h4>
+        <p class="text-muted small mb-0">Generación de entrada a almacén y obligación contable con proveedor (RF-31, RF-51).</p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Comercial</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">Compras</a></li>
+            <li class="breadcrumb-item active">Recepción</li>
+        </ol>
     </div>
 </div>
 
-<div class="row mt-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <form asp-action="Receive" method="post">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="id" value="@Model.Id" />
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            window.SubmitAjaxForm('receivePurchaseForm');
+        });
+    </script>
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <form asp-action="Receive" method="post" id="receivePurchaseForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
 
-                <div class="card border-success-subtle shadow-sm">
-                    <div class="card-header bg-success-subtle">
-                        <h4 class="card-title mb-0">Datos del Informe de Recepción (REC)</h4>
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-success bg-opacity-10 py-3">
+                    <h5 class="m-0 fw-bold text-success">Datos del Comprobante REC</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-info border-0 shadow-sm small py-3 mb-4">
+                        <i class="ti ti-info-circle-filled me-1"></i>
+                        Al finalizar este proceso, el sistema incrementará automáticamente el stock físico y registrará la <strong>Cuenta por Pagar</strong>
+                        en el Diario a nombre de: <strong>@Model.Proveedor.RazonSocial</strong>.
                     </div>
-                    <div class="card-body">
-                        <div class="alert alert-info py-2 small mb-4">
-                            <i class="ti ti-info-circle me-1"></i> Al procesar esta recepción, se incrementará el stock físico y se generará automáticamente la **Cuenta por Pagar** al proveedor @Model.Proveedor.RazonSocial.
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Número de Informe de Recepción (Documento Físico)</label>
+                            <input type="text" name="receiptNumber" class="form-control form-control-lg fw-bold text-primary" placeholder="Ej: REC-2026-001" required />
+                            <small class="text-muted italic">Clave para la trazabilidad de auditoría (CGR).</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Almacén de Destino Final</label>
+                            <select name="almacenId" class="form-select form-select-lg select2" asp-items="ViewBag.AlmacenId" required></select>
                         </div>
 
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Número de Informe de Recepción</label>
-                                <input type="text" name="receiptNumber" class="form-control form-control-lg" placeholder="Ej: REC-2026-001" required />
-                                <small class="text-muted">Debe coincidir con el documento físico firmado.</small>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Almacén de Entrada</label>
-                                <select name="almacenId" class="form-select form-select-lg" asp-items="ViewBag.AlmacenId" required></select>
-                            </div>
-
-                            <div class="col-12 mt-4">
-                                <h5 class="border-bottom pb-2">Resumen del Pedido</h5>
-                                <table class="table table-sm small">
-                                <thead class="thead-sm text-uppercase fs-xxs">
+                        <div class="col-12 mt-4">
+                            <h5 class="fw-bold mb-3 small text-uppercase"><i class="ti ti-list me-2"></i>Artículos a Ingresar</h5>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table border rounded-3 overflow-hidden">
+                                    <thead class="table-light">
                                         <tr>
-                                            <th>Producto</th>
-                                            <th>Cantidad a Recibir</th>
-                                            <th>Costo Unitario</th>
+                                            <th class="ps-4">Producto / Insumo</th>
+                                            <th class="text-center">Cant. Solicitada</th>
+                                            <th class="text-center">Cant. Recibida</th>
+                                            <th class="text-end">Costo Unit.</th>
+                                            <th class="text-end pe-4">Subtotal</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach (var det in Model.OrdenCompraDetalles)
                                         {
                                             <tr>
-                                                <td>@det.Producto.Nombre</td>
-                                                <td class="text-end fw-bold">@det.CantidadSolicitada.ToString("N2") @det.Producto.UnidadMedida.Codigo</td>
-                                                <td>@det.PrecioUnitario.ToString("C")</td>
+                                                <td class="ps-4">
+                                                    <div class="fw-bold">@det.Producto.Nombre</div>
+                                                    <small class="text-muted">@det.Producto.Codigo</small>
+                                                </td>
+                                                <td class="text-center">@det.CantidadSolicitada.ToString("N2")</td>
+                                                <td class="text-center">
+                                                    <span class="badge bg-success-subtle text-success fw-bold">@det.CantidadSolicitada.ToString("N2")</span>
+                                                </td>
+                                                <td class="text-end">@det.PrecioUnitario.ToString("C2")</td>
+                                               <td class="fw-bold pe-4">@(det.SubtotalLinea?.ToString("C2") ?? "0.00")</td>
                                             </tr>
                                         }
                                     </tbody>
-                                    <tfoot class="fw-bold">
+                                    <tfoot class="bg-light-subtle">
                                         <tr>
-                                            <td colspan="2" class="text-end text-uppercase">Total a Contabilizar:</td>
-                                            <td class="text-end text-primary">@Model.Total.ToString("C")</td>
+                                            <td colspan="4" class="text-end text-uppercase fw-bold">Impacto en Pasivo Corriente:</td>
+                                           <td class="text-primary fw-bold pe-4 fs-18">@Model.Total.ToString("C2")</td>
                                         </tr>
                                     </tfoot>
                                 </table>
                             </div>
                         </div>
                     </div>
-                    <div class="card-footer bg-light d-flex justify-content-end gap-2">
-                        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancelar</a>
-                        <button type="submit" class="btn btn-success px-5 py-2 fw-bold">
-                            <i class="ti ti-circle-check me-1"></i> FINALIZAR RECEPCIÓN
+
+                    <div class="d-grid gap-2 mt-5">
+                        <button type="submit" class="btn btn-success btn-lg py-3 shadow">
+                            <i class="ti ti-circle-check me-1"></i> FINALIZAR Y CONTABILIZAR RECEPCIÓN
                         </button>
+                        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">CANCELAR OPERACIÓN</a>
                     </div>
                 </div>
-            </form>
-        </div>
+            </div>
+        </form>     
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            window.SubmitAjaxForm('receivePurchaseForm');
+        });
+    </script>
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+
+  
+

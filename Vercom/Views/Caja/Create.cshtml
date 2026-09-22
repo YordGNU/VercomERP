@@ -24,7 +24,8 @@
                     <h5 class="m-0 fw-bold"><i class="ti ti-cash me-2 text-primary"></i>Datos del Arca</h5>
                 </div>
                 <div class="card-body p-4">
-                    <form asp-action="Create" class="row g-4">
+                    <form asp-action="Create" class="row g-4" id="createCajaForm">
+                        @Html.AntiForgeryToken()
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
                         <div class="col-md-6">
                             <label class="form-label">Sucursal de Ubicación</label>
@@ -38,7 +39,7 @@
 
                         <div class="col-md-6">
                             <label class="form-label">Cuenta Mayor Asociada (Tesorería)</label>
-                            <select asp-for="Caja.CuentaContableId" name="Caja.CuentaContableId" class="form-control form-select w-100 select2" asp-items="Model.CuentasContables" required></select>
+                            <select asp-for="Caja.CuentaContableId" name="Caja.CuentaContableId" class="form-control form-select w-100 select2-cuenta" asp-items="Model.CuentasContables" required></select>
                         </div>
 
                         <div class="col-md-3">
@@ -70,4 +71,9 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        $(document).ready(function() {
+            window.SubmitAjaxForm('createCajaForm');
+        });
+    </script>
 }

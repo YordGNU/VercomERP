@@ -18,7 +18,7 @@
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <form asp-action="Finish" method="post">
         @Html.AntiForgeryToken()
         <input type="hidden" name="id" value="@Model.Id" />
@@ -73,7 +73,7 @@
                                                 <div class="fw-bold fs-13">@c.ProductoInsumo.Nombre</div>
                                                 <small class="text-muted tiny">COD: @c.ProductoInsumo.Codigo</small>
                                             </td>
-                                            <td class="text-end fw-semibold">@c.CantidadPlanificada.ToString("N4")</td>
+                                           <td class="fw-semibold">@c.CantidadPlanificada.ToString("N4")</td>
                                             <td>
                                                 <input type="number" name="actualConsumptions[@i].CantidadReal"
                                                        class="form-control form-control-sm text-end fw-bold input-actual"

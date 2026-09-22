@@ -1,8 +1,18 @@
 @model Vercom.ViewModels.DashboardViewModel
 @{
     ViewBag.Title = "Panel de Control";
+    string Num(decimal? v, string fmt = "N2") => v.HasValue ? v.Value.ToString(fmt) : "—";
+    string Money(decimal v) => v.ToString("N2");
 }
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
+
+@if (!string.IsNullOrEmpty(Model.Mensaje))
+{
+    <div class="alert alert-warning d-flex align-items-center" role="alert">
+        <i class="ti ti-info-circle fs-20 me-2"></i>
+        <div>@Model.Mensaje</div>
+    </div>
+}
+<div class="page-title-head d-flex align-items-center p-3 mb-1">
     <div class="flex-grow-1">
         <h4 class="page-main-title m-0 fw-bold">Centro de Mando Vercom Elite</h4>
         <p class="text-muted small mb-0">Indicadores clave de rendimiento y monitoreo operativo en tiempo real.</p>
@@ -13,161 +23,469 @@
         </span>
     </div>
 </div>
-<!-- Fila 1: KPIs Principales (Estilo Odoo/NetSuite) -->
-<div class="row row-cols-xxl-4 row-cols-md-3 align-items-center g-1" id="bloque-resumen">
+<!-- Fila 1: KPIs Comerciales -->
+<div class="row row-cols-xxl-4 row-cols-md-2 g-1 mb-1" id="bloque-comercial">
     <div class="col">
-        <div class="card">
+        <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
-                        <h2 class="mb-1 fw-bold text-primary">@Model.Liquidez.ToString("N2")</h2>
-                        <p class="text-muted mb-0 small text-uppercase fw-bold letter-spacing-1">Liquidez Corriente</p>
+                        <h2 class="mb-1 fw-bold text-primary">@Money(Model.VentasMes)</h2>
+                        <p class="text-muted mb-1 small text-uppercase fw-bold letter-spacing-1">Ventas del Mes</p>
+                        <span class="badge @(Model.VariacionVentasPct >= 0 ? "badge-soft-success" : "badge-soft-danger") py-1">
+                            <i class="ti @(Model.VariacionVentasPct >= 0 ? "ti-trending-up" : "ti-trending-down") me-1"></i>
+                            @Model.VariacionVentasPct.ToString("N1")% vs mes anterior
+                        </span>
                     </div>
                     <div class="avatar-md bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                        <i class="ti ti-cash fs-24"></i>
+                        <i class="ti ti-shopping-cart fs-24"></i>
                     </div>
+                </div>
+                <div class="d-flex justify-content-between mt-3 pt-3 border-top text-muted small">
+                    <span>Hoy: <strong class="text-body">@Money(Model.VentasHoy)</strong></span>
+                    <span>Facturas mes: <strong class="text-body">@Model.FacturasMes</strong></span>
                 </div>
             </div>
         </div>
     </div>
     <div class="col">
-        <div class="card">
+        <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
-                        <h2 class="mb-1 fw-bold text-success">@Model.Rentabilidad.ToString("N1")%</h2>
-                        <p class="text-muted mb-0 small text-uppercase fw-bold letter-spacing-1">Margen Neto</p>
+                        <h2 class="mb-1 fw-bold text-success">@Money(Model.PosicionEfectivo)</h2>
+                        <p class="text-muted mb-1 small text-uppercase fw-bold letter-spacing-1">Posición de Efectivo</p>
+                        <span class="text-muted small">Cajas + Bancos</span>
                     </div>
                     <div class="avatar-md bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                        <i class="ti ti-chart-pie fs-24"></i>
+                        <i class="ti ti-wallet fs-24"></i>
                     </div>
+                </div>
+                <div class="d-flex justify-content-between mt-3 pt-3 border-top text-muted small">
+                    <span>Cajas: <strong class="text-body">@Money(Model.SaldoCajas)</strong></span>
+                    <span>Bancos: <strong class="text-body">@Money(Model.SaldoBancos)</strong></span>
                 </div>
             </div>
         </div>
     </div>
     <div class="col">
-        <div class="card">
+        <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
-                        <h2 class="mb-1 fw-bold text-info">@Model.RotacionStock.ToString("N1")</h2>
-                        <p class="text-muted mb-0 small text-uppercase fw-bold letter-spacing-1">Rotación Stock</p>
+                        <h2 class="mb-1 fw-bold text-info">@Money(Model.PorCobrar)</h2>
+                        <p class="text-muted mb-1 small text-uppercase fw-bold letter-spacing-1">Cuentas por Cobrar</p>
+                        @if (Model.CxcVencido > 0)
+                        {
+                            <span class="badge badge-soft-danger py-1"><i class="ti ti-alert-triangle me-1"></i>Vencido: @Money(Model.CxcVencido)</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-soft-success py-1"><i class="ti ti-circle-check me-1"></i>Sin vencidos</span>
+                        }
                     </div>
                     <div class="avatar-md bg-info bg-opacity-10 text-info rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                        <i class="ti ti-refresh fs-24"></i>
+                        <i class="ti ti-receipt fs-24"></i>
                     </div>
+                </div>
+                <div class="d-flex justify-content-between mt-3 pt-3 border-top text-muted small">
+                    <span>Por vencer: <strong class="text-body">@Money(Model.CxcPorVencer)</strong></span>
+                    <span>Días cobro: <strong class="text-body">@Num(Model.DiasCobro, "N0")</strong></span>
                 </div>
             </div>
         </div>
     </div>
     <div class="col">
-        <div class="card">
+        <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
-                        <h2 class="mb-1 fw-bold text-warning">@Model.FechaCierreCaja</h2>
-                        <p class="text-muted mb-0 small text-uppercase fw-bold letter-spacing-1">Último Cierre</p>
+                        <h2 class="mb-1 fw-bold text-warning">@Money(Model.PorPagar)</h2>
+                        <p class="text-muted mb-1 small text-uppercase fw-bold letter-spacing-1">Cuentas por Pagar</p>
+                        @if (Model.CxpVencido > 0)
+                        {
+                            <span class="badge badge-soft-danger py-1"><i class="ti ti-alert-triangle me-1"></i>Vencido: @Money(Model.CxpVencido)</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-soft-success py-1"><i class="ti ti-circle-check me-1"></i>Sin vencidos</span>
+                        }
                     </div>
                     <div class="avatar-md bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                        <i class="ti ti-lock fs-24"></i>
+                        <i class="ti ti-file-invoice fs-24"></i>
                     </div>
+                </div>
+                <div class="d-flex justify-content-between mt-3 pt-3 border-top text-muted small">
+                    <span>Por vencer: <strong class="text-body">@Money(Model.CxpPorVencer)</strong></span>
+                    <span>Días pago: <strong class="text-body">@Num(Model.DiasPago, "N0")</strong></span>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<!-- Fila 2: Gráficos BI -->
-<div class="row row-cols-xxl-2 row-cols-md-6 align-items-center g-1">
+
+<!-- Fila 2: Ratios Financieros -->
+<div class="row row-cols-2 row-cols-md-3 row-cols-xl-6 g-1 mb-1">
+    <div class="col">
+        <div class="card card-sm h-100">
+            <div class="card-body text-center">
+                <div class="text-muted small text-uppercase">Liquidez</div>
+                <div class="fs-24 fw-bold text-primary">@Num(Model.Liquidez)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card card-sm h-100">
+            <div class="card-body text-center">
+                <div class="text-muted small text-uppercase">Rentabilidad</div>
+                <div class="fs-24 fw-bold @(Model.Rentabilidad >= 0 ? "text-success" : "text-danger")">@Num(Model.Rentabilidad, "N1")%</div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card card-sm h-100">
+            <div class="card-body text-center">
+                <div class="text-muted small text-uppercase">Rotación Stock</div>
+                <div class="fs-24 fw-bold text-info">@Num(Model.RotacionStock)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card card-sm h-100">
+            <div class="card-body text-center">
+                <div class="text-muted small text-uppercase">Solvencia</div>
+                <div class="fs-24 fw-bold text-warning">@Num(Model.Solvencia)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card card-sm h-100">
+            <div class="card-body text-center">
+                <div class="text-muted small text-uppercase">Ticket Prom.</div>
+                <div class="fs-24 fw-bold">@Money(Model.TicketPromedio)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card card-sm h-100">
+            <div class="card-body text-center">
+                <div class="text-muted small text-uppercase">Ventas Hoy</div>
+                <div class="fs-24 fw-bold">@Money(Model.VentasHoy)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fila 3: Gráficos BI -->
+<div class="row g-1 mb-1">
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-header border-0 bg-transparent pt-4 px-4">
+                <h5 class="m-0 fw-bold"><i class="ti ti-chart-line me-2 text-primary"></i>Ventas de los Últimos 14 Días</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-box" style="height: 300px;">
+                    <canvas id="ventasSerieChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header border-0 bg-transparent pt-4 px-4">
+                <h5 class="m-0 fw-bold"><i class="ti ti-chart-donut me-2 text-info"></i>Ventas por Canal</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-box" style="height: 300px;">
+                    <canvas id="canalChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-1 mb-1">
     <div class="col-lg-6">
         <div class="card h-100">
             <div class="card-header border-0 bg-transparent pt-4 px-4">
                 <h5 class="m-0 fw-bold"><i class="ti ti-trending-up me-2 text-success"></i>Tendencia de Rentabilidad</h5>
             </div>
             <div class="card-body">
-                <canvas id="profitTrendChart" height="280"></canvas>
+                <div class="chart-box" style="height: 280px;">
+                    <canvas id="profitTrendChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-lg-6">
         <div class="card h-100">
             <div class="card-header border-0 bg-transparent pt-4 px-4">
-                <h5 class="m-0 fw-bold"><i class="ti ti-chart-bar me-2 text-primary"></i>Índice de Liquidez Mensual</h5>
+                <h5 class="m-0 fw-bold"><i class="ti ti-chart-bar me-2 text-warning"></i>Índice de Liquidez Mensual</h5>
             </div>
             <div class="card-body">
-                <canvas id="liquidityTrendChart" height="280"></canvas>
+                <div class="chart-box" style="height: 280px;">
+                    <canvas id="liquidityTrendChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
 </div>
-<!-- Fila 3: Alertas y Acciones Rápidas -->
-<div class="row g-1">
-    <div class="col-lg-8">
+<!-- Fila 4: POS Operativo -->
+<div class="row g-1 mb-1">
+    <div class="col-12">
         <div class="card">
-             <div class="card-header border-light justify-content-between">
+            <div class="card-header border-light justify-content-between">
+                <h5 class="m-0 fw-bold text-primary"><i class="ti ti-device-laptop me-2"></i>Operación Punto de Venta (POS)</h5>
+                <a asp-controller="PosVentaPendiente" asp-action="Index" class="btn btn-sm btn-outline">Ver Pendientes</a>
+            </div>
+            <div class="card-body">
+                <div class="row row-cols-2 row-cols-md-5 g-3 mb-3">
+                    <div class="col text-center">
+                        <div class="fs-24 fw-bold text-success">@Model.PosTerminalesActivas</div>
+                        <div class="text-muted small text-uppercase">Terminales Activas</div>
+                    </div>
+                    <div class="col text-center">
+                        <div class="fs-24 fw-bold text-primary">@Model.PosSesionesAbiertas</div>
+                        <div class="text-muted small text-uppercase">Sesiones Abiertas</div>
+                    </div>
+                    <div class="col text-center">
+                        <div class="fs-24 fw-bold">@Money(Model.PosVentasHoy)</div>
+                        <div class="text-muted small text-uppercase">Ventas POS Hoy</div>
+                    </div>
+                    <div class="col text-center">
+                        <div class="fs-24 fw-bold @(Model.PosPendientesSync > 0 ? "text-warning" : "text-success")">@Model.PosPendientesSync</div>
+                        <div class="text-muted small text-uppercase">Pendientes Sync</div>
+                    </div>
+                    <div class="col text-center">
+                        <div class="fs-24 fw-bold @(Model.PosConflictos > 0 ? "text-danger" : "text-success")">@Model.PosConflictos</div>
+                        <div class="text-muted small text-uppercase">Conflictos</div>
+                    </div>
+                </div>
+                @if (Model.PosSesiones.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table table-hover mb-0">
+                            <thead class="thead-sm text-uppercase fs-xxs">
+                                <tr>
+                                    <th>Terminal</th>
+                                    <th>Cajero</th>
+                                    <th class="text-center">Apertura</th>
+                                    <th class="text-end">Monto Apertura</th>
+                                    <th class="text-end">Ventas</th>
+                                    <th class="text-center">Facturas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var s in Model.PosSesiones)
+                                {
+                                    <tr>
+                                        <td class="fw-bold">@s.Dispositivo</td>
+                                        <td>@s.Cajero</td>
+                                        <td class="text-center small">@s.FechaApertura.ToString("dd/MM HH:mm")</td>
+                                        <td class="text-end">@Money(s.MontoApertura)</td>
+                                        <td class="text-end fw-bold text-success">@Money(s.TotalVentas)</td>
+                                        <td class="text-center">@s.CantidadFacturas</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted small">
+                        <i class="ti ti-device-desktop-off fs-32 d-block mb-2 opacity-50"></i>
+                        No hay sesiones POS abiertas en este momento.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Fila 5: Top Productos + Alertas -->
+<div class="row g-1 mb-1">
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-header border-light">
+                <h5 class="m-0 fw-bold text-success"><i class="ti ti-trophy me-2"></i>Productos Más Vendidos (Mes)</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.TopProductos.Any())
+                {
+                    var maxImporte = Model.TopProductos.Max(p => p.Importe);
+                    <div class="list-group list-group-flush">
+                        @foreach (var p in Model.TopProductos)
+                        {
+                            var pct = maxImporte > 0 ? (double)(p.Importe / maxImporte * 100) : 0;
+                            <div class="list-group-item px-0">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="fw-bold text-truncate me-2">@p.Nombre</span>
+                                    <span class="text-nowrap">@Money(p.Importe)</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-success" style="width: @pct.ToString("N0")%"></div>
+                                </div>
+                                <div class="text-muted small mt-1">@p.Cantidad.ToString("N2") unidades</div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted small">
+                        <i class="ti ti-package-off fs-32 d-block mb-2 opacity-50"></i>
+                        Sin ventas registradas este mes.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-header border-light justify-content-between">
                 <h5 class="m-0 fw-bold text-danger"><i class="ti ti-alert-triangle me-2"></i>Alertas Críticas de Inventario</h5>
                 <a asp-controller="Inventory" asp-action="LowStock" class="btn btn-sm btn-outline">Ver Todo</a>
             </div>
             <div class="card-body">
-                <table class="table mb-0">
-                    <thead class="thead-sm text-uppercase fs-xxs">
-                        <tr>
-                            <th>Producto</th>
-                            <th  class="text-center">Stock Actual</th>
-                            <th  class="text-center">Mínimo</th>
-                            <th>Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (Model.AlertasStock.Any())
-                        {
-                            @foreach (var alert in Model.AlertasStock)
+                <div class="table-responsive">
+                    <table class="table table-vcenter card-table table-hover mb-0">
+                        <thead class="thead-sm text-uppercase fs-xxs">
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-center">Stock Actual</th>
+                                <th class="text-center">Mínimo</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.AlertasStock.Any())
+                            {
+                                @foreach (var alert in Model.AlertasStock)
+                                {
+                                    <tr>
+                                        <td class="fw-bold">@alert.Producto?.Nombre</td>
+                                        <td class="text-center"><span class="badge badge-soft-danger fs-13">@alert.Cantidad.ToString("N0")</span></td>
+                                        <td class="text-center text-muted">@alert.StockMinimo.ToString("N0")</td>
+                                        <td>
+                                            <a asp-controller="Purchase" asp-action="Create" class="btn btn-sm btn-outline py-0 px-2 text-primary">Comprar</a>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
                             {
                                 <tr>
-                                    <td class="fw-bold">@alert.Producto.Nombre</td>
-                                    <td ><span class="badge badge-soft-danger fs-13">@alert.Cantidad.ToString("N0")</span></td>
-                                    <td text-muted">@alert.StockMinimo.ToString("N0")</td>
-                                    <td>
-                                        <a asp-controller="Purchase" asp-action="Create" class="btn btn-sm btn-outline py-0 px-2 text-primary">Comprar</a>
+                                    <td colspan="4" class="text-center py-5 text-muted small">
+                                        <i class="ti ti-circle-check fs-32 d-block mb-2 text-success opacity-50"></i>
+                                        Niveles de stock óptimos en todos los almacenes.
                                     </td>
                                 </tr>
                             }
-                        }
-                        else
-                        {
-                            <tr>
-                                <td colspan="4" class="text-center py-5 text-muted small">
-                                    <i class="ti ti-circle-check fs-32 d-block mb-2 text-success opacity-50"></i>
-                                    Niveles de stock óptimos en todos los almacenes.
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
+</div>
+<!-- Fila 6: Contratos + Operaciones Rápidas -->
+<div class="row g-1 mb-1">
+    <div class="col-lg-8">
+        @if (Model.AlertasVencimiento.Any())
+        {
+            <div class="card mb-3 border-start border-danger border-3">
+                <div class="card-header bg-danger-subtle py-3">
+                    <h5 class="m-0 fw-bold text-danger"><i class="ti ti-calendar-x me-2"></i>Lotes Próximos a Vencer (30 días)</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Almacén</th>
+                                    <th>Lote</th>
+                                    <th class="text-center">Vence</th>
+                                    <th class="text-end">Cantidad</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var l in Model.AlertasVencimiento)
+                                {
+                                    <tr>
+                                        <td class="fw-bold">@l.Producto?.Nombre</td>
+                                        <td class="small text-muted">@l.Almacen?.Nombre</td>
+                                        <td class="font-monospace small">@l.Lote</td>
+                                        <td class="text-center"><span class="badge badge-soft-danger">@l.FechaVencimiento?.ToString("dd/MM/yyyy")</span></td>
+                                        <td class="text-end">@l.Cantidad.ToString("N2")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+        @if (Model.ContratosVencer.Any())
+        {
+            <div class="card border-start border-warning border-3">
+                <div class="card-header bg-warning-subtle py-3">
+                    <h5 class="m-0 fw-bold text-warning"><i class="ti ti-calendar-clock me-2"></i>Contratos Económicos por Vencer (15 días)</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Número de Contrato</th>
+                                    <th>Tercero (Cliente/Prov)</th>
+                                    <th class="text-center">Vencimiento</th>
+                                    <th width="50"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var c in Model.ContratosVencer)
+                                {
+                                    <tr>
+                                        <td class="fw-bold">@c.NumeroContrato</td>
+                                        <td class="small">@(c.Cliente?.NombreRazonSocial ?? c.Proveedor?.RazonSocial)</td>
+                                        <td class="text-center">
+                                            <span class="badge bg-warning-subtle text-warning">@c.FechaFin?.ToString("dd/MM/yyyy")</span>
+                                        </td>
+                                        <td class="pe-4">
+                                            <a asp-controller="ContratoEconomico" asp-action="Details" asp-route-id="@c.Id" class="btn btn-icon btn-sm btn-ghost-warning"><i class="ti ti-edit"></i></a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
     <div class="col-lg-4">
-        <div class="card bg-primary text-white border-0 shadow-lg">
-            <div class="card-header border-white border-opacity-10 bg-transparent text-white pt-4 px-4">
+        <div class="card bg-primary border-0 shadow-lg h-100">
+            <div class="card-header border-white border-opacity-10 bg-transparent pt-4 px-4">
                 <h5 class="m-0 fw-bold">Operaciones Rápidas</h5>
             </div>
             <div class="card-body p-4">
                 <div class="d-grid gap-3">
-                    <a asp-controller="Sales" asp-action="Create" class="btn btn-light fw-bold py-3 text-primary d-flex align-items-center justify-content-between">
+                    <a asp-controller="Sales" asp-action="Create" class="btn fw-bold py-3 d-flex align-items-center justify-content-between">
                         <span><i class="ti ti-plus me-2"></i>Nueva Factura de Venta</span>
                         <i class="ti ti-chevron-right"></i>
                     </a>
-                    <a asp-controller="Inventory" asp-action="CreateMovement" class="btn btn-light bg-opacity-10 border-white border-opacity-25 text-white fw-bold py-3 d-flex align-items-center justify-content-between">
+                    <a asp-controller="Inventory" asp-action="CreateMovement" class="btn fw-bold py-3 d-flex align-items-center justify-content-between">
                         <span><i class="ti ti-transfer-in me-2"></i>Entrada de Almacén</span>
                         <i class="ti ti-chevron-right"></i>
                     </a>
-                    <a asp-controller="AsientoContable" asp-action="Create" class="btn btn-light bg-opacity-10 border-white border-opacity-25 text-white fw-bold py-3 d-flex align-items-center justify-content-between">
+                    <a asp-controller="AsientoContable" asp-action="Create" class="btn fw-bold py-3 d-flex align-items-center justify-content-between">
                         <span><i class="ti ti-calculator me-2"></i>Registrar Asiento</span>
                         <i class="ti ti-chevron-right"></i>
                     </a>
                 </div>
                 <div class="mt-4 pt-3 border-top border-white border-opacity-10 text-center">
-                    <p class="small text-white-50 mb-0">Acceso rápido a los documentos primarios de la S.U.R.L.</p>
+                    <p class="small mb-0">Acceso rápido a los documentos primarios de la S.U.R.L.</p>
                 </div>
             </div>
         </div>
@@ -176,15 +494,53 @@
 @section Scripts {
     <script src="~/js/plugins/chartjs/chart.js"></script>
     <script>
-        const ctxProfit = document.getElementById('profitTrendChart').getContext('2d');
-        const profitData = @Html.Raw(Json.Serialize(Model.TrendRentabilidad));
-        new Chart(ctxProfit, {
+        const ventasLabels = @Html.Raw(Json.Serialize(Model.VentasSerie.Select(x => x.Label)));
+        const ventasValues = @Html.Raw(Json.Serialize(Model.VentasSerie.Select(x => x.Value)));
+        const profitLabels = @Html.Raw(Json.Serialize(Model.TrendRentabilidad.Select(x => x.Label)));
+        const profitValues = @Html.Raw(Json.Serialize(Model.TrendRentabilidad.Select(x => x.Value)));
+        const liqLabels = @Html.Raw(Json.Serialize(Model.TrendLiquidez.Select(x => x.Label)));
+        const liqValues = @Html.Raw(Json.Serialize(Model.TrendLiquidez.Select(x => x.Value)));
+        const canalLabels = @Html.Raw(Json.Serialize(Model.VentasPorCanal.Select(x => x.Name)));
+        const canalValues = @Html.Raw(Json.Serialize(Model.VentasPorCanal.Select(x => x.Value)));
+        const pagoLabels = @Html.Raw(Json.Serialize(Model.VentasPorFormaPago.Select(x => x.Name)));
+        const pagoValues = @Html.Raw(Json.Serialize(Model.VentasPorFormaPago.Select(x => x.Value)));
+
+        const baseScales = {
+            y: { grid: { color: '#f1f5f9' }, ticks: { display: true } },
+            x: { grid: { display: false } }
+        };
+
+        new Chart(document.getElementById('ventasSerieChart').getContext('2d'), {
             type: 'line',
             data: {
-                labels: ['M-5', 'M-4', 'M-3', 'M-2', 'M-1', 'Actual'],
+                labels: ventasLabels,
+                datasets: [{
+                    label: 'Ventas',
+                    data: ventasValues,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                    pointBackgroundColor: '#3b82f6',
+                    pointBorderColor: '#fff',
+                    pointHoverRadius: 6,
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: baseScales
+            }
+        });
+
+        new Chart(document.getElementById('profitTrendChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: profitLabels,
                 datasets: [{
                     label: 'Rentabilidad (%)',
-                    data: profitData,
+                    data: profitValues,
                     borderColor: '#10b981',
                     backgroundColor: 'rgba(16, 185, 129, 0.05)',
                     pointBackgroundColor: '#10b981',
@@ -196,46 +552,47 @@
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                scales: {
-                    y: { grid: { display: false }, ticks: { display: true } },
-                    x: { grid: { display: false } }
-                }
+                scales: baseScales
             }
         });
 
-        const ctxLiq = document.getElementById('liquidityTrendChart').getContext('2d');
-        const liqData = @Html.Raw(Json.Serialize(Model.TrendLiquidez));
-
-        new Chart(ctxLiq, {
+        new Chart(document.getElementById('liquidityTrendChart').getContext('2d'), {
             type: 'bar',
             data: {
-                labels: ['M-5', 'M-4', 'M-3', 'M-2', 'M-1', 'Actual'],
+                labels: liqLabels,
                 datasets: [{
                     label: 'Liquidez (Veces)',
-                    data: liqData,
-                    backgroundColor: '#3b82f6',
-                    hoverBackgroundColor: '#2563eb',
+                    data: liqValues,
+                    backgroundColor: '#f59e0b',
+                    hoverBackgroundColor: '#d97706',
                     borderRadius: 8,
                     barThickness: 30
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                scales: {
-                    y: { grid: { display: true, color: '#f1f5f9' } },
-                    x: { grid: { display: false } }
-                }
+                scales: baseScales
             }
+        });
+
+        const doughnutOpts = {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } }
+        };
+
+        new Chart(document.getElementById('canalChart').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: canalLabels,
+                datasets: [{
+                    data: canalValues,
+                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6']
+                }]
+            },
+            options: doughnutOpts
         });
     </script>
 }
-
-<style>
-    .letter-spacing-1 { letter-spacing: 0.05rem; }
-    .fs-13 { font-size: 0.8125rem; }
-</style>

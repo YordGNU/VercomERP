@@ -12,6 +12,8 @@ public partial class CuentaPorCobrar
 
     public Guid DocumentoOrigenId { get; set; }
 
+    public string? DocumentoOrigenNumero { get; set; }
+
     public Guid? AsientoOrigenId { get; set; }
 
     public DateOnly FechaEmision { get; set; }

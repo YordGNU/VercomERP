@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Vercom.Services;
 using Vercom.ViewModels;
 
@@ -41,9 +42,34 @@ public class TopePrecioMfpController : Controller
         if (ModelState.IsValid)
         {
             var result = await _commercialService.CreatePriceLimitAsync(limit);
-            if (result.Succeeded) return RedirectToAction(nameof(Index));
-            ModelState.AddModelError("", result.Message);
+            if (result.Succeeded)
+            {
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
+            }
+            return Json(new { success = false, message = result.Message });
         }
-        return View(vm);
+
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Verifique los datos del tope.", errors = errorList });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetTope(Guid productoId)
+    {
+        // Obtener el producto para saber su familia
+        var context = (Vercom.Models.AppDbContext)HttpContext.RequestServices.GetService(typeof(Vercom.Models.AppDbContext));
+        var prod = await context.Productos.FindAsync(productoId);
+        if (prod == null) return Json(new { exists = false });
+
+        var today = DateOnly.FromDateTime(DateTime.Now);
+        var tope = await context.TopePrecioMfps
+            .Where(t => (t.ProductoId == productoId || t.FamiliaId == prod.FamiliaId)
+                        && t.VigenteDesde <= today && (t.VigenteHasta == null || t.VigenteHasta >= today))
+            .OrderByDescending(t => t.ProductoId) // Priorizar producto sobre familia
+            .FirstOrDefaultAsync();
+
+        if (tope == null) return Json(new { exists = false });
+
+        return Json(new { exists = true, precioMaximo = tope.PrecioMaximo });
     }
 }

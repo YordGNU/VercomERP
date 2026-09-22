@@ -58,12 +58,12 @@ public class FichaCostoController : Controller
             var result = await _productionService.CreateCostSheetAsync(fichaCosto);
             if (result.Succeeded)
             {
-                TempData["Success"] = result.Message;
-                return RedirectToAction(nameof(Index));
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
             }
-            ModelState.AddModelError("", result.Message);
+            return Json(new { success = false, message = result.Message });
         }
-        var vm = await _productionService.GetCostSheetCreateContextAsync(fichaCosto);
-        return View(vm);
+
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Verifique los datos de la ficha.", errors = errorList });
     }
 }

@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vercom.DTOs;
 using Vercom.Services;
@@ -35,6 +37,7 @@ public class PosApiController : ControllerBase
         return Unauthorized(new { message = result.Message });
     }
 
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpGet("pos/reserva-rango")]
     public async Task<IActionResult> ReservarRango([FromQuery] Guid dispositivoId, [FromQuery] string serie = "POS", [FromQuery] int cantidad = 100)
     {
@@ -44,6 +47,15 @@ public class PosApiController : ControllerBase
             return Ok(new { range.Serie, desde = range.Desde, hasta = range.Hasta });
         }
         catch (Exception ex) { return NotFound(ex.Message); }
+    }
+
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [HttpPost("pos/dispositivo/heartbeat")]
+    public async Task<IActionResult> Heartbeat([FromQuery] Guid dispositivoPosId)
+    {
+        var result = await _posService.HeartbeatAsync(dispositivoPosId);
+        if (!result.Succeeded) return NotFound(new { message = result.Message });
+        return Ok(new { message = "OK", timestamp = DateTimeOffset.UtcNow });
     }
 
     [HttpPost("ventas/sync")]

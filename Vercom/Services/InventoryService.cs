@@ -53,6 +53,8 @@ public interface IInventoryService
 
     // Tipos de Movimiento
     Task<IEnumerable<TipoMovimiento>> GetMovementTypesAsync();
+    /// <summary>Devuelve el Id del tipo de movimiento para un código, creándolo si no existe.</summary>
+    Task<int> EnsureMovementTypeAsync(string codigo);
 
     // Escritura Almacén
     Task<(bool Succeeded, string Message, MovimientoInventario? Movement)> ProcessMovementAsync(MovimientoInventario movement);
@@ -62,19 +64,26 @@ public interface IInventoryService
     Task<List<KardexRowViewModel>> GetKardexByProductAsync(Guid productoId, Guid? almacenId = null);
     Task<(bool Succeeded, string Message)> TransferBetweenWarehousesAsync(Guid origenId, Guid destinoId, List<MovimientoInventarioDetalle> items, Guid userId);
     Task<(bool Succeeded, string Message)> ConciliatePhysicalCountAsync(Guid countId, Guid userId);
+    Task<(bool Succeeded, string Message)> DeleteFamiliaAsync(Guid id);
 }
 
 public class InventoryService : IInventoryService
 {
     private readonly AppDbContext _context;
     private readonly IAccountingService _accountingService;
+    private readonly IParametroSistemaService _paramService;
     private readonly Security.IEntidadProvider _entidadProvider;
+    private readonly ILogger<InventoryService> _logger;
 
-    public InventoryService(AppDbContext context, IAccountingService accountingService, Security.IEntidadProvider entidadProvider)
+    public InventoryService(AppDbContext context, IAccountingService accountingService,
+        IParametroSistemaService paramService, Security.IEntidadProvider entidadProvider,
+        ILogger<InventoryService> logger)
     {
         _context = context;
         _accountingService = accountingService;
+        _paramService = paramService;
         _entidadProvider = entidadProvider;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<Existencium>> GetStocksAsync()
@@ -147,35 +156,92 @@ public class InventoryService : IInventoryService
     {
         var entidadId = _entidadProvider.CurrentEntidadId;
 
+        // Inventario: cuentas de activo de naturaleza deudora. Se excluyen las
+        // subcuentas reguladoras acreedoras (ej. 188.0030 / 188.0050).
         var cuentasActivo = await _context.CuentaContables
-              .Where(c => c.EntidadId == entidadId && c.Activo && c.Clase == "ACTIVO")
+              .Where(c => c.EntidadId == entidadId && c.Activo && c.AceptaMovimiento
+                       && c.Clase == "ACTIVO" && c.Naturaleza == "DEUDORA"
+                       && (c.Codigo.StartsWith("183") || c.Codigo.StartsWith("184")
+                        || c.Codigo.StartsWith("185") || c.Codigo.StartsWith("187")
+                        || c.Codigo.StartsWith("188") || c.Codigo.StartsWith("189")
+                        || c.Codigo == "207" || c.Codigo == "208" || c.Codigo == "209"))
               .OrderBy(c => c.Codigo)
-              .Select(c => new { c.Id, Display = $"{c.Codigo} - {c.Nombre}" })
+              .Select(c => new { c.Id, c.Codigo, Display = $"{c.Codigo} - {c.Nombre}" })
               .ToListAsync();
 
+        // Costo de venta: cuentas de gasto de lo vendido (810/811/814).
         var cuentasGasto = await _context.CuentaContables
-            .Where(c => c.EntidadId == entidadId && c.Activo && c.Clase == "GASTO")
+            .Where(c => c.EntidadId == entidadId && c.Activo && c.AceptaMovimiento
+                     && c.Clase == "GASTOS" && c.Naturaleza == "DEUDORA"
+                     && (c.Codigo == "810" || c.Codigo == "811" || c.Codigo == "814"))
             .OrderBy(c => c.Codigo)
-            .Select(c => new { c.Id, Display = $"{c.Codigo} - {c.Nombre}" })
+            .Select(c => new { c.Id, c.Codigo, Display = $"{c.Codigo} - {c.Nombre}" })
             .ToListAsync();
 
+        // Ingreso por ventas (900/901/904).
         var cuentasIngreso = await _context.CuentaContables
-            .Where(c => c.EntidadId == entidadId && c.Activo && c.Clase == "INGRESO")
+            .Where(c => c.EntidadId == entidadId && c.Activo && c.AceptaMovimiento
+                     && c.Clase == "INGRESOS" && c.Naturaleza == "ACREEDORA"
+                     && (c.Codigo == "900" || c.Codigo == "901" || c.Codigo == "904"))
             .OrderBy(c => c.Codigo)
-            .Select(c => new { c.Id, Display = $"{c.Codigo} - {c.Nombre}" })
+            .Select(c => new { c.Id, c.Codigo, Display = $"{c.Codigo} - {c.Nombre}" })
             .ToListAsync();
+
+        var invPorCodigo = cuentasActivo.ToDictionary(c => c.Codigo, c => c.Id);
+        var costoPorCodigo = cuentasGasto.ToDictionary(c => c.Codigo, c => c.Id);
+        var ingresoPorCodigo = cuentasIngreso.ToDictionary(c => c.Codigo, c => c.Id);
+
+        Guid? Resolver(Dictionary<string, Guid> mapa, string? codigo) =>
+            codigo != null && mapa.TryGetValue(codigo, out var id) ? id : (Guid?)null;
+
+        var tipos = new[] { "MATERIA_PRIMA", "EN_PROCESO", "TERMINADO", "SERVICIO", "MERCANCIA" };
+
+        var cuentasPorTipo = tipos.ToDictionary(tipo => tipo, tipo =>
+        {
+            var (inventario, costo, ingreso) = CuentasContablesSugeridasPorTipo(tipo);
+            return new CuentasContablesSugeridas
+            {
+                InventarioId = Resolver(invPorCodigo, inventario),
+                CostoVentaId = Resolver(costoPorCodigo, costo),
+                IngresoId = Resolver(ingresoPorCodigo, ingreso)
+            };
+        });
+
+        var producto = existing ?? new Producto { Activo = true, AplicaImpuestoVentas = true, Tipo = "TERMINADO" };
+
+        // Asignación por defecto según el propósito/naturaleza del tipo de producto;
+        // solo rellena cuentas aún no definidas, el usuario puede cambiarlas.
+        if (cuentasPorTipo.TryGetValue(producto.Tipo, out var sugeridas))
+        {
+            producto.CuentaInventarioId ??= sugeridas.InventarioId;
+            producto.CuentaCostoVentaId ??= sugeridas.CostoVentaId;
+            producto.CuentaIngresoId ??= sugeridas.IngresoId;
+        }
 
         return new ProductFormViewModel
         {
-            Producto = existing ?? new Producto { Activo = true, AplicaImpuestoVentas = true, Tipo = "TERMINADO" },
+            Producto = producto,
             Familias = new SelectList(await _context.FamiliaProductos.ToListAsync(), "Id", "Nombre"),
             UnidadesMedida = new SelectList(await _context.UnidadMedida.ToListAsync(), "Id", "Nombre"),
             CuentasInventario = new SelectList(cuentasActivo, "Id", "Display"),
             CuentasCostoVenta = new SelectList(cuentasGasto, "Id", "Display"),
             CuentasIngresos = new SelectList(cuentasIngreso, "Id", "Display"),
-            TiposProducto = new SelectList(new[] { "MATERIA_PRIMA", "EN_PROCESO", "TERMINADO", "SERVICIO", "MERCANCIA" })
+            TiposProducto = new SelectList(tipos),
+            CuentasPorTipo = cuentasPorTipo
         };
     }
+
+    // Mapeo de cuentas según la norma cubana y el propósito del artículo:
+    // inventario (183/185/188/189), costo de lo vendido (810/811/814) e ingreso (900/901/904).
+    private static (string? Inventario, string? Costo, string? Ingreso) CuentasContablesSugeridasPorTipo(string tipo) => tipo switch
+    {
+        "MATERIA_PRIMA" => ("183.0010", null, null),
+        "EN_PROCESO" => ("185.0010", null, null),
+        "TERMINADO" => ("188.0020", "810", "900"),
+        "SERVICIO" => (null, "811", "901"),
+        "MERCANCIA" => ("189.0010", "814", "904"),
+        _ => (null, null, null)
+    };
 
     public async Task<(bool Succeeded, string Message)> CreateProductAsync(Producto product)
     {
@@ -330,6 +396,41 @@ public class InventoryService : IInventoryService
         catch (Exception ex) { return (false, ex.Message); }
     }
 
+    public async Task<(bool Succeeded, string Message)> DeleteFamiliaAsync(Guid id)
+    {
+        try
+        {
+            var familia = await _context.FamiliaProductos.FirstOrDefaultAsync(f => f.Id == id && f.EntidadId == _entidadProvider.CurrentEntidadId);
+
+            if (familia == null)
+                return (false, "Familia no encontrada.");
+
+            // Validación 1: No tiene productos asociados
+            var tieneProductos = await _context.Productos
+                .AnyAsync(p => p.FamiliaId == id);
+
+            if (tieneProductos)
+                return (false, "No se puede eliminar la familia porque tiene productos asociados.");
+
+            // Validación 2: No tiene subfamilias
+            var tieneSubfamilias = await _context.FamiliaProductos
+                .AnyAsync(f => f.FamiliaPadreId == id);
+
+            if (tieneSubfamilias)
+                return (false, "No se puede eliminar la familia porque tiene subfamilias asociadas.");
+
+            _context.FamiliaProductos.Remove(familia);
+            await _context.SaveChangesAsync();
+            // El AuditInterceptor registra el DELETE automáticamente
+
+            return (true, $"Familia '{familia.Nombre}' eliminada correctamente.");
+        }
+        catch (Exception ex)
+        {
+            return (false, $"Error al eliminar: {ex.Message}");
+        }
+    }
+
     public async Task<IEnumerable<UnidadMedidum>> GetUnitsAsync()
     {
         return await _context.UnidadMedida.OrderBy(u => u.Nombre).ToListAsync();
@@ -420,9 +521,58 @@ public class InventoryService : IInventoryService
         return await _context.TipoMovimientos.OrderBy(t => t.Nombre).ToListAsync();
     }
 
+    // Catálogo canónico de tipos de movimiento (fuente única en código). Evita depender
+    // de Ids numéricos fijos, que en esta base de datos no coincidían con los sembrados.
+    private static readonly (string Codigo, string Nombre, string Naturaleza, bool AfectaCosto)[] CatalogoTiposMovimiento =
+    {
+        ("RECEPCION", "Informe de Recepción", "ENTRADA", true),
+        ("VALE_ENTREGA", "Vale de Entrega", "SALIDA", true),
+        ("DEVOLUCION_ENTRADA", "Devolución de Cliente", "ENTRADA", true),
+        ("DEVOLUCION_SALIDA", "Devolución a Proveedor", "SALIDA", true),
+        ("TRANSFERENCIA_SALIDA", "Transferencia - Salida", "SALIDA", false),
+        ("TRANSFERENCIA_ENTRADA", "Transferencia - Entrada", "ENTRADA", false),
+        ("AJUSTE_POSITIVO", "Ajuste por Sobrante", "ENTRADA", true),
+        ("AJUSTE_NEGATIVO", "Ajuste por Faltante", "SALIDA", true),
+        ("CONSUMO_PRODUCCION", "Consumo en Producción", "SALIDA", true),
+        ("ENTRADA_PRODUCCION", "Entrada de Producto Terminado", "ENTRADA", true),
+        ("VENTA_POS", "Venta en Punto de Venta", "SALIDA", true),
+    };
+
+    public async Task<int> EnsureMovementTypeAsync(string codigo)
+    {
+        var existing = await _context.TipoMovimientos.FirstOrDefaultAsync(t => t.Codigo == codigo);
+        if (existing != null) return existing.Id;
+
+        var def = CatalogoTiposMovimiento.FirstOrDefault(c => c.Codigo == codigo);
+        if (def.Codigo == null)
+            throw new InvalidOperationException($"Tipo de movimiento '{codigo}' no reconocido.");
+
+        var tipo = new TipoMovimiento
+        {
+            Codigo = def.Codigo,
+            Nombre = def.Nombre,
+            Naturaleza = def.Naturaleza,
+            AfectaCosto = def.AfectaCosto
+        };
+        _context.TipoMovimientos.Add(tipo);
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            // Carrera con otra creación: descartar el duplicado y releer.
+            _context.Entry(tipo).State = EntityState.Detached;
+            return (await _context.TipoMovimientos.FirstAsync(t => t.Codigo == codigo)).Id;
+        }
+        return tipo.Id;
+    }
+
     public async Task<(bool Succeeded, string Message, MovimientoInventario? Movement)> ProcessMovementAsync(MovimientoInventario movement)
     {
-        using var transaction = await _context.Database.BeginTransactionAsync();
+        // Unirse a la transacción ambiente si el llamador ya abrió una (evita anidar transacciones).
+        var ownsTransaction = _context.Database.CurrentTransaction == null;
+        var transaction = ownsTransaction ? await _context.Database.BeginTransactionAsync() : null;
         try
         {
             var tipo = await _context.TipoMovimientos.FindAsync(movement.TipoMovimientoId);
@@ -436,6 +586,11 @@ public class InventoryService : IInventoryService
             {
                 if (movement.AlmacenOrigenId.HasValue)
                 {
+                    // SALIDA: Capturar PPP antes de descontar para el rastro de costo (RF-32)
+                    var stock = await _context.Existencia.FirstOrDefaultAsync(e => e.AlmacenId == movement.AlmacenOrigenId && e.ProductoId == detail.ProductoId);
+                    if (detail.CostoUnitario == null || detail.CostoUnitario == 0)
+                        detail.CostoUnitario = stock?.CostoPromedio ?? 0;
+
                     var res = await UpdateStockAsync(movement.AlmacenOrigenId.Value, detail.ProductoId, -detail.QuantityNormalized(), detail.CostoUnitario, detail.Lote, detail.FechaVencimiento);
                     if (!res.Succeeded) throw new Exception(res.Message);
                 }
@@ -449,14 +604,19 @@ public class InventoryService : IInventoryService
 
             await _context.SaveChangesAsync();
             await CreateAccountingEntryAsync(movement, tipo);
-            await transaction.CommitAsync();
+
+            if (ownsTransaction) await transaction!.CommitAsync();
 
             return (true, "Movimiento procesado.", movement);
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            if (ownsTransaction) await transaction!.RollbackAsync();
             return (false, ex.Message, null);
+        }
+        finally
+        {
+            if (transaction != null) await transaction.DisposeAsync();
         }
     }
 
@@ -534,7 +694,7 @@ public class InventoryService : IInventoryService
         var movement = new MovimientoInventario
         {
             EntidadId = await _context.Almacens.Where(a => a.Id == origenId).Select(a => a.EntidadId).FirstAsync(),
-            TipoMovimientoId = 2, // TRA: Transferencia
+            TipoMovimientoId = await EnsureMovementTypeAsync("TRANSFERENCIA_SALIDA"), // ambas bodegas en un solo movimiento (no afecta costo)
             AlmacenOrigenId = origenId,
             AlmacenDestinoId = destinoId,
             NumeroDocumento = $"TRA-{DateTime.Now:yyyyMMddHHmm}",
@@ -554,23 +714,39 @@ public class InventoryService : IInventoryService
             .Include(c => c.ConteoFisicoDetalles)
             .FirstOrDefaultAsync(c => c.Id == countId);
 
-        if (count == null || count.Estado != "EN_PROGRESO") return (false, "Conteo no válido o ya cerrado.");
+        if (count == null || count.Estado != "EN_PROCESO") return (false, "Conteo no válido o ya cerrado.");
 
-        using var transaction = await _context.Database.BeginTransactionAsync();
+        var tipoFaltante = await EnsureMovementTypeAsync("AJUSTE_NEGATIVO");
+        var tipoSobrante = await EnsureMovementTypeAsync("AJUSTE_POSITIVO");
+
+        // Unirse a la transacción ambiente si el llamador ya abrió una.
+        var ownsTransaction = _context.Database.CurrentTransaction == null;
+        var transaction = ownsTransaction ? await _context.Database.BeginTransactionAsync() : null;
         try
         {
+            var entidadId = await _context.Almacens.Where(a => a.Id == count.AlmacenId).Select(a => a.EntidadId).FirstAsync();
+
+            var index = 0;
             foreach (var detail in count.ConteoFisicoDetalles)
             {
                 if (detail.Diferencia == 0) continue;
 
                 var isFaltante = detail.Diferencia < 0;
+
+                // RF-33: Exigir justificación obligatoria para faltantes (Expediente de Merma)
+                if (isFaltante && string.IsNullOrWhiteSpace(detail.Justificacion))
+                {
+                    return (false, $"Se requiere justificación para el faltante del producto {detail.ProductoId}. Operación detenida.");
+                }
+
+                index++;
                 var adjustment = new MovimientoInventario
                 {
-                    EntidadId = await _context.Almacens.Where(a => a.Id == count.AlmacenId).Select(a => a.EntidadId).FirstAsync(),
-                    TipoMovimientoId = 4, // AJU: Ajuste
+                    EntidadId = entidadId,
+                    TipoMovimientoId = isFaltante ? tipoFaltante : tipoSobrante,
                     AlmacenOrigenId = isFaltante ? count.AlmacenId : null,
                     AlmacenDestinoId = isFaltante ? null : count.AlmacenId,
-                    NumeroDocumento = $"AJU-CONTEO-{countId.ToString().Substring(0, 8)}",
+                    NumeroDocumento = $"AJU-{countId.ToString()[..8]}-{index}",
                     Fecha = DateTimeOffset.Now,
                     Observaciones = $"Ajuste automático por conteo físico. Justificación: {detail.Justificacion}",
                     Canal = "ERP",
@@ -585,26 +761,35 @@ public class InventoryService : IInventoryService
                 });
 
                 var res = await ProcessMovementAsync(adjustment);
-                if (!res.Succeeded) throw new Exception(res.Message);
+                if (!res.Succeeded) throw new Exception($"Fallo al procesar ajuste: {res.Message}");
 
                 detail.MovimientoAjusteId = adjustment.Id;
             }
 
-            count.Estado = "FINALIZADO";
+            count.Estado = "CERRADO";
             await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
-            return (true, "Conteo conciliado y ajustes generados.");
+
+            if (ownsTransaction) await transaction!.CommitAsync();
+            return (true, "Conteo conciliado, inventario actualizado y asientos de ajuste generados.");
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            if (ownsTransaction) await transaction!.RollbackAsync();
+            _logger.LogError(ex, "Error al conciliar conteo físico {CountId}", countId);
             return (false, ex.Message);
+        }
+        finally
+        {
+            if (transaction != null) await transaction.DisposeAsync();
         }
     }
 
     private async Task CreateAccountingEntryAsync(MovimientoInventario movement, TipoMovimiento tipo)
     {
         if (movement.AsientoId != null) return; // Evitar duplicidad
+
+        // Los movimientos que no afectan costo (p. ej. transferencias entre almacenes) no generan asiento.
+        if (!tipo.AfectaCosto) return;
 
         var tipoComprobante = await _context.TipoComprobantes.FirstOrDefaultAsync(t => t.Codigo == "DIA");
         if (tipoComprobante == null) return;
@@ -645,25 +830,49 @@ public class InventoryService : IInventoryService
 
             if (tipo.Naturaleza == "ENTRADA")
             {
-                // DEBE: Inventario | HABER: Cuenta de Contrapartida (Ingreso o Ajuste)
-                var contraAccId = (tipo.Codigo == "ORDEN_PRODUCCION" || tipo.Codigo == "OP") ? incomeAccId : incomeAccId;
+                // DEBE: Inventario | HABER: Contrapartida
+                Guid? contraAccId = null;
+
+                if (tipo.Codigo == "AJUSTE_POSITIVO")
+                {
+                    var cta = await _paramService.ObtenerValorVigenteAsync(movement.EntidadId, "CTA_INGRESO_AJUSTE_INV") ?? "930.0010";
+                    var acc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == cta && c.EntidadId == movement.EntidadId);
+                    contraAccId = acc?.Id;
+                }
+                else
+                {
+                    contraAccId = incomeAccId;
+                }
+
                 if (contraAccId == null) continue;
 
-                entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = invAccId.Value, Debe = monto, Haber = 0, Glosa = $"Entrada {prod.Nombre}" });
+                entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = invAccId.Value, Debe = monto, Haber = 0, Glosa = $"Alta Inventario {prod.Nombre}" });
                 entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = contraAccId.Value, Debe = 0, Haber = monto, Glosa = $"Contrapartida {tipo.Nombre}" });
             }
             else if (tipo.Naturaleza == "SALIDA")
             {
-                // DEBE: Costo/Gasto | HABER: Inventario
-                var contraAccId = (tipo.Codigo == "VENTA" || tipo.Codigo == "VEN" || tipo.Codigo == "CONSUMO") ? expenseAccId : expenseAccId;
+                // DEBE: Contrapartida | HABER: Inventario
+                Guid? contraAccId = null;
+
+                if (tipo.Codigo == "AJUSTE_NEGATIVO")
+                {
+                    var cta = await _paramService.ObtenerValorVigenteAsync(movement.EntidadId, "CTA_PERDIDA_INVENTARIO") ?? "850.0010";
+                    var acc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == cta && c.EntidadId == movement.EntidadId);
+                    contraAccId = acc?.Id;
+                }
+                else
+                {
+                    contraAccId = expenseAccId;
+                }
+
                 if (contraAccId == null) continue;
 
-                entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = contraAccId.Value, Debe = monto, Haber = 0, Glosa = $"Costo/Salida {prod.Nombre}" });
-                entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = invAccId.Value, Debe = 0, Haber = monto, Glosa = $"Salida Inventario {prod.Nombre}" });
+                entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = contraAccId.Value, Debe = monto, Haber = 0, Glosa = $"Costo/Gasto {prod.Nombre}" });
+                entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = invAccId.Value, Debe = 0, Haber = monto, Glosa = $"Baja Inventario {prod.Nombre}" });
             }
         }
 
-        if (entry.AsientoDetalles.Any())
+        if (entry.AsientoDetalles.Any() && entry.AsientoDetalles.Sum(d => d.Debe) == entry.AsientoDetalles.Sum(d => d.Haber))
         {
             var res = await _accountingService.CreateEntryAsync(entry);
             if (res.Succeeded)

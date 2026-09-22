@@ -95,23 +95,13 @@ public class EmpleadoController : Controller
             var result = await _hrService.CreateEmployeeWithContractAsync(empleado, contrato, vm.DocumentoContrato);
             if (result.Succeeded)
             {
-                TempData["Success"] = result.Message;
-                return RedirectToAction(nameof(Index));
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
             }
-            ModelState.AddModelError("", result.Message);
-        }
-        else
-        {
-            var errors = string.Join(" | ", ModelState.Values
-                .SelectMany(v => v.Errors)
-                .Select(e => e.ErrorMessage));
-            ModelState.AddModelError("", $"Verifique los datos: {errors}");
+            return Json(new { success = false, message = result.Message });
         }
 
-        // Recargar listas para la vista en caso de error
-        var contextVm = await _hrService.GetEmployeeCreateContextAsync(empleado);
-        contextVm.Contrato = contrato;
-        return View(contextVm);
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Verifique los datos del formulario.", errors = errorList });
     }
 
     [Authorize(Policy = "RRHH.EMPLEADO.EDITAR")]
@@ -168,7 +158,13 @@ public class EmpleadoController : Controller
     {
         var contrato = vm.Contrato;
 
-        // 1. Limpiar validaciones de campos de visualización y navegación
+        // Sincronizar ID de empleado
+        if (contrato.EmpleadoId == Guid.Empty && vm.EmpleadoId != Guid.Empty)
+        {
+            contrato.EmpleadoId = vm.EmpleadoId;
+        }
+
+        // 1. Limpiar validaciones de campos que no están en el formulario
         ModelState.Remove("NombreEmpleado");
         ModelState.Remove("Cargos");
         ModelState.Remove("TiposContrato");
@@ -177,32 +173,22 @@ public class EmpleadoController : Controller
         ModelState.Remove("Contrato.Id");
         ModelState.Remove("Contrato.CreadoEn");
         ModelState.Remove("Contrato.DocumentoUrl");
-        ModelState.Remove("Documento");
+        ModelState.Remove("DocumentoContrato"); // Validar manualmente si es necesario
 
         if (string.IsNullOrEmpty(contrato.Estado)) contrato.Estado = "VIGENTE";
 
         if (ModelState.IsValid)
         {
-            var result = await _hrService.AddContractAsync(contrato, vm.Documento);
+            var result = await _hrService.AddContractAsync(contrato, vm.DocumentoContrato);
             if (result.Succeeded)
             {
-                TempData["Success"] = result.Message;
-                return RedirectToAction(nameof(File), new { id = contrato.EmpleadoId });
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(File), new { id = contrato.EmpleadoId }) });
             }
-            ModelState.AddModelError("", result.Message);
-        }
-        else
-        {
-            var errors = string.Join(" | ", ModelState.Values
-                .SelectMany(v => v.Errors)
-                .Select(e => e.ErrorMessage));
-            ModelState.AddModelError("", "Verifique los datos: " + errors);
+            return Json(new { success = false, message = result.Message });
         }
 
-        // Recargar contexto de visualización
-        var contextVm = await _hrService.GetContractCreateContextAsync(contrato.EmpleadoId);
-        contextVm.Contrato = contrato;
-        return View(contextVm);
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Errores de validación.", errors = errorList });
     }
 
     // GESTIÓN DE CERTIFICADOS MÉDICOS

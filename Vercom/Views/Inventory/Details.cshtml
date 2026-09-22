@@ -78,16 +78,16 @@
                                     @if(!string.IsNullOrEmpty(det.Lote)) { <small class="text-muted">Lote: @det.Lote</small> }
                                 </td>
                                 <td >@det.Producto.UnidadMedida.Codigo</td>
-                                <td class="text-end fw-bold">@det.Cantidad.ToString("N4")</td>
+                               <td class="fw-bold">@det.Cantidad.ToString("N4")</td>
                                 <td>@(det.CostoUnitario?.ToString("C") ?? "-")</td>
-                                <td class="text-end fw-bold">@importe.ToString("C")</td>
+                               <td class="fw-bold">@importe.ToString("C")</td>
                             </tr>
                         }
                     </tbody>
                     <tfoot class="table-light fs-16 fw-bold">
                         <tr>
                             <td colspan="5" class="text-end">VALOR TOTAL DEL DOCUMENTO:</td>
-                            <td class="text-end text-primary">@Model.MovimientoInventarioDetalles.Sum(d => d.Cantidad * (d.CostoUnitario ?? 0)).ToString("C")</td>
+                           <td class="text-primary">@Model.MovimientoInventarioDetalles.Sum(d => d.Cantidad * (d.CostoUnitario ?? 0)).ToString("C")</td>
                         </tr>
                     </tfoot>
                 </table>

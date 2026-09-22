@@ -11,7 +11,7 @@
 </div>
 
 <div class="row">
-    <form asp-action="Create" method="post">
+    <form asp-action="Create" method="post" id="createBankAccountForm">
         @Html.AntiForgeryToken()
         <div asp-validation-summary="All" class="alert alert-danger py-2 small border-0 mb-4 shadow-sm"></div>
 
@@ -50,7 +50,7 @@
 
                             <div class="col-md-6">
                                 <label class="form-label">Cuenta Mayor Asociada</label>
-                                <select asp-for="BankAccount.CuentaContableId" name="BankAccount.CuentaContableId" class="form-control form-select w-100 select2" asp-items="Model.CuentasContables" required></select>
+                                <select asp-for="BankAccount.CuentaContableId" name="BankAccount.CuentaContableId" class="form-control form-select w-100 select2-cuenta" asp-items="Model.CuentasContables" required></select>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Saldo de Apertura ($)</label>
@@ -83,4 +83,9 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        $(document).ready(function() {
+            window.SubmitAjaxForm('createBankAccountForm');
+        });
+    </script>
 }

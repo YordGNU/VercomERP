@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Vercom.Helpers;
 using Vercom.Models;
 using Vercom.ViewModels;
 
@@ -26,9 +27,11 @@ public class PurchaseService : IPurchaseService
     private readonly IAccountingService _accountingService;
     private readonly IParametroSistemaService _paramService;
     private readonly Security.IEntidadProvider _entidadProvider;
+    private readonly IConsecutivoService _consecutivoService;
 
     public PurchaseService(AppDbContext context, IInventoryService inventoryService, IContractService _contractService,
-        IAccountingService accountingService, IParametroSistemaService paramService, Security.IEntidadProvider entidadProvider)
+        IAccountingService accountingService, IParametroSistemaService paramService, Security.IEntidadProvider entidadProvider,
+        IConsecutivoService consecutivoService)
     {
         _context = context;
         _inventoryService = inventoryService;
@@ -36,6 +39,7 @@ public class PurchaseService : IPurchaseService
         _accountingService = accountingService;
         _paramService = paramService;
         _entidadProvider = entidadProvider;
+        _consecutivoService = consecutivoService;
     }
 
     public async Task<IEnumerable<OrdenCompra>> GetPurchaseOrdersAsync(string? search = null, string? status = null)
@@ -89,7 +93,8 @@ public class PurchaseService : IPurchaseService
         }
 
         order.Id = Guid.NewGuid();
-        order.NumeroOrden = $"OC-{DateTime.Now:yyyyMMdd}-{new Random().Next(100, 999)}";
+        var numeroOc = await _consecutivoService.ObtenerSiguienteNumeroAsync(order.EntidadId, null, DocumentoTipo.OrdenCompra, "A");
+        order.NumeroOrden = $"OC-{numeroOc}";
         order.Estado = "BORRADOR";
         order.Fecha = DateOnly.FromDateTime(DateTime.Now);
         order.CreadoEn = DateTimeOffset.Now;
@@ -133,7 +138,7 @@ public class PurchaseService : IPurchaseService
             var movement = new MovimientoInventario
             {
                 EntidadId = order.EntidadId,
-                TipoMovimientoId = 1, // REC
+                TipoMovimientoId = await _inventoryService.EnsureMovementTypeAsync("RECEPCION"),
                 NumeroDocumento = receiptNumber,
                 AlmacenDestinoId = almacenId,
                 Fecha = DateTimeOffset.Now,
@@ -176,9 +181,10 @@ public class PurchaseService : IPurchaseService
             _context.CuentaPorPagars.Add(cxp);
 
             // 3. Crear Registro de Recepción
+            var recepcionId = Guid.NewGuid();
             var recepcion = new RecepcionCompra
             {
-                Id = Guid.NewGuid(),
+                Id = recepcionId,
                 OrdenCompraId = order.Id,
                 MovimientoInventarioId = movement.Id,
                 CuentaPorPagarId = cxp.Id,
@@ -188,7 +194,12 @@ public class PurchaseService : IPurchaseService
             };
             _context.RecepcionCompras.Add(recepcion);
 
-            order.Estado = "RECIBIDA";
+            // Actualizar estado basado en cumplimiento real (Iteración 3)
+            var totalSolicitado = order.OrdenCompraDetalles.Sum(d => d.CantidadSolicitada);
+            var totalRecibidoAcum = order.OrdenCompraDetalles.Sum(d => d.CantidadRecibida);
+
+            order.Estado = totalRecibidoAcum >= totalSolicitado ? "RECIBIDA_TOTAL" : "RECIBIDA_PARCIAL";
+
             await _context.SaveChangesAsync();
 
             // 4. Integración Contable de Compra (REC - Recepción)

@@ -145,6 +145,44 @@
                 </table>
             </div>
         </div>
+
+        @if (Model.ContratosVencer.Any())
+        {
+            <div class="card mt-4 border-start border-warning border-3">
+                <div class="card-header bg-warning-subtle py-3">
+                    <h5 class="m-0 fw-bold text-warning"><i class="ti ti-calendar-clock me-2"></i>Contratos Económicos por Vencer (15 días)</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Número de Contrato</th>
+                                    <th>Tercero (Cliente/Prov)</th>
+                                    <th class="text-center">Vencimiento</th>
+                                    <th width="50"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var c in Model.ContratosVencer)
+                                {
+                                    <tr>
+                                        <td class="fw-bold">@c.NumeroContrato</td>
+                                        <td class="small">@(c.Cliente?.NombreRazonSocial ?? c.Proveedor?.RazonSocial)</td>
+                                        <td class="text-center">
+                                            <span class="badge bg-warning-subtle text-warning">@c.FechaFin?.ToString("dd/MM/yyyy")</span>
+                                        </td>
+                                        <td class="pe-4">
+                                            <a asp-controller="ContratoEconomico" asp-action="Details" asp-route-id="@c.Id" class="btn btn-icon btn-sm btn-ghost-warning"><i class="ti ti-edit"></i></a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
     </div>
     <div class="col-lg-4">
         <div class="card bg-primary text-white border-0 shadow-lg">

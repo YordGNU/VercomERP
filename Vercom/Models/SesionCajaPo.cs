@@ -1,11 +1,15 @@
 ﻿namespace Vercom.Models;
 
 /// <summary>
-/// Un dispositivo solo puede tener una sesión ABIERTA a la vez — aplicar índice único parcial en capa de aplicación o UNIQUE(dispositivo_pos_id) WHERE estado=&apos;ABIERTA&apos;.
+/// Sesión de caja compartida por todos los dispositivos de una misma caja:
+/// solo puede existir una sesión ABIERTA por caja — índice único parcial
+/// UNIQUE(caja_id) WHERE estado=&apos;ABIERTA&apos;. DispositivoPosId es el dispositivo que la abrió.
 /// </summary>
 public partial class SesionCajaPo
 {
     public Guid Id { get; set; }
+
+    public Guid CajaId { get; set; }
 
     public Guid DispositivoPosId { get; set; }
 
@@ -44,6 +48,8 @@ public partial class SesionCajaPo
     public Guid? SupervisorConciliacionId { get; set; }
 
     public virtual AsientoContable? AsientoCierre { get; set; }
+
+    public virtual Caja Caja { get; set; } = null!;
 
     public virtual Usuario Cajero { get; set; } = null!;
 

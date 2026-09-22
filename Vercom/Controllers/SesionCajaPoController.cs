@@ -24,6 +24,14 @@ public class SesionCajaPoController : Controller
         return View(items);
     }
 
+    [Authorize(Policy = "POS.CONFIGURACION.VER")]
+    public async Task<IActionResult> Details(Guid id)
+    {
+        var item = await _posService.GetSessionByIdAsync(id);
+        if (item == null) return NotFound();
+        return View(item);
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Policy = "POS.CONFIGURACION.CREAR")]

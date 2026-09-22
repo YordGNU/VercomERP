@@ -1,23 +1,23 @@
 @model Vercom.Models.OrdenCompra
 @{
-    ViewBag.Title = "Detalle de Orden de Compra";
+    ViewBag.Title = "Orden de Compra: " + Model.NumeroOrden;
 }
 
 <div class="page-title-head d-flex align-items-center p-3 mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Orden de Compra #@Model.NumeroOrden</h4>
-        <p class="text-muted small mb-0">Proveedor: <span class="fw-bold">@Model.Proveedor.RazonSocial</span></p>
+        <h4 class="page-main-title m-0 fw-bold">Gestión de Aprovisionamiento</h4>
+        <p class="text-muted small mb-0">Orden de Compra a Suministrador (RF-51).</p>
     </div>
     <div class="text-end d-flex gap-2">
-        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
-            <i class="ti ti-arrow-left me-1"></i> VOLVER
-        </a>
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary"><i class="ti ti-arrow-left me-1"></i> VOLVER</a>
+        <button onclick="window.print()" class="btn btn-sm btn-light"><i class="ti ti-printer me-1"></i> IMPRIMIR</button>
 
-        @if (Model.Estado == "PENDIENTE")
+        @if (Model.Estado == "BORRADOR")
         {
             <form asp-action="Approve" method="post" class="d-inline">
+                @Html.AntiForgeryToken()
                 <input type="hidden" name="id" value="@Model.Id" />
-                <button type="submit" class="btn btn-sm btn-success">
+                <button type="submit" class="btn btn-sm btn-success shadow-sm">
                     <i class="ti ti-check me-1"></i> APROBAR ORDEN
                 </button>
             </form>
@@ -25,126 +25,163 @@
 
         @if (Model.Estado == "APROBADA")
         {
-            <a asp-action="Receive" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
+            <a asp-action="Receive" asp-route-id="@Model.Id" class="btn btn-sm btn-primary shadow-sm">
                 <i class="ti ti-package-import me-1"></i> REGISTRAR RECEPCIÓN
             </a>
+        }
+
+        @if (Model.RecepcionCompras.Any())
+        {
+            var lastMov = Model.RecepcionCompras.OrderByDescending(r => r.Fecha).First().MovimientoInventario;
+            if (lastMov != null && lastMov.AsientoId.HasValue)
+            {
+                <a asp-controller="AsientoContable" asp-action="Details" asp-route-id="@lastMov.AsientoId" class="btn btn-sm btn-info">
+                    <i class="ti ti-calculator me-1"></i> VER ASIENTO
+                </a>
+            }
         }
     </div>
 </div>
 
-<div class="row">
+<div class="container-xxl">
     <div class="row">
-        <!-- Información de Cabecera -->
+        <!-- Columna Izquierda: Información de la Orden -->
         <div class="col-lg-8">
-            <div class="card mb-4">
-                 <div class="card-header border-light justify-content-between">
-                    <h5 class="m-0 fw-bold"><i class="ti ti-info-circle me-2 text-primary"></i>Datos de la Orden</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="text-muted small text-uppercase fw-bold d-block">Fecha Emisión</label>
-                            <span>@Model.Fecha.ToString("dd/MM/yyyy")</span>
+            <div class="card shadow-sm border-0 mb-4 invoice-print">
+                <div class="card-body p-5">
+                    <!-- Cabecera Documento -->
+                    <div class="row mb-5">
+                        <div class="col-6">
+                            <h2 class="fw-bold text-primary mb-1">@Model.Entidad.RazonSocial</h2>
+                            <p class="text-muted mb-0 small">NIT: @Model.Entidad.Nit | REEUP: @Model.Entidad.CodigoReeup</p>
+                            <p class="text-muted small">@Model.Entidad.DireccionLegal</p>
                         </div>
-                        <div class="col-md-4">
-                            <label class="text-muted small text-uppercase fw-bold d-block">Entrega Esperada</label>
-                            <span>@(Model.FechaEntregaEsperada?.ToString("dd/MM/yyyy") ?? "No definida")</span>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <label class="text-muted small text-uppercase fw-bold d-block">Estado Actual</label>
+                        <div class="col-6 text-end">
+                            <h1 class="fw-bold text-uppercase h3 mb-0">Orden de Compra</h1>
+                            <h3 class="fw-bold text-primary mb-0">#@Model.NumeroOrden</h3>
+                            <p class="mb-0 fw-bold">Fecha: @Model.Fecha.ToString("dd/MM/yyyy")</p>
                             @{
                                 var statusClass = Model.Estado switch {
-                                    "RECIBIDA" => "badge-soft-success",
-                                    "APROBADA" => "badge-soft-primary",
-                                    "PENDIENTE" => "badge-soft-warning",
-                                    _ => "badge-soft-secondary"
+                                    "RECIBIDA_TOTAL" => "bg-success",
+                                    "RECIBIDA_PARCIAL" => "bg-info",
+                                    "RECIBIDA" => "bg-success",
+                                    "APROBADA" => "bg-primary",
+                                    "BORRADOR" => "bg-warning",
+                                    _ => "bg-secondary"
                                 };
                             }
-                            <span class="badge @statusClass fs-13">@Model.Estado</span>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="text-muted small text-uppercase fw-bold d-block">Almacén Destino</label>
-                            <span class="fw-bold">@Model.AlmacenDestino.Nombre</span>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="text-muted small text-uppercase fw-bold d-block">Contrato Relacionado</label>
-                            <span>@(Model.Contrato?.NumeroContrato ?? "Operación sin contrato")</span>
+                            <span class="badge @statusClass px-3">@Model.Estado</span>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Detalle de Ítems -->
-            <div class="card">
-                 <div class="card-header border-light justify-content-between">
-                    <h5 class="m-0 fw-bold"><i class="ti ti-list me-2 text-primary"></i>Partidas de Compra</h5>
-                </div>
-                <div class="card-body">
-                    <table class="table table-vcenter mb-0">
-                    <thead class="thead-sm text-uppercase fs-xxs">
-                            <tr>
-                                <th>Artículo</th>
-                              <th>Cantidad</th>
-                               <th>P. Unitario</th>
-                               <th>Importe</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var det in Model.OrdenCompraDetalles)
-                            {
-                                <tr>
-                                    <td>
-                                        <div class="fw-bold">@det.Producto.Nombre</div>
-                                        <small class="text-muted">@det.Producto.Codigo</small>
-                                    </td>
-                                    <td >@(det.CantidadSolicitada.ToString("N2") ?? "0.00")</td>
-                                    <td>@det.PrecioUnitario.ToString("N2")</td>
-                                    <td class="text-end fw-bold">@(det.SubtotalLinea?.ToString("N2") ?? "0.00")</td>
-                                </tr>
+                    <!-- Datos de las Partes -->
+                    <div class="row mb-4">
+                        <div class="col-sm-6">
+                            <h6 class="text-muted text-uppercase small fw-bold mb-2">Proveedor:</h6>
+                            <h5 class="fw-bold mb-1">@Model.Proveedor.RazonSocial</h5>
+                            <p class="mb-1 text-muted small">NIT: @Model.Proveedor.Nit</p>
+                            <p class="mb-0 text-muted small">Dirección: @Model.Proveedor.Direccion</p>
+                        </div>
+                        <div class="col-sm-6 text-sm-end">
+                            <h6 class="text-muted text-uppercase small fw-bold mb-2">Logística:</h6>
+                            <p class="mb-1 small"><strong>Almacén Destino:</strong> @Model.AlmacenDestino.Nombre</p>
+                            <p class="mb-1 small"><strong>Entrega Esperada:</strong> @(Model.FechaEntregaEsperada?.ToString("dd/MM/yyyy") ?? "Inmediata")</p>
+                            @if (Model.Contrato != null) {
+                                <p class="mb-0 text-primary small"><strong>Contrato:</strong> @Model.Contrato.NumeroContrato</p>
                             }
-                        </tbody>
-                    </table>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Artículos -->
+                    <div class="table-responsive mb-5">
+                        <table class="table table-bordered align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th width="80">Cód.</th>
+                                    <th>Descripción del Producto</th>
+                                    <th class="text-center">Cant. Solicitada</th>
+                                    <th class="text-center">Cant. Recibida</th>
+                                    <th class="text-end">Precio Unit.</th>
+                                    <th class="text-end pe-4">Importe</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var det in Model.OrdenCompraDetalles)
+                                {
+                                    <tr>
+                                        <td class="font-monospace small">@det.Producto.Codigo</td>
+                                        <td>
+                                            <div class="fw-bold">@det.Producto.Nombre</div>
+                                            <small class="text-muted">U.M: @det.Producto.UnidadMedida.Codigo</small>
+                                        </td>
+                                        <td class="text-center fw-bold">@det.CantidadSolicitada.ToString("N2")</td>
+                                        <td class="text-center">
+                                            <span class="badge @(det.CantidadRecibida >= det.CantidadSolicitada ? "bg-success-subtle text-success" : "bg-warning-subtle text-warning")">
+                                                @det.CantidadRecibida.ToString("N2")
+                                            </span>
+                                        </td>
+                                        <td class="text-end">@det.PrecioUnitario.ToString("C2")</td>
+                                        <td class="text-end fw-bold">@(det.SubtotalLinea?.ToString("C2") ?? "0.00")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Totales -->
+                    <div class="row justify-content-end">
+                        <div class="col-md-5">
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <th class="text-muted">Subtotal:</th>
+                                    <td class="text-end fw-bold">@Model.Subtotal.ToString("C2")</td>
+                                </tr>
+                                <tr class="border-top">
+                                    <th class="h4 fw-bold">TOTAL @Model.Moneda:</th>
+                                    <td class="h4 text-end text-primary fw-bold">@Model.Total.ToString("C2")</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Resumen de Costos -->
+        <!-- Columna Derecha: Recepciones y Auditoría -->
         <div class="col-lg-4">
-            <div class="card mb-4">
-                 <div class="card-header border-light justify-content-between">
-                    <h5 class="m-0 fw-bold"><i class="ti ti-calculator me-2 text-primary"></i>Resumen Financiero</h5>
+            <div class="card shadow-sm border-0 mb-4">
+                 <div class="card-header bg-light-subtle py-3">
+                    <h5 class="m-0 fw-bold small text-uppercase"><i class="ti ti-package me-2"></i>Historial de Recepciones</h5>
                 </div>
-                <div class="card-body">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">Subtotal:</span>
-                        <span>@Model.Subtotal.ToString("N2") @Model.Moneda</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-3">
-                        <span class="text-muted">Impuestos:</span>
-                        <span>@((Model.Total - Model.Subtotal).ToString("N2")) @Model.Moneda</span>
-                    </div>
-                    <hr class="my-2">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h4 class="fw-bold m-0">TOTAL:</h4>
-                        <h3 class="fw-bold text-primary m-0">@Model.Total.ToString("N2") @Model.Moneda</h3>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        @foreach (var rec in Model.RecepcionCompras)
+                        {
+                            <div class="list-group-item p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="fw-bold text-primary small">IR #@rec.NumeroInformeRecepcion</span>
+                                    <small class="text-muted">@rec.Fecha.ToString("dd/MM/yyyy")</small>
+                                </div>
+                                <div class="small text-muted">Recibido por: @rec.RecibidoPorNavigation?.NombreCompleto</div>
+                            </div>
+                        }
+                        @if (!Model.RecepcionCompras.Any())
+                        {
+                            <div class="p-4 text-center text-muted small italic">No hay informes de recepción registrados.</div>
+                        }
                     </div>
                 </div>
             </div>
 
-            <!-- Auditoría -->
-            <div class="card">
+            <div class="card shadow-sm border-0">
                 <div class="card-body py-3">
                     <div class="d-flex align-items-center mb-2">
                         <i class="ti ti-user me-2 text-muted"></i>
-                        <small class="text-muted">Registrado por: <strong>@Model.CreadoPorNavigation?.NombreCompleto</strong></small>
-                    </div>
-                    <div class="d-flex align-items-center mb-2">
-                        <i class="ti ti-calendar me-2 text-muted"></i>
-                        <small class="text-muted">Fecha Sistema: @Model.CreadoEn.ToString("g")</small>
+                        <small class="text-muted">Emitido por: <strong>@Model.CreadoPorNavigation?.NombreCompleto</strong></small>
                     </div>
                     @if (Model.AprobadoPor.HasValue)
                     {
-                        <div class="d-flex align-items-center text-success">
+                        <div class="d-flex align-items-center text-success mb-2">
                             <i class="ti ti-shield-check me-2"></i>
                             <small>Aprobado por: <strong>@Model.AprobadoPorNavigation?.NombreCompleto</strong></small>
                         </div>
@@ -156,7 +193,11 @@
 </div>
 
 <style>
-    .badge-soft-success { background-color: #ecfdf5; color: #059669; }
-    .badge-soft-primary { background-color: #eff6ff; color: #2563eb; }
-    .badge-soft-warning { background-color: #fffbeb; color: #d97706; }
+    @@media print {
+        .app-topbar, .sidenav-menu, .footer, .btn, .page-title-head { display: none !important; }
+        .content-page { margin-left: 0 !important; padding: 0 !important; }
+        .container-xxl { max-width: 100% !important; width: 100% !important; }
+        .card { border: 0 !important; box-shadow: none !important; }
+        body { background: white !important; }
+    }
 </style>

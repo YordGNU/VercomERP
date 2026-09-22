@@ -1,202 +1,327 @@
 @using Microsoft.AspNetCore.Authorization
 @inject IAuthorizationService AuthorizationService
 @model IEnumerable<Vercom.Models.Producto>
+
 @{
     ViewBag.Title = "Catálogo de Productos";
+    var totalItems = Model.Count();
+    var activos = Model.Count(p => p.Activo);
+    var inactivos = totalItems - activos;
+    var puedeEliminar = (await AuthorizationService.AuthorizeAsync(User, "INVENTARIO.PRODUCTO.ELIMINAR")).Succeeded;
+    var puedeCrear = (await AuthorizationService.AuthorizeAsync(User, "INVENTARIO.PRODUCTO.CREAR")).Succeeded;
 }
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
+
+<!-- ============================================================ -->
+<!-- HEADER -->
+<!-- ============================================================ -->
+<div class="page-title-head d-flex align-items-center flex-wrap gap-2 p-3 mb-3 rounded-3">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Maestro de Productos e Insumos</h4>
+        <h4 class="page-main-title m-0 fw-bold d-flex align-items-center gap-2">
+            <i class="ti ti-box text-primary"></i>
+            Maestro de Productos e Insumos
+        </h4>
         <p class="text-muted small mb-0">Catálogo centralizado para inventario, producción y ventas.</p>
     </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Inventario</a></li>
-            <li class="breadcrumb-item active">Productos</li>
-        </ol>      
+    <div class="text-end">      
+        @if (puedeCrear)
+        {
+            <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
+                <i class="ti ti-plus me-1"></i> Nuevo Producto
+            </a>
+        }
     </div>
 </div>
-<div class="row">
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="m-0 fw-bold"><i class="ti ti-box me-2 text-primary"></i>Artículos Registrados</h5>
-            <div class="d-flex gap-2">
-                <span class="badge badge-soft-info">@Model.Count() Items</span>
-            </div>  
-            <div class="row mb-3">
-                <div class="col-md-3">
-                    <select id="filterTipo" class="form-select form-select-sm">
-                        <option value="">Todos los tipos</option>
-                        <option value="TERMINADO">Terminado</option>
-                        <option value="INSUMO">Insumo</option>
-                        <option value="ELABORADO">Elaborado</option>
-                    </select>
+
+<!-- ============================================================ -->
+<!-- ESTADÍSTICAS RÁPIDAS -->
+<!-- ============================================================ -->
+<div class="row g-2 mb-3">
+    <div class="col-md-4 col-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body py-2 d-flex align-items-center gap-3">
+                <div class="bg-primary bg-opacity-10 p-2 rounded-2">
+                    <i class="ti ti-box fs-5 text-primary"></i>
+                </div>
+                <div>
+                    <span class="d-block fw-bold fs-5">@totalItems</span>
+                    <span class="text-muted small">Total productos</span>
                 </div>
             </div>
-            <div class="row mt-3 align-items-end">            
-                @if ((await AuthorizationService.AuthorizeAsync(User, "INVENTARIO.PRODUCTO.ELIMINAR")).Succeeded)
-                {
-                    <div class="col-md-3">
-                        <span id="selectedCount" class="text-muted small">Ningún producto seleccionado</span>
-                    </div>
-                    <div class="col-md-3 text-end">
-                        <button type="button" id="deleteSelected" class="btn btn-danger btn-sm" disabled>
-                            <i class="ti ti-trash"></i> Eliminar seleccionados
-                        </button>
-                    </div>    
-                    <div class="col-md-3 text-end">
-                        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
-                            <i class="ti ti-plus"></i> NUEVO PRODUCTO
-                        </a>
-                    </div>                   
-                }       
-            </div>       
         </div>
-        <div class="card-body">
-            <table id="productsTable" class="table table-striped table-hover dt-responsive">
-                     <thead class="thead-sm text-uppercase fs-xxs">
-                    <tr>
-                        <th>
-                            <input type="checkbox" id="selectAll" class="form-check-input" />
-                        </th>
-                        <th>Código</th>
-                        <th>Nombre</th>
-                        <th>Familia</th>
-                        <th>U/M</th>
-                        <th>Precio</th>
-                        <th>Tipo</th>
-                        <th>Estado</th>
-                        <th style="width: 80px;">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model)
-                    {
-                        var typeClass = item.Tipo switch
-                        {
-                            "TERMINADO" => "badge-soft-success",
-                            "INSUMO" => "badge-soft-info",
-                            "ELABORADO" => "badge-soft-warning",
-                            _ => "badge-soft-secondary"
-                        };
+    </div>
+    <div class="col-md-4 col-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body py-2 d-flex align-items-center gap-3">
+                <div class="bg-success bg-opacity-10 p-2 rounded-2">
+                    <i class="ti ti-check fs-5 text-success"></i>
+                </div>
+                <div>
+                    <span class="d-block fw-bold fs-5 text-success">@activos</span>
+                    <span class="text-muted small">Activos</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body py-2 d-flex align-items-center gap-3">
+                <div class="bg-danger bg-opacity-10 p-2 rounded-2">
+                    <i class="ti ti-x fs-5 text-danger"></i>
+                </div>
+                <div>
+                    <span class="d-block fw-bold fs-5 text-danger">@inactivos</span>
+                    <span class="text-muted small">Inactivos</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
+<!-- ============================================================ -->
+<!-- TABLA PRINCIPAL -->
+<!-- ============================================================ -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2 py-3">
+                <h5 class="m-0 fw-bold d-flex align-items-center gap-2">
+                    <i class="ti ti-list text-primary"></i>
+                    Artículos Registrados
+                    <span class="badge bg-primary bg-opacity-10 text-primary fw-normal">@totalItems</span>
+                </h5>
+
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="text-muted small d-none d-md-inline">Filtrar:</span>
+
+                    <!-- Filtro por Tipo -->
+                    <div style="min-width: 160px;">
+                        <select id="filterTipo" class="form-select form-select-sm">
+                            <option value="">Todos los tipos</option>
+                            <option value="TERMINADO">Terminado</option>
+                            <option value="INSUMO">Insumo</option>
+                            <option value="ELABORADO">Elaborado</option>
+                            <option value="MATERIA_PRIMA">Materia Prima</option>
+                            <option value="MERCANCIA">Mercancía</option>
+                            <option value="SERVICIO">Servicio</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro por Estado -->
+                    <div style="min-width: 140px;">
+                        <select id="filterEstado" class="form-select form-select-sm">
+                            <option value="">Todos los estados</option>
+                            <option value="ACTIVO">Activos</option>
+                            <option value="INACTIVO">Inactivos</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <!-- Barra de acciones para seleccionados -->
+                @if (puedeEliminar)
+                {
+                    <div class="row align-items-end g-2 mb-3">
+                        <div class="col-md-6">
+                            <span id="selectedCount" class="text-muted small">
+                                <i class="ti ti-checkbox me-1"></i> Ningún producto seleccionado
+                            </span>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button type="button" id="deleteSelected" class="btn btn-danger btn-sm" disabled>
+                                <i class="ti ti-trash me-1"></i> Eliminar seleccionados
+                            </button>
+                        </div>
+                    </div>
+                }
+                <!-- Token antiforgery para AJAX -->
+                @Html.AntiForgeryToken()
+                <table id="productsTable" class="table table-striped table-hover dt-responsive mb-0 w-100">
+                    <thead class="thead-sm text-uppercase fs-xxs bg-light">
                         <tr>
-                            <td class="float-sm-start">
-                                <input type="checkbox" class="row-checkbox form-check-input" data-id="@item.Id" />
-                            </td>
-                            <td class="text-numeric fw-bold text-primary">@item.Codigo</td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="avatar-xs bg-light rounded-2 d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px;">
-                                        <i class="ti ti-package-export fs-16 text-muted"></i>
-                                    </div>
-                                    <div class="fw-semibold">@item.Nombre</div>
-                                </div>
-                            </td>
-                            <td><span class="small text-muted">@item.Familia?.Nombre</span></td>
-                            <td small fw-bold">@item.UnidadMedida.Codigo</td>
-                            <td class="text-numeric fw-bold text-success">@item.PrecioVentaActual?.ToString("N2")</td>
-                            <td ><span class="badge @typeClass">@item.Tipo</span></td>
-                            <td >
-                                @if (item.Activo)
-                                {
-                                    <span class="badge badge-soft-success">ACTIVO</span>
-                                }
-                                else
-                                {
-
-                                    <span class="badge badge-soft-danger">INACTIVO</span>
-                                }
-                            </td>
-                            <td>
-                               <div class="d-flex justify-content-center gap-1">
-                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-light btn-icon btn-sm rounded-circle" title="Detalles">
-                                        <i class="ti ti-eye"></i>
-                                    </a>
-                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-light btn-icon btn-sm rounded-circle" title="Editar">
-                                        <i class="ti ti-edit"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-light btn-icon btn-sm rounded-circle" data-id="@item.Id" title="Eliminar">
-                                        <i class="ti ti-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
+                            <th style="width: 10px;" class="text-center">
+                                <input type="checkbox" id="selectAll" class="form-check-input" />
+                            </th>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Familia</th>
+                            <th class="text-center">U/M</th>
+                            <th class="text-end">Precio</th>
+                            <th class="text-center">Tipo</th>
+                            <th class="text-center">Estado</th>
+                            <th style="width: 120px;" class="text-center">Acciones</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
-            <!-- Barra de acciones para seleccionados -->            
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var typeClass = item.Tipo switch
+                            {
+                                "TERMINADO" => "badge-soft-success",
+                                "INSUMO" => "badge-soft-info",
+                                "ELABORADO" => "badge-soft-warning",
+                                "MATERIA_PRIMA" => "badge-soft-secondary",
+                                "MERCANCIA" => "badge-soft-primary",
+                                "SERVICIO" => "badge-soft-purple",
+                                _ => "badge-soft-secondary"
+                            };
+
+                            <tr>
+                                <td class="text-center">
+                                    <input type="checkbox" class="row-checkbox form-check-input" data-id="@item.Id" />
+                                </td>
+                                <td class="fw-bold text-primary">@item.Codigo</td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="avatar-xs bg-light rounded-2 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px;">
+                                            <i class="ti ti-package-export fs-16 text-muted"></i>
+                                        </div>
+                                        <span class="fw-semibold text-truncate" style="max-width: 200px;">@item.Nombre</span>
+                                    </div>
+                                </td>
+                                <td><span class="small text-muted">@item.Familia?.Nombre</span></td>
+                                <td class="text-center small fw-bold">@item.UnidadMedida?.Codigo</td>
+                                <td class="text-end fw-bold text-success">@item.PrecioVentaActual?.ToString("N2")</td>
+                                <td class="text-center">
+                                    <span class="badge @typeClass">@item.Tipo</span>
+                                </td>
+                                <td class="text-center">
+                                    @if (item.Activo)
+                                    {
+                                        <span class="badge badge-soft-success">
+                                            <i class="ti ti-circle-check me-1"></i> ACTIVO
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-soft-danger">
+                                            <i class="ti ti-circle-x me-1"></i> INACTIVO
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="d-flex justify-content-center gap-1">
+                                        <a asp-action="Details" asp-route-id="@item.Id"
+                                           class="btn btn-soft-primary btn-icon btn-sm rounded-circle" title="Detalles">
+                                            <i class="ti ti-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@item.Id"
+                                           class="btn btn-soft-warning btn-icon btn-sm rounded-circle" title="Editar">
+                                            <i class="ti ti-edit"></i>
+                                        </a>
+                                        @if (puedeEliminar)
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-soft-danger btn-icon btn-sm rounded-circle delete-single"
+                                                    data-id="@item.Id"
+                                                    data-nombre="@item.Nombre"
+                                                    title="Eliminar">
+                                                <i class="ti ti-trash"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 @section Scripts {
     <script src="~/js/plugins/toastr/toastr.min.js"></script>
-    <!-- Configuración de Toastr -->
+    <link href="~/css/plugins/toastr/toastr.min.css" rel="stylesheet" />
+
     <script>
         toastr.options = {
-            "closeButton": true,
-            "progressBar": true,
-            "positionClass": "toast-top-right",
-            "timeOut": "5000",
-            "extendedTimeOut": "2000"
+            closeButton: true,
+            progressBar: true,
+            positionClass: "toast-top-right",
+            timeOut: "5000",
+            extendedTimeOut: "2000"
         };
-    </script>
-    <script>
-        $(document).ready(function() {
+
+        $(document).ready(function () {
             // ============================================================
             // 1. INICIALIZACIÓN DE DATATABLE
             // ============================================================
             var table = $('#productsTable').DataTable({
-                language: {
-                    url: '@Url.Content("~/lib/i18n/es-ES.json")'
-                },
+                language: { url: '@Url.Content("~/lib/i18n/es-ES.json")' },
                 order: [[1, 'asc']],
                 pageLength: 25,
                 lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
                 columnDefs: [
                     { targets: [0], orderable: false, searchable: false, className: 'text-center' },
                     {
-                        targets: [5], type: 'numeric', render: function(data) {
+                        targets: [5], type: 'numeric', className: 'text-end',
+                        render: function (data) {
                             if (typeof data === 'string') return parseFloat(data.replace(/[$,]/g, '')) || 0;
                             return data || 0;
                         }
                     },
-                    { targets: [7], type: 'string' },
-                    { targets: [8], orderable: false, searchable: false, className: 'text-end' }
+                    { targets: [6, 7], orderable: true, searchable: true },
+                    { targets: [8], orderable: false, searchable: false, className: 'text-center' }
                 ],
                 dom: '<"row align-items-center"<"col-md-6"l><"col-md-6"f>>rt<"row align-items-center"<"col-md-5"i><"col-md-7"p>>',
                 autoWidth: false,
                 responsive: true,
-                drawCallback: function() {
+                drawCallback: function () {
                     updateSelectedCount();
                     updateDeleteButtonState();
                 }
             });
 
             // ============================================================
-            // 2. MANEJO DE CHECKBOXES
+            // 2. FILTROS PERSONALIZADOS (Tipo + Estado)
             // ============================================================
-            $('#selectAll').on('change', function() {
+            $.fn.dataTable.ext.search.push(function (settings, data) {
+                var filterTipo = $('#filterTipo').val();
+                if (filterTipo && data[6] !== filterTipo) return false;
+                return true;
+            });
+
+            $.fn.dataTable.ext.search.push(function (settings, data) {
+                var filterEstado = $('#filterEstado').val();
+                if (filterEstado) {
+                    var estadoActual = data[7].includes('ACTIVO') ? 'ACTIVO' : 'INACTIVO';
+                    if (estadoActual !== filterEstado) return false;
+                }
+                return true;
+            });
+
+            $('#filterTipo, #filterEstado').on('change', function () {
+                table.draw();
+            });
+
+            // ============================================================
+            // 3. MANEJO DE CHECKBOXES
+            // ============================================================
+            $('#selectAll').on('change', function () {
                 var isChecked = $(this).prop('checked');
                 $('.row-checkbox').prop('checked', isChecked);
                 updateSelectedCount();
                 updateDeleteButtonState();
             });
 
-            $('#productsTable').on('change', '.row-checkbox', function() {
-                var allChecked = $('.row-checkbox:checked').length === $('.row-checkbox').length;
-                $('#selectAll').prop('checked', allChecked);
+            $('#productsTable').on('change', '.row-checkbox', function () {
+                var total = $('.row-checkbox').length;
+                var checked = $('.row-checkbox:checked').length;
+                $('#selectAll').prop('checked', total > 0 && checked === total);
                 updateSelectedCount();
                 updateDeleteButtonState();
             });
 
             // ============================================================
-            // 3. FUNCIONES AUXILIARES
+            // 4. FUNCIONES AUXILIARES
             // ============================================================
             function updateSelectedCount() {
                 var count = $('.row-checkbox:checked').length;
-                $('#selectedCount').text(count === 0 ? 'Ningún producto seleccionado' : count + ' producto(s) seleccionado(s)');
+                if (count === 0) {
+                    $('#selectedCount').html('<i class="ti ti-checkbox me-1"></i> Ningún producto seleccionado');
+                } else {
+                    $('#selectedCount').html('<i class="ti ti-checkbox-checked me-1"></i> ' + count + ' producto(s) seleccionado(s)');
+                }
             }
 
             function updateDeleteButtonState() {
@@ -206,43 +331,27 @@
 
             function getSelectedIds() {
                 var ids = [];
-                $('.row-checkbox:checked').each(function() {
+                $('.row-checkbox:checked').each(function () {
                     ids.push($(this).data('id'));
                 });
                 return ids;
             }
 
             // ============================================================
-            // 4. FUNCIÓN DE ELIMINACIÓN CON TOAST (Notificación)
-            // ============================================================
-            function showToast(message, type = 'success') {
-                // Usar Toastr o SweetAlert2
-                if (type === 'success') {
-                    toastr.success(message);
-                } else if (type === 'error') {
-                    toastr.error(message);
-                } else if (type === 'warning') {
-                    toastr.warning(message);
-                } else {
-                    toastr.info(message);
-                }
-            }
-
-            // ============================================================
             // 5. ELIMINACIÓN EN LOTE
             // ============================================================
-            $('#deleteSelected').on('click', function() {
+            $('#deleteSelected').on('click', function () {
                 var selectedIds = getSelectedIds();
                 if (selectedIds.length === 0) return;
 
                 Swal.fire({
-                    title: '¿Estás seguro?',
+                    title: '¿Eliminar productos seleccionados?',
                     text: `Se eliminarán ${selectedIds.length} producto(s). Esta acción no se puede deshacer.`,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#d33',
                     cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Sí, eliminar',
+                    confirmButtonText: `Sí, eliminar (${selectedIds.length})`,
                     cancelButtonText: 'Cancelar'
                 }).then((result) => {
                     if (result.isConfirmed) {
@@ -254,36 +363,25 @@
                             contentType: 'application/json',
                             data: JSON.stringify({ ids: selectedIds }),
                             headers: { 'RequestVerificationToken': token },
-                            beforeSend: function() {
+                            beforeSend: function () {
                                 $('#deleteSelected').prop('disabled', true).html(
                                     '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Eliminando...'
                                 );
                             },
-                            success: function(response) {
+                            success: function (response) {
                                 if (response.success) {
-                                    showToast(response.message, 'success');
-                                    // Recargar la página o eliminar filas vía DataTables
-                                    location.reload();
+                                    toastr.success(response.message);
+                                    setTimeout(function () { location.reload(); }, 1000);
                                 } else {
-                                    showToast(response.message, 'error');
-                                    if (response.failedIds && response.failedIds.length > 0) {
-                                        // Marcar los productos que no se pudieron eliminar
-                                        response.failedIds.forEach(function(id) {
-                                            var row = $('#productsTable').find('input[data-id="' + id + '"]').closest('tr');
-                                            row.addClass('table-danger');
-                                            setTimeout(function() {
-                                                row.removeClass('table-danger');
-                                            }, 3000);
-                                        });
-                                    }
+                                    toastr.error(response.message);
                                 }
                             },
-                            error: function() {
-                                showToast('Ocurrió un error al procesar la solicitud.', 'error');
+                            error: function () {
+                                toastr.error('Error al eliminar los productos seleccionados.');
                             },
-                            complete: function() {
+                            complete: function () {
                                 $('#deleteSelected').prop('disabled', false).html(
-                                    '<i class="ti ti-trash"></i> Eliminar seleccionados'
+                                    '<i class="ti ti-trash me-1"></i> Eliminar seleccionados'
                                 );
                             }
                         });
@@ -294,14 +392,15 @@
             // ============================================================
             // 6. ELIMINACIÓN INDIVIDUAL
             // ============================================================
-            $('#productsTable').on('click', '.delete-single', function() {
+            $('#productsTable').on('click', '.delete-single', function () {
                 var id = $(this).data('id');
+                var nombre = $(this).data('nombre');
                 var row = $(this).closest('tr');
-                var nombre = row.find('.fw-semibold').text();
+                var $btn = $(this);
 
                 Swal.fire({
-                    title: '¿Eliminar producto?',
-                    text: `¿Estás seguro de eliminar "${nombre}"? Esta acción no se puede deshacer.`,
+                    title: `¿Eliminar "${nombre}"?`,
+                    text: 'Esta acción no se puede deshacer.',
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#d33',
@@ -311,7 +410,6 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         var token = $('input[name="__RequestVerificationToken"]').val();
-                        var $this = $(this);
 
                         $.ajax({
                             url: '@Url.Action("Delete", "Producto")',
@@ -319,26 +417,25 @@
                             contentType: 'application/json',
                             data: JSON.stringify({ id: id }),
                             headers: { 'RequestVerificationToken': token },
-                            beforeSend: function() {
-                                $this.prop('disabled', true).html(
+                            beforeSend: function () {
+                                $btn.prop('disabled', true).html(
                                     '<span class="spinner-border spinner-border-sm"></span>'
                                 );
                             },
-                            success: function(response) {
+                            success: function (response) {
                                 if (response.success) {
-                                    showToast(response.message, 'success');
+                                    toastr.success(response.message);
                                     table.row(row).remove().draw();
                                     updateSelectedCount();
                                     updateDeleteButtonState();
                                 } else {
-                                    showToast(response.message, 'error');
+                                    toastr.error(response.message);
+                                    $btn.prop('disabled', false).html('<i class="ti ti-trash"></i>');
                                 }
                             },
-                            error: function() {
-                                showToast('Error al eliminar el producto.', 'error');
-                            },
-                            complete: function() {
-                                // El botón desaparece con la fila
+                            error: function () {
+                                toastr.error('Error al eliminar el producto.');
+                                $btn.prop('disabled', false).html('<i class="ti ti-trash"></i>');
                             }
                         });
                     }
@@ -346,22 +443,10 @@
             });
 
             // ============================================================
-            // 7. INICIALIZAR ESTADO
+            // 7. ESTADO INICIAL
             // ============================================================
             updateSelectedCount();
             updateDeleteButtonState();
-            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-                var filterTipo = $('#filterTipo').val();
-                if (!filterTipo) return true;
-                var tipo = data[5]; // columna de Tipo
-                return tipo === filterTipo;
-            });
-
-            $('#filterTipo').on('change', function() {
-                table.draw();
-            });
-
         });
-
     </script>
 }

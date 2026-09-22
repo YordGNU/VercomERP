@@ -34,7 +34,7 @@
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <div class="row">
         <!-- Columna Izquierda: Estatus de la Orden -->
         <div class="col-lg-4">
@@ -143,7 +143,7 @@
                                             <small class="text-muted tiny font-monospace">@c.ProductoInsumo.Codigo</small>
                                         </td>
                                         <td>@c.CantidadPlanificada.ToString("N2")</td>
-                                        <td class="text-end fw-bold">@(c.CantidadReal > 0 ? c.CantidadReal.ToString("N2") : "-")</td>
+                                       <td class="fw-bold">@(c.CantidadReal > 0 ? c.CantidadReal.ToString("N2") : "-")</td>
                                         <td >
                                             @if (c.CantidadReal > 0)
                                             {

@@ -20,42 +20,45 @@
 <div class="row">
     <div class="row justify-content-center">
         <div class="col-lg-10">
-            <div class="card shadow-sm">
-                 <div class="card-header border-light justify-content-between">
-                    <h5 class="m-0 fw-bold"><i class="ti ti-file-certificate me-2 text-primary"></i>Datos del Instrumento Jurídico</h5>
+            <div class="card shadow-sm border-0">
+                 <div class="card-header bg-light-subtle py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="m-0 fw-bold text-primary"><i class="ti ti-file-certificate me-2"></i>Nuevo Contrato Económico (RF-50)</h5>
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                        <i class="ti ti-arrow-left me-1"></i> VOLVER
+                    </a>
                 </div>
                 <div class="card-body p-4">
-                    <form asp-action="Create" class="row g-4">
+                    <form asp-action="Create" class="row g-4" id="createContractForm">
                         @Html.AntiForgeryToken()
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
-
+                        <input asp-for="Contract.Estado" type="hidden" value="VIGENTE" />
                         <div class="col-md-4">
-                            <label class="form-label">Tipo de Contraparte</label>
-                            <select asp-for="Contract.TerceroTipo" name="Contract.TerceroTipo" class="form-control form-select w-100" id="terceroTipo" required>
-                                <option value="">-- Seleccione tipo --</option>
-                                <option value="CLIENTE">Cliente</option>
-                                <option value="PROVEEDOR">Proveedor</option>
+                            <label class="form-label fw-bold">Tipo de Contraparte</label>
+                            <select asp-for="Contract.TerceroTipo" name="Contract.TerceroTipo" class="form-select w-100 fw-bold" id="terceroTipo" required>
+                                <option value="">-- SELECCIONE TIPO --</option>
+                                <option value="CLIENTE">CLIENTE (VENTAS)</option>
+                                <option value="PROVEEDOR">PROVEEDOR (COMPRAS)</option>
                             </select>
                             <span asp-validation-for="Contract.TerceroTipo" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-8" id="divCliente" style="display:none;">
-                            <label class="form-label">Seleccionar Cliente</label>
-                            <select asp-for="Contract.ClienteId" name="Contract.ClienteId" class="form-control form-select w-100 select2" asp-items="Model.Clientes">
-                                <option value="">-- Seleccionar Cliente --</option>
+                            <label class="form-label fw-bold">Buscar Cliente</label>
+                            <select asp-for="Contract.ClienteId" name="Contract.ClienteId" class="form-select select2" asp-items="Model.Clientes">
+                                <option value="">-- BUSCAR POR NOMBRE --</option>
                             </select>
                         </div>
 
                         <div class="col-md-8" id="divProveedor" style="display:none;">
-                            <label class="form-label">Seleccionar Proveedor</label>
-                            <select asp-for="Contract.ProveedorId" name="Contract.ProveedorId" class="form-control form-select w-100 select2" asp-items="Model.Proveedores">
-                                <option value="">-- Seleccionar Proveedor --</option>
+                            <label class="form-label fw-bold">Buscar Proveedor</label>
+                            <select asp-for="Contract.ProveedorId" name="Contract.ProveedorId" class="form-select select2" asp-items="Model.Proveedores">
+                                <option value="">-- BUSCAR POR RAZÓN SOCIAL --</option>
                             </select>
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label">Número de Contrato</label>
-                            <input asp-for="Contract.NumeroContrato" name="Contract.NumeroContrato" class="form-control w-100 fw-bold text-primary" placeholder="Ej: CONTR-2026-001" required />
+                            <label class="form-label fw-bold">Número de Contrato (Legal)</label>
+                            <input asp-for="Contract.NumeroContrato" name="Contract.NumeroContrato" class="form-control fw-bold text-primary" placeholder="Ej: CT-2026/045" required />
                             <span asp-validation-for="Contract.NumeroContrato" class="text-danger small"></span>
                         </div>
 
@@ -92,16 +95,13 @@
                             <small class="text-muted italic">Dejar vacío para monto indeterminado.</small>
                             <span asp-validation-for="Contract.MontoTotal" class="text-danger small"></span>
                         </div>
-
                         <div class="col-md-8">
-                            <label class="form-label">Documento Digital (URL/Ruta)</label>
+                            <label class="form-label fw-bold">Adjuntar Contrato Digitalizado (Word/PDF)</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="ti ti-link"></i></span>
-                                <input asp-for="Contract.DocumentoUrl" name="Contract.DocumentoUrl" class="form-control w-grow" placeholder="https://..." />
+                                <input type="file" asp-for="DocumentoContrato" class="form-control" accept=".doc,.docx,.pdf" />
                             </div>
-                            <span asp-validation-for="Contract.DocumentoUrl" class="text-danger small"></span>
-                        </div>
-
+                        </div>    
                         <div class="col-12 d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                             <a asp-action="Index" class="btn btn-sm btn-outline px-4">CANCELAR</a>
                             <button type="submit" class="btn btn-sm btn-primary px-5 py-2 shadow">
@@ -114,7 +114,6 @@
         </div>
     </div>
 </div>
-
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script>
@@ -126,6 +125,8 @@
             };
             $('#terceroTipo').change(toggleDivs);
             toggleDivs();
+
+            window.SubmitAjaxForm('createContractForm');
         });
     </script>
 }

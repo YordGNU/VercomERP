@@ -67,7 +67,7 @@
                         </tbody>
                         <tfoot class="bg-light fw-bold" style="border-top: 2px solid var(--erp-border-color);">
                             <tr>
-                                <td class="text-end p-3">SUMATORIAS TOTALES:</td>
+                               <td class="p-3">SUMATORIAS TOTALES:</td>
                                 <td class="text-numeric p-3 text-primary" id="totalDebe">0.00</td>
                                 <td class="text-numeric p-3 text-primary" id="totalHaber">0.00</td>
                                 <td colspan="2" class="p-3">
@@ -146,6 +146,7 @@
                 addRow();
                 addRow();
             }
+            window.SubmitAjaxForm('asientoForm');
         });
     </script>
 }

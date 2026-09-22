@@ -16,10 +16,11 @@ public class ClienteController : Controller
     }
 
     [Authorize(Policy = "COMERCIAL.CLIENTE.VER")]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? search, string? segment, string? estado, int page = 1)
     {
-        var clientes = await _commercialService.GetClientsAsync();
-        return View(clientes);
+        bool? activo = estado switch { "activa" => true, "inactiva" => false, _ => null };
+        var vm = await _commercialService.GetClientIndexAsync(search, segment, activo, page);
+        return View(vm);
     }
 
     [Authorize(Policy = "COMERCIAL.CLIENTE.VER")]
@@ -49,11 +50,15 @@ public class ClienteController : Controller
         if (ModelState.IsValid)
         {
             var result = await _commercialService.CreateClientAsync(client);
-            if (result.Succeeded) return RedirectToAction(nameof(Index));
-            ModelState.AddModelError("", result.Message);
+            if (result.Succeeded)
+            {
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
+            }
+            return Json(new { success = false, message = result.Message });
         }
-        var contextVm = await _commercialService.GetClientFormContextAsync(client);
-        return View(contextVm);
+
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Verifique los datos del cliente.", errors = errorList });
     }
 
     [Authorize(Policy = "COMERCIAL.CLIENTE.EDITAR")]
@@ -80,10 +85,14 @@ public class ClienteController : Controller
         if (ModelState.IsValid)
         {
             var result = await _commercialService.UpdateClientAsync(client);
-            if (result.Succeeded) return RedirectToAction(nameof(Index));
-            ModelState.AddModelError("", result.Message);
+            if (result.Succeeded)
+            {
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
+            }
+            return Json(new { success = false, message = result.Message });
         }
-        var contextVm = await _commercialService.GetClientFormContextAsync(client);
-        return View(contextVm);
+
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Errores de validación.", errors = errorList });
     }
 }

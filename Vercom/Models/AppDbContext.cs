@@ -99,6 +99,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Feedback> Feedbacks { get; set; }
 
+    public virtual DbSet<Notificacion> Notificaciones { get; set; }
+
     public virtual DbSet<FamiliaProducto> FamiliaProductos { get; set; }
 
     public virtual DbSet<FichaCosto> FichaCostos { get; set; }
@@ -108,6 +110,8 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<Indicador> Indicadors { get; set; }
 
     public virtual DbSet<IndicadorValor> IndicadorValors { get; set; }
+
+    public virtual DbSet<TurnoTrabajo> TurnoTrabajos { get; set; }
 
     public virtual DbSet<ListaMateriale> ListaMateriales { get; set; }
 
@@ -569,14 +573,14 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValueSql("(sysdatetimeoffset())")
                 .HasColumnName("creado_en");
             entity.Property(e => e.CreadoPor).HasColumnName("creado_por");
-            entity.Property(e => e.DocumentoOrigenId).HasColumnName("documento_origen_id");
+entity.Property(e => e.DocumentoOrigenId).HasColumnName("documento_origen_id");
             entity.Property(e => e.DocumentoOrigenTipo)
                 .HasMaxLength(50)
                 .HasColumnName("documento_origen_tipo");
             entity.Property(e => e.EntidadId).HasColumnName("entidad_id");
             entity.Property(e => e.Estado)
                 .HasMaxLength(15)
-                .HasDefaultValue("CONTABILIZADO")
+                .HasDefaultValue("PENDIENTE")
                 .HasColumnName("estado");
             entity.Property(e => e.Fecha).HasColumnName("fecha");
             entity.Property(e => e.ModuloOrigen)
@@ -1299,6 +1303,9 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValueSql("(sysdatetimeoffset())")
                 .HasColumnName("creado_en");
             entity.Property(e => e.DocumentoOrigenId).HasColumnName("documento_origen_id");
+            entity.Property(e => e.DocumentoOrigenNumero)
+                .HasMaxLength(100)
+                .HasColumnName("documento_origen_numero");
             entity.Property(e => e.DocumentoOrigenTipo)
                 .HasMaxLength(50)
                 .HasColumnName("documento_origen_tipo");
@@ -1353,6 +1360,9 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValueSql("(sysdatetimeoffset())")
                 .HasColumnName("creado_en");
             entity.Property(e => e.DocumentoOrigenId).HasColumnName("documento_origen_id");
+            entity.Property(e => e.DocumentoOrigenNumero)
+                .HasMaxLength(100)
+                .HasColumnName("documento_origen_numero");
             entity.Property(e => e.DocumentoOrigenTipo)
                 .HasMaxLength(50)
                 .HasColumnName("documento_origen_tipo");
@@ -1631,6 +1641,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Telefono)
                 .HasMaxLength(30)
                 .HasColumnName("telefono");
+            entity.Property(e => e.TurnoTrabajoId).HasColumnName("turno_trabajo_id");
 
             entity.HasOne(d => d.Cargo).WithMany(p => p.Empleados)
                 .HasForeignKey(d => d.CargoId)
@@ -1645,6 +1656,10 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.Sucursal).WithMany(p => p.Empleados)
                 .HasForeignKey(d => d.SucursalId)
                 .HasConstraintName("FK__empleado__sucurs__382F5661");
+
+            entity.HasOne(d => d.TurnoTrabajo).WithMany()
+                .HasForeignKey(d => d.TurnoTrabajoId)
+                .HasConstraintName("FK_empleado_turno_trabajo");
         });
 
         modelBuilder.Entity<Entidad>(entity =>
@@ -2081,6 +2096,29 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Mensaje).HasColumnName("mensaje");
             entity.Property(e => e.MetadataTecnica).HasColumnName("metadata_tecnica");
             entity.Property(e => e.Estado).HasMaxLength(15).HasDefaultValue("PENDIENTE").HasColumnName("estado");
+            entity.Property(e => e.CreadoEn).HasDefaultValueSql("(sysdatetimeoffset())").HasColumnName("creado_en");
+
+            entity.HasOne(d => d.Entidad).WithMany().HasForeignKey(d => d.EntidadId).OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(d => d.Usuario).WithMany().HasForeignKey(d => d.UsuarioId).OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
+        modelBuilder.Entity<Notificacion>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.ToTable("notificacion", "nucleo", tb => tb.HasComment("Centro de notificaciones: eventos generados por el sistema (POS, inventario, seguridad) hacia la entidad, un usuario concreto o el maestro. Persistidas para mostrar bandeja e historial; además de emitirse en vivo por SignalR."));
+
+            entity.HasIndex(e => new { e.EntidadId, e.Leida, e.CreadoEn }, "IX_notificacion_entidad_leida").HasFilter("[entidad_id] IS NOT NULL");
+            entity.HasIndex(e => new { e.UsuarioId, e.Leida, e.CreadoEn }, "IX_notificacion_usuario_leida").HasFilter("[usuario_id] IS NOT NULL");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())").HasColumnName("id");
+            entity.Property(e => e.EntidadId).HasColumnName("entidad_id");
+            entity.Property(e => e.UsuarioId).HasColumnName("usuario_id");
+            entity.Property(e => e.Titulo).HasMaxLength(200).HasColumnName("titulo");
+            entity.Property(e => e.Mensaje).HasColumnName("mensaje");
+            entity.Property(e => e.Tipo).HasMaxLength(20).HasDefaultValue("info").HasColumnName("tipo");
+            entity.Property(e => e.Enlace).HasMaxLength(500).HasColumnName("enlace");
+            entity.Property(e => e.Leida).HasDefaultValue(false).HasColumnName("leida");
             entity.Property(e => e.CreadoEn).HasDefaultValueSql("(sysdatetimeoffset())").HasColumnName("creado_en");
 
             entity.HasOne(d => d.Entidad).WithMany().HasForeignKey(d => d.EntidadId).OnDelete(DeleteBehavior.ClientSetNull);
@@ -3502,6 +3540,9 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Observaciones).HasColumnName("observaciones");
             entity.Property(e => e.RegistradoPor).HasColumnName("registrado_por");
             entity.Property(e => e.TipoAusenciaId).HasColumnName("tipo_ausencia_id");
+            entity.Property(e => e.TurnoTrabajoId).HasColumnName("turno_trabajo_id");
+            entity.Property(e => e.RetardoMinutos).HasColumnName("retardo_minutos");
+            entity.Property(e => e.SalidaTempranaMinutos).HasColumnName("salida_temprana_minutos");
 
             entity.HasOne(d => d.Empleado).WithMany(p => p.RegistroAsistencia)
                 .HasForeignKey(d => d.EmpleadoId)
@@ -3515,6 +3556,10 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.TipoAusencia).WithMany(p => p.RegistroAsistencia)
                 .HasForeignKey(d => d.TipoAusenciaId)
                 .HasConstraintName("FK__registro___tipo___52E34C9D");
+
+            entity.HasOne(d => d.TurnoTrabajo).WithMany()
+                .HasForeignKey(d => d.TurnoTrabajoId)
+                .HasConstraintName("FK_registro_asistencia_turno_trabajo");
         });
 
         modelBuilder.Entity<RegistroSalarioTiempoServicio>(entity =>
@@ -3659,11 +3704,13 @@ public partial class AppDbContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK__sesion_c__3213E83F408B869D");
 
-            entity.ToTable("sesion_caja_pos", "integracion", tb => tb.HasComment("Un dispositivo solo puede tener una sesión ABIERTA a la vez — aplicar índice único parcial en capa de aplicación o UNIQUE(dispositivo_pos_id) WHERE estado='ABIERTA'."));
+            entity.ToTable("sesion_caja_pos", "integracion", tb => tb.HasComment("Una caja puede tener una única sesión ABIERTA, compartida por todos sus dispositivos (índice único parcial UNIQUE(caja_id) WHERE estado='ABIERTA')."));
 
             entity.HasIndex(e => new { e.DispositivoPosId, e.Estado }, "idx_sesion_caja_dispositivo");
 
-            entity.HasIndex(e => e.DispositivoPosId, "uq_sesion_caja_abierta")
+            entity.HasIndex(e => new { e.CajaId, e.Estado }, "idx_sesion_caja_caja");
+
+            entity.HasIndex(e => e.CajaId, "uq_sesion_caja_abierta")
                 .IsUnique()
                 .HasFilter("([estado]='ABIERTA')");
 
@@ -3671,6 +3718,7 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValueSql("(newid())")
                 .HasColumnName("id");
             entity.Property(e => e.AsientoCierreId).HasColumnName("asiento_cierre_id");
+            entity.Property(e => e.CajaId).HasColumnName("caja_id");
             entity.Property(e => e.CajeroId).HasColumnName("cajero_id");
             entity.Property(e => e.CantidadFacturas).HasColumnName("cantidad_facturas");
             entity.Property(e => e.DiferenciaArqueo)
@@ -3716,6 +3764,11 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.AsientoCierre).WithMany(p => p.SesionCajaPos)
                 .HasForeignKey(d => d.AsientoCierreId)
                 .HasConstraintName("FK__sesion_ca__asien__16EE5E27");
+
+            entity.HasOne(d => d.Caja).WithMany()
+                .HasForeignKey(d => d.CajaId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_sesion_caja_caja");
 
             entity.HasOne(d => d.Cajero).WithMany(p => p.SesionCajaPoCajeros)
                 .HasForeignKey(d => d.CajeroId)
@@ -3766,6 +3819,12 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Telefono)
                 .HasMaxLength(30)
                 .HasColumnName("telefono");
+            entity.Property(e => e.Latitud)
+                .HasColumnType("decimal(10, 6)")
+                .HasColumnName("latitud");
+            entity.Property(e => e.Longitud)
+                .HasColumnType("decimal(10, 6)")
+                .HasColumnName("longitud");
             entity.Property(e => e.Tipo)
                 .HasMaxLength(30)
                 .HasDefaultValue("ALMACEN")
@@ -3775,6 +3834,45 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.EntidadId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__sucursal__entida__4316F928");
+        });
+
+        modelBuilder.Entity<TurnoTrabajo>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_turno_trabajo");
+
+            entity.ToTable("turno_trabajo", "rrhh");
+
+            entity.HasIndex(e => new { e.EntidadId, e.Codigo }, "UQ_turno_trabajo_entidad_codigo").IsUnique();
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("id");
+            entity.Property(e => e.Activo)
+                .HasDefaultValue(true)
+                .HasColumnName("activo");
+            entity.Property(e => e.Codigo)
+                .HasMaxLength(20)
+                .HasColumnName("codigo");
+            entity.Property(e => e.CreadoEn)
+                .HasDefaultValueSql("(sysdatetimeoffset())")
+                .HasColumnName("creado_en");
+            entity.Property(e => e.EntidadId).HasColumnName("entidad_id");
+            entity.Property(e => e.EsNocturno).HasColumnName("es_nocturno");
+            entity.Property(e => e.HoraEntrada)
+                .HasColumnType("time")
+                .HasColumnName("hora_entrada");
+            entity.Property(e => e.HoraSalida)
+                .HasColumnType("time")
+                .HasColumnName("hora_salida");
+            entity.Property(e => e.Nombre)
+                .HasMaxLength(100)
+                .HasColumnName("nombre");
+            entity.Property(e => e.ToleranciaMinutos).HasColumnName("tolerancia_minutos");
+
+            entity.HasOne(d => d.Entidad).WithMany()
+                .HasForeignKey(d => d.EntidadId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_turno_trabajo_entidad");
         });
 
         modelBuilder.Entity<TipoAusencium>(entity =>
@@ -4032,6 +4130,7 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("accion");
             entity.Property(e => e.Canal)
                 .HasMaxLength(20)
+                .HasDefaultValue("ERP")
                 .HasColumnName("canal");
             entity.Property(e => e.Id)
                 .ValueGeneratedOnAdd()
@@ -4054,6 +4153,7 @@ public partial class AppDbContext : DbContext
 
             entity.Property(e => e.Canal)
                 .HasMaxLength(20)
+                .HasDefaultValue("ERP")
                 .HasColumnName("canal");
             entity.Property(e => e.EsquemaTabla)
                 .HasMaxLength(100)
@@ -4256,29 +4356,8 @@ public partial class AppDbContext : DbContext
                     }
                 }
             }
-
-            // 2. Aislamiento por Sucursal (Opcional - Si la tabla tiene SucursalId)
-            //var sucursalIdProp = entityType.FindProperty("SucursalId");
-            //if (sucursalIdProp != null && (sucursalIdProp.ClrType == typeof(Guid) || sucursalIdProp.ClrType == typeof(Guid?)))
-            //{
-            //    var sucursalIdExpr = System.Linq.Expressions.Expression.Property(parameter, "SucursalId");
-            //    var nullConst = System.Linq.Expressions.Expression.Constant(null, typeof(Guid?));
-
-            //    // Expresión: (this.CurrentSucursalId == null || e.SucursalId == this.CurrentSucursalId)
-            //    var isNoRestriction = System.Linq.Expressions.Expression.Equal(currentSucursalIdExpr, nullConst);
-
-            //    // Asegurar comparación correcta si es nullable
-            //    var sucursalIdNullable = sucursalIdProp.ClrType == typeof(Guid)
-            //        ? (System.Linq.Expressions.Expression)System.Linq.Expressions.Expression.Convert(sucursalIdExpr, typeof(Guid?))
-            //        : (System.Linq.Expressions.Expression)sucursalIdExpr;
-
-            //    var isEqual = System.Linq.Expressions.Expression.Equal(sucursalIdNullable, currentSucursalIdExpr);
-            //    var sucursalFilter = System.Linq.Expressions.Expression.OrElse(isNoRestriction, isEqual);
-
-            //    filterBody = filterBody == null ? sucursalFilter : System.Linq.Expressions.Expression.AndAlso(filterBody, sucursalFilter);
-            //}
-
-            // 3. Aplicar Excepción para el Usuario Master (Ve todo) y Sellar Filtro
+          
+            // 2. Aplicar Excepción para el Usuario Master (Ve todo) y Sellar Filtro
             if (filterBody != null)
             {
                 var finalFilter = System.Linq.Expressions.Expression.OrElse(isMasterExpr, filterBody);

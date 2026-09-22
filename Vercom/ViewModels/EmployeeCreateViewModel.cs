@@ -16,6 +16,7 @@ public class EmployeeCreateViewModel
     public IEnumerable<SelectListItem> Cargos { get; set; } = new List<SelectListItem>();
     public IEnumerable<SelectListItem> Sucursales { get; set; } = new List<SelectListItem>();
     public IEnumerable<SelectListItem> TiposContrato { get; set; } = new List<SelectListItem>();
+    public IEnumerable<SelectListItem> Turnos { get; set; } = new List<SelectListItem>();
 
     public string Title { get; set; } = "Alta de Trabajador con Contrato";
 }

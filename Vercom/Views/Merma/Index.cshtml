@@ -20,7 +20,7 @@
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <div class="card shadow-sm border-0">
         <div class="card-header bg-light-subtle">
             <h5 class="m-0 fw-bold"><i class="ti ti-trash me-2 text-danger"></i>Historial de Pérdidas Operativas</h5>
@@ -52,12 +52,12 @@
                                     }
                                 </td>
                                 <td class="fw-bold fs-13">@item.Producto?.Nombre</td>
-                                <td class="text-end fw-bold text-danger">
+                               <td class="fw-bold text-danger">
                                     @item.Cantidad.ToString("N2")
                                     <small class="text-muted">@item.Producto?.UnidadMedida.Codigo</small>
                                 </td>
                                 <td><span class="badge border border-danger text-danger small">@item.Causa</span></td>
-                                <td class="text-end fw-bold">@item.ValorContable?.ToString("C")</td>
+                               <td class="fw-bold">@item.ValorContable?.ToString("C")</td>
                                 <td>
                                     <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-icon btn-light rounded-circle">
                                         <i class="ti ti-eye"></i>

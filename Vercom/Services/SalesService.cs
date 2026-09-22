@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Vercom.Helpers;
 using Vercom.Models;
 using Vercom.ViewModels;
 
@@ -22,20 +23,25 @@ public class SalesService : ISalesService
     private readonly AppDbContext _context;
     private readonly IInventoryService _inventoryService;
     private readonly IContractService _contractService;
+    private readonly ICommercialService _commercialService;
     private readonly ITaxService _taxService;
     private readonly IConsecutivoService _consecutivoService;
     private readonly IAccountingService _accountingService;
+    private readonly IParametroSistemaService _paramService;
     private readonly Security.IEntidadProvider _entidadProvider;
 
     public SalesService(AppDbContext context, IInventoryService inventoryService, IContractService contractService,
-        ITaxService taxService, IConsecutivoService consecutivoService, IAccountingService accountingService, Security.IEntidadProvider entidadProvider)
+        ICommercialService commercialService, ITaxService taxService, IConsecutivoService consecutivoService,
+        IAccountingService accountingService, IParametroSistemaService paramService, Security.IEntidadProvider entidadProvider)
     {
         _context = context;
         _inventoryService = inventoryService;
         _contractService = contractService;
+        _commercialService = commercialService;
         _taxService = taxService;
         _consecutivoService = consecutivoService;
         _accountingService = accountingService;
+        _paramService = paramService;
         _entidadProvider = entidadProvider;
     }
 
@@ -108,7 +114,7 @@ public class SalesService : ISalesService
             if (string.IsNullOrEmpty(invoice.NumeroFactura))
             {
                 invoice.NumeroFactura = await _consecutivoService.ObtenerSiguienteNumeroAsync(
-                    invoice.EntidadId, invoice.SucursalId, "FACTURA_VENTA", invoice.Serie);
+                    invoice.EntidadId, invoice.SucursalId, DocumentoTipo.FacturaVenta, invoice.Serie);
             }
 
             invoice.Id = Guid.NewGuid();
@@ -118,18 +124,11 @@ public class SalesService : ISalesService
 
             decimal totalTax = 0;
             decimal subtotal = 0;
+            decimal totalCostoReal = 0;
 
+            // Pre-validar todos los productos y topes antes de iniciar movimientos
             foreach (var detail in invoice.FacturaVentaDetalles)
             {
-                detail.Id = Guid.NewGuid();
-                detail.FacturaId = invoice.Id;
-
-                // Obtener costo actual para registro de costo de venta (RF-35)
-                var stock = await _context.Existencia
-                    .FirstOrDefaultAsync(e => e.AlmacenId == invoice.AlmacenId && e.ProductoId == detail.ProductoId);
-                detail.CostoUnitarioVenta = stock?.CostoPromedio ?? 0;
-
-                // Cálculo de Impuesto Dinámico (RF-53) y Validación de Topes (RF-55)
                 var prod = await _context.Productos.Include(p => p.Familia).FirstOrDefaultAsync(p => p.Id == detail.ProductoId);
                 if (prod == null) return (false, $"Producto {detail.ProductoId} no encontrado.", null);
 
@@ -138,59 +137,79 @@ public class SalesService : ISalesService
                 var tope = await _context.TopePrecioMfps
                     .Where(t => (t.ProductoId == prod.Id || t.FamiliaId == prod.FamiliaId)
                                 && t.VigenteDesde <= today && (t.VigenteHasta == null || t.VigenteHasta >= today))
-                    .OrderByDescending(t => t.ProductoId) // Priorizar tope por producto sobre familia
+                    .OrderByDescending(t => t.ProductoId)
                     .FirstOrDefaultAsync();
 
                 if (tope != null && detail.PrecioUnitario > tope.PrecioMaximo)
                 {
                     return (false, $"ALERTA LEGAL: El precio de '{prod.Nombre}' ($ {detail.PrecioUnitario:N2}) excede el tope máximo permitido por el MFP ($ {tope.PrecioMaximo:N2}). Operación bloqueada.", null);
                 }
+            }
 
-                if (prod.AplicaImpuestoVentas)
+            // 3. Procesar Movimiento de Inventario Centralizado (VALE_ENTREGA)
+            var movSalida = new MovimientoInventario
+            {
+                Id = Guid.NewGuid(),
+                EntidadId = invoice.EntidadId,
+                TipoMovimientoId = await _inventoryService.EnsureMovementTypeAsync("VALE_ENTREGA"),
+                NumeroDocumento = invoice.NumeroFactura,
+                AlmacenOrigenId = invoice.AlmacenId,
+                Fecha = DateTimeOffset.Now,
+                ReferenciaExternaTipo = "FACTURA_VENTA",
+                ReferenciaExternaId = invoice.Id,
+                Canal = invoice.CanalVenta,
+                CreadoPor = invoice.CreadoPor
+            };
+
+            foreach (var detail in invoice.FacturaVentaDetalles)
+            {
+                detail.Id = Guid.NewGuid();
+                detail.FacturaId = invoice.Id;
+
+                var prod = await _context.Productos.FindAsync(detail.ProductoId);
+
+                if (prod != null && prod.AplicaImpuestoVentas)
                 {
                     var taxAmount = await _taxService.CalculateSalesTaxAsync(invoice.EntidadId, detail.PrecioUnitario * detail.Cantidad);
-                    detail.ImpuestoPorcentaje = 10.0m; // Informativo
+                    detail.ImpuestoPorcentaje = 10.0m;
                     totalTax += taxAmount;
                 }
 
                 detail.SubtotalLinea = (detail.PrecioUnitario * detail.Cantidad);
                 subtotal += detail.SubtotalLinea;
 
-                // 3. Descuento automático de Inventario (VEN)
-                var movSalida = new MovimientoInventario
-                {
-                    EntidadId = invoice.EntidadId,
-                    TipoMovimientoId = 3, // VEN
-                    NumeroDocumento = invoice.NumeroFactura,
-                    AlmacenOrigenId = invoice.AlmacenId,
-                    Fecha = DateTimeOffset.Now,
-                    ReferenciaExternaTipo = "FACTURA_VENTA",
-                    ReferenciaExternaId = invoice.Id,
-                    Canal = invoice.CanalVenta,
-                    CreadoPor = invoice.CreadoPor
-                };
                 movSalida.MovimientoInventarioDetalles.Add(new MovimientoInventarioDetalle
                 {
                     Id = Guid.NewGuid(),
                     ProductoId = detail.ProductoId,
-                    Cantidad = detail.Cantidad,
-                    CostoUnitario = detail.CostoUnitarioVenta
+                    Cantidad = detail.Cantidad
                 });
+            }
 
-                var invResult = await _inventoryService.ProcessMovementAsync(movSalida);
-                if (!invResult.Succeeded) throw new Exception($"Stock insuficiente: {invResult.Message}");
+            var invResult = await _inventoryService.ProcessMovementAsync(movSalida);
+            if (!invResult.Succeeded) return (false, $"Stock insuficiente: {invResult.Message}", null);
 
-                detail.MovimientoInventarioId = movSalida.Id;
+            // Recuperar costos reales calculados por el motor de inventario (RF-32)
+            foreach (var detMov in invResult.Movement!.MovimientoInventarioDetalles)
+            {
+                var detFac = invoice.FacturaVentaDetalles.First(d => d.ProductoId == detMov.ProductoId);
+                detFac.CostoUnitarioVenta = detMov.CostoUnitario ?? 0;
+                detFac.MovimientoInventarioId = movSalida.Id;
+                totalCostoReal += (decimal)(detFac.CostoUnitarioVenta * detFac.Cantidad);
             }
 
             invoice.Subtotal = subtotal;
             invoice.ImpuestoVentasTotal = totalTax;
             invoice.Total = subtotal + totalTax - invoice.DescuentoTotal;
 
-            // 4. Gestión de Cobros (RF-54)
+            // 4. Gestión de Cobros y Límite de Crédito (RF-54)
             var totalPagado = invoice.FormaPagoVenta.Sum(p => p.Monto);
             if (totalPagado < invoice.Total)
             {
+                // Validar Límite de Crédito
+                var creditCheck = await _commercialService.ValidateCreditLimitAsync(invoice.ClienteId, invoice.Total - totalPagado);
+                if (!creditCheck.Succeeded) return (false, creditCheck.Message, null);
+
                 var cxc = new CuentaPorCobrar
                 {
                     Id = Guid.NewGuid(),
@@ -212,8 +231,8 @@ public class SalesService : ISalesService
             _context.FacturaVenta.Add(invoice);
             await _context.SaveChangesAsync();
 
-            // 5. Integración Contable Venta (RF-52/RF-11)
-            var tipoComprobante = await _context.TipoComprobantes.FirstOrDefaultAsync(t => t.Codigo == "ING"); // Ingresos
+            // 5. Integración Contable Refinada (RF-52)
+            var tipoComprobante = await _context.TipoComprobantes.FirstOrDefaultAsync(t => t.Codigo == "ING");
             if (tipoComprobante != null)
             {
                 var period = await _context.PeriodoContables.FirstOrDefaultAsync(p => p.EntidadId == invoice.EntidadId && p.Anio == invoice.Fecha.Year && p.Mes == invoice.Fecha.Month);
@@ -235,24 +254,48 @@ public class SalesService : ISalesService
                         Estado = "CONTABILIZADO"
                     };
 
-                    // DEBE: Caja o Cuenta por Cobrar
-                    var caja = await _context.Cajas.FirstOrDefaultAsync(c => c.SucursalId == invoice.SucursalId);
-                    var debitAccId = (totalPagado >= invoice.Total) ? caja?.CuentaContableId : invoice.Cliente.CuentaContableId;
+                    // A. DEBE: Cobro (Caja/Banco o Cuenta por Cobrar)
+                    var ctaCaja = await _paramService.ObtenerValorVigenteAsync(invoice.EntidadId, "CTA_CAJA_MN") ?? "101";
+                    var ctaCxC = await _paramService.ObtenerValorVigenteAsync(invoice.EntidadId, "CTA_CXC_CLIENTES") ?? "135";
 
-                    if (debitAccId.HasValue)
-                        entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = debitAccId.Value, Debe = invoice.Total, Haber = 0, Glosa = "Cobro Factura" });
+                    if (totalPagado > 0)
+                    {
+                        var acc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaCaja && c.EntidadId == invoice.EntidadId);
+                        if (acc != null) entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = acc.Id, Debe = totalPagado, Glosa = "Cobro Contado" });
+                    }
+                    if (invoice.Total - totalPagado > 0)
+                    {
+                        var acc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaCxC && c.EntidadId == invoice.EntidadId);
+                        if (acc != null) entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = acc.Id, Debe = invoice.Total - totalPagado, Glosa = "Venta a Crédito" });
+                    }
 
-                    // HABER: Ingresos e Impuestos
-                    // Usamos la cuenta de ingresos del primer producto para simplificar el asiento global
-                    var firstProd = await _context.Productos.FindAsync(invoice.FacturaVentaDetalles.First().ProductoId);
-                    if (firstProd?.CuentaIngresoId != null)
-                        entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = firstProd.CuentaIngresoId.Value, Debe = 0, Haber = invoice.Subtotal - invoice.DescuentoTotal, Glosa = "Venta de Mercancías" });
+                    // B. HABER: Ingresos e Impuestos
+                    var ctaVentas = await _paramService.ObtenerValorVigenteAsync(invoice.EntidadId, "CTA_VENTAS_GENERAL") ?? "500.0100";
+                    var ctaImp = await _paramService.ObtenerValorVigenteAsync(invoice.EntidadId, "CTA_IMP_VENTAS") ?? "440.0001";
+
+                    var salesAcc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaVentas && c.EntidadId == invoice.EntidadId);
+                    if (salesAcc != null) entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = salesAcc.Id, Haber = invoice.Subtotal - invoice.DescuentoTotal, Glosa = "Ingresos por Ventas" });
 
                     if (invoice.ImpuestoVentasTotal > 0)
                     {
-                        var taxAcc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "402" && c.EntidadId == invoice.EntidadId); // 402: Impuestos por Pagar
-                        if (taxAcc != null)
-                            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = taxAcc.Id, Debe = 0, Haber = invoice.ImpuestoVentasTotal, Glosa = "Impuesto sobre Ventas (10%)" });
+                        var taxAcc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaImp && c.EntidadId == invoice.EntidadId);
+                        if (taxAcc != null) entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = taxAcc.Id, Haber = invoice.ImpuestoVentasTotal, Glosa = "Impuesto sobre Ventas" });
+                    }
+
+                    // C. COSTO DE VENTA (RF-35): DEBE Costo / HABER Inventario
+                    if (totalCostoReal > 0)
+                    {
+                        var ctaCosto = await _paramService.ObtenerValorVigenteAsync(invoice.EntidadId, "CTA_COSTO_VENTAS") ?? "810";
+                        var ctaInv = await _paramService.ObtenerValorVigenteAsync(invoice.EntidadId, "CTA_INV_GENERICA") ?? "183.0010";
+
+                        var costAcc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaCosto && c.EntidadId == invoice.EntidadId);
+                        var invAcc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaInv && c.EntidadId == invoice.EntidadId);
+
+                        if (costAcc != null && invAcc != null)
+                        {
+                            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = costAcc.Id, Debe = totalCostoReal, Glosa = "Costo de Mercancía Vendida" });
+                            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = invAcc.Id, Haber = totalCostoReal, Glosa = "Baja de Inventario por Venta" });
+                        }
                     }
 
                     if (entry.AsientoDetalles.Sum(d => d.Debe) == entry.AsientoDetalles.Sum(d => d.Haber))
@@ -264,8 +307,7 @@ public class SalesService : ISalesService
             }
 
             await transaction.CommitAsync();
-
-            return (true, $"Factura {invoice.NumeroFactura} emitida.", invoice);
+            return (true, $"Factura {invoice.NumeroFactura} emitida y contabilizada.", invoice);
         }
         catch (Exception ex)
         {
@@ -291,7 +333,7 @@ public class SalesService : ISalesService
                 var movRegreso = new MovimientoInventario
                 {
                     EntidadId = invoice.EntidadId,
-                    TipoMovimientoId = 4,
+                    TipoMovimientoId = await _inventoryService.EnsureMovementTypeAsync("DEVOLUCION_ENTRADA"),
                     NumeroDocumento = $"ANUL-{invoice.NumeroFactura}",
                     AlmacenDestinoId = invoice.AlmacenId,
                     Fecha = DateTimeOffset.Now,
@@ -312,9 +354,16 @@ public class SalesService : ISalesService
             invoice.Estado = "ANULADA";
             invoice.MotivoAnulacion = reason;
 
+            // Revertir Asiento Contable si existe (RF-12)
+            if (invoice.AsientoId.HasValue)
+            {
+                var revResult = await _accountingService.ReverseEntryAsync(invoice.AsientoId.Value, $"Anulación Factura {invoice.NumeroFactura}: {reason}");
+                if (!revResult.Succeeded) throw new Exception($"No se pudo revertir el asiento: {revResult.Message}");
+            }
+
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
-            return (true, "Operación anulada.");
+            return (true, "Operación anulada e impacto contable revertido.");
         }
         catch (Exception ex)
         {

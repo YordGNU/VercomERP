@@ -1,0 +1,157 @@
+@model IEnumerable<Vercom.Models.Notificacion>
+@{
+    ViewBag.Title = "Centro de Notificaciones";
+}
+
+<div class="page-title-head d-flex align-items-center p-3">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Centro de Notificaciones</h4>
+        <p class="text-muted small mb-0">Bandeja central del ERP: ventas POS, terminales, sesiones de caja, inventario, RRHH y seguridad.</p>
+    </div>
+    <div>
+        <button type="button" class="btn btn-primary btn-sm shadow" id="btn-marcar-todas">
+            <i class="ti ti-check-all me-1"></i> Marcar todas leídas
+        </button>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-auto">
+        <div class="btn-group btn-group-sm" role="group">
+            <a asp-action="Index" asp-route-filtro="todas" class="btn @(ViewBag.Filtro == "todas" ? "btn-primary" : "btn-light")">Todas</a>
+            <a asp-action="Index" asp-route-filtro="noleidas" class="btn @(ViewBag.Filtro == "noleidas" ? "btn-primary" : "btn-light")">No leídas</a>
+            <a asp-action="Index" asp-route-filtro="leidas" class="btn @(ViewBag.Filtro == "leidas" ? "btn-primary" : "btn-light")">Leídas</a>
+        </div>
+    </div>
+    <div class="col-auto">
+        <select class="form-select form-select-sm" id="select-tipo">
+            <option value="todas">Todos los tipos</option>
+            @foreach (var t in ViewBag.Tipos as List<string?> ?? new List<string?>())
+            {
+                <option value="@t" selected="@(ViewBag.Tipo == t)">@t</option>
+            }
+        </select>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table id="notificacionTable" class="table table-striped table-hover dt-responsive">
+                <thead class="thead-light text-uppercase fs-xxs">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Título</th>
+                        <th>Mensaje</th>
+                        <th>Tipo</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        var colorIcono = item.Tipo switch
+                        {
+                            "success" => "text-success",
+                            "danger" => "text-danger",
+                            "warning" => "text-warning",
+                            _ => "text-info"
+                        };
+                        var badge = item.Tipo switch
+                        {
+                            "success" => "bg-success-subtle text-success",
+                            "danger" => "bg-danger-subtle text-danger",
+                            "warning" => "bg-warning-subtle text-warning",
+                            _ => "bg-info-subtle text-info"
+                        };
+                        <tr class="@(item.Leida ? "text-muted" : "fw-semibold")">
+                            <td class="small">@item.CreadoEn.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@item.Titulo</td>
+                            <td style="max-width: 420px;"><p class="mb-0 text-truncate" title="@item.Mensaje">@item.Mensaje</p></td>
+                            <td><span class="badge @badge"><i class="ti @(item.Tipo == "success" ? "ti-circle-check" : item.Tipo == "danger" ? "ti-alert-triangle" : item.Tipo == "warning" ? "ti-alert" : "ti-info-circle") me-1"></i>@item.Tipo</span></td>
+                            <td>
+                                @if (item.Leida)
+                                {
+                                    <span class="badge bg-light text-success"><i class="ti ti-check me-1"></i>Leída</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning-subtle text-warning"><i class="ti ti-bell me-1"></i>Nueva</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-list justify-content-end">
+                                    @if (!item.Leida)
+                                    {
+                                        <form asp-action="MarcarLeida" method="post" class="d-inline notif-marcar" data-leida="true">
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button type="submit" class="btn btn-sm btn-icon btn-light rounded-circle" title="Marcar leída">
+                                                <i class="ti ti-circle-check text-success"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form asp-action="MarcarNoLeida" method="post" class="d-inline notif-marcar" data-leida="false">
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button type="submit" class="btn btn-sm btn-icon btn-light rounded-circle" title="Marcar no leída">
+                                                <i class="ti ti-bell text-secondary"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#notificacionTable').DataTable({
+                language: { url: '/js/i18n/es-ES.json' },
+                order: [[0, 'desc']]
+            });
+
+            // Selector de tipo => recarga con el filtro
+            $('#select-tipo').on('change', function () {
+                window.location.href = '@Url.Action("Index")' + '?filtro=' + '@ViewBag.Filtro' + '&tipo=' + $(this).val();
+            });
+
+            // Marcar leída / no leída vía AJAX
+            $('.notif-marcar').on('submit', function (e) {
+                e.preventDefault();
+                const $form = $(this);
+                $.post({
+                    url: $form.attr('action'),
+                    data: $form.serialize(),
+                    success: function () {
+                        window.SwalAlert('success', 'Estado actualizado.');
+                        setTimeout(() => window.location.reload(), 900);
+                    },
+                    error: function () {
+                        window.SwalAlert('error', 'No se pudo actualizar el estado.');
+                    }
+                });
+            });
+
+            // Marcar todas leídas
+            $('#btn-marcar-todas').on('click', function (e) {
+                e.preventDefault();
+                $.post({
+                    url: '@Url.Action("MarcarTodasLeidas")',
+                    headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').first().val() },
+                    success: function () {
+                        window.SwalAlert('success', 'Todas las notificaciones marcadas como leídas.');
+                        setTimeout(() => window.location.reload(), 900);
+                    }
+                });
+            });
+        });
+    </script>
+}

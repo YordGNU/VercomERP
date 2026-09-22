@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using System.Text.Json;
+using Vercom.Helpers;
 using Vercom.Models;
 
 namespace Vercom.Services;
@@ -35,6 +36,10 @@ public class AuditInterceptor : SaveChangesInterceptor
         var userName = GetCurrentUserName();
         var ipAddress = _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?.ToString();
 
+        // ✅ Obtener el canal sanitizado
+        var canalRaw = _httpContextAccessor.HttpContext?.Request?.Headers["X-Channel"].FirstOrDefault();
+        var canal = AuditConstants.NormalizeCanal(canalRaw);
+
         foreach (var entry in context.ChangeTracker.Entries())
         {
             if (entry.Entity is Auditorium || entry.State == EntityState.Detached || entry.State == EntityState.Unchanged)
@@ -44,10 +49,10 @@ public class AuditInterceptor : SaveChangesInterceptor
             {
                 UsuarioId = userId,
                 NombreUsuario = userName,
-                OcurridoEn = DateTime.Now,
+                OcurridoEn = DateTimeOffset.Now,
                 EsquemaTabla = entry.Metadata.GetTableName() ?? entry.Entity.GetType().Name,
                 IpOrigen = ipAddress,
-                Canal = "ERP"
+                Canal = canal
             };
 
             var primaryKey = entry.Metadata.FindPrimaryKey();

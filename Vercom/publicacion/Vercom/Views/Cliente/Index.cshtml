@@ -1,6 +1,7 @@
-@model IEnumerable<Vercom.Models.Cliente>
+@model Vercom.ViewModels.ClientListViewModel
 @{
-    ViewBag.Title = "Cartera de Clientes";
+    ViewData["Title"] = "Cartera de Clientes";
+    var estado = Model.Activo switch { true => "activa", false => "inactiva", _ => "" };
 }
 
 <div class="page-title-head d-flex align-items-center p-3 mb-4">
@@ -8,69 +9,243 @@
         <h4 class="page-main-title m-0 fw-bold">Gestión Comercial: Cartera de Clientes</h4>
         <p class="text-muted small mb-0">Directorio unificado de clientes corporativos y consumidores finales.</p>
     </div>
-    <div class="text-end">      
-        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
-            <i class="ti ti-user-plus"></i> REGISTRAR CLIENTE
+    <div class="text-end d-flex align-items-center gap-3"> 
+        <a asp-action="Create" class="btn btn-primary shadow-sm">
+            <i class="ti ti-user-plus me-1"></i> REGISTRAR CLIENTE
         </a>
     </div>
 </div>
 
-<div class="row">
-    <div class="card">
-         <div class="card-header border-light justify-content-between">
-            <h5 class="m-0 fw-bold"><i class="ti ti-users me-2 text-primary"></i>Listado de Clientes</h5>
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm mb-0">
+            <div class="card-body p-3 d-flex align-items-center gap-3">
+                <span class="avatar bg-primary-subtle text-primary"><i class="ti ti-users fs-20"></i></span>
+                <div>
+                    <div class="fs-5 fw-bold mb-0">@Model.Total</div>
+                    <div class="text-muted small">Clientes</div>
+                </div>
+            </div>
         </div>
-        <div class="card-body">
-            <table id="clientsTable" class="table table-striped table-hover dt-responsive">
-                <thead class="thead-sm text-uppercase fs-xxs">
-                    <tr>
-                        <th>Nombre / Razón Social</th>
-                        <th> NIT / CI</th>
-                        <th >Segmento</th>
-                        <th  class="text-center">Teléfono</th>
-                       <th>Límite Crédito ($)</th>
-                      <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model)
-                    {
-                        <tr>
-                            <td class="fw-bold">@item.NombreRazonSocial</td>
-                            <td class="text-numeric small">@item.NitOCi</td>
-                            <td><span class="badge badge-soft-secondary">@item.Segmento</span></td>
-                            <td >@item.Telefono</td>
-                            <td class="text-numeric">@item.LimiteCredito.ToString("N2")</td>
-                            <td >
-                                <span class="badge @(item.Activo ? "badge-soft-success" : "badge-soft-danger")">@(item.Activo ? "ACTIVO" : "INACTIVO")</span>
-                            </td>
-                            <td>
-                               <div class="d-flex justify-content-center gap-1">
-                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-light btn-icon btn-sm rounded-circle"title="Expediente">
-                                        <i class="ti ti-eye"></i>
-                                    </a>
-                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-light btn-icon btn-sm rounded-circle"title="Editar">
-                                        <i class="ti ti-edit"></i>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm mb-0">
+            <div class="card-body p-3 d-flex align-items-center gap-3">
+                <span class="avatar bg-success-subtle text-success"><i class="ti ti-circle-check fs-20"></i></span>
+                <div>
+                    <div class="fs-5 fw-bold mb-0">@Model.Activos</div>
+                    <div class="text-muted small">Clientes activos</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm mb-0">
+            <div class="card-body p-3 d-flex align-items-center gap-3">
+                <span class="avatar bg-danger-subtle text-danger"><i class="ti ti-circle-x fs-20"></i></span>
+                <div>
+                    <div class="fs-5 fw-bold mb-0">@Model.Inactivos</div>
+                    <div class="text-muted small">Clientes inactivos</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm mb-0">
+            <div class="card-body p-3 d-flex align-items-center gap-3">
+                <span class="avatar bg-info-subtle text-info"><i class="ti ti-chart-donut fs-20"></i></span>
+                <div>
+                    <div class="fs-5 fw-bold mb-0">@Model.Minoristas <span class="text-muted fs-6 fw-normal">/ @Model.Mayoristas</span></div>
+                    <div class="text-muted small">Minoristas / Mayoristas</div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-@section Scripts {
-    <script>
-        $(document).ready(function () {
-            $('#clientsTable').DataTable({
-                language: { url: '@Url.Content("~/lib/i18n/es-ES.json")' },
-                order: [[1, 'asc']],
-                dom: '<"row align-items-center"<"col-md-6"l><"col-md-6"f>>rt<"row align-items-center"<"col-md-5"i><"col-md-7"p>>',
-            });
-        });
-    </script>
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body p-3">
+        <form asp-action="Index" method="get" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small fw-bold mb-1">Buscar</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="ti ti-search"></i></span>
+                    <input type="text" name="search" value="@Model.Search" class="form-control" placeholder="Nombre o NIT/CI..." autocomplete="off" />
+                    <button type="submit" class="btn btn-primary"><i class="ti ti-arrow-right"></i></button>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold mb-1">Segmento</label>
+                <select name="segment" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Todos --</option>
+                    @if (Model.Segmento == "MINORISTA")
+                    {
+                        <option value="MINORISTA" selected>MINORISTA</option>
+                        <option value="MAYORISTA">MAYORISTA</option>
+                    }
+                    else if (Model.Segmento == "MAYORISTA")
+                    {
+                        <option value="MINORISTA">MINORISTA</option>
+                        <option value="MAYORISTA" selected>MAYORISTA</option>
+                    }
+                    else
+                    {
+                        <option value="MINORISTA">MINORISTA</option>
+                        <option value="MAYORISTA">MAYORISTA</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold mb-1">Estado</label>
+                <select name="estado" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Todos --</option>
+                    @if (estado == "activa")
+                    {
+                        <option value="activa" selected>Activos</option>
+                        <option value="inactiva">Inactivos</option>
+                    }
+                    else if (estado == "inactiva")
+                    {
+                        <option value="activa">Activos</option>
+                        <option value="inactiva" selected>Inactivos</option>
+                    }
+                    else
+                    {
+                        <option value="activa">Activos</option>
+                        <option value="inactiva">Inactivos</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <a asp-action="Index" class="btn btn-light w-100">
+                    <i class="ti ti-refresh me-1"></i> LIMPIAR
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row">
+    @foreach (var item in Model.Items)
+    {
+        var seg = (string.IsNullOrEmpty(item.Segmento) ? "SIN SEGMENTO" : item.Segmento).ToUpperInvariant();
+        var tipo = (string.IsNullOrEmpty(item.TipoPersona) ? "SIN TIPO" : item.TipoPersona).ToUpperInvariant();
+        var segBadge = seg == "MAYORISTA" ? "bg-dark-subtle text-dark" : "bg-info-subtle text-info";
+        var contacto = new[] { item.Direccion, item.Telefono, item.Email }.Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+        <div class="col-md-6 col-xl-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm overflow-hidden">
+                <div class="card-status-top @(item.Activo ? "bg-success" : "bg-secondary")"></div>
+                <div class="card-body p-3 d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="d-flex gap-2 align-items-center">
+                            <span class="avatar bg-light text-primary"><i class="ti ti-user-star fs-22"></i></span>
+                            <div>
+                                <span class="badge @segBadge text-uppercase mb-1">@seg</span>
+                                <h5 class="card-title mb-0 fs-14 text-truncate fw-bold" style="max-width: 190px;">@item.NombreRazonSocial</h5>
+                                <code class="text-muted small">NIT/CI: @item.NitOCi</code>
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-icon btn-light border" data-bs-toggle="dropdown" type="button" title="Acciones">
+                                <i class="ti ti-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                <li><h6 class="dropdown-header small text-uppercase">Acciones</h6></li>
+                                <li><a class="dropdown-item" asp-action="Details" asp-route-id="@item.Id"><i class="ti ti-eye me-1 text-primary"></i> Detalles</a></li>
+                                <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@item.Id"><i class="ti ti-edit me-1 text-info"></i> Editar</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" asp-controller="Sales" asp-action="Create" asp-route-clienteId="@item.Id"><i class="ti ti-receipt me-1 text-success"></i> Nueva venta</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center bg-light-subtle border rounded-2 px-2 py-2 mb-3">
+                        <span class="badge @(tipo == "JURIDICA" ? "bg-primary-subtle text-primary" : "bg-secondary-subtle text-secondary") text-uppercase">@tipo</span>
+                        <div class="text-end">
+                            <div class="tiny fw-bold text-muted text-uppercase">Límite crédito</div>
+                            <div class="fw-bold text-dark">$@item.LimiteCredito.ToString("N2")</div>
+                        </div>
+                    </div>
+
+                    @if (item.Direccion != null)
+                    {
+                        <div class="small text-muted mb-1">
+                            <i class="ti ti-map-pin me-1 text-danger"></i>
+                            @item.Direccion
+                        </div>
+                    }
+                    @if (item.Telefono != null)
+                    {
+                        <div class="small text-muted mb-1">
+                            <i class="ti ti-phone me-1 text-success"></i>@item.Telefono
+                        </div>
+                    }
+                    @if (item.Email != null)
+                    {
+                        <div class="small text-muted mb-1">
+                            <i class="ti ti-mail me-1 text-primary"></i><span class="text-truncate d-inline-block align-bottom" style="max-width: 190px;">@item.Email</span>
+                        </div>
+                    }
+                    @if (item.Direccion == null && item.Email == null && item.Telefono == null)
+                    {
+                        <div class="small text-muted mb-1"><i class="ti ti-info-circle me-1"></i>Sin datos de contacto.</div>
+                    }
+
+                    <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center">
+                        <span class="badge @(item.Activo ? "badge-soft-success" : "badge-soft-danger")">
+                            <i class="ti ti-circle-filled me-1"></i> @(item.Activo ? "ACTIVO" : "INACTIVO")
+                        </span>
+                        <div class="btn-list">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i> VER</a>
+                            <a asp-controller="Sales" asp-action="Create" asp-route-clienteId="@item.Id" class="btn btn-sm btn-success">
+                                <i class="ti ti-receipt me-1"></i> VENDER
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (!Model.Items.Any())
+    {
+        <div class="col-12 text-center py-5">
+            <div class="avatar-lg bg-light text-muted rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                <i class="ti ti-users fs-40"></i>
+            </div>
+            <h4>@(Model.TotalItems == 0 ? "Sin clientes registrados" : "Sin resultados")</h4>
+            <p class="text-muted">@(Model.TotalItems == 0 ? "Registre su primer cliente para comenzar la facturación." : "Ningún cliente coincide con los filtros aplicados.")</p>
+            <a asp-action="Create" class="btn btn-primary mt-2"><i class="ti ti-plus me-1"></i> Registrar cliente</a>
+        </div>
+    }
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    var inicio = Math.Max(1, Model.Page - 2);
+    var fin = Math.Min(Model.TotalPages, Model.Page + 2);
+    <nav class="mt-2">
+        <ul class="pagination pagination-sm justify-content-center mb-0">
+            <li class="page-item @(Model.HasPrevious ? "" : "disabled")">
+                <a class="page-link" asp-action="Index" asp-route-search="@Model.Search" asp-route-segment="@Model.Segmento" asp-route-estado="@estado" asp-route-page="@(Model.Page - 1)">Anterior</a>
+            </li>
+            @for (int p = inicio; p <= fin; p++)
+            {
+                <li class="page-item @(p == Model.Page ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-search="@Model.Search" asp-route-segment="@Model.Segmento" asp-route-estado="@estado" asp-route-page="@p">@p</a>
+                </li>
+            }
+            <li class="page-item @(Model.HasNext ? "" : "disabled")">
+                <a class="page-link" asp-action="Index" asp-route-search="@Model.Search" asp-route-segment="@Model.Segmento" asp-route-estado="@estado" asp-route-page="@(Model.Page + 1)">Siguiente</a>
+            </li>
+        </ul>
+    </nav>
 }
+
+<div class="text-center text-muted small mt-2">
+    Mostrando @Model.Items.Count() de @Model.TotalItems clientes
+</div>
+
+<style>
+    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
+</style>

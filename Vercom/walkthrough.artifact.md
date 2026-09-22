@@ -1,41 +1,33 @@
-# Integración de la Iteración 3: RRHH e Inmutabilidad de Datos - Walkthrough
+# Construcción de Vistas de Integración POS - Walkthrough
 
-Se ha completado la actualización del módulo de Recursos Humanos siguiendo las directrices de la **Iteración 3**, centrada en la seguridad del historial salarial, el cumplimiento fiscal de precisión y la eficiencia en el alta de personal.
+Se ha completado la construcción y estilización de las interfaces de gestión para la integración con terminales móviles (POS), dotando al ERP de capacidades profundas de auditoría y configuración de hardware.
 
-## Mejoras de Seguridad y Cumplimiento
+## Capacidades de Auditoría y Gestión Implementadas
 
-### 1. Blindaje Inmutable (RNF-22)
-Se han instalado disparadores (**Triggers**) de nivel de base de datos en las tablas de nómina:
-- **Protección de Auditoría:** Una vez que una nómina se marca como `CONTABILIZADA` o `PAGADA`, el sistema bloquea cualquier intento de edición o eliminación de sus detalles o conceptos.
-- **Integridad de Salarios:** Esto garantiza que el historial salarial sea inalterable con fines probatorios laborales ante el MTSS.
+### 1. Monitor Detallado de Sesiones (Arqueos)
+- **Vista de Detalle:** Se creó la pantalla para inspeccionar los turnos de venta, permitiendo comparar el monto declarado por el cajero contra el saldo del sistema.
+- **Diferencias Visibles:** El sistema resalta automáticamente faltantes o sobrantes de efectivo, facilitando la conciliación por parte de los supervisores.
 
-### 2. Cálculo Fiscal de Precisión (RF-23)
-Se refactorizó el motor de cálculo para alinearlo con las normas vigentes de las MIPYMES:
-- **ISP/IRP Inteligente:** El Impuesto sobre Ingresos Personales ahora se calcula aplicando la tasa del 3% solo sobre el excedente del **Umbral Exento** (configurado en 2,500 CUP por defecto).
-- **Horas Extra Proporcionales:** Se implementó el recargo legal del 25% sobre el valor real de la hora trabajada, basado en la jornada semanal pactada.
-- **Cuadre Contable Automático:** El asiento de aprobación ahora incluye todas las retenciones y aportes patronales (12.5% SS y 5% Fuerza de Trabajo), asegurando la partida doble exacta en el Diario.
+### 2. Inspección Técnica de Sincronización
+- **Visor de Operaciones Offline:** Se implementó una vista para examinar el "Payload JSON" de las ventas enviadas desde Android. Esto permite a los técnicos diagnosticar errores de red o inconsistencias en los datos sin entrar a la base de datos.
+- **Control de Intentos:** Los administradores pueden ver cuántas veces se ha intentado procesar una operación y forzar un reintento manual si es necesario.
 
-## Optimizaciones para el Especialista
+### 3. Ficha Técnica de Terminales (Hardware)
+- **Gestión Completa:** Ahora es posible editar la configuración de cada dispositivo, vinculándolo a diferentes cajas (arcas) o sucursales según la necesidad operativa.
+- **Trazabilidad de Versión:** Se puede monitorear qué versión de la aplicación tiene instalada cada terminal para asegurar que todo el personal trabaje con las mismas reglas de negocio.
 
-### 3. Control de Plazas (Staffing) en Tiempo Real
-- **Candado de Contratación:** Al intentar registrar un nuevo contrato (ya sea en el Alta 360° o individualmente), el sistema verifica automáticamente la **Plantilla Aprobada**. Si no hay plazas disponibles para ese cargo en la sucursal, la operación se bloquea para evitar el sobregiro de nómina.
-
-### 4. Privacidad de Diagnósticos Médicos (RNF-20)
-- **Restricción de Acceso:** En el expediente digital, el diagnóstico CIE de los certificados médicos ahora se oculta automáticamente para usuarios sin roles de RRHH, Dirección o Admin, cumpliendo con la confidencialidad de datos sensibles.
-
-### 5. Asistente de Alta 360° (UX)
-- Se corrigió el flujo de autocompletado por Carnet de Identidad.
-- Se añadió la sugerencia de **Email Institucional** dinámico.
-- Se implementó la visualización de **Escalas Salariales** al seleccionar el cargo para guiar la negociación del contrato.
+### 4. Control de Folios (Rangos de Numeración)
+- **Semáforo de Consumo:** El listado de rangos ahora incluye una barra de progreso que indica visualmente qué terminales están próximas a agotar sus números de factura reservados.
+- **Alertas de Agotado:** Los bloques terminados se marcan con badges rojos, indicando que el dispositivo requiere una nueva reserva de números.
 
 ## Resultados Técnicos
 
 > [!SUCCESS]
-> **Auditabilidad Total:** El módulo ahora cumple con los requisitos de la Contraloría (CGR) respecto a la inmutabilidad de los registros financieros de personal.
+> **Integridad Visual:** Se unificó el diseño de todas las pantallas de POS bajo el estándar Vercom Elite, utilizando DataTables para búsquedas rápidas y el motor AJAX para ediciones sin recarga.
 
 > [!IMPORTANT]
-> **Ajuste de Parámetros:** Se recomienda revisar periódicamente los valores de `UMBRAL_EXENTO_IMP_INGRESOS_PERS` y `TASA_RECARGO_HORA_EXTRA` en la configuración del sistema ante posibles cambios legislativos.
+> **Transparencia Cloud:** Los jefes de ventas ahora tienen visibilidad total de lo que ocurre en los dispositivos móviles, desde la apertura del turno hasta la sincronización del último centavo vendido.
 
 ## Próximos Pasos
-- Implementar el reporte de "Aportes al Presupuesto" consolidado por tipo de impuesto.
-- Habilitar la generación de transferencias masivas de pago.
+- Integrar una alerta en el Dashboard principal que notifique cuando una terminal tenga menos de un 10% de números disponibles.
+- Implementar la descarga de reportes de arqueo en formato PDF para firma física de cajeros.

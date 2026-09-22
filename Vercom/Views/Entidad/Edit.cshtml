@@ -12,7 +12,8 @@
 <div class="row mt-4">
     <div class="row justify-content-center">
         <div class="col-lg-10">
-            <form asp-action="Edit" method="post">
+            <form asp-action="Edit" method="post" id="editEntityForm">
+                @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="Id" />
                 <input type="hidden" asp-for="CreadoEn" />
 
@@ -101,4 +102,9 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            window.SubmitAjaxForm('editEntityForm');
+        });
+    </script>
 }

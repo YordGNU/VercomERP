@@ -50,12 +50,13 @@ public class RolController : Controller
             var result = await _authService.CreateRolAsync(rol);
             if (result.Succeeded)
             {
-                TempData["Success"] = result.Message;
-                return RedirectToAction(nameof(Index));
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
             }
-            ModelState.AddModelError("", result.Message);
+            return Json(new { success = false, message = result.Message });
         }
-        return View(rol);
+
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Errores de validación.", errors = errorList });
     }
 
     [HttpGet]
@@ -86,12 +87,13 @@ public class RolController : Controller
             var result = await _authService.UpdateRolAsync(rol);
             if (result.Succeeded)
             {
-                TempData["Success"] = result.Message;
-                return RedirectToAction(nameof(Index));
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
             }
-            ModelState.AddModelError("", result.Message);
+            return Json(new { success = false, message = result.Message });
         }
-        return View(rol);
+
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Errores de validación.", errors = errorList });
     }
 
     [HttpGet]
@@ -136,12 +138,9 @@ public class RolController : Controller
         var result = await _authService.UpdateRolPermissionsAsync(id, selectedPermissions);
         if (result.Succeeded)
         {
-            TempData["Success"] = result.Message;
-            return RedirectToAction(nameof(Index));
+            return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
         }
 
-        ModelState.AddModelError("", result.Message);
-        var vm = await _authService.GetRolPermissionsContextAsync(id);
-        return View(vm);
+        return Json(new { success = false, message = result.Message });
     }
 }

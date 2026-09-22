@@ -17,7 +17,7 @@
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <div class="card border-dark shadow-none" style="background: white;">
         <div class="card-body p-5">
             <!-- Encabezado Oficial MTSS -->
@@ -67,7 +67,7 @@
                             <tr>
                                 <td fw-bold border-dark font-monospace">@row.Periodo</td>
                                 <td border-dark">@row.DiasTrabajados.ToString("N1")</td>
-                                <td class="text-end fw-bold border-dark pe-4">@row.SalarioDevengado.ToString("N2")</td>
+                               <td class="fw-bold border-dark pe-4">@row.SalarioDevengado.ToString("N2")</td>
                                 <td border-dark">@row.TiempoServicioMeses</td>
                             </tr>
                         }
@@ -80,9 +80,9 @@
                     </tbody>
                     <tfoot class="fw-bold">
                         <tr class="bg-light">
-                            <td class="text-end border-dark pe-3">TOTALES:</td>
+                           <td class="border-dark pe-3">TOTALES:</td>
                             <td border-dark">@Model.Sum(r => r.DiasTrabajados).ToString("N1")</td>
-                            <td class="text-end border-dark pe-4 text-primary">@Model.Sum(r => r.SalarioDevengado).ToString("C")</td>
+                           <td class="border-dark pe-4 text-primary">@Model.Sum(r => r.SalarioDevengado).ToString("C")</td>
                             <td border-dark">-</td>
                         </tr>
                     </tfoot>

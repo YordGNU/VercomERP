@@ -101,6 +101,9 @@
                         </td>
                         <td>
                             <div class="btn-list justify-content-end">
+                                <a asp-controller="Empleado" asp-action="Index" asp-route-cargoId="@row.CargoId" asp-route-sucursalId="@row.SucursalId" class="btn btn-sm btn-icon btn-light rounded-circle" title="Ver Personal">
+                                    <i class="ti ti-users"></i>
+                                </a>
                                 <a asp-action="Edit" asp-route-id="@row.Id" class="btn btn-sm btn-icon btn-light rounded-circle" title="Editar Plazas">
                                     <i class="ti ti-edit"></i>
                                 </a>
@@ -144,8 +147,12 @@
                         method: 'POST',
                         body: formData
                     }).then(res => res.json()).then(data => {
-                        if (data.success) location.reload();
-                        else toastr.error(data.message);
+                        if (data.success) {
+                            window.SwalAlert('success', data.message);
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            Swal.fire('Error', data.message, 'error');
+                        }
                     });
                 }
             });

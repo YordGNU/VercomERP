@@ -20,7 +20,7 @@
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <div class="card shadow-sm border-0">
         <div class="card-header bg-light-subtle d-flex justify-content-between align-items-center">
             <h5 class="m-0 fw-bold"><i class="ti ti-book me-2 text-primary"></i>Libro de Registro de Obligaciones</h5>
@@ -52,7 +52,7 @@
                                     </td>
                                     <td class="fw-semibold">@item.Periodo.Mes.ToString("D2") / @item.Periodo.Anio</td>
                                     <td>@item.BaseImponible.ToString("N2")</td>
-                                    <td class="text-end fw-bold text-danger">@item.MontoCalculado.ToString("N2")</td>
+                                   <td class="fw-bold text-danger">@item.MontoCalculado.ToString("N2")</td>
                                     <td >
                                         @{
                                             var statusClass = item.Estado == "PAGADA" ? "bg-success-subtle text-success" : "bg-warning-subtle text-warning";

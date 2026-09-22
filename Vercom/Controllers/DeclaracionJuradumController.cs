@@ -30,9 +30,10 @@ public class DeclaracionJuradumController : Controller
     public async Task<IActionResult> Create(int tipoObligacionId, Guid periodoId)
     {
         var result = await _taxService.GenerateTaxDeclarationAsync(_entidadProvider.CurrentEntidadId, tipoObligacionId, periodoId);
-        if (result.Succeeded) TempData["Success"] = result.Message;
-        else TempData["Error"] = result.Message;
-
-        return RedirectToAction(nameof(Index));
+        if (result.Succeeded)
+        {
+            return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
+        }
+        return Json(new { success = false, message = result.Message });
     }
 }

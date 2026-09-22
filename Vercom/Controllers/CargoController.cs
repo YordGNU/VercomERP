@@ -40,11 +40,18 @@ public class CargoController : Controller
     [Authorize(Policy = "RRHH.CARGO.CREAR")]
     public async Task<IActionResult> Create(Cargo cargo)
     {
+        if (ModelState.IsValid)
+        {
+            var result = await _hrService.CreateCargoAsync(cargo);
+            if (result.Succeeded)
+            {
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
+            }
+            return Json(new { success = false, message = result.Message });
+        }
 
-        var result = await _hrService.CreateCargoAsync(cargo);
-        if (result.Succeeded) return RedirectToAction(nameof(Index));
-        ModelState.AddModelError("", result.Message);
-        return View(cargo);
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Errores de validación.", errors = errorList });
     }
 
     [Authorize(Policy = "RRHH.CARGO.VER")]
@@ -74,10 +81,15 @@ public class CargoController : Controller
         if (ModelState.IsValid)
         {
             var result = await _hrService.UpdateCargoAsync(cargo);
-            if (result.Succeeded) return RedirectToAction(nameof(Index));
-            ModelState.AddModelError("", result.Message);
+            if (result.Succeeded)
+            {
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
+            }
+            return Json(new { success = false, message = result.Message });
         }
-        return View(cargo);
+
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Errores de validación.", errors = errorList });
     }
 
     [HttpPost]

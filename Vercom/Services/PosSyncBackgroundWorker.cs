@@ -43,6 +43,7 @@ public class PosSyncBackgroundWorker : BackgroundService
         var salesService = scope.ServiceProvider.GetRequiredService<ISalesService>();
 
         var pendingList = await context.PosVentaPendientes
+            .IgnoreQueryFilters()
             .Where(p => p.Estado == "PENDIENTE")
             .OrderBy(p => p.FechaRecibidoServidor)
             .Take(20) // Procesar en lotes de 20
@@ -52,15 +53,25 @@ public class PosSyncBackgroundWorker : BackgroundService
 
         foreach (var pending in pendingList)
         {
+            // Los pendientes del formato nuevo (VentaPosPayload) se procesan bajo
+            // JWT vía /api/pos/sincronizacion/.../procesar; aquí solo legacy.
+            if (pending.PayloadJson.IndexOf("TipoMovimientoId", StringComparison.OrdinalIgnoreCase) >= 0)
+                continue;
+
             try
             {
                 var op = JsonSerializer.Deserialize<OperacionRequestDto>(pending.PayloadJson);
                 if (op == null) throw new Exception("Payload JSON inválido");
 
+                var device = await context.DispositivoPos.AsNoTracking()
+                    .Where(d => d.Id == pending.DispositivoPosId)
+                    .Select(d => new { d.EntidadId, d.Nombre })
+                    .FirstAsync(ct);
+
                 // Mapear DTO a modelo Factura
                 var invoice = new FacturaVentum
                 {
-                    EntidadId = await context.DispositivoPos.Where(d => d.Id == pending.DispositivoPosId).Select(d => d.EntidadId).FirstAsync(ct),
+                    EntidadId = device.EntidadId,
                     SucursalId = await context.DispositivoPos.Where(d => d.Id == pending.DispositivoPosId).Select(d => d.SucursalId).FirstOrDefaultAsync(ct),
                     Serie = "POS",
                     ClienteId = op.ClienteId ?? Guid.Empty,
@@ -91,6 +102,10 @@ public class PosSyncBackgroundWorker : BackgroundService
                     pending.Estado = "PROCESADA";
                     pending.FacturaId = result.Invoice?.Id;
                     pending.ProcesadoEn = DateTimeOffset.Now;
+
+                    var notifications = scope.ServiceProvider.GetRequiredService<INotificationService>();
+                    await notifications.NotifyEntityAsync(device.EntidadId, "Venta POS procesada",
+                        $"{device.Nombre}: venta por {invoice.Total:N2} {op.Moneda} procesada.", "success");
                 }
                 else
                 {

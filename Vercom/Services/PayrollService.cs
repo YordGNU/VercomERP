@@ -151,6 +151,10 @@ public class PayrollService : IPayrollService
             var tasaRecargoHE = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "TASA_RECARGO_HORA_EXTRA") != 0
                 ? await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "TASA_RECARGO_HORA_EXTRA") : 25m;
 
+            // Obtener conceptos por código para evitar hardcoding de IDs
+            var conceptos = await _context.ConceptoNominas.Where(c => c.EntidadId == entidadId || c.EntidadId == Guid.Empty).ToListAsync();
+            var getConceptId = new Func<string, int?>(code => conceptos.FirstOrDefault(c => c.Codigo == code)?.Id);
+
             foreach (var emp in employees)
             {
                 var contract = emp.ContratoLaborals.FirstOrDefault(c => c.Estado == "VIGENTE");
@@ -165,11 +169,11 @@ public class PayrollService : IPayrollService
                     .SumAsync(a => a.HorasExtra);
 
                 // Valor hora con recargo (Iteración 3)
-                var valorHoraNormal = contract.SalarioPactado / (contract.JornadaHorasSemana * 4.33m); // Promedio semanas/mes
+                var valorHoraNormal = contract.SalarioPactado / (contract.JornadaHorasSemana * 4.33m);
                 var valorHoraExtra = valorHoraNormal * (1 + (tasaRecargoHE / 100m));
                 var montoHoraExtra = Math.Round(overtimeHours * valorHoraExtra, 2);
 
-                // 2. Certificados Médicos
+                // 2. Certificados Médicos (Subsidio SS)
                 var medicalDays = await _context.CertificadoMedicos
                     .Where(c => c.EmpleadoId == emp.Id &&
                                ((c.FechaInicio.Year == anio && c.FechaInicio.Month == mes) ||
@@ -189,14 +193,21 @@ public class PayrollService : IPayrollService
                     medicalAmount += Math.Round(dailySalary * daysInMonth * (cert.PorcentajeSubsidio / 100), 2);
                 }
 
+                // 3. Vacaciones (Pagadas en el mes)
+                var vacationDaysCount = await _context.RegistroAsistencia
+                    .Include(a => a.TipoAusencia)
+                    .Where(a => a.EmpleadoId == emp.Id && a.Fecha.Year == anio && a.Fecha.Month == mes && a.TipoAusencia != null && (a.TipoAusencia.Codigo == "01" || a.TipoAusencia.Codigo == "VACACIONES"))
+                    .CountAsync();
+                var vacationAmount = Math.Round(vacationDaysCount * dailySalary, 2);
+
                 var earnedSalary = dailySalary * attendanceCount;
                 var variableAmount = await _context.NominaDetalleConceptos
                     .Where(c => c.NominaDetalle.EmpleadoId == emp.Id && c.NominaDetalle.PeriodoNomina.Anio == anio && c.NominaDetalle.PeriodoNomina.Mes == mes)
                     .SumAsync(c => (decimal?)c.Monto) ?? 0;
 
-                var brutoTotal = earnedSalary + montoHoraExtra + variableAmount + medicalAmount;
+                var brutoTotal = earnedSalary + montoHoraExtra + variableAmount + medicalAmount + vacationAmount;
 
-                // 3. Retenciones (Iteración 3: IRP sobre excedente)
+                // 4. Retenciones (Iteración 3: IRP sobre excedente)
                 var ssRetention = Math.Round(brutoTotal * ssTasa, 2);
                 decimal irpAmount = brutoTotal > irpMin ? Math.Round((brutoTotal - irpMin) * (irpTasa / 100m), 2) : 0;
 
@@ -205,7 +216,7 @@ public class PayrollService : IPayrollService
                     Id = Guid.NewGuid(),
                     PeriodoNominaId = period.Id,
                     EmpleadoId = emp.Id,
-                    DiasTrabajados = attendanceCount + medicalDaysCount,
+                    DiasTrabajados = attendanceCount + medicalDaysCount + vacationDaysCount,
                     HorasExtra = overtimeHours,
                     SalarioDevengado = brutoTotal,
                     TotalDeducciones = ssRetention + irpAmount,
@@ -215,10 +226,18 @@ public class PayrollService : IPayrollService
                 _context.NominaDetalles.Add(detail);
 
                 // Registrar Conceptos (Transparencia)
-                _context.NominaDetalleConceptos.Add(new NominaDetalleConcepto { Id = Guid.NewGuid(), NominaDetalleId = detail.Id, ConceptoId = 1, Monto = earnedSalary }); // SAL_BASICO
-                if (montoHoraExtra > 0) _context.NominaDetalleConceptos.Add(new NominaDetalleConcepto { Id = Guid.NewGuid(), NominaDetalleId = detail.Id, ConceptoId = 4, Monto = montoHoraExtra }); // HORA_EXTRA
-                if (ssRetention > 0) _context.NominaDetalleConceptos.Add(new NominaDetalleConcepto { Id = Guid.NewGuid(), NominaDetalleId = detail.Id, ConceptoId = 6, Monto = -ssRetention }); // CONT_SS_TRAB
-                if (irpAmount > 0) _context.NominaDetalleConceptos.Add(new NominaDetalleConcepto { Id = Guid.NewGuid(), NominaDetalleId = detail.Id, ConceptoId = 7, Monto = -irpAmount }); // IMP_INGRESOS_PERS
+                void AddConcept(string code, decimal amount) {
+                    if (amount == 0) return;
+                    var cid = getConceptId(code);
+                    if (cid.HasValue) _context.NominaDetalleConceptos.Add(new NominaDetalleConcepto { Id = Guid.NewGuid(), NominaDetalleId = detail.Id, ConceptoId = cid.Value, Monto = amount });
+                }
+
+                AddConcept("SAL_BASICO", earnedSalary);
+                AddConcept("HORA_EXTRA", montoHoraExtra);
+                AddConcept("SUBSIDIO_SS", medicalAmount);
+                AddConcept("VACACIONES_PAGO", vacationAmount);
+                AddConcept("CONT_SS_TRAB", -ssRetention);
+                AddConcept("IMP_INGRESOS_PERS", -irpAmount);
             }
 
             period.CalculadoEn = DateTimeOffset.Now;

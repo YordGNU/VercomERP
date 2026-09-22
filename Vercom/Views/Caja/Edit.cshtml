@@ -33,7 +33,8 @@
                 </a>
             </div>
             <div class="card-body">
-                <form asp-action="@(esNueva ? "Create" : "Edit")" class="row g-3 needs-validation" novalidate>
+                <form asp-action="@(esNueva ? "Create" : "Edit")" class="row g-3 needs-validation" novalidate id="editCajaForm">
+                    @Html.AntiForgeryToken()
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
                     <input type="hidden" asp-for="Caja.Id" />
                     <input type="hidden" asp-for="Caja.EntidadId" />
@@ -87,7 +88,7 @@
                             <label asp-for="Caja.CuentaContableId" class="form-label fw-semibold"></label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="ti ti-coin"></i></span>
-                                <select asp-for="Caja.CuentaContableId" class="form-select" asp-items="@Model.CuentasContables">
+                                <select asp-for="Caja.CuentaContableId" class="form-select select2-cuenta" asp-items="@Model.CuentasContables">
                                     <option value="">-- Seleccionar Cuenta --</option>
                                 </select>
                             </div>
@@ -172,25 +173,8 @@
     <partial name="_ValidationScriptsPartial" />
     <script>
         $(document).ready(function() {
-            // Cambiar el texto del toggle según el estado del checkbox
-            $('#Caja_Activa').on('change', function() {
-                var label = $(this).closest('.form-check').find('.form-check-label');
-                var icon = label.find('i');
-                if ($(this).is(':checked')) {
-                    icon.removeClass('ti-x-circle').addClass('ti-check-circle');
-                    label.html('<i class="ti ti-check-circle me-1"></i> Activa');
-                } else {
-                    icon.removeClass('ti-check-circle').addClass('ti-x-circle');
-                    label.html('<i class="ti ti-x-circle me-1"></i> Inactiva');
-                }
-            });
-
-            // Inicializar Select2 para mejor búsqueda (opcional)
-            $('.form-select').select2({
-                theme: 'bootstrap-5',
-                placeholder: 'Seleccione una opción...',
-                allowClear: true
-            });
+            // ... (resto del código igual)
+            window.SubmitAjaxForm('editCajaForm');
         });
     </script>
 }

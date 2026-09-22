@@ -26,7 +26,7 @@
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <div class="row">
         <!-- Resumen de Costos -->
         <div class="col-lg-4">
@@ -90,13 +90,13 @@
                                 <tr>
                                     <th>Componente de Gasto</th>
                                     <th>Importe Unitario</th>
-                                    <th  class="text-center">Participación</th>
+                                    <th>Participación</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
                                     <td class="fw-bold ps-4">1. Materias Primas y Materiales</td>
-                                    <td class="text-end fw-bold">@Model.CostoMateriaPrima.ToString("N4")</td>
+                                   <td class="fw-bold">@Model.CostoMateriaPrima.ToString("N4")</td>
                                     <td >
                                         <div class="progress progress-xs mb-1">
                                             @{ var mpPerc = (Model.CostoMateriaPrima / Model.CostoTotalUnitario * 100) ?? 0; }
@@ -107,7 +107,7 @@
                                 </tr>
                                 <tr>
                                     <td class="fw-bold ps-4">2. Mano de Obra Directa</td>
-                                    <td class="text-end fw-bold">@Model.CostoManoObra.ToString("N4")</td>
+                                   <td class="fw-bold">@Model.CostoManoObra.ToString("N4")</td>
                                     <td >
                                         <div class="progress progress-xs mb-1">
                                             @{ var moPerc = (Model.CostoManoObra / Model.CostoTotalUnitario * 100) ?? 0; }
@@ -118,7 +118,7 @@
                                 </tr>
                                 <tr>
                                     <td class="fw-bold ps-4">3. Gastos Indirectos de Fabricación (GIF)</td>
-                                    <td class="text-end fw-bold">@Model.GastosIndirectos.ToString("N4")</td>
+                                   <td class="fw-bold">@Model.GastosIndirectos.ToString("N4")</td>
                                     <td >
                                         <div class="progress progress-xs mb-1">
                                             @{ var gifPerc = (Model.GastosIndirectos / Model.CostoTotalUnitario * 100) ?? 0; }
@@ -131,7 +131,7 @@
                             <tfoot class="table-dark fs-15">
                                 <tr>
                                   <td>COSTO TOTAL DE PRODUCCIÓN</td>
-                                    <td class="text-end fw-bold">@Model.CostoTotalUnitario?.ToString("N4")</td>
+                                   <td class="fw-bold">@Model.CostoTotalUnitario?.ToString("N4")</td>
                                     <td >100.0%</td>
                                 </tr>
                             </tfoot>

@@ -20,7 +20,7 @@
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <div class="card shadow-sm border-0">
         <div class="card-header bg-light-subtle">
             <h5 class="m-0 fw-bold"><i class="ti ti-table me-2 text-primary"></i>Catálogo de Fichas Versionadas</h5>
@@ -54,8 +54,8 @@
                                 <td >
                                     <span class="badge @(isVigente ? "bg-success" : "bg-light text-muted") px-3 py-1">@item.Estado</span>
                                 </td>
-                                <td class="text-end fw-bold">@item.CostoTotalUnitario?.ToString("N2")</td>
-                                <td class="text-end text-primary fw-bold">@item.PrecioSugerido?.ToString("N2")</td>
+                               <td class="fw-bold">@item.CostoTotalUnitario?.ToString("N2")</td>
+                               <td class="text-primary fw-bold">@item.PrecioSugerido?.ToString("N2")</td>
                                 <td fw-bold text-success">@item.MargenPorcentaje%</td>
                                 <td>
                                     <div class="btn-group">

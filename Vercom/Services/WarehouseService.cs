@@ -95,50 +95,8 @@ public class WarehouseService : IWarehouseService
         return (true, "Detalle guardado.");
     }
 
-    public async Task<(bool Succeeded, string Message)> CloseAndAdjustCountAsync(Guid conteoId, Guid userId)
-    {
-        var conteo = await _context.ConteoFisicos
-            .Include(c => c.ConteoFisicoDetalles)
-            .FirstOrDefaultAsync(c => c.Id == conteoId);
-
-        if (conteo == null || conteo.Estado != "EN_PROCESO") return (false, "Conteo no válido.");
-
-        var diferencias = conteo.ConteoFisicoDetalles.Where(d => d.Diferencia != 0).ToList();
-
-        if (diferencias.Any())
-        {
-            var mov = new MovimientoInventario
-            {
-                EntidadId = await _context.Almacens.Where(a => a.Id == conteo.AlmacenId).Select(a => a.EntidadId).FirstAsync(),
-                TipoMovimientoId = 4, // AJU: Ajuste de Inventario
-                NumeroDocumento = $"AJU-{conteo.Fecha:yyyyMMdd}",
-                AlmacenDestinoId = conteo.AlmacenId, // Si es positivo suma, si es negativo resta
-                Fecha = DateTimeOffset.Now,
-                ReferenciaExternaTipo = "CONTEO_FISICO",
-                ReferenciaExternaId = conteo.Id,
-                Canal = "ERP",
-                Observaciones = "Ajuste por conteo físico.",
-                CreadoPor = userId
-            };
-
-            foreach (var d in diferencias)
-            {
-                mov.MovimientoInventarioDetalles.Add(new MovimientoInventarioDetalle
-                {
-                    Id = Guid.NewGuid(),
-                    ProductoId = d.ProductoId,
-                    Cantidad = d.Diferencia ?? 0,
-                    Observaciones = d.Justificacion
-                });
-            }
-
-            var result = await _inventoryService.ProcessMovementAsync(mov);
-            if (!result.Succeeded) return (false, $"Error al ajustar: {result.Message}");
-        }
-
-        conteo.Estado = "CERRADO";
-        await _context.SaveChangesAsync();
-
-        return (true, "Conteo cerrado y existencias ajustadas.");
-    }
+    // Delegado al motor de inventario: una sola implementación de conciliación
+    // (tipos de ajuste correctos, cantidades positivas y transacción atómica).
+    public Task<(bool Succeeded, string Message)> CloseAndAdjustCountAsync(Guid conteoId, Guid userId)
+        => _inventoryService.ConciliatePhysicalCountAsync(conteoId, userId);
 }

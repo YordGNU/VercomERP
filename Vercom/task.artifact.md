@@ -1,25 +1,18 @@
-# Tareas: Integración de Iteración 3 — RRHH e Inmutabilidad
+# Tareas: Construcción de Vistas de Integración POS
 
-## 1. Base de Datos (Seguridad y Parámetros)
-- [x] Ejecutar script `103_iteracion3_rrhh.sql` para triggers de inmutabilidad.
-- [x] Insertar nuevos parámetros legales:
-    - [x] `TASA_RECARGO_HORA_EXTRA` (25%)
-    - [x] `UMBRAL_EXENTO_IMP_INGRESOS_PERS` (2500)
-    - [x] `TASA_IMP_INGRESOS_PERS` (3%)
+## 1. Refactorización de Controladores
+- [x] `SesionCajaPoController.cs`: Añadir acción `Details`.
+- [x] `PosVentaPendienteController.cs`: Añadir acción `Details`.
+- [x] `DispositivoPoController.cs`: Añadir acciones `Edit` (GET/POST) y `Details`.
 
-## 2. Lógica de Nómina (PayrollService)
-- [x] Refactorizar `CalculatePayrollAsync`:
-    - [x] Implementar cálculo de horas extra con recargo.
-    - [x] Implementar cálculo de IRP con umbral exento.
-    - [x] Registrar aportes patronales como conceptos de nómina.
-- [x] Ajustar `ApprovePayrollAsync` para asegurar cuadre contable (DEBE = Gasto + Aportes).
+## 2. Construcción de Vistas (UI)
+- [x] `Views/SesionCajaPo/Details.cshtml`: Ver arqueo y balance de turno.
+- [x] `Views/PosVentaPendiente/Details.cshtml`: Visor de JSON de operación offline.
+- [x] `Views/DispositivoPo/Details.cshtml`: Ficha técnica de terminal.
+- [x] `Views/DispositivoPo/Edit.cshtml`: Actualizar para usar AJAX y sistema de diseño.
+- [x] `Views/PosRangoNumeracion/Index.cshtml`: Estilizar listado de folios.
 
-## 3. Gestión de Plantilla y Privacidad (HRService)
-- [x] Integrar validación de plazas disponibles en `AddContractAsync`.
-- [x] Implementar restricción de acceso a diagnósticos en `GetExpedienteAsync`.
-
-## 4. Verificación
-- [x] Validar inmutabilidad (intentar editar nómina aprobada).
-- [x] Probar cálculo de IRP sobre excedente.
-- [x] Validar bloqueo de contrato por falta de plazas.
-- [x] Generar Walkthrough de la Iteración 3 finalizado.
+## 3. Verificación
+- [x] Validar navegación entre listados y detalles.
+- [x] Verificar carga de datos dinámicos.
+- [x] Generar Walkthrough de la integración visual finalizado.

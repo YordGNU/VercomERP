@@ -32,7 +32,7 @@
         {
             return canal?.ToUpperInvariant() switch
             {
-                "WEB" => "globe",
+                "ERP" => "globe",
                 "POS" => "device-desktop",
                 "API" => "api",
                 "MOVIL" => "device-mobile",

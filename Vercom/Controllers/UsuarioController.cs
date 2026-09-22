@@ -51,12 +51,10 @@ public class UsuarioController : Controller
         var result = await _authService.CreateUserAsync(usuario, vm.Password ?? "", vm.SelectedRoles);
         if (result.Succeeded)
         {
-            return RedirectToAction(nameof(Index));
+            return Json(new { success = true, message = "Usuario creado correctamente.", redirectUrl = Url.Action(nameof(Index)) });
         }
-        ModelState.AddModelError("", result.Message);
 
-        var contextVm = await _authService.GetUserFormContextAsync(usuario);
-        return View(contextVm);
+        return Json(new { success = false, message = result.Message });
     }
 
     [Authorize(Policy = "SEGURIDAD.USUARIO.EDITAR")]
@@ -86,13 +84,13 @@ public class UsuarioController : Controller
             var result = await _authService.UpdateUserAsync(usuario, vm.SelectedRoles);
             if (result.Succeeded)
             {
-                return RedirectToAction(nameof(Index));
+                return Json(new { success = true, message = "Usuario actualizado.", redirectUrl = Url.Action(nameof(Index)) });
             }
-            ModelState.AddModelError("", result.Message);
+            return Json(new { success = false, message = result.Message });
         }
 
-        var contextVm = await _authService.GetUserFormContextAsync(usuario);
-        return View(contextVm);
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Errores de validación.", errors = errorList });
     }
 
     [HttpPost]

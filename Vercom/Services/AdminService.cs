@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Vercom.Helpers;
 using Vercom.Models;
 using Vercom.ViewModels;
 
@@ -20,7 +21,8 @@ public interface IAdminService
 
     // Consecutivos (RNF-51)
     Task<IEnumerable<Consecutivo>> GetConsecutivosAsync();
-    Task<ConsecutivoFormViewModel> GetConsecutivoFormContextAsync(Guid? id = null);
+    Task<ConsecutivoFormViewModel> GetConsecutivoFormContextAsync(int? id = null);
+    Task<Consecutivo?> GetConsecutivoByIdAsync(int id);
     Task<(bool Succeeded, string Message)> SaveConsecutivoAsync(Consecutivo entry);
 
     // Parámetros del Sistema
@@ -31,8 +33,10 @@ public interface IAdminService
     // Sucursales
     Task<IEnumerable<Sucursal>> GetSucursalesAsync();
     Task<Sucursal?> GetSucursalByIdAsync(Guid id);
+    Task<SucursalPagedResult> GetSucursalesPagedAsync(string? search = null, string? tipo = null, bool? activo = null, int page = 1, int pageSize = 12);
     Task<(bool Succeeded, string Message)> CreateSucursalAsync(Sucursal sucursal);
     Task<(bool Succeeded, string Message)> UpdateSucursalAsync(Sucursal sucursal);
+    Task<(bool Succeeded, string Message)> DeleteSucursalAsync(Guid id);
 
     // Dashboard Administrativo
     Task<MasterDashboardViewModel> GetMasterDashboardStatsAsync();
@@ -237,14 +241,15 @@ public class AdminService : IAdminService
         _context.ParametroSistemas.AddRange(parametros);
 
         // 3. Consecutivos Base (Serie A)
-        var documentos = new[] { "FACTURA_VENTA", "ORDEN_COMPRA", "ORDEN_PRODUCCION", "ASIENTO_CONTABLE", "VALE_ENTRADA", "VALE_SALIDA" };
-        foreach (var doc in documentos)
+        foreach (var doc in DocumentoTipo.Catalogo)
         {
             _context.Consecutivos.Add(new Consecutivo
             {
                 EntidadId = entidadId,
-                SucursalId = sucursal.Id,
-                TipoDocumento = doc,
+                // La factura se numera por sucursal (RNF-51); el resto de las secuencias es central
+                // porque sus tablas tienen índices únicos por entidad (asiento, OC, OP, vales).
+                SucursalId = doc.Codigo == DocumentoTipo.FacturaVenta ? sucursal.Id : null,
+                TipoDocumento = doc.Codigo,
                 Serie = "A",
                 UltimoNumero = 0,
                 LongitudPadding = 8,
@@ -258,34 +263,74 @@ public class AdminService : IAdminService
         return await _context.Consecutivos.Include(c => c.Sucursal).ToListAsync();
     }
 
-    public async Task<ConsecutivoFormViewModel> GetConsecutivoFormContextAsync(Guid? id = null)
+    public async Task<Consecutivo?> GetConsecutivoByIdAsync(int id)
     {
-        var existing = id.HasValue ? await _context.Consecutivos.FindAsync(id.Value) : null;
-        var tipos_documentos = new List<string> {
-            "VALE","FACTURA","REPORTE","EMISION"
-        };
+        return await _context.Consecutivos
+            .Include(c => c.Entidad)
+            .Include(c => c.Sucursal)
+            .FirstOrDefaultAsync(c => c.Id == id);
+    }
+
+    public async Task<ConsecutivoFormViewModel> GetConsecutivoFormContextAsync(int? id = null)
+    {
+        var existing = id.HasValue
+            ? await _context.Consecutivos
+                .Include(c => c.Entidad)
+                .Include(c => c.Sucursal)
+                .FirstOrDefaultAsync(c => c.Id == id.Value)
+            : null;
         return new ConsecutivoFormViewModel
         {
             Consecutivo = existing ?? new Consecutivo { UltimoNumero = 0, LongitudPadding = 8 },
             Sucursales = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(await _context.Sucursals.ToListAsync(), "Id", "Nombre"),
-            TipoDocumentos = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(tipos_documentos, "Id", "Nombre")
+            TipoDocumentos = DocumentoTipo.Catalogo
+                .Select(t => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = t.Codigo, Text = $"{t.Nombre} ({t.Codigo})" })
+                .ToList()
         };
     }
 
     public async Task<(bool Succeeded, string Message)> SaveConsecutivoAsync(Consecutivo entry)
     {
+        if (string.IsNullOrWhiteSpace(entry.TipoDocumento))
+            return (false, "Debe seleccionar un tipo de documento.");
+        if (string.IsNullOrWhiteSpace(entry.Serie))
+            return (false, "Debe indicar la serie del documento.");
+        if (entry.LongitudPadding <= 0 || entry.LongitudPadding > 20)
+            return (false, "La longitud de relleno debe estar entre 1 y 20.");
+        if (entry.UltimoNumero < 0)
+            return (false, "El último número no puede ser negativo.");
+
         try
         {
+            entry.TipoDocumento = entry.TipoDocumento.Trim().ToUpperInvariant();
+            entry.Serie = entry.Serie.Trim().ToUpperInvariant();
+
             if (entry.Id == 0)
             {
                 entry.EntidadId = _entidadProvider.CurrentEntidadId;
+                var exists = await _context.Consecutivos.AnyAsync(c =>
+                    c.EntidadId == entry.EntidadId &&
+                    c.SucursalId == entry.SucursalId &&
+                    c.TipoDocumento == entry.TipoDocumento &&
+                    c.Serie == entry.Serie);
+                if (exists) return (false, "Ya existe un consecutivo para esa combinación de sucursal, tipo de documento y serie.");
+                entry.ActualizadoEn = DateTimeOffset.Now;
                 _context.Consecutivos.Add(entry);
             }
             else
             {
                 var existing = await _context.Consecutivos.FindAsync(entry.Id);
-                if (existing == null) return (false, "No existe.");
+                if (existing == null) return (false, "El consecutivo no existe.");
+                entry.EntidadId = existing.EntidadId;
+                var exists = await _context.Consecutivos.AnyAsync(c =>
+                    c.Id != entry.Id &&
+                    c.EntidadId == entry.EntidadId &&
+                    c.SucursalId == entry.SucursalId &&
+                    c.TipoDocumento == entry.TipoDocumento &&
+                    c.Serie == entry.Serie);
+                if (exists) return (false, "Ya existe un consecutivo para esa combinación de sucursal, tipo de documento y serie.");
                 _context.Entry(existing).CurrentValues.SetValues(entry);
+                existing.ActualizadoEn = DateTimeOffset.Now;
             }
             await _context.SaveChangesAsync();
             return (true, "Consecutivo guardado.");
@@ -333,9 +378,75 @@ public class AdminService : IAdminService
         return await _context.Sucursals.OrderBy(s => s.Nombre).ToListAsync();
     }
 
+    public async Task<SucursalPagedResult> GetSucursalesPagedAsync(string? search = null, string? tipo = null, bool? activo = null, int page = 1, int pageSize = 12)
+    {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 6, 48);
+
+        var query = _context.Sucursals.AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            query = query.Where(s => s.Nombre.Contains(term) || s.Codigo.Contains(term));
+        }
+
+        if (!string.IsNullOrWhiteSpace(tipo))
+        {
+            var t = tipo.Trim();
+            query = query.Where(s => s.Tipo == t);
+        }
+
+        if (activo.HasValue)
+        {
+            var a = activo.Value;
+            query = query.Where(s => s.Activo == a);
+        }
+
+        var totalItems = await query.CountAsync();
+        var items = await query.OrderBy(s => s.Nombre)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var totalSucursales = await _context.Sucursals.CountAsync();
+        var activas = await _context.Sucursals.CountAsync(s => s.Activo);
+        var tipos = await _context.Sucursals
+            .Select(s => s.Tipo ?? "SIN TIPO")
+            .Distinct()
+            .OrderBy(t => t)
+            .ToListAsync();
+
+        return new SucursalPagedResult
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalItems = totalItems,
+            TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
+            Search = search,
+            Tipo = tipo,
+            Activo = activo,
+            TotalSucursales = totalSucursales,
+            Activas = activas,
+            Inactivas = totalSucursales - activas,
+            Tipos = tipos
+        };
+    }
+
     public async Task<Sucursal?> GetSucursalByIdAsync(Guid id)
     {
-        return await _context.Sucursals.FindAsync(id);
+        return await _context.Sucursals
+            .Include(s => s.Entidad)
+            .Include(s => s.Usuarios)
+            .Include(s => s.Almacens)
+            .Include(s => s.Cajas)
+            .Include(s => s.DispositivoPos)
+            .Include(s => s.CentroCostos)
+            .Include(s => s.Empleados)
+            .Include(s => s.Consecutivos)
+            .Include(s => s.ActivoFijos)
+            .FirstOrDefaultAsync(s => s.Id == id);
     }
 
     public async Task<(bool Succeeded, string Message)> CreateSucursalAsync(Sucursal sucursal)
@@ -366,14 +477,102 @@ public class AdminService : IAdminService
         catch (Exception ex) { return (false, ex.Message); }
     }
 
+    public async Task<(bool Succeeded, string Message)> DeleteSucursalAsync(Guid id)
+    {
+        try
+        {
+            var sucursal = await _context.Sucursals
+                .Include(s => s.Usuarios)
+                .Include(s => s.Empleados)
+                .Include(s => s.Almacens)
+                .Include(s => s.Cajas)
+                .Include(s => s.CentroCostos)
+                .Include(s => s.Consecutivos)
+                .Include(s => s.DispositivoPos)
+                .Include(s => s.ActivoFijos)
+                .FirstOrDefaultAsync(s => s.Id == id);
+            if (sucursal == null) return (false, "No existe.");
+
+            var dependencias = new List<string>();
+            if (sucursal.Usuarios.Any()) dependencias.Add($"{sucursal.Usuarios.Count} usuarios");
+            if (sucursal.Empleados.Any()) dependencias.Add($"{sucursal.Empleados.Count} empleados");
+            if (sucursal.Almacens.Any()) dependencias.Add($"{sucursal.Almacens.Count} almacenes");
+            if (sucursal.Cajas.Any()) dependencias.Add($"{sucursal.Cajas.Count} cajas");
+            if (sucursal.CentroCostos.Any()) dependencias.Add($"{sucursal.CentroCostos.Count} centros de costo");
+            if (sucursal.Consecutivos.Any()) dependencias.Add($"{sucursal.Consecutivos.Count} consecutivos");
+            if (sucursal.DispositivoPos.Any()) dependencias.Add($"{sucursal.DispositivoPos.Count} dispositivos POS");
+            if (sucursal.ActivoFijos.Any()) dependencias.Add($"{sucursal.ActivoFijos.Count} activos fijos");
+
+            if (dependencias.Any())
+                return (false, $"No se puede eliminar: la sucursal tiene registros vinculados ({string.Join(", ", dependencias)}).");
+
+            _context.Sucursals.Remove(sucursal);
+            await _context.SaveChangesAsync();
+            return (true, "Sucursal eliminada.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
     public async Task<MasterDashboardViewModel> GetMasterDashboardStatsAsync()
     {
+        var now = DateTimeOffset.Now;
+        var inicioMes = new DateTimeOffset(new DateTime(now.Year, now.Month, 1), now.Offset);
+
+        // Ventas globales del mes agrupadas por entidad (alimenta KPI y ranking)
+        var ventasMes = await _context.FacturaVenta.IgnoreQueryFilters()
+            .Where(f => f.Estado == "EMITIDA" && f.Fecha >= inicioMes)
+            .GroupBy(f => f.EntidadId)
+            .Select(g => new { EntidadId = g.Key, Total = g.Sum(x => x.Total), Facturas = g.Count() })
+            .OrderByDescending(x => x.Total)
+            .ToListAsync();
+
+        var entidadIds = ventasMes.Select(v => v.EntidadId).ToList();
+        var nombresEntidad = await _context.Entidads.IgnoreQueryFilters()
+            .Where(e => entidadIds.Contains(e.Id))
+            .Select(e => new { e.Id, e.NombreComercial })
+            .ToDictionaryAsync(e => e.Id, e => e.NombreComercial);
+
+        var pendientes = await _context.PosVentaPendientes.IgnoreQueryFilters()
+            .Where(p => p.Estado == "PENDIENTE")
+            .Select(p => new { p.MensajeError })
+            .ToListAsync();
+
+        var sesiones = await _context.SesionCajaPos.IgnoreQueryFilters()
+            .Where(s => s.Estado == "ABIERTA")
+            .Include(s => s.Cajero)
+            .Include(s => s.DispositivoPos).ThenInclude(d => d.Entidad)
+            .OrderByDescending(s => s.FechaApertura)
+            .Take(10)
+            .ToListAsync();
+
         return new MasterDashboardViewModel
         {
             TotalEntidades = await _context.Entidads.IgnoreQueryFilters().CountAsync(e => e.Activo),
             EntidadesPendientes = await _context.Entidads.IgnoreQueryFilters().CountAsync(e => !e.Activo),
             UsuariosTotales = await _context.Usuarios.IgnoreQueryFilters().CountAsync(),
             SesionesPosActivas = await _context.SesionCajaPos.IgnoreQueryFilters().CountAsync(s => s.Estado == "ABIERTA"),
+            DispositivosPos = await _context.DispositivoPos.IgnoreQueryFilters().CountAsync(),
+            VentasGlobalesMes = ventasMes.Sum(v => v.Total),
+            FacturasGlobalesMes = ventasMes.Sum(v => v.Facturas),
+            PosPendientes = pendientes.Count,
+            PosConflictos = pendientes.Count(p => !string.IsNullOrEmpty(p.MensajeError)),
+            TopEntidades = ventasMes.Take(5).Select(v => new TopEntidadItem
+            {
+                Nombre = nombresEntidad.TryGetValue(v.EntidadId, out var n) ? n : "Entidad",
+                Ventas = v.Total,
+                Facturas = v.Facturas
+            }).ToList(),
+            SesionesPos = sesiones.Select(s => new PosSesionItem
+            {
+                Dispositivo = s.DispositivoPos?.Codigo ?? "N/D",
+                Entidad = s.DispositivoPos?.Entidad?.NombreComercial,
+                Cajero = s.Cajero?.NombreCompleto ?? "N/D",
+                FechaApertura = s.FechaApertura,
+                MontoApertura = s.MontoApertura,
+                TotalVentas = s.TotalVentas,
+                TotalEfectivo = s.TotalEfectivo,
+                CantidadFacturas = s.CantidadFacturas
+            }).ToList(),
             UltimoBackup = await _context.BackupLogs.IgnoreQueryFilters()
                 .Where(l => l.Estado == "EXITOSO")
                 .OrderByDescending(l => l.FinalizadoEn)

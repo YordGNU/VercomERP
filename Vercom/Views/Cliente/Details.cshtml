@@ -28,7 +28,7 @@
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <div class="row">
         <!-- Columna Izquierda: Perfil Financiero -->
         <div class="col-lg-4">
@@ -61,7 +61,7 @@
                 <div class="card-body">
                     <div class="mb-3">
                         <label class="text-muted tiny fw-bold text-uppercase d-block mb-1">Límite de Crédito</label>
-                        <h3 class="fw-bold m-0">@(Model.LimiteCredito.ToString("C") ?? "SIN LÍMITE")</h3>
+                        <h3 class="fw-bold m-0">@(Model.LimiteCredito > 0 ? Model.LimiteCredito.ToString("C") : "SIN LÍMITE")</h3>
                     </div>
                     <div class="progress progress-sm mb-3">
                         @{
@@ -117,7 +117,7 @@
                                             <tr>
                                                 <td class="small">@f.Fecha.ToString("dd/MM/yyyy")</td>
                                                 <td class="fw-bold">@f.Serie-@f.NumeroFactura</td>
-                                                <td class="text-end fw-bold">@f.Total.ToString("N2")</td>
+                                               <td class="fw-bold">@f.Total.ToString("N2")</td>
                                                 <td >
                                                     <span class="badge @(f.Estado == "EMITIDA" ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger") small">@f.Estado</span>
                                                 </td>
@@ -145,7 +145,7 @@
                                             <tr>
                                                 <td class="small @(cxc.FechaVencimiento < DateOnly.FromDateTime(DateTime.Now) ? "text-danger fw-bold" : "")">@cxc.FechaVencimiento.ToString("dd/MM/yyyy")</td>
                                                 <td class="small">@cxc.MontoOriginal.ToString("N2")</td>
-                                                <td class="text-end fw-bold text-danger">@cxc.SaldoPendiente.ToString("N2")</td>
+                                               <td class="fw-bold text-danger">@cxc.SaldoPendiente.ToString("N2")</td>
                                                 <td ><span class="badge badge-soft-warning">@cxc.Estado</span></td>
                                             </tr>
                                         }

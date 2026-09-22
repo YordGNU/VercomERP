@@ -18,7 +18,7 @@
         </div>
     </div>
 </div>
-<div class="container-xxl">
+<div class="row">
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-body p-3">
             <form asp-action="Console" method="get" class="row g-3 align-items-end">
@@ -62,9 +62,10 @@
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-striped table-hover dt-responsive">
-                    <thead class="thead-sm text-uppercase fs-xxs">
+                        <thead class="thead-sm text-uppercase fs-xxs">
                             <tr>
                                 <th class="ps-4">Empleado</th>
+                                <th class="text-center" width="160">Turno</th>
                                 <th class="text-center" width="140">Hora Entrada</th>
                                 <th class="text-center" width="140">Hora Salida</th>
                                 <th class="text-center" width="120">Horas Extra</th>
@@ -76,33 +77,76 @@
                             @for (int i = 0; i < Model.Rows.Count; i++)
                             {
                                 var row = Model.Rows[i];
-                                <tr>
+                                var ausente = row.Record.TipoAusenciaId.HasValue;
+                                <tr class="@(row.EsIncapacidad ? "table-warning" : (row.RetardoMinutos > 0 || row.SalidaTempranaMinutos > 0 ? "table-danger bg-opacity-10" : ""))">
                                   <td>
                                         <input type="hidden" name="logs[@i].EmpleadoId" value="@row.EmpleadoId" />
                                         <input type="hidden" name="logs[@i].Fecha" value="@Model.Date.ToString("yyyy-MM-dd")" />
+                                        <input type="hidden" name="logs[@i].TurnoTrabajoId" value="@row.TurnoTrabajoId" />
                                         <div class="fw-bold fs-13">@row.NombreCompleto</div>
                                         <small class="text-muted tiny text-uppercase">@row.Cargo</small>
+                                        @if (row.EsIncapacidad)
+                                        {
+                                            <span class="badge bg-warning text-dark ms-1" title="Certificado médico activo"><i class="ti ti-first-aid-kit"></i> INCAPACIDAD @(row.PorcentajeSubsidio?.ToString("0"))%</span>
+                                        }
+                                        else if (row.RetardoMinutos > 0)
+                                        {
+                                            <span class="badge bg-danger ms-1">RETARDO @row.RetardoMinutos min</span>
+                                        }
+                                        @if (!row.EsIncapacidad && row.SalidaTempranaMinutos > 0)
+                                        {
+                                            <span class="badge bg-warning text-dark ms-1">SALIDA TEMPRANA @row.SalidaTempranaMinutos min</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (!string.IsNullOrEmpty(row.TurnoNombre))
+                                        {
+                                            <div class="fw-bold fs-13">@row.TurnoNombre</div>
+                                            <small class="text-muted font-monospace">@row.TurnoHoraEntrada?.ToString("HH:mm") - @row.TurnoHoraSalida?.ToString("HH:mm")</small>
+                                            @if (row.EsNocturno)
+                                            {
+                                                <span class="badge bg-dark ms-1" title="Turno nocturno"><i class="ti ti-moon"></i></span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small fst-italic">Sin turno</span>
+                                        }
                                     </td>
                                     <td>
-                                        <input type="time" name="logs[@i].HoraEntrada" class="form-control form-control-sm text-center font-monospace" value="@row.Record.HoraEntrada?.ToString("HH:mm")" />
+                                        <input type="time" name="logs[@i].HoraEntrada" class="form-control form-control-sm text-center font-monospace" value="@row.Record.HoraEntrada?.ToString("HH:mm")" disabled="@(row.EsIncapacidad ? "disabled" : null)" />
                                     </td>
                                     <td>
-                                        <input type="time" name="logs[@i].HoraSalida" class="form-control form-control-sm text-center font-monospace" value="@row.Record.HoraSalida?.ToString("HH:mm")" />
+                                        <input type="time" name="logs[@i].HoraSalida" class="form-control form-control-sm text-center font-monospace" value="@row.Record.HoraSalida?.ToString("HH:mm")" disabled="@(row.EsIncapacidad ? "disabled" : null)" />
                                     </td>
                                     <td>
                                         <div class="input-group input-group-sm">
-                                            <input type="number" step="0.5" name="logs[@i].HorasExtra" class="form-control text-center" value="@row.Record.HorasExtra" />
+                                            <input type="number" step="0.5" name="logs[@i].HorasExtra" class="form-control text-center" value="@row.Record.HorasExtra" disabled="@(row.EsIncapacidad ? "disabled" : null)" />
                                             <span class="input-group-text bg-light">h</span>
                                         </div>
                                     </td>
                                     <td>
-                                        <select name="logs[@i].TipoAusenciaId" class="form-select form-select-sm fw-bold">
-                                            <option value="">-- Presente --</option>
-                                            @foreach (var ta in Model.TiposAusencia)
-                                            {
-                                                <!option value="@ta.Id" @(row.Record.TipoAusenciaId == ta.Id ? "selected" : "")>@ta.Nombre</!option>
-                                            }
-                                        </select>
+                                        @if (row.EsIncapacidad)
+                                        {
+                                            <input type="hidden" name="logs[@i].TipoAusenciaId" value="@row.Record.TipoAusenciaId" />
+                                            <select class="form-select form-select-sm fw-bold text-warning-emphasis" disabled>
+                                                @foreach (var ta in Model.TiposAusencia)
+                                                {
+                                                    <!option value="@ta.Id" @(row.Record.TipoAusenciaId == ta.Id ? "selected" : "")>@ta.Nombre</!option>
+                                                }
+                                            </select>
+                                            <small class="text-muted tiny">Bloqueado por certificado médico vigente.</small>
+                                        }
+                                        else
+                                        {
+                                            <select name="logs[@i].TipoAusenciaId" class="form-select form-select-sm fw-bold @(ausente ? "text-danger" : "")">
+                                                <option value="">-- Presente --</option>
+                                                @foreach (var ta in Model.TiposAusencia)
+                                                {
+                                                    <!option value="@ta.Id" @(row.Record.TipoAusenciaId == ta.Id ? "selected" : "")>@ta.Nombre</!option>
+                                                }
+                                            </select>
+                                        }
                                     </td>
                                     <td class="pe-4">
                                         <input name="logs[@i].Observaciones" class="form-control form-control-sm" value="@row.Record.Observaciones" placeholder="Justificación..." maxlength="200" />
@@ -115,7 +159,7 @@
             </div>
             <div class="card-footer bg-light-subtle d-flex justify-content-between align-items-center p-4">
                 <div class="text-muted small italic">
-                    <i class="ti ti-info-circle me-1"></i> Los cambios impactarán automáticamente el acumulado de vacaciones (9.09%).
+                    <i class="ti ti-info-circle me-1"></i> Los retardos y salidas tempranas se calculan según el turno asignado. Las filas con certificado médico vigente quedan bloqueadas como Incapacidad. Los cambios impactarán automáticamente el acumulado de vacaciones (9.09%).
                 </div>
                 <div class="btn-list">
                     <a asp-action="Index" class="btn btn-outline-secondary">CANCELAR</a>

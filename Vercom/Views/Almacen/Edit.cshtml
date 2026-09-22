@@ -18,7 +18,7 @@
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <div class="card shadow-sm border-0">
@@ -26,7 +26,7 @@
                     <h5 class="m-0 fw-bold"><i class="ti ti-edit me-2 text-primary"></i>Configuración de Depósito</h5>
                 </div>
                 <div class="card-body p-4">
-                    <form asp-action="Edit" method="post" class="row g-4">
+                    <form asp-action="Edit" method="post" class="row g-4" id="editWarehouseForm">
                         @Html.AntiForgeryToken()
                         <input type="hidden" asp-for="Almacen.Id" name="Almacen.Id" />
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
@@ -85,4 +85,9 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            window.SubmitAjaxForm('editWarehouseForm');
+        });
+    </script>
 }

@@ -5,7 +5,7 @@ using Vercom.ViewModels;
 
 namespace Vercom.Controllers;
 
-[Authorize(Policy = "SEGURIDAD.ROL.ASIGNAR")]
+[Authorize(Policy = "ADMIN.CONSECUTIVO.VER")]
 public class ConsecutivoController : Controller
 {
     private readonly IAdminService _adminService;
@@ -22,6 +22,14 @@ public class ConsecutivoController : Controller
     }
 
     [HttpGet]
+    public async Task<IActionResult> Details(int id)
+    {
+        var item = await _adminService.GetConsecutivoByIdAsync(id);
+        if (item == null) return NotFound();
+        return View(item);
+    }
+
+    [HttpGet]
     public async Task<IActionResult> Create()
     {
         var vm = await _adminService.GetConsecutivoFormContextAsync();
@@ -35,6 +43,7 @@ public class ConsecutivoController : Controller
         var entry = vm.Consecutivo;
         ModelState.Remove("Consecutivo.Entidad");
         ModelState.Remove("Consecutivo.Sucursal");
+        ModelState.Remove("Consecutivo.EntidadId");
 
         if (ModelState.IsValid)
         {
@@ -43,6 +52,35 @@ public class ConsecutivoController : Controller
             ModelState.AddModelError("", result.Message);
         }
         var contextVm = await _adminService.GetConsecutivoFormContextAsync();
+        contextVm.Consecutivo = entry;
+        return View(contextVm);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var vm = await _adminService.GetConsecutivoFormContextAsync(id);
+        if (vm.Consecutivo == null || vm.Consecutivo.Id == 0) return NotFound();
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, ConsecutivoFormViewModel vm)
+    {
+        if (id != vm.Consecutivo.Id) return BadRequest();
+        var entry = vm.Consecutivo;
+        ModelState.Remove("Consecutivo.Entidad");
+        ModelState.Remove("Consecutivo.Sucursal");
+        ModelState.Remove("Consecutivo.EntidadId");
+
+        if (ModelState.IsValid)
+        {
+            var result = await _adminService.SaveConsecutivoAsync(entry);
+            if (result.Succeeded) return RedirectToAction(nameof(Index));
+            ModelState.AddModelError("", result.Message);
+        }
+        var contextVm = await _adminService.GetConsecutivoFormContextAsync(id);
         contextVm.Consecutivo = entry;
         return View(contextVm);
     }

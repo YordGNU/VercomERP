@@ -186,6 +186,10 @@
                                 <li class="side-nav-item"><a asp-controller="Empleado" asp-action="Create" class="side-nav-link text-success">+ Nuevo Empleado</a></li>
                             }
                             <li class="side-nav-item"><a asp-controller="RegistroAsistencia" asp-action="Console" class="side-nav-link">Control de Asistencia</a></li>
+                            @if (await PuedeAsync("RRHH.REPORTE.VER"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="ReporteAsistencia" asp-action="Mensual" class="side-nav-link">Reportes de Asistencia</a></li>
+                            }
                             @if (await PuedeAsync("RRHH.NOMINA.VER"))
                             {
                                 <li class="side-nav-item"><a asp-controller="Nomina" asp-action="Index" class="side-nav-link">Nómina de Salarios</a></li>
@@ -200,6 +204,7 @@
                             }
                             <li class="side-nav-item"><a asp-controller="ConceptoNomina" asp-action="Index" class="side-nav-link">Conceptos Salariales</a></li>
                             <li class="side-nav-item"><a asp-controller="TipoAusencium" asp-action="Index" class="side-nav-link">Tipos de Ausencia</a></li>                                         
+                            <li class="side-nav-item"><a asp-controller="TurnoTrabajo" asp-action="Index" class="side-nav-link">Turnos y Horarios</a></li>
                         </ul>
                     </div>
                 </li>

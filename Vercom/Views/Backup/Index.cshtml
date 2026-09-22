@@ -28,11 +28,10 @@
                             <i class="ti ti-database-export me-1"></i> GENERAR RESPALDO AHORA
                         </button>
                     </form>
-                    <form asp-action="CleanOldBackups" method="post" class="d-inline ms-2">
+                    <form id="formCleanBackups" asp-action="CleanOldBackups" method="post" class="d-inline ms-2">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="daysToKeep" value="30" />
-                        <button type="submit" class="btn btn-outline-secondary btn-sm"
-                                onclick="return confirm('¿Eliminar respaldos de más de 30 días?')">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="confirmCleanBackups()">
                             <i class="ti ti-trash me-1"></i> Limpiar antiguos
                         </button>
                     </form>
@@ -84,13 +83,9 @@
                                             <a asp-action="Download" asp-route-id="@log.Id" class="btn btn-light btn-icon btn-sm rounded-circle" title="Descargar">
                                                 <i class="ti ti-download"></i>
                                             </a>                                          
-                                            <form asp-action="Restore" asp-route-id="@log.Id" method="post" class="d-inline"
-                                                  onsubmit="return confirm('⚠️ ¿Restaurar la base de datos desde este respaldo? Esta acción reemplazará todos los datos actuales.')">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-light btn-icon btn-sm rounded-circle" title="Restaurar">
-                                                    <i class="ti ti-rotate-clockwise"></i>
-                                                </button>
-                                            </form>
+                                            <button type="button" class="btn btn-light btn-icon btn-sm rounded-circle" title="Restaurar" onclick="confirmRestore('@log.Id')">
+                                                <i class="ti ti-rotate-clockwise"></i>
+                                            </button>
                                         </div>
                                     }
                                 </td>
@@ -117,5 +112,47 @@
                 dom: '<"row align-items-center"<"col-md-6"l><"col-md-6"f>>rt<"row align-items-center"<"col-md-5"i><"col-md-7"p>>',
             });
         });
+
+        function confirmCleanBackups() {
+            Swal.fire({
+                title: '¿Limpiar respaldos antiguos?',
+                text: "Se eliminarán permanentemente todos los archivos de respaldo con más de 30 días de antigüedad.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'SÍ, LIMPIAR',
+                cancelButtonText: 'CANCELAR'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('formCleanBackups').submit();
+                }
+            });
+        }
+
+        function confirmRestore(id) {
+            Swal.fire({
+                title: '⚠️ ¿Restaurar Base de Datos?',
+                text: "Esta acción reemplazará todos los datos actuales con la información contenida en el respaldo. La aplicación se reiniciará. ¿Está seguro?",
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'SÍ, RESTAURAR AHORA',
+                cancelButtonText: 'CANCELAR'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '/Backup/Restore/' + id;
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                    const inputToken = document.createElement('input');
+                    inputToken.type = 'hidden';
+                    inputToken.name = '__RequestVerificationToken';
+                    inputToken.value = token;
+                    form.appendChild(inputToken);
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
     </script>
 }

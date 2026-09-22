@@ -20,9 +20,17 @@ public partial class RegistroAsistencium
 
     public Guid? RegistradoPor { get; set; }
 
+    public Guid? TurnoTrabajoId { get; set; }
+
+    public int? RetardoMinutos { get; set; }
+
+    public int? SalidaTempranaMinutos { get; set; }
+
     public virtual Empleado Empleado { get; set; } = null!;
 
     public virtual Usuario? RegistradoPorNavigation { get; set; }
 
     public virtual TipoAusencium? TipoAusencia { get; set; }
+
+    public virtual TurnoTrabajo? TurnoTrabajo { get; set; }
 }

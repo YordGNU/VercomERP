@@ -78,7 +78,7 @@
                                 </td>
                                 <td>@det.Cantidad.ToString("N2")</td>
                                 <td>@det.PrecioUnitario.ToString("C")</td>
-                                <td class="text-end fw-bold">@det.SubtotalLinea.ToString("C")</td>
+                               <td class="fw-bold">@det.SubtotalLinea.ToString("C")</td>
                             </tr>
                         }
                     </tbody>
@@ -91,18 +91,18 @@
                     <table class="table table-sm table-borderless">
                         <tr>
                             <th class="text-muted">Subtotal:</th>
-                            <td class="text-end fw-bold">@Model.Subtotal.ToString("C")</td>
+                           <td class="fw-bold">@Model.Subtotal.ToString("C")</td>
                         </tr>
                         @if (Model.DescuentoTotal > 0)
                         {
                             <tr>
                                 <th class="text-muted">Descuento:</th>
-                                <td class="text-end text-danger fw-bold">- @Model.DescuentoTotal.ToString("C")</td>
+                               <td class="text-danger fw-bold">- @Model.DescuentoTotal.ToString("C")</td>
                             </tr>
                         }
                         <tr>
                             <th class="text-muted">Impuesto sobre Ventas (10%):</th>
-                            <td class="text-end fw-bold">@Model.ImpuestoVentasTotal.ToString("C")</td>
+                           <td class="fw-bold">@Model.ImpuestoVentasTotal.ToString("C")</td>
                         </tr>
                         <tr class="border-top">
                             <th class="h4 fw-bold">TOTAL A PAGAR:</th>

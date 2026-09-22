@@ -16,6 +16,45 @@
 </div>
 
 <div class="row">
+    <!-- Sección de Filtros -->
+    <div class="col-12 mb-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-3">
+                <form method="get" class="row g-3 align-items-end">
+                    <div class="col-lg-4">
+                        <label class="form-label small fw-bold">Nombre o NIT/CI</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="ti ti-search text-muted"></i></span>
+                            <input type="text" name="search" class="form-control border-start-0" placeholder="Buscar cliente..." value="@ViewBag.CurrentSearch" />
+                        </div>
+                    </div>
+                    <div class="col-lg-2">
+                        <label class="form-label small fw-bold">Segmento</label>
+                        <select name="segment" class="form-select">
+                            <option value="">-- Todos --</option>
+                            <!option value="MINORISTA" @(ViewBag.CurrentSegment == "MINORISTA" ? "selected" : "")>MINORISTA</!option>
+                            <!option value="MAYORISTA" @(ViewBag.CurrentSegment == "MAYORISTA" ? "selected" : "")>MAYORISTA</!option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2">
+                        <label class="form-label small fw-bold">Estado</label>
+                        <select name="active" class="form-select">
+                            <option value="">-- Todos --</option>
+                            <!option value="true" @(ViewBag.CurrentActive == true ? "selected" : "")>ACTIVOS</!option>
+                            <!option value="false" @(ViewBag.CurrentActive == false ? "selected" : "")>INACTIVOS</!option>
+                        </select>
+                    </div>
+                    <div class="col-lg-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="ti ti-filter me-1"></i> APLICAR FILTROS
+                        </button>
+                        <a asp-action="Index" class="btn btn-light" title="Limpiar"><i class="ti ti-refresh"></i></a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div class="card">
          <div class="card-header border-light justify-content-between">
             <h5 class="m-0 fw-bold"><i class="ti ti-users me-2 text-primary"></i>Listado de Clientes</h5>

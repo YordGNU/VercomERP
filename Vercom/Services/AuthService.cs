@@ -398,7 +398,7 @@ public class AuthService : IAuthService
             new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
             new Claim("FullName", usuario.NombreCompleto),
             new Claim("EntidadId", usuario.EntidadId.ToString()),
-            new Claim("EntidadNombre", usuario.Entidad.NombreComercial),
+            new Claim("EntidadNombre", usuario.Entidad.RazonSocial),
             new Claim("SucursalId", usuario.SucursalId?.ToString() ?? ""),
             new Claim("MustChangePassword", usuario.DebeCambiarPass.ToString())
         };

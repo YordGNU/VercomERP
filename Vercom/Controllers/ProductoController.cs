@@ -69,11 +69,15 @@ public class ProductoController : Controller
         if (ModelState.IsValid)
         {
             var result = await _inventoryService.CreateProductAsync(producto);
-            if (result.Succeeded) return RedirectToAction(nameof(Index));
-            ModelState.AddModelError("", result.Message);
+            if (result.Succeeded)
+            {
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
+            }
+            return Json(new { success = false, message = result.Message });
         }
-        var contextVm = await _inventoryService.GetProductFormContextAsync(producto);
-        return View(contextVm);
+
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Verifique los datos del formulario.", errors = errorList });
     }
 
     [Authorize(Policy = "INVENTARIO.PRODUCTO.EDITAR")]
@@ -106,11 +110,15 @@ public class ProductoController : Controller
         if (ModelState.IsValid)
         {
             var result = await _inventoryService.UpdateProductAsync(producto);
-            if (result.Succeeded) return RedirectToAction(nameof(Index));
-            ModelState.AddModelError("", result.Message);
+            if (result.Succeeded)
+            {
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
+            }
+            return Json(new { success = false, message = result.Message });
         }
-        var contextVm = await _inventoryService.GetProductFormContextAsync(producto);
-        return View(contextVm);
+
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Errores de validación.", errors = errorList });
     }
 
     // ============================================================
@@ -170,6 +178,42 @@ public class ProductoController : Controller
 
             return Json(new { success = false, message = "Ocurrió un error al eliminar los productos." });
         }
+    }
+
+    // ============================================================
+    // BÚSQUEDA POR CÓDIGO DE BARRAS (PARA POS/ALMACÉN)
+    // ============================================================
+    [HttpGet]
+    [Authorize(Policy = "INVENTARIO.PRODUCTO.VER")]
+    public async Task<IActionResult> SearchByBarcode(string barcode)
+    {
+        var catalog = await _inventoryService.GetCatalogAsync();
+        var product = catalog.FirstOrDefault(p => p.CodigoBarras == barcode && p.Activo);
+
+        if (product == null) return NotFound();
+
+        return Json(new {
+            id = product.Id,
+            nombre = product.Nombre,
+            codigo = product.Codigo,
+            precio = product.PrecioVentaActual
+        });
+    }
+
+    // ============================================================
+    // DESACTIVACIÓN LÓGICA (PARA PRODUCTOS CON HISTORIAL)
+    // ============================================================
+    [HttpPost]
+    [Authorize(Policy = "INVENTARIO.PRODUCTO.EDITAR")]
+    public async Task<IActionResult> Deactivate(Guid id)
+    {
+        var product = await _inventoryService.GetProductByIdAsync(id);
+        if (product == null) return NotFound();
+
+        product.Activo = false;
+        var result = await _inventoryService.UpdateProductAsync(product);
+
+        return Json(new { success = result.Succeeded, message = result.Message });
     }
 }
 

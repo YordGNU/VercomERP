@@ -115,7 +115,7 @@
                             </div>
                         </div>
                         <div class="d-flex justify-content-between mb-3">
-                            <span class="text-muted">Impuesto Ventas (10%):</span>
+                            <span class="text-muted" id="labelTaxText">Impuesto Ventas (10%):</span>
                             <span class="fw-bold" id="labelTax">0.00</span>
                         </div>
                         <hr class="border-secondary opacity-10">
@@ -157,16 +157,18 @@
     <script>
         let rowCount = 0;
         const parsedProductos = @Html.Raw(Json.Serialize(Model.ProductosDisponibles));
+        const taxRate = parseFloat('@ViewBag.TaxRate') / 100;
 
         function addRow() {
             const tbody = document.querySelector("#detailsTable tbody");
             const row = document.createElement("tr");
             row.innerHTML = `
-              <td>
-                    <select name="Invoice.FacturaVentaDetalles[${rowCount}].ProductoId" class="form-control form-select w-100 select2" onchange="updatePrice(this, ${rowCount})" required>
+                <td>
+                    <select name="Invoice.FacturaVentaDetalles[${rowCount}].ProductoId" class="form-control form-select w-100 select2-dynamic" onchange="updatePrice(this, ${rowCount})" required>
                         <option value="">-- Buscar Artículo --</option>
                         ${parsedProductos.map(p => `<option value="${p.id}" data-price="${p.precioVentaActual}">${p.codigo} - ${p.nombre}</option>`).join('')}
                     </select>
+                    <div class="tope-warning small text-danger mt-1" style="display:none;"><i class="ti ti-alert-triangle"></i> Excede tope legal</div>
                 </td>
                 <td><input name="Invoice.FacturaVentaDetalles[${rowCount}].Cantidad" type="number" step="0.01" class="form-control text-center fw-bold input-qty" value="1.00" onchange="calculateTotals()" required /></td>
                 <td><input name="Invoice.FacturaVentaDetalles[${rowCount}].PrecioUnitario" type="number" step="0.01" class="form-control text-end input-price" value="0.00" onchange="calculateTotals()" required /></td>
@@ -178,7 +180,13 @@
                 </td>
             `;
             tbody.appendChild(row);
-            // Re-inicializar select2 si fuera necesario
+
+            $(row).find('.select2-dynamic').select2({
+                width: '100%',
+                placeholder: '-- Buscar Artículo --',
+                dropdownParent: $('#invoiceForm')
+            });
+
             rowCount++;
         }
 
@@ -187,6 +195,22 @@
             const price = option.getAttribute('data-price') || 0;
             const row = select.closest('tr');
             row.querySelector('.input-price').value = price;
+
+            // Validar Tope de Precio (AJAX opcional o local si se tuviera la data)
+            const productoId = $(select).val();
+            const precio = parseFloat(price);
+
+            fetch(`/TopePrecioMfp/GetTope?productoId=${productoId}`)
+                .then(res => res.json())
+                .then(data => {
+                    const warning = $(row).find('.tope-warning');
+                    if (data.exists && precio > data.precioMaximo) {
+                        warning.text(`Excede tope legal ($${data.precioMaximo})`).show();
+                    } else {
+                        warning.hide();
+                    }
+                });
+
             calculateTotals();
         }
 
@@ -201,21 +225,45 @@
             });
 
             const discount = parseFloat(document.getElementsByName('Invoice.DescuentoTotal')[0].value || 0);
-            const tax = (subtotal - discount) * 0.10;
+            const tax = (subtotal - discount) * taxRate;
             const total = (subtotal - discount) + tax;
 
             document.getElementById('labelSubtotal').innerText = subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 });
             document.getElementById('labelTax').innerText = tax.toLocaleString('en-US', { minimumFractionDigits: 2 });
             document.getElementById('labelTotal').innerText = total.toLocaleString('en-US', { minimumFractionDigits: 2 });
+            document.getElementById('labelTaxText').innerText = `Impuesto Ventas (${(taxRate * 100).toFixed(0)}%):`;
 
             const pagoMontoInput = document.getElementById('pagoMonto');
             if (parseFloat(pagoMontoInput.value) === 0) pagoMontoInput.value = total.toFixed(2);
 
-            document.getElementById('alertCredito').style.display = (parseFloat(pagoMontoInput.value) < total - 0.01) ? 'block' : 'none';
+            const isCredit = (parseFloat(pagoMontoInput.value) < total - 0.01);
+            document.getElementById('alertCredito').style.display = isCredit ? 'block' : 'none';
+
+            if (isCredit) {
+                checkCreditLimit(total - parseFloat(pagoMontoInput.value));
+            }
+
             document.getElementById('btnSubmit').disabled = total <= 0;
         }
 
-        document.addEventListener('DOMContentLoaded', () => { addRow(); });
+        function checkCreditLimit(amount) {
+            const clienteId = $('#Invoice_ClienteId').val();
+            if (!clienteId) return;
+
+            fetch(`/Sales/CheckCreditLimit?clienteId=${clienteId}&amount=${amount}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.succeeded) {
+                        toastr.error(data.message, "Riesgo de Crédito");
+                        $('#btnSubmit').prop('disabled', true);
+                    }
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            addRow();
+            $('#Invoice_ClienteId').on('change', calculateTotals);
+        });
     </script>
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

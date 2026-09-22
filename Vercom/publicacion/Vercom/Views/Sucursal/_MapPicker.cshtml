@@ -1,0 +1,101 @@
+@model Vercom.Models.Sucursal
+
+<div id="sucursal-map-picker-wrap">
+    <label class="form-label fw-bold">Ubicación en el mapa <small class="text-muted fw-normal">(opcional)</small></label>
+    <div class="ratio ratio-16x9 border rounded overflow-hidden mb-1">
+        <div id="sucursal-map-picker" class="w-100 h-100"></div>
+    </div>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <small class="text-muted">Haga clic o arrastre el marcador para precisar las coordenadas.</small>
+        <button type="button" id="btn-clear-coords" class="btn btn-sm btn-outline-danger">
+            <i class="ti ti-map-pin-off me-1"></i> QUITAR COORDENADAS
+        </button>
+    </div>
+    <small id="coord-feedback" class="text-muted d-block mt-1"></small>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    (function () {
+        var mapDiv = document.getElementById('sucursal-map-picker');
+        var latInput = document.getElementById('Latitud');
+        var lngInput = document.getElementById('Longitud');
+        var btnClear = document.getElementById('btn-clear-coords');
+        var feedback = document.getElementById('coord-feedback');
+
+        var DEFAULT_LAT = 20.8889, DEFAULT_LNG = -76.2572;
+
+        if (typeof L === 'undefined' || !L.tileLayer) {
+            mapDiv.innerHTML =
+                '<div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted">' +
+                '<i class="ti ti-cloud-off fs-40 mb-2"></i>' +
+                'No se pudo cargar el mapa. Ingrese las coordenadas manualmente en los campos de Latitud y Longitud.</div>';
+            return;
+        }
+        var map = L.map(mapDiv);
+
+        function onCoordChange() {
+            if (!latInput.value || !lngInput.value) {
+                feedback.textContent = '';
+                return;
+            }
+            feedback.textContent = 'Coordenadas: ' + Number(latInput.value).toFixed(6) + ', ' + Number(lngInput.value).toFixed(6);
+        }
+
+        function updateInputs(lat, lng) {
+            latInput.value = lat.toFixed(6);
+            lngInput.value = lng.toFixed(6);
+            onCoordChange();
+        }
+
+        function updateMarker(lat, lng) {
+            if (!marker) { marker = L.marker([lat, lng], { draggable: true }); marker.addTo(map); }
+            else { marker.setLatLng([lat, lng]); }
+            marker.once('dragend', function () {
+                var p = marker.getLatLng();
+                updateInputs(p.lat, p.lng);
+            });
+        }
+
+        function setFromInputs() {
+            var l = parseFloat(latInput.value), n = parseFloat(lngInput.value);
+            if (!isNaN(l) && !isNaN(n)) {
+                updateMarker(l, n);
+                map.setView([l, n], 14);
+            }
+        }
+
+        var marker = null;
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        var hasCoords = latInput.value && lngInput.value;
+        var startLat = hasCoords ? parseFloat(latInput.value) : DEFAULT_LAT;
+        var startLng = hasCoords ? parseFloat(lngInput.value) : DEFAULT_LNG;
+
+        updateMarker(startLat, startLng);
+        map.setView([startLat, startLng], hasCoords ? 15 : 9);
+
+        map.on('click', function (e) {
+            updateMarker(e.latlng.lat, e.latlng.lng);
+            updateInputs(e.latlng.lat, e.latlng.lng);
+        });
+
+        btnClear.addEventListener('click', function () {
+            latInput.value = '';
+            lngInput.value = '';
+            onCoordChange();
+            if (marker) { map.removeLayer(marker); marker = null; }
+            map.flyTo([DEFAULT_LAT, DEFAULT_LNG], 9);
+        });
+
+        [latInput, lngInput].forEach(function (input) {
+            input.addEventListener('change', function () { setFromInputs(); });
+        });
+
+        onCoordChange();
+    })();
+</script>

@@ -66,14 +66,13 @@ public class PurchaseController : Controller
             var result = await _purchaseService.CreatePurchaseOrderAsync(order);
             if (result.Succeeded)
             {
-                TempData["Success"] = result.Message;
-                return RedirectToAction(nameof(Details), new { id = result.Order?.Id });
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Details), new { id = result.Order?.Id }) });
             }
-            ModelState.AddModelError("", result.Message);
+            return Json(new { success = false, message = result.Message });
         }
 
-        var contextVm = await _purchaseService.GetPurchaseOrderCreateContextAsync(order);
-        return View(contextVm);
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Verifique los datos de la orden.", errors = errorList });
     }
 
     [HttpPost]
@@ -107,11 +106,9 @@ public class PurchaseController : Controller
 
         if (result.Succeeded)
         {
-            TempData["Success"] = result.Message;
-            return RedirectToAction(nameof(Details), new { id });
+            return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Details), new { id }) });
         }
 
-        TempData["Error"] = result.Message;
-        return RedirectToAction(nameof(Receive), new { id });
+        return Json(new { success = false, message = result.Message });
     }
 }

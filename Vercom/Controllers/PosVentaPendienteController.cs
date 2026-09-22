@@ -15,10 +15,21 @@ public class PosVentaPendienteController : Controller
     }
 
     [Authorize(Policy = "POS.CONFIGURACION.VER")]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(Guid? deviceId = null)
     {
         var items = await _posService.GetPendingSalesAsync();
+        if (deviceId.HasValue && deviceId != Guid.Empty)
+            items = items.Where(x => x.DispositivoPosId == deviceId.Value);
+        ViewBag.DeviceId = deviceId;
         return View(items);
+    }
+
+    [Authorize(Policy = "POS.CONFIGURACION.VER")]
+    public async Task<IActionResult> Details(Guid id)
+    {
+        var item = await _posService.GetPendingSaleByIdAsync(id);
+        if (item == null) return NotFound();
+        return View(item);
     }
 
     [HttpPost]

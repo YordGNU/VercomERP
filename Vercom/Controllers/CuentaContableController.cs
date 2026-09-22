@@ -53,14 +53,13 @@ public class CuentaContableController : Controller
             var result = await _accountingService.CreateAccountAsync(account);
             if (result.Succeeded)
             {
-                TempData["Success"] = result.Message;
-                return RedirectToAction(nameof(Index));
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
             }
-            ModelState.AddModelError("", result.Message);
+            return Json(new { success = false, message = result.Message });
         }
 
-        var contextVm = await _accountingService.GetAccountFormContextAsync(account);
-        return View(contextVm);
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Errores de validación.", errors = errorList });
     }
 
     [Authorize(Policy = "CONTABILIDAD.CUENTA.EDITAR")]
@@ -88,13 +87,10 @@ public class CuentaContableController : Controller
         var result = await _accountingService.UpdateAccountAsync(account);
         if (result.Succeeded)
         {
-            TempData["Success"] = result.Message;
-            return RedirectToAction(nameof(Index));
+            return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
         }
-        ModelState.AddModelError("", result.Message);
 
-        var contextVm = await _accountingService.GetAccountFormContextAsync(account);
-        return View(contextVm);
+        return Json(new { success = false, message = result.Message });
     }
 
     [Authorize(Policy = "CONTABILIDAD.CUENTA.ELIMINAR")]

@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Vercom.Models;
+using Vercom.ViewModels;
 
 namespace Vercom.Services;
 
@@ -17,6 +19,21 @@ public interface IReceivablesPayablesService
 {
     Task<List<AgingReportRow>> GetReceivablesAgingAsync(Guid entidadId);
     Task<List<AgingReportRow>> GetPayablesAgingAsync(Guid entidadId);
+
+    Task<CxCIndexViewModel> GetCxCIndexAsync(Guid entidadId, string? search = null, string? documentoTipo = null, string? estado = null, bool vencidasOnly = false, int page = 1, int pageSize = 12);
+    Task<CxPIndexViewModel> GetCxPIndexAsync(Guid entidadId, string? search = null, string? documentoTipo = null, string? estado = null, bool vencidasOnly = false, int page = 1, int pageSize = 12);
+
+    Task<CxCFormViewModel> GetCxCFormContextAsync(Guid entidadId, CuentaPorCobrar? existing = null);
+    Task<CxPFormViewModel> GetCxPFormContextAsync(Guid entidadId, CuentaPorPagar? existing = null);
+
+    Task<CuentaPorCobrar?> GetCxCByIdAsync(Guid id);
+    Task<CuentaPorPagar?> GetCxPByIdAsync(Guid id);
+
+    Task<(bool Succeeded, string Message)> CreateCxCAsync(CuentaPorCobrar item, Guid entidadId);
+    Task<(bool Succeeded, string Message)> UpdateCxCAsync(CuentaPorCobrar item, Guid entidadId);
+    Task<(bool Succeeded, string Message)> CreateCxPAsync(CuentaPorPagar item, Guid entidadId);
+    Task<(bool Succeeded, string Message)> UpdateCxPAsync(CuentaPorPagar item, Guid entidadId);
+
     Task<(bool Succeeded, string Message)> RecordCollectionAsync(Guid cxcId, decimal amount, string paymentMethod, string? reference, Guid userId);
     Task<(bool Succeeded, string Message)> RecordPaymentAsync(Guid cxpId, decimal amount, string paymentMethod, string? reference, Guid userId);
 }
@@ -231,5 +248,296 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
             await transaction.RollbackAsync();
             return (false, $"Error al pagar: {ex.Message}");
         }
+    }
+
+    private static (int Page, int PageSize, int Skip) NormalizePaging(int page, int pageSize)
+    {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 6, 48);
+        return (page, pageSize, (page - 1) * pageSize);
+    }
+
+    public async Task<CxCIndexViewModel> GetCxCIndexAsync(Guid entidadId, string? search = null, string? documentoTipo = null, string? estado = null, bool vencidasOnly = false, int page = 1, int pageSize = 12)
+    {
+        var p = NormalizePaging(page, pageSize);
+        var today = DateOnly.FromDateTime(DateTime.Now);
+
+        var query = _context.CuentaPorCobrars.AsNoTracking()
+            .Where(c => c.EntidadId == entidadId)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            query = query.Where(c => c.Cliente.NombreRazonSocial.Contains(term)
+                || c.Cliente.NitOCi.Contains(term)
+                || (c.DocumentoOrigenNumero != null && c.DocumentoOrigenNumero.Contains(term)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(documentoTipo))
+        {
+            var t = documentoTipo.Trim();
+            query = query.Where(c => c.DocumentoOrigenTipo == t);
+        }
+
+        if (!string.IsNullOrWhiteSpace(estado))
+        {
+            var st = estado.Trim();
+            query = query.Where(c => c.Estado == st);
+        }
+
+        if (vencidasOnly)
+            query = query.Where(c => c.FechaVencimiento < today && c.Estado != "PAGADA");
+
+        var totalItems = await query.CountAsync();
+        var items = await query.OrderBy(c => c.Estado == "PAGADA").ThenBy(c => c.FechaVencimiento)
+            .Skip(p.Skip)
+            .Take(p.PageSize)
+            .Include(c => c.Cliente)
+            .ToListAsync();
+
+        var abierto = await _context.CuentaPorCobrars
+            .Where(c => c.EntidadId == entidadId && c.Estado != "PAGADA")
+            .SumAsync(c => (decimal?)c.SaldoPendiente) ?? 0;
+        var vencido = await _context.CuentaPorCobrars
+            .Where(c => c.EntidadId == entidadId && c.Estado != "PAGADA" && c.FechaVencimiento < today)
+            .SumAsync(c => (decimal?)c.SaldoPendiente) ?? 0;
+        var aplicado = await _context.PagoAplicados
+            .Where(x => x.CuentaPorCobrarId != null && x.CuentaPorCobrar!.EntidadId == entidadId)
+            .SumAsync(x => (decimal?)x.Monto) ?? 0;
+        var abiertos = await _context.CuentaPorCobrars.CountAsync(c => c.EntidadId == entidadId && c.Estado != "PAGADA");
+
+        return new CxCIndexViewModel
+        {
+            Items = items,
+            Page = p.Page,
+            PageSize = p.PageSize,
+            TotalItems = totalItems,
+            TotalPages = (int)Math.Ceiling(totalItems / (double)p.PageSize),
+            Search = search,
+            DocumentoTipo = documentoTipo,
+            Estado = estado,
+            VencidasOnly = vencidasOnly,
+            TotalAbierto = abierto,
+            TotalVencido = vencido,
+            TotalPorVencer = abierto - vencido,
+            TotalAplicado = aplicado,
+            DocumentosAbiertos = abiertos,
+            Aging = await GetReceivablesAgingAsync(entidadId)
+        };
+    }
+
+    public async Task<CxPIndexViewModel> GetCxPIndexAsync(Guid entidadId, string? search = null, string? documentoTipo = null, string? estado = null, bool vencidasOnly = false, int page = 1, int pageSize = 12)
+    {
+        var p = NormalizePaging(page, pageSize);
+        var today = DateOnly.FromDateTime(DateTime.Now);
+
+        var query = _context.CuentaPorPagars.AsNoTracking()
+            .Where(c => c.EntidadId == entidadId)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            query = query.Where(c => c.Proveedor.RazonSocial.Contains(term)
+                || c.Proveedor.Nit.Contains(term)
+                || (c.DocumentoOrigenNumero != null && c.DocumentoOrigenNumero.Contains(term)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(documentoTipo))
+        {
+            var t = documentoTipo.Trim();
+            query = query.Where(c => c.DocumentoOrigenTipo == t);
+        }
+
+        if (!string.IsNullOrWhiteSpace(estado))
+        {
+            var st = estado.Trim();
+            query = query.Where(c => c.Estado == st);
+        }
+
+        if (vencidasOnly)
+            query = query.Where(c => c.FechaVencimiento < today && c.Estado != "PAGADA");
+
+        var totalItems = await query.CountAsync();
+        var items = await query.OrderBy(c => c.Estado == "PAGADA").ThenBy(c => c.FechaVencimiento)
+            .Skip(p.Skip)
+            .Take(p.PageSize)
+            .Include(c => c.Proveedor)
+            .ToListAsync();
+
+        var abierto = await _context.CuentaPorPagars
+            .Where(c => c.EntidadId == entidadId && c.Estado != "PAGADA")
+            .SumAsync(c => (decimal?)c.SaldoPendiente) ?? 0;
+        var vencido = await _context.CuentaPorPagars
+            .Where(c => c.EntidadId == entidadId && c.Estado != "PAGADA" && c.FechaVencimiento < today)
+            .SumAsync(c => (decimal?)c.SaldoPendiente) ?? 0;
+        var aplicado = await _context.PagoAplicados
+            .Where(x => x.CuentaPorPagarId != null && x.CuentaPorPagar!.EntidadId == entidadId)
+            .SumAsync(x => (decimal?)x.Monto) ?? 0;
+        var abiertos = await _context.CuentaPorPagars.CountAsync(c => c.EntidadId == entidadId && c.Estado != "PAGADA");
+
+        return new CxPIndexViewModel
+        {
+            Items = items,
+            Page = p.Page,
+            PageSize = p.PageSize,
+            TotalItems = totalItems,
+            TotalPages = (int)Math.Ceiling(totalItems / (double)p.PageSize),
+            Search = search,
+            DocumentoTipo = documentoTipo,
+            Estado = estado,
+            VencidasOnly = vencidasOnly,
+            TotalAbierto = abierto,
+            TotalVencido = vencido,
+            TotalPorVencer = abierto - vencido,
+            TotalAplicado = aplicado,
+            DocumentosAbiertos = abiertos,
+            Aging = await GetPayablesAgingAsync(entidadId)
+        };
+    }
+
+    public async Task<CxCFormViewModel> GetCxCFormContextAsync(Guid entidadId, CuentaPorCobrar? existing = null)
+    {
+        var clientes = await _context.Clientes
+            .Where(c => c.EntidadId == entidadId && c.Activo)
+            .OrderBy(c => c.NombreRazonSocial)
+            .Select(c => new { c.Id, Nombre = c.NombreRazonSocial })
+            .ToListAsync();
+
+        return new CxCFormViewModel
+        {
+            Item = existing ?? new CuentaPorCobrar
+            {
+                Estado = "PENDIENTE",
+                Moneda = "CUP",
+                DocumentoOrigenTipo = "FACTURA",
+                FechaEmision = DateOnly.FromDateTime(DateTime.Now),
+                FechaVencimiento = DateOnly.FromDateTime(DateTime.Now.AddDays(30))
+            },
+            Clientes = new SelectList(clientes, "Id", "Nombre")
+        };
+    }
+
+    public async Task<CxPFormViewModel> GetCxPFormContextAsync(Guid entidadId, CuentaPorPagar? existing = null)
+    {
+        var proveedores = await _context.Proveedors
+            .Where(p => p.EntidadId == entidadId && p.Activo)
+            .OrderBy(p => p.RazonSocial)
+            .Select(p => new { p.Id, Nombre = p.RazonSocial })
+            .ToListAsync();
+
+        return new CxPFormViewModel
+        {
+            Item = existing ?? new CuentaPorPagar
+            {
+                Estado = "PENDIENTE",
+                Moneda = "CUP",
+                DocumentoOrigenTipo = "FACTURA",
+                FechaEmision = DateOnly.FromDateTime(DateTime.Now),
+                FechaVencimiento = DateOnly.FromDateTime(DateTime.Now.AddDays(30))
+            },
+            Proveedores = new SelectList(proveedores, "Id", "Nombre")
+        };
+    }
+
+    public async Task<CuentaPorCobrar?> GetCxCByIdAsync(Guid id)
+    {
+        return await _context.CuentaPorCobrars
+            .Include(c => c.Cliente)
+            .Include(c => c.PagoAplicados)
+            .Include(c => c.AsientoOrigen)
+            .FirstOrDefaultAsync(c => c.Id == id);
+    }
+
+    public async Task<CuentaPorPagar?> GetCxPByIdAsync(Guid id)
+    {
+        return await _context.CuentaPorPagars
+            .Include(c => c.Proveedor)
+            .Include(c => c.PagoAplicados)
+            .Include(c => c.AsientoOrigen)
+            .FirstOrDefaultAsync(c => c.Id == id);
+    }
+
+    public async Task<(bool Succeeded, string Message)> CreateCxCAsync(CuentaPorCobrar item, Guid entidadId)
+    {
+        try
+        {
+            item.Id = Guid.NewGuid();
+            item.EntidadId = entidadId;
+            item.CreadoEn = DateTimeOffset.Now;
+            item.SaldoPendiente = item.MontoOriginal;
+            if (item.DocumentoOrigenId == Guid.Empty) item.DocumentoOrigenId = item.Id;
+            if (string.IsNullOrWhiteSpace(item.Estado)) item.Estado = "PENDIENTE";
+            if (string.IsNullOrWhiteSpace(item.Moneda)) item.Moneda = "CUP";
+            _context.CuentaPorCobrars.Add(item);
+            await _context.SaveChangesAsync();
+            return (true, "Cuenta por cobrar registrada.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<(bool Succeeded, string Message)> UpdateCxCAsync(CuentaPorCobrar item, Guid entidadId)
+    {
+        try
+        {
+            var existing = await _context.CuentaPorCobrars.FindAsync(item.Id);
+            if (existing == null) return (false, "No existe.");
+            existing.ClienteId = item.ClienteId;
+            existing.DocumentoOrigenTipo = item.DocumentoOrigenTipo;
+            existing.DocumentoOrigenId = item.DocumentoOrigenId;
+            existing.DocumentoOrigenNumero = item.DocumentoOrigenNumero;
+            existing.FechaEmision = item.FechaEmision;
+            existing.FechaVencimiento = item.FechaVencimiento;
+            existing.MontoOriginal = item.MontoOriginal;
+            existing.SaldoPendiente = item.SaldoPendiente;
+            existing.Moneda = item.Moneda;
+            existing.Estado = item.Estado;
+            existing.EntidadId = entidadId;
+            await _context.SaveChangesAsync();
+            return (true, "Cuenta por cobrar actualizada.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<(bool Succeeded, string Message)> CreateCxPAsync(CuentaPorPagar item, Guid entidadId)
+    {
+        try
+        {
+            item.Id = Guid.NewGuid();
+            item.EntidadId = entidadId;
+            item.CreadoEn = DateTimeOffset.Now;
+            item.SaldoPendiente = item.MontoOriginal;
+            if (item.DocumentoOrigenId == Guid.Empty) item.DocumentoOrigenId = item.Id;
+            if (string.IsNullOrWhiteSpace(item.Estado)) item.Estado = "PENDIENTE";
+            if (string.IsNullOrWhiteSpace(item.Moneda)) item.Moneda = "CUP";
+            _context.CuentaPorPagars.Add(item);
+            await _context.SaveChangesAsync();
+            return (true, "Cuenta por pagar registrada.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<(bool Succeeded, string Message)> UpdateCxPAsync(CuentaPorPagar item, Guid entidadId)
+    {
+        try
+        {
+            var existing = await _context.CuentaPorPagars.FindAsync(item.Id);
+            if (existing == null) return (false, "No existe.");
+            existing.ProveedorId = item.ProveedorId;
+            existing.DocumentoOrigenTipo = item.DocumentoOrigenTipo;
+            existing.DocumentoOrigenId = item.DocumentoOrigenId;
+            existing.DocumentoOrigenNumero = item.DocumentoOrigenNumero;
+            existing.FechaEmision = item.FechaEmision;
+            existing.FechaVencimiento = item.FechaVencimiento;
+            existing.MontoOriginal = item.MontoOriginal;
+            existing.SaldoPendiente = item.SaldoPendiente;
+            existing.Moneda = item.Moneda;
+            existing.Estado = item.Estado;
+            existing.EntidadId = entidadId;
+            await _context.SaveChangesAsync();
+            return (true, "Cuenta por pagar actualizada.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
     }
 }

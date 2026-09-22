@@ -22,7 +22,7 @@
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <div class="row">
         <!-- Columna Izquierda: Identidad y Capacidad -->
         <div class="col-lg-4">
@@ -110,7 +110,7 @@
                                             <span class="badge @(ex.Cantidad <= ex.StockMinimo ? "bg-danger" : "bg-success")">@ex.Cantidad.ToString("N2")</span>
                                         </td>
                                         <td small font-monospace">@ex.CostoPromedio.ToString("N4")</td>
-                                        <td class="text-end fw-bold text-primary">
+                                       <td class="fw-bold text-primary">
                                             @((ex.Cantidad * ex.CostoPromedio).ToString("C"))
                                         </td>
                                     </tr>
@@ -125,7 +125,7 @@
                                 <tfoot class="bg-light-subtle fw-bold">
                                     <tr>
                                         <td colspan="3" class="text-end">VALOR TOTAL DEL INVENTARIO:</td>
-                                        <td class="text-end text-primary fs-15">@Model.Existencia.Sum(x => x.Cantidad * x.CostoPromedio).ToString("C")</td>
+                                       <td class="text-primary fs-15">@Model.Existencia.Sum(x => x.Cantidad * x.CostoPromedio).ToString("C")</td>
                                     </tr>
                                 </tfoot>
                             }

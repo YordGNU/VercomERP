@@ -16,19 +16,11 @@
             <li class="breadcrumb-item"><a href="javascript: void(0);">Comercial</a></li>
             <li class="breadcrumb-item"><a asp-action="Index">Proveedores</a></li>
             <li class="breadcrumb-item active">Ficha</li>
-        </ol>
-        <div class="btn-list">
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary">
-                <i class="ti ti-edit me-1"></i> MODIFICAR DATOS
-            </a>
-            <a asp-controller="Purchase" asp-action="Create" asp-route-proveedorId="@Model.Id" class="btn btn-sm btn-primary shadow-sm">
-                <i class="ti ti-shopping-cart-plus me-1"></i> NUEVA COMPRA
-            </a>
-        </div>
+        </ol>       
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <div class="row">
         <!-- Columna Izquierda: Perfil Financiero -->
         <div class="col-lg-4">
@@ -90,6 +82,14 @@
                     <div class="text-end">
                         <div class="small text-muted">Compras Recibidas: <strong class="text-dark">@totalPurchases.ToString("C")</strong></div>
                     </div>
+                     <div class="btn-list">
+                         <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary">
+                             <i class="ti ti-edit me-1"></i> MODIFICAR DATOS
+                         </a>
+                         <a asp-controller="Purchase" asp-action="Create" asp-route-proveedorId="@Model.Id" class="btn btn-sm btn-primary shadow-sm">
+                             <i class="ti ti-shopping-cart-plus me-1"></i> NUEVA COMPRA
+                         </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <ul class="nav nav-tabs nav-tabs-alt border-0" role="tablist">
@@ -116,7 +116,7 @@
                                             <tr>
                                                 <td class="small">@o.Fecha.ToString("dd/MM/yyyy")</td>
                                                 <td class="fw-bold">#@o.NumeroOrden</td>
-                                                <td class="text-end fw-bold">@o.Total.ToString("N2")</td>
+                                               <td class="fw-bold">@o.Total.ToString("N2")</td>
                                                 <td >
                                                     <span class="badge @(o.Estado == "RECIBIDA" ? "bg-success" : "bg-warning") small">@o.Estado</span>
                                                 </td>
@@ -144,7 +144,7 @@
                                             <tr>
                                                 <td class="small @(cxp.FechaVencimiento < DateOnly.FromDateTime(DateTime.Now) ? "text-danger fw-bold" : "")">@cxp.FechaVencimiento.ToString("dd/MM/yyyy")</td>
                                                 <td class="small">@cxp.MontoOriginal.ToString("N2")</td>
-                                                <td class="text-end fw-bold text-danger">@cxp.SaldoPendiente.ToString("N2")</td>
+                                               <td class="fw-bold text-danger">@cxp.SaldoPendiente.ToString("N2")</td>
                                                 <td ><span class="badge badge-soft-warning">@cxp.Estado</span></td>
                                             </tr>
                                         }

@@ -34,9 +34,10 @@ public class ClosureController : Controller
     {
         var result = await _closureService.CloseFiscalYearAsync(_entidadProvider.CurrentEntidadId, year, _entidadProvider.CurrentUsuarioId);
 
-        if (result.Succeeded) TempData["Success"] = result.Message;
-        else TempData["Error"] = result.Message;
-
-        return RedirectToAction(nameof(Yearly));
+        if (result.Succeeded)
+        {
+            return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Yearly)) });
+        }
+        return Json(new { success = false, message = result.Message });
     }
 }

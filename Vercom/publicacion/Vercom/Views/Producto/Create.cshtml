@@ -11,7 +11,7 @@
 </div>
 
 <div class="row">
-    <form asp-action="Create" method="post">
+    <form asp-action="Create" method="post" id="createProductForm">
         @Html.AntiForgeryToken()
         <div asp-validation-summary="All" class="alert alert-danger py-2 small border-0 mb-4 shadow-sm"></div>
 
@@ -106,17 +106,17 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label asp-for="Producto.CuentaInventarioId" class="control-label fw-bold"></label>
-                                            <select asp-for="Producto.CuentaInventarioId" asp-items="Model.CuentasInventario" class="form-control select2-cuenta">
+                                            <select asp-for="Producto.CuentaInventarioId" asp-items="Model.CuentasInventario" class="form-control select2">
                                                 <option value="">-- Seleccionar --</option>
                                             </select>
                                             <span asp-validation-for="Producto.CuentaInventarioId" class="text-danger"></span>
-                                            <small class="form-text text-muted">Cuenta de Activo (ej. 240-251 Activos Fijos Tangibles)</small>
+                                            <small class="form-text text-muted">Cuenta de Activo: 183.0010 Materias Primas / 185.0010 Partes y Piezas / 188.0020 Producción Terminada / 189.0010 Mercancía para la Venta</small>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label asp-for="Producto.CuentaCostoVentaId" class="control-label fw-bold"></label>
-                                            <select asp-for="Producto.CuentaCostoVentaId" asp-items="Model.CuentasCostoVenta" class="form-control select2-cuenta">
+                                            <select asp-for="Producto.CuentaCostoVentaId" asp-items="Model.CuentasCostoVenta" class="form-control select2">
                                                 <option value="">-- Seleccionar --</option>
                                             </select>
                                             <span asp-validation-for="Producto.CuentaCostoVentaId" class="text-danger"></span>
@@ -126,11 +126,11 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label asp-for="Producto.CuentaIngresoId" class="control-label fw-bold"></label>
-                                            <select asp-for="Producto.CuentaIngresoId" asp-items="Model.CuentasIngresos" class="form-control select2-cuenta">
+                                            <select asp-for="Producto.CuentaIngresoId" asp-items="Model.CuentasIngresos" class="form-control select2">
                                                 <option value="">-- Seleccionar --</option>
                                             </select>
                                             <span asp-validation-for="Producto.CuentaIngresoId" class="text-danger"></span>
-                                            <small class="form-text text-muted">Cuenta de Ingreso (ej. 701 Producción Propia para Insumo)</small>
+                                            <small class="form-text text-muted">Cuenta de Ingreso: 900 Ventas de Producción / 901 Ventas de Servicios / 904 Venta de Mercancías</small>
                                         </div>
                                     </div>
                                 </div>
@@ -158,4 +158,26 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            window.SubmitAjaxForm('createProductForm');
+
+            var cuentasPorTipo = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CuentasPorTipo));
+            function setCuenta(selector, id) {
+                var $select = $(selector);
+                if (id && $select.find('option[value="' + id + '"]').length) {
+                    $select.val(id).trigger('change');
+                } else {
+                    $select.val('').trigger('change');
+                }
+            }
+            $('#Producto_Tipo').on('change', function() {
+                var cuentas = cuentasPorTipo[$(this).val()];
+                if (!cuentas) return;
+                setCuenta('#Producto_CuentaInventarioId', cuentas.InventarioId);
+                setCuenta('#Producto_CuentaCostoVentaId', cuentas.CostoVentaId);
+                setCuenta('#Producto_CuentaIngresoId', cuentas.IngresoId);
+            });
+        });
+    </script>
 }

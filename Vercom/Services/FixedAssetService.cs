@@ -56,18 +56,31 @@ public class FixedAssetService : IFixedAssetService
     public async Task<AssetFormViewModel> GetAssetFormContextAsync(ActivoFijo? existing = null)
     {
         var entidadId = _entidadProvider.CurrentEntidadId;
-        var cuentas = await _context.CuentaContables
-            .Where(c => c.Activo && c.AceptaMovimiento)
+
+        var cuentasActivo = await _context.CuentaContables
+            .Where(c => c.EntidadId == entidadId && c.Activo && c.AceptaMovimiento && c.Clase == "ACTIVO" && c.Codigo.StartsWith("24"))
             .OrderBy(c => c.Codigo)
-            .Select(c => new { c.Id, Display = c.Codigo + " " + c.Nombre })
+            .Select(c => new { c.Id, Display = $"{c.Codigo} - {c.Nombre}" })
+            .ToListAsync();
+
+        var cuentasDep = await _context.CuentaContables
+            .Where(c => c.EntidadId == entidadId && c.Activo && c.AceptaMovimiento && c.Clase == "ACTIVO" && c.Codigo.StartsWith("300"))
+            .OrderBy(c => c.Codigo)
+            .Select(c => new { c.Id, Display = $"{c.Codigo} - {c.Nombre}" })
+            .ToListAsync();
+
+        var cuentasGasto = await _context.CuentaContables
+            .Where(c => c.EntidadId == entidadId && c.Activo && c.AceptaMovimiento && c.Clase == "GASTO" && c.Codigo.StartsWith("8"))
+            .OrderBy(c => c.Codigo)
+            .Select(c => new { c.Id, Display = $"{c.Codigo} - {c.Nombre}" })
             .ToListAsync();
 
         return new AssetFormViewModel
         {
             Asset = existing ?? new ActivoFijo { Estado = "ACTIVO", MetodoDepreciacion = "LINEA_RECTA", FechaAdquisicion = DateOnly.FromDateTime(DateTime.Now) },
-            CuentasActivo = new SelectList(cuentas, "Id", "Display"),
-            CuentasDepreciacion = new SelectList(cuentas, "Id", "Display"),
-            CuentasGasto = new SelectList(cuentas, "Id", "Display"),
+            CuentasActivo = new SelectList(cuentasActivo, "Id", "Display"),
+            CuentasDepreciacion = new SelectList(cuentasDep, "Id", "Display"),
+            CuentasGasto = new SelectList(cuentasGasto, "Id", "Display"),
             Sucursales = new SelectList(await _context.Sucursals.Where(s => s.Activo).ToListAsync(), "Id", "Nombre")
         };
     }

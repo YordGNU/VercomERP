@@ -29,7 +29,7 @@
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <div class="row">
         <!-- Columna Izquierda: Identidad y Valoración -->
         <div class="col-lg-4">
@@ -154,7 +154,7 @@
                                                 <td @(isExpired ? "text-danger fw-bold" : (isNear ? "text-warning fw-bold" : ""))">
                                                     @(lote.FechaVencimiento?.ToString("dd/MM/yyyy") ?? "N/A")
                                                 </td>
-                                                <td class="text-end fw-bold">@lote.Cantidad.ToString("N2")</td>
+                                               <td class="fw-bold">@lote.Cantidad.ToString("N2")</td>
                                                 <td >
                                                     @if(isExpired) { <span class="badge bg-danger">VENCIDO</span> }
                                                     else if(isNear) { <span class="badge bg-warning">PRÓXIMO</span> }

@@ -1,0 +1,144 @@
+@model Vercom.Models.SesionCajaPo
+@{
+    ViewBag.Title = "Detalle de Sesión POS";
+    var isClosed = Model.Estado == "CERRADA";
+    var diffClass = Model.DiferenciaArqueo < 0 ? "text-danger" : "text-success";
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Turno de Venta: @Model.DispositivoPos.Nombre</h4>
+        <p class="text-muted small mb-0">Auditoría de arqueo y conciliación de valores en terminal.</p>
+    </div>
+    <div class="text-end">
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+            <i class="ti ti-arrow-left me-1"></i> VOLVER
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Resumen Financiero -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-primary text-white py-3">
+                <h5 class="m-0 fw-bold"><i class="ti ti-report-money me-2"></i>Estado del Arqueo</h5>
+            </div>
+            <div class="card-body p-4 text-center">
+                <div class="mb-4">
+                    <span class="text-muted tiny fw-bold text-uppercase d-block mb-1">Total Ventas Consolidadas</span>
+                    <h1 class="display-5 fw-bold text-dark m-0">@Model.TotalVentas.ToString("C2")</h1>
+                </div>
+
+                <div class="row g-2 mb-4">
+                    <div class="col-6">
+                        <div class="bg-light-subtle rounded-3 p-3 border">
+                            <span class="text-muted extra-small d-block text-uppercase">Declarado</span>
+                            <h4 class="fw-bold mb-0">@(Model.MontoCierreDeclarado?.ToString("C2") ?? "-")</h4>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light-subtle rounded-3 p-3 border">
+                            <span class="text-muted extra-small d-block text-uppercase">Sistema</span>
+                            <h4 class="fw-bold mb-0">@(Model.MontoCierreSistema?.ToString("C2") ?? "-")</h4>
+                        </div>
+                    </div>
+                </div>
+
+                @if (isClosed)
+                {
+                    <div class="alert @(Model.DiferenciaArqueo == 0 ? "alert-success" : "alert-warning") border-0 py-3 mb-0">
+                        <h6 class="mb-1 fw-bold">Diferencia Final:</h6>
+                        <h3 class="fw-bold mb-0 @diffClass">@Model.DiferenciaArqueo?.ToString("C2")</h3>
+                        @if (Model.DiferenciaArqueo != 0)
+                        {
+                            <p class="small mb-0 mt-2 italic text-muted">Conciliado por: Supervisor</p>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info border-0 py-3 mb-0">
+                        <i class="ti ti-clock-play me-1"></i> SESIÓN EN CURSO
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <h6 class="fw-bold text-muted text-uppercase small border-bottom pb-2 mb-3">Trazabilidad de Tiempo</h6>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Apertura:</span>
+                    <span class="fw-bold">@Model.FechaApertura.ToString("dd/MM/yyyy HH:mm")</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Cierre:</span>
+                    <span class="fw-bold">@(Model.FechaCierre?.ToString("dd/MM/yyyy HH:mm") ?? "Pendiente")</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted small">Cajero:</span>
+                    <span class="fw-bold">@Model.CajeroId</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detalles de Movimientos -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-light-subtle d-flex justify-content-between align-items-center">
+                <h5 class="m-0 fw-bold text-primary"><i class="ti ti-list me-2"></i>Operaciones en esta Sesión</h5>
+                <span class="badge bg-primary">@Model.CantidadFacturas Transacciones</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-vcenter card-table table-hover mb-0">
+                        <thead class="thead-sm text-uppercase fs-xxs">
+                            <tr>
+                                <th>Factura / Vale</th>
+                                <th>Fecha/Hora</th>
+                                <th>Forma Pago</th>
+                                <th class="text-end">Importe ($)</th>
+                                <th width="50"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var f in Model.FacturaVenta)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@f.NumeroFactura</td>
+                                    <td class="small">@f.Fecha.ToString("HH:mm:ss")</td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">EFECTIVO</span>
+                                    </td>
+                                    <td class="text-end fw-bold">@f.Total.ToString("N2")</td>
+                                    <td>
+                                        <a asp-controller="Sales" asp-action="Details" asp-route-id="@f.Id" class="btn btn-icon btn-sm btn-ghost-primary">
+                                            <i class="ti ti-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.ObservacionesCierre))
+        {
+            <div class="card mt-4 border-start border-info border-3">
+                <div class="card-body">
+                    <h6 class="fw-bold text-info"><i class="ti ti-notes me-2"></i>Observaciones de Cierre:</h6>
+                    <p class="mb-0 italic">"@Model.ObservacionesCierre"</p>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
+    .extra-small { font-size: 0.75rem; }
+</style>

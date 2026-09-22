@@ -20,6 +20,10 @@ public partial class Sucursal
 
     public string? Telefono { get; set; }
 
+    public decimal? Latitud { get; set; }
+
+    public decimal? Longitud { get; set; }
+
     public bool Activo { get; set; }
 
     public DateTimeOffset CreadoEn { get; set; }

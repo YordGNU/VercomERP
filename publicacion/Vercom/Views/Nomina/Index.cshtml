@@ -8,7 +8,10 @@
         <h4 class="page-main-title m-0">Control de Nóminas y Haberes</h4>
         <p class="text-muted small mb-0">Cálculo de salarios, retenciones e impuestos sobre la fuerza de trabajo (RF-22).</p>
     </div>
-    <div class="text-end">
+    <div class="text-end d-flex gap-2">
+        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#previewPayrollModal">
+            <i class="ti ti-chart-dots"></i> SIMULADOR / PREVIEW
+        </button>
         <button type="button" class="btn btn-sm btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#calcPayrollModal">
             <i class="ti ti-calculator"></i> CALCULAR NUEVA NÓMINA
         </button>
@@ -84,6 +87,50 @@
                 <div class="modal-footer border-0 p-4 pt-0">
                     <button type="button" class="btn btn-sm btn-outline px-4" data-bs-dismiss="modal">CANCELAR</button>
                     <button type="submit" class="btn btn-sm btn-primary px-4">PROCESAR NÓMINA</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal de Vista Previa / Simulador -->
+<div class="modal fade" id="previewPayrollModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form asp-action="Preview" method="get" class="w-100">
+            <div class="modal-content shadow-lg border-0 rounded-4">
+                <div class="modal-header border-0 bg-info text-white p-4">
+                    <h5 class="modal-title fw-bold">Simulador de Nómina</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="bg-light-subtle border rounded-3 p-3 mb-4 small">
+                        <i class="ti ti-info-circle-filled text-info me-2"></i>
+                        Esta herramienta permite previsualizar los cálculos del mes sin generar registros permanentes en la base de datos.
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Año Fiscal</label>
+                            <input type="number" name="anio" class="form-control w-100" value="@Model.CurrentAnio" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Mes</label>
+                            <select name="mes" class="form-control form-select w-100" required>
+                                @for(int m=1; m<=12; m++) {
+                                    <!option value="@m" @(Model.CurrentMes == m ? "selected" : "")>@meses[m]</!option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Sucursal (Opcional)</label>
+                            <select name="sucursalId" class="form-select select2" asp-items="ViewBag.SucursalId">
+                                <option value="">-- Todas las Unidades --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-sm btn-outline px-4" data-bs-dismiss="modal">CANCELAR</button>
+                    <button type="submit" class="btn btn-sm btn-info px-4">VER SIMULACIÓN</button>
                 </div>
             </div>
         </form>

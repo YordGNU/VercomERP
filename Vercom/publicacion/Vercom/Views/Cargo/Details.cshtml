@@ -14,7 +14,7 @@
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <div class="row">
         <!-- Resumen del Cargo -->
         <div class="col-lg-4">
@@ -63,6 +63,50 @@
                         } else {
                             <p class="text-muted italic mb-0">No se han definido las funciones para este cargo.</p>
                         }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen de Plantilla -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light-subtle py-3">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-users-group me-2 text-primary"></i>Resumen de Plantilla (Staffing)</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4">Unidad / Sucursal</th>
+                                    <th class="text-center">Plazas Aprobadas</th>
+                                    <th class="text-center">Personal Actual</th>
+                                    <th class="text-center">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var p in Model.PlantillaAprobada)
+                                {
+                                    var cubiertas = Model.Empleados.Count(e => e.Estado == "ACTIVO" && e.SucursalId == p.SucursalId);
+                                    var diff = p.PlazasAprobadas - cubiertas;
+                                    <tr>
+                                        <td class="ps-4 fw-semibold text-primary">@(p.Sucursal?.Nombre ?? "GLOBAL / CENTRAL")</td>
+                                        <td class="text-center fw-bold">@p.PlazasAprobadas</td>
+                                        <td class="text-center">@cubiertas</td>
+                                        <td class="text-center">
+                                            @if (diff > 0) { <span class="badge bg-warning-subtle text-warning">VACANTE (@diff)</span> }
+                                            else if (diff < 0) { <span class="badge bg-danger-subtle text-danger">SOBREGIRADO (@Math.Abs(diff))</span> }
+                                            else { <span class="badge bg-success-subtle text-success">COMPLETO</span> }
+                                        </td>
+                                    </tr>
+                                }
+                                @if (!Model.PlantillaAprobada.Any())
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4 text-muted small">No se han configurado plazas aprobadas para este cargo en la plantilla.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

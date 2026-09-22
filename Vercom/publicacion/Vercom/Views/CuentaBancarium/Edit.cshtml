@@ -11,7 +11,7 @@
 </div>
 
 <div class="row">
-    <form asp-action="Edit" method="post">
+    <form asp-action="Edit" method="post" id="editBankAccountForm">
         @Html.AntiForgeryToken()
         <div asp-validation-summary="All" class="alert alert-danger py-2 small border-0 mb-4 shadow-sm"></div>
         <input type="hidden" asp-for="BankAccount.Id" name="BankAccount.Id" />
@@ -43,6 +43,10 @@
                             </div>
 
                             <div class="col-md-6">
+                                <label class="form-label">Cuenta Mayor Asociada</label>
+                                <select asp-for="BankAccount.CuentaContableId" name="BankAccount.CuentaContableId" class="form-control form-select w-100 select2-cuenta" asp-items="Model.CuentasContables" required></select>
+                            </div>
+                            <div class="col-md-6">
                                 <label class="form-label">Saldo Actual ($)</label>
                                 <input asp-for="BankAccount.SaldoActual" name="BankAccount.SaldoActual" type="number" step="0.01" class="form-control w-100 text-numeric" />
                             </div>
@@ -73,4 +77,9 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            window.SubmitAjaxForm('editBankAccountForm');
+        });
+    </script>
 }

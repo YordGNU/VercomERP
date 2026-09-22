@@ -93,13 +93,12 @@ public class AsientoContableController : Controller
             var result = await _accountingService.CreateEntryAsync(asientoContable);
             if (result.Succeeded)
             {
-                return RedirectToAction(nameof(Details), new { id = result.Entry?.Id });
+                return Json(new { success = true, message = "Asiento registrado correctamente.", redirectUrl = Url.Action(nameof(Details), new { id = result.Entry?.Id }) });
             }
-            ModelState.AddModelError("", result.Message);
+            return Json(new { success = false, message = result.Message });
         }
 
-        var contextVm = await _accountingService.GetAsientoCreateContextAsync(asientoContable);
-        return View(contextVm);
+        return Json(new { success = false, message = "El asiento debe tener al menos una partida (línea)." });
     }
 
     [Authorize(Policy = "CONTABILIDAD.ASIENTO.CREAR")]

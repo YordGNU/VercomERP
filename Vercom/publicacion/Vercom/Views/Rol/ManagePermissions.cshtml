@@ -10,7 +10,8 @@
 </div>
 
 <div class="row mt-4">
-    <form asp-action="ManagePermissions" method="post">
+    <form asp-action="ManagePermissions" method="post" id="managePermissionsForm">
+        @Html.AntiForgeryToken()
         <input type="hidden" name="id" value="@Model.Rol.Id" />
 
         <div class="row">
@@ -52,3 +53,11 @@
         </div>
     </form>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            window.SubmitAjaxForm('managePermissionsForm');
+        });
+    </script>
+}

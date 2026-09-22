@@ -18,11 +18,9 @@
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <form asp-action="Create" method="post" id="purchaseForm">
         @Html.AntiForgeryToken()
-        <div asp-validation-summary="All" class="alert alert-danger py-2 small border-0 mb-4 shadow-sm"></div>
-
         <div class="row">
             <!-- Columna Principal: Cabecera y Partidas -->
             <div class="col-lg-8">
@@ -145,15 +143,15 @@
             const tbody = document.querySelector("#detailsTable tbody");
             const row = document.createElement("tr");
             row.innerHTML = `
-              <td>
-                    <select name="Order.OrdenCompraDetalles[${rowCount}].ProductoId" class="form-control form-select w-100 select2" required>
+                <td>
+                    <select name="Order.OrdenCompraDetalles[${rowCount}].ProductoId" class="form-control form-select w-100 select2-dynamic" required>
                         <option value="">-- Buscar Artículo --</option>
-                        ${parsedProductos.map(p => `<option value="${p.id}">${p.display}</option>`).join('')}
+                        ${parsedProductos.map(p => `<option value="${p.id}">${p.codigo} - ${p.nombre}</option>`).join('')}
                     </select>
                 </td>
                 <td><input name="Order.OrdenCompraDetalles[${rowCount}].CantidadSolicitada" type="number" step="0.01" class="form-control text-center fw-bold input-qty" value="1.00" onchange="calculateTotals()" required /></td>
                 <td><input name="Order.OrdenCompraDetalles[${rowCount}].PrecioUnitario" type="number" step="0.01" class="form-control text-end input-price" value="0.00" onchange="calculateTotals()" required /></td>
-                <td class="text-end pe-4 fw-bold text-dark label-line-total">0.00</td>
+               <td class="pe-4 fw-bold text-dark label-line-total">0.00</td>
                 <td>
                     <button type="button" class="btn btn-sm btn-icon btn-ghost-danger border-0" onclick="this.closest('tr').remove(); calculateTotals();">
                         <i class="ti ti-trash"></i>
@@ -161,6 +159,13 @@
                 </td>
             `;
             tbody.appendChild(row);
+
+            $(row).find('.select2-dynamic').select2({
+                width: '100%',
+                placeholder: '-- Buscar Artículo --',
+                dropdownParent: $('#purchaseForm')
+            });
+
             rowCount++;
         }
 
@@ -179,7 +184,10 @@
             document.getElementById('btnSubmit').disabled = total <= 0;
         }
 
-        document.addEventListener('DOMContentLoaded', () => { addRow(); });
+        document.addEventListener('DOMContentLoaded', () => {
+            addRow();
+            window.SubmitAjaxForm('purchaseForm');
+        });
     </script>
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

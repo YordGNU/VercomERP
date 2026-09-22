@@ -147,8 +147,12 @@
                         method: 'POST',
                         body: formData
                     }).then(res => res.json()).then(data => {
-                        if (data.success) location.reload();
-                        else toastr.error(data.message);
+                        if (data.success) {
+                            window.SwalAlert('success', data.message);
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            Swal.fire('Error', data.message, 'error');
+                        }
                     });
                 }
             });

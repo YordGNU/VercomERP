@@ -10,12 +10,17 @@ namespace Vercom.Controllers;
 public class SalesController : Controller
 {
     private readonly ISalesService _salesService;
+    private readonly IParametroSistemaService _paramService;
     private readonly IEntidadProvider _entidadProvider;
+    private readonly ICommercialService _commercialService;
 
-    public SalesController(ISalesService salesService, IEntidadProvider entidadProvider)
+    public SalesController(ISalesService salesService, IParametroSistemaService paramService,
+        IEntidadProvider entidadProvider, ICommercialService commercialService)
     {
         _salesService = salesService;
+        _paramService = paramService;
         _entidadProvider = entidadProvider;
+        _commercialService = commercialService;
     }
 
     [Authorize(Policy = "COMERCIAL.FACTURA_VENTA.VER")]
@@ -43,8 +48,20 @@ public class SalesController : Controller
     [Authorize(Policy = "COMERCIAL.FACTURA_VENTA.CREAR")]
     public async Task<IActionResult> Create()
     {
+        var entidadId = _entidadProvider.CurrentEntidadId;
         var vm = await _salesService.GetSalesCreateContextAsync();
+
+        ViewBag.TaxRate = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "TASA_IMP_VENTAS");
+        if (ViewBag.TaxRate == 0) ViewBag.TaxRate = 10.0m; // Default 10%
+
         return View(vm);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> CheckCreditLimit(Guid clienteId, decimal amount)
+    {
+        var result = await _commercialService.ValidateCreditLimitAsync(clienteId, amount);
+        return Json(new { succeeded = result.Succeeded, message = result.Message });
     }
 
     [HttpPost]
@@ -67,7 +84,7 @@ public class SalesController : Controller
         if (ModelState.IsValid)
         {
             invoice.EntidadId = _entidadProvider.CurrentEntidadId;
-            invoice.SucursalId = _entidadProvider.CurrentSucursalId ?? invoice.SucursalId; // Forzar sucursal si está restringido
+            invoice.SucursalId = _entidadProvider.CurrentSucursalId ?? invoice.SucursalId;
             invoice.CreadoPor = _entidadProvider.CurrentUsuarioId;
             invoice.CanalVenta = "ERP";
             invoice.Moneda = "CUP";
@@ -77,19 +94,13 @@ public class SalesController : Controller
             var result = await _salesService.CreateInvoiceAsync(invoice);
             if (result.Succeeded)
             {
-                TempData["Success"] = result.Message;
-                return RedirectToAction(nameof(Details), new { id = result.Invoice?.Id });
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Details), new { id = result.Invoice?.Id }) });
             }
-            ModelState.AddModelError("", result.Message);
-        }
-        else
-        {
-            var errors = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-            ModelState.AddModelError("", $"Verifique los datos: {errors}");
+            return Json(new { success = false, message = result.Message });
         }
 
-        var contextVm = await _salesService.GetSalesCreateContextAsync(invoice);
-        return View(contextVm);
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Verifique los datos de facturación.", errors = errorList });
     }
 
     [HttpPost]

@@ -26,7 +26,8 @@
                     <h5 class="m-0 fw-bold"><i class="ti ti-briefcase me-2 text-primary"></i>Datos del Puesto</h5>
                 </div>
                 <div class="card-body p-4">
-                    <form asp-action="Edit" class="row g-4">
+                    <form asp-action="Edit" class="row g-4" id="editCargoForm">
+                        @Html.AntiForgeryToken()
                         <input type="hidden" asp-for="Id" />
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
 
@@ -94,4 +95,9 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        $(document).ready(function() {
+            window.SubmitAjaxForm('editCargoForm');
+        });
+    </script>
 }

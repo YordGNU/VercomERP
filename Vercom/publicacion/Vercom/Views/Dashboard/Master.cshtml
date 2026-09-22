@@ -1,9 +1,10 @@
 @model Vercom.ViewModels.MasterDashboardViewModel
 @{
     ViewBag.Title = "Monitor Maestro";
+    string Money(decimal v) => v.ToString("N2");
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
+<div class="page-title-head d-flex align-items-center p-1 ">
     <div class="flex-grow-1">
         <h4 class="page-main-title m-0 fw-bold">Monitor Maestro de Ecosistema ERP</h4>
         <p class="text-muted small mb-0">Visión global de infraestructura, seguridad y entidades registradas.</p>
@@ -15,201 +16,332 @@
     </div>
 </div>
 
-<div class="container-xxl">
-    <!-- Fila 1: KPIs Globales -->
-    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3 mb-4">
-        <div class="col">
-            <div class="card card-sm">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-primary text-white avatar"><i class="ti ti-building-community fs-24"></i></span>
-                        </div>
-                        <div class="col">
-                            <div class="font-weight-medium fw-bold">@Model.TotalEntidades</div>
-                            <div class="text-muted small">Empresas Activas</div>
-                        </div>
+<!-- Fila 1: KPIs Globales -->
+<div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-1 mb-3">
+    <div class="col">
+        <div class="card card-sm h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <span class="bg-primary text-white avatar"><i class="ti ti-building-community fs-24"></i></span>
                     </div>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card card-sm border-warning-subtle">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-warning text-white avatar"><i class="ti ti-clock-pause fs-24"></i></span>
-                        </div>
-                        <div class="col">
-                            <div class="font-weight-medium fw-bold">@Model.EntidadesPendientes</div>
-                            <div class="text-muted small">Pendientes Aprobación</div>
-                        </div>
-                    </div>
-                    @if (Model.EntidadesPendientes > 0)
-                    {
-                        <div class="mt-2 text-center">
-                            <a asp-controller="Entidad" asp-action="Pending" class="btn btn-sm btn-link py-0">Gestionar <i class="ti ti-arrow-right"></i></a>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card card-sm">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-info text-white avatar"><i class="ti ti-users fs-24"></i></span>
-                        </div>
-                        <div class="col">
-                            <div class="font-weight-medium fw-bold">@Model.UsuariosTotales</div>
-                            <div class="text-muted small">Usuarios del Sistema</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card card-sm">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-success text-white avatar"><i class="ti ti-device-laptop fs-24"></i></span>
-                        </div>
-                        <div class="col">
-                            <div class="font-weight-medium fw-bold">@Model.SesionesPosActivas</div>
-                            <div class="text-muted small">Terminales POS Online</div>
-                        </div>
+                    <div class="col">
+                        <div class="font-weight-medium fw-bold fs-20">@Model.TotalEntidades</div>
+                        <div class="text-muted small">Empresas Activas</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <div class="row g-3">
-        <!-- Columna Izquierda: Auditoría y Seguridad -->
-        <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header justify-content-between">
-                    <h5 class="m-0 fw-bold text-danger"><i class="ti ti-shield-alert me-2"></i>Alertas de Seguridad Recientes</h5>
-                    <a asp-controller="Admin" asp-action="AuditLogs" class="btn btn-sm btn-outline">Ver Bitácora Completa</a>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-vcenter card-table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Evento</th>
-                                    <th>Usuario</th>
-                                    <th>IP Origen</th>
-                                    <th>Fecha/Hora</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var alert in Model.AlertasSeguridad)
-                                {
-                                    <tr>
-                                        <td>
-                                            <span class="badge badge-soft-danger">@alert.Accion</span>
-                                        </td>
-                                        <td class="fw-bold">@alert.NombreUsuario</td>
-                                        <td class="small text-muted">@alert.IpOrigen</td>
-                                        <td class="small">@alert.OcurridoEn.ToString("dd/MM/yyyy HH:mm")</td>
-                                    </tr>
-                                }
-                                @if (!Model.AlertasSeguridad.Any())
-                                {
-                                    <tr>
-                                        <td colspan="4" class="text-center py-4 text-muted small">No se han detectado incidentes críticos recientemente.</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
+    <div class="col">
+        <div class="card card-sm border-warning-subtle h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <span class="bg-warning text-white avatar"><i class="ti ti-clock-pause fs-24"></i></span>
                     </div>
+                    <div class="col">
+                        <div class="font-weight-medium fw-bold fs-20">@Model.EntidadesPendientes</div>
+                        <div class="text-muted small">Pendientes Aprobación</div>
+                    </div>
+                </div>
+                @if (Model.EntidadesPendientes > 0)
+                {
+                    <div class="mt-2 text-center">
+                        <a asp-controller="Entidad" asp-action="Pending" class="btn btn-sm btn-link py-0">Gestionar <i class="ti ti-arrow-right"></i></a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card card-sm h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <span class="bg-success text-white avatar"><i class="ti ti-cash fs-24"></i></span>
+                    </div>
+                    <div class="col">
+                        <div class="font-weight-medium fw-bold fs-20">@Money(Model.VentasGlobalesMes)</div>
+                        <div class="text-muted small">Ventas Globales (Mes)</div>
+                    </div>
+                </div>
+                <div class="text-muted small mt-2">@Model.FacturasGlobalesMes facturas emitidas</div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card card-sm h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <span class="bg-info text-white avatar"><i class="ti ti-device-laptop fs-24"></i></span>
+                    </div>
+                    <div class="col">
+                        <div class="font-weight-medium fw-bold fs-20">@Model.SesionesPosActivas</div>
+                        <div class="text-muted small">Sesiones POS Activas</div>
+                    </div>
+                </div>
+                <div class="text-muted small mt-2">@Model.DispositivosPos terminales registradas</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fila 2: Salud POS y Encabezados -->
+<div class="row row-cols-1 row-cols-md-3 g-1 mb-3">
+    <div class="col">
+        <div class="card card-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <i class="ti ti-alert-triangle fs-28 me-3 @(Model.PosConflictos > 0 ? "text-danger" : "text-success")"></i>
+                <div>
+                    <div class="fs-20 fw-bold @(Model.PosConflictos > 0 ? "text-danger" : "text-success")">@Model.PosConflictos</div>
+                    <div class="text-muted small">Conflictos de Sincronización</div>
                 </div>
             </div>
         </div>
-
-        <!-- Columna Derecha: Infraestructura -->
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="m-0 fw-bold"><i class="ti ti-database-export me-2 text-primary"></i>Respaldo de Datos</h5>
-                </div>
-                <div class="card-body">
-                    @if (Model.UltimoBackup != null)
-                    {
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="avatar bg-success-subtle text-success me-3">
-                                <i class="ti ti-check fs-24"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold">Sistema Protegido</div>
-                                <div class="text-muted small">Último backup: @Model.UltimoBackup.FinalizadoEn?.ToString("dd MMM, HH:mm")</div>
-                            </div>
-                        </div>
-                        <div class="bg-light p-3 rounded mb-3">
-                            <p class="small mb-1"><strong>Archivo:</strong> @System.IO.Path.GetFileName(Model.UltimoBackup.RutaArchivo)</p>
-                            <p class="small mb-0"><strong>Tamaño:</strong> @((Model.UltimoBackup.TamanoBytes / 1024.0 / 1024.0)?.ToString("N2")) MB</p>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="alert alert-danger">
-                            <i class="ti ti-alert-circle me-1"></i> No hay registros de backups exitosos.
-                        </div>
-                    }
-                    <div class="d-grid mt-4">
-                        <a asp-controller="Admin" asp-action="Backups" class="btn btn-primary py-2 shadow-sm">
-                            <i class="ti ti-player-play me-1"></i> EJECUTAR RESPALDO GLOBAL
-                        </a>
-                    </div>
+    </div>
+    <div class="col">
+        <div class="card card-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <i class="ti ti-refresh fs-28 me-3 @(Model.PosPendientes > 0 ? "text-warning" : "text-success")"></i>
+                <div>
+                    <div class="fs-20 fw-bold @(Model.PosPendientes > 0 ? "text-warning" : "text-success")">@Model.PosPendientes</div>
+                    <div class="text-muted small">Ventas POS Pendientes</div>
                 </div>
             </div>
-
-            <div class="card mt-4 border-warning border-opacity-25 shadow-sm">
-                <div class="card-header bg-warning-subtle">
-                    <h5 class="m-0 fw-bold text-warning"><i class="ti ti-clock-exclamation me-2"></i>Alertas de Vencimiento Próximas</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-vcenter card-table small mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Producto</th>
-                                  <th>Vence</th>
-                                    <th>Lote</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var alert in Model.AlertasVencimiento)
-                                {
-                                    <tr>
-                                        <td class="fw-bold">@alert.Producto.Nombre</td>
-                                        <td text-danger fw-bold">@alert.FechaVencimiento?.ToString("dd/MM")</td>
-                                        <td class="text-end font-monospace tiny">@alert.Lote</td>
-                                    </tr>
-                                }
-                                @if (!Model.AlertasVencimiento.Any())
-                                {
-                                    <tr>
-                                        <td colspan="3" class="text-center py-4 text-muted small">Sin alertas de caducidad.</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card bg-dark text-white border-0 mt-4">
-                <div class="card-body p-4 text-center">
-                    <i class="ti ti-rocket fs-48 text-primary mb-3"></i>
-                    <h4 class="fw-bold">Gestión de Clientes API</h4>
-                    <p class="text-white-50 small">Configure tokens de acceso para aplicaciones de terceros o integraciones B2B.</p>
-                    <a asp-controller="Api" asp-action="Index" class="btn btn-sm btn-outline-light w-100 mt-2">CONFIGURAR INTEGRACIONES</a>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card card-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <i class="ti ti-users fs-28 me-3 text-info"></i>
+                <div>
+                    <div class="fs-20 fw-bold text-info">@Model.UsuariosTotales</div>
+                    <div class="text-muted small">Usuarios del Sistema</div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<div class="row g-1 mb-3">
+    <!-- Columna Izquierda: Ranking de Entidades + Sesiones POS -->
+    <div class="col-lg-7">
+        <div class="card mb-3">
+            <div class="card-header border-light">
+                <h5 class="m-0 fw-bold text-success"><i class="ti ti-trophy me-2"></i>Entidades con Mayor Volumen (Mes)</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.TopEntidades.Any())
+                {
+                    var maxVentas = Model.TopEntidades.Max(e => e.Ventas);
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Entidad</th>
+                                    <th class="text-center">Facturas</th>
+                                    <th class="text-end">Ventas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{ var pos = 1; }
+                                @foreach (var e in Model.TopEntidades)
+                                {
+                                    var pct = maxVentas > 0 ? (double)(e.Ventas / maxVentas * 100) : 0;
+                                    <tr>
+                                        <td class="fw-bold text-muted">@pos</td>
+                                        <td class="fw-bold">@e.Nombre</td>
+                                        <td class="text-center">@e.Facturas</td>
+                                        <td class="text-end fw-bold">@Money(e.Ventas)</td>
+                                    </tr>
+                                    pos++;
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted small">
+                        <i class="ti ti-chart-bar-off fs-32 d-block mb-2 opacity-50"></i>
+                        Sin ventas registradas este mes en el ecosistema.
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header border-light justify-content-between">
+                <h5 class="m-0 fw-bold text-primary"><i class="ti ti-device-laptop me-2"></i>Sesiones POS Abiertas</h5>
+                <a asp-controller="PosVentaPendiente" asp-action="Index" class="btn btn-sm btn-outline">Ver Pendientes</a>
+            </div>
+            <div class="card-body">
+                @if (Model.SesionesPos.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Entidad</th>
+                                    <th>Terminal</th>
+                                    <th>Cajero</th>
+                                    <th class="text-center">Apertura</th>
+                                    <th class="text-end">Ventas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var s in Model.SesionesPos)
+                                {
+                                    <tr>
+                                        <td class="small text-muted">@s.Entidad</td>
+                                        <td class="fw-bold">@s.Dispositivo</td>
+                                        <td>@s.Cajero</td>
+                                        <td class="text-center small">@s.FechaApertura.ToString("dd/MM HH:mm")</td>
+                                        <td class="text-end fw-bold text-success">@Money(s.TotalVentas)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted small">
+                        <i class="ti ti-device-desktop-off fs-32 d-block mb-2 opacity-50"></i>
+                        No hay sesiones POS abiertas.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Columna Derecha: Seguridad + Infraestructura -->
+    <div class="col-lg-5">
+        <div class="card mb-3">
+            <div class="card-header justify-content-between">
+                <h5 class="m-0 fw-bold text-danger"><i class="ti ti-shield-alert me-2"></i>Alertas de Seguridad</h5>
+                <a asp-controller="Admin" asp-action="AuditLogs" class="btn btn-sm btn-outline">Bitácora</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-vcenter card-table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Evento</th>
+                                <th>Usuario</th>
+                                <th>Fecha/Hora</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var alert in Model.AlertasSeguridad)
+                            {
+                                <tr>
+                                    <td><span class="badge badge-soft-danger">@alert.Accion</span></td>
+                                    <td class="fw-bold small">@alert.NombreUsuario</td>
+                                    <td class="small">@alert.OcurridoEn.ToString("dd/MM HH:mm")</td>
+                                </tr>
+                            }
+                            @if (!Model.AlertasSeguridad.Any())
+                            {
+                                <tr>
+                                    <td colspan="3" class="text-center py-4 text-muted small">No se han detectado incidentes críticos recientemente.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="m-0 fw-bold"><i class="ti ti-database-export me-2 text-primary"></i>Respaldo de Datos</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.UltimoBackup != null)
+                {
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="avatar bg-success-subtle text-success me-3">
+                            <i class="ti ti-check fs-24"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold">Sistema Protegido</div>
+                            <div class="text-muted small">Último backup: @Model.UltimoBackup.FinalizadoEn?.ToString("dd MMM, HH:mm")</div>
+                        </div>
+                    </div>
+                    <div class="bg-light p-3 rounded mb-3">
+                        <p class="small mb-1"><strong>Archivo:</strong> @System.IO.Path.GetFileName(Model.UltimoBackup.RutaArchivo)</p>
+                        <p class="small mb-0"><strong>Tamaño:</strong> @((Model.UltimoBackup.TamanoBytes / 1024.0 / 1024.0)?.ToString("N2")) MB</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-danger mb-3">
+                        <i class="ti ti-alert-circle me-1"></i> No hay registros de backups exitosos.
+                    </div>
+                }
+                <div class="d-grid">
+                    <a asp-controller="Admin" asp-action="Backups" class="btn btn-primary py-2 shadow-sm">
+                        <i class="ti ti-player-play me-1"></i> EJECUTAR RESPALDO GLOBAL
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-warning border-opacity-25 shadow-sm">
+            <div class="card-header bg-warning-subtle">
+                <h5 class="m-0 fw-bold text-warning"><i class="ti ti-clock-exclamation me-2"></i>Vencimientos Próximos</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-vcenter card-table small mb-0">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Vence</th>
+                                <th>Lote</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var alert in Model.AlertasVencimiento)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@alert.Producto?.Nombre</td>
+                                    <td class="text-danger fw-bold">@alert.FechaVencimiento?.ToString("dd/MM")</td>
+                                    <td class="font-monospace tiny">@alert.Lote</td>
+                                </tr>
+                            }
+                            @if (!Model.AlertasVencimiento.Any())
+                            {
+                                <tr>
+                                    <td colspan="3" class="text-center py-4 text-muted small">Sin alertas de caducidad.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-1">
+    <div class="col-12">
+        <div class="card bg-dark text-white border-0">
+            <div class="card-body p-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center">
+                    <i class="ti ti-rocket fs-48 text-primary me-3"></i>
+                    <div>
+                        <h4 class="fw-bold mb-1">Gestión de Clientes API</h4>
+                        <p class="text-white-50 small mb-0">Configure tokens de acceso para aplicaciones de terceros o integraciones B2B.</p>
+                    </div>
+                </div>
+                <a asp-controller="Api" asp-action="Index" class="btn btn-outline-light">CONFIGURAR INTEGRACIONES</a>
+            </div>
+        </div>
+    </div>
+</div>
+

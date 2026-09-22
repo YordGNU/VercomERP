@@ -118,4 +118,29 @@ public class ProductionController : Controller
         var deviations = await _productionService.GetDeviationsAsync();
         return View(deviations);
     }
+
+    [Authorize(Policy = "PRODUCCION.ORDEN.CREAR")]
+    public async Task<IActionResult> Plans()
+    {
+        var plans = await _productionService.GetProductionPlansAsync();
+        return View(plans);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "PRODUCCION.ORDEN.CREAR")]
+    public async Task<IActionResult> GenerateSuggestedPlan(short year, short month)
+    {
+        var plan = await _productionService.GenerateSuggestedPlanAsync(_entidadProvider.CurrentEntidadId, year, month);
+
+        if (!plan.PlanProduccionDetalles.Any())
+        {
+            TempData["Info"] = "No hay necesidades de producción detectadas (Stock por encima del mínimo).";
+            return RedirectToAction(nameof(Plans));
+        }
+
+        await _productionService.CreatePlanAsync(plan);
+        TempData["Success"] = $"Plan de producción sugerido generado con {plan.PlanProduccionDetalles.Count} artículos.";
+        return RedirectToAction(nameof(Plans));
+    }
 }
