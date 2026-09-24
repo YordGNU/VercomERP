@@ -1,92 +1,112 @@
-﻿@model Vercom.Models.CuentaPorCobrar
+﻿@model Vercom.ViewModels.CxCFormViewModel
 @{
-    ViewBag.Title = "Alta de Cuenta por Cobrar";
+    ViewBag.Title = "Registrar Cuenta por Cobrar";
+    var fmt = new System.Globalization.CultureInfo("es-CU");
 }
 
 <div class="page-title-head d-flex align-items-center p-3 mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Registrar Deuda de Cliente</h4>
+        <h4 class="page-main-title m-0 fw-bold">Registrar Cuenta por Cobrar</h4>
         <p class="text-muted small mb-0">Carga manual de saldos pendientes o créditos comerciales extraordinarios.</p>
     </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+    <div class="text-end d-none d-md-block">
+        <ol class="breadcrumb m-0 py-0">
             <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Finanzas</a></li>
-            <li class="breadcrumb-item"><a asp-action="Index">CxC</a></li>
-            <li class="breadcrumb-item active">Nueva</li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Contabilidad</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">Cuentas por Cobrar</a></li>
+            <li class="breadcrumb-item active">Registrar</li>
         </ol>
     </div>
 </div>
 
-<div class="container-xxl">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-light-subtle py-3">
-                    <h5 class="m-0 fw-bold"><i class="ti ti-report-money me-2 text-primary"></i>Datos del Título de Crédito</h5>
+<div class="row justify-content-center mt-2">
+    <div class="col-lg-9">
+        <div class="card shadow-sm border-0">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Item.DocumentoOrigenId" />
+                <div class="card-header bg-light-subtle py-3 d-flex align-items-center gap-2">
+                    <i class="ti ti-report-money fs-5 text-primary"></i>
+                    <h5 class="m-0 fw-bold">Datos del Título de Crédito</h5>
                 </div>
                 <div class="card-body p-4">
-                    <form asp-action="Create" method="post" class="row g-4">
-                        @Html.AntiForgeryToken()
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small shadow-sm border-0"></div>
 
-                        <div class="col-md-12">
-                            <label class="form-label fw-bold">Cliente Deudor</label>
-                            <select asp-for="ClienteId" class="form-control form-select w-100 select2" asp-items="ViewBag.ClienteId" required>
-                                <option value="">-- Buscar en Cartera de Clientes --</option>
+                    <h6 class="fw-bold text-uppercase text-primary mb-3"><i class="ti ti-user me-1"></i> Deudor</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <label asp-for="Item.ClienteId" class="form-label fw-bold">Cliente deudor</label>
+                            <select asp-for="Item.ClienteId" class="form-select" asp-items="Model.Clientes">
+                                <option value="">-- Seleccione el cliente --</option>
+                            </select>
+                            <span asp-validation-for="Item.ClienteId" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-uppercase text-primary mb-3"><i class="ti ti-file-text me-1"></i> Documento Origen</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="Item.DocumentoOrigenTipo" class="form-label fw-bold">Tipo de documento</label>
+                            <select asp-for="Item.DocumentoOrigenTipo" class="form-select">
+                                <option value="">-- Seleccione --</option>
+                                @foreach (var t in Vercom.ViewModels.CarteraCatalogos.TiposDocumento)
+                                {
+                                    <!option value="@t" @(t == Model.Item.DocumentoOrigenTipo ? "selected" : "")>@t</!option>
+                                }
                             </select>
                         </div>
-
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Tipo de Documento Origen</label>
-                            <select asp-for="DocumentoOrigenTipo" class="form-select" required>
-                                <option value="FACTURA">Factura de Venta</option>
-                                <option value="CONTRATO">Saldo de Contrato</option>
-                                <option value="AJUSTE">Ajuste de Saldo</option>
-                                <option value="OTROS">Otros Títulos</option>
+                            <label asp-for="Item.DocumentoOrigenNumero" class="form-label fw-bold">Nº de documento / referencia</label>
+                            <input asp-for="Item.DocumentoOrigenNumero" class="form-control" placeholder="ej: FAC-001" />
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-uppercase text-primary mb-3"><i class="ti ti-calendar me-1"></i> Plazos</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="Item.FechaEmision" class="form-label fw-bold">Fecha de emisión</label>
+                            <input asp-for="Item.FechaEmision" type="date" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Item.FechaVencimiento" class="form-label fw-bold">Fecha de vencimiento</label>
+                            <input asp-for="Item.FechaVencimiento" type="date" class="form-control" />
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-uppercase text-primary mb-3"><i class="ti ti-moneybag me-1"></i> Importes</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Item.MontoOriginal" class="form-label fw-bold">Importe original</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="ti ti-currency-peso"></i></span>
+                                <input asp-for="Item.MontoOriginal" type="number" step="0.01" min="0.01" class="form-control fw-bold text-end" placeholder="0.00" />
+                            </div>
+                            <span asp-validation-for="Item.MontoOriginal" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Item.Moneda" class="form-label fw-bold">Moneda</label>
+                            <select asp-for="Item.Moneda" class="form-select">
+                                @foreach (var m in Vercom.ViewModels.CarteraCatalogos.Monedas)
+                                {
+                                    <!option value="@m" @(m == Model.Item.Moneda ? "selected" : "")>@m</!option>
+                                }
                             </select>
                         </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Referencia / Nº Documento</label>
-                            <input asp-for="DocumentoOrigenId" name="DocumentoOrigenId" class="form-control" placeholder="Ej: FAC-001" required />
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Fecha de Emisión</label>
-                            <input asp-for="FechaEmision" type="date" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Fecha de Vencimiento</label>
-                            <input asp-for="FechaVencimiento" type="date" class="form-control" value="@DateTime.Now.AddDays(30).ToString("yyyy-MM-dd")" required />
-                        </div>
-
-                        <div class="col-md-6 mt-4 pt-3 border-top">
-                            <label class="form-label fw-bold">Monto Original ($)</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input asp-for="MontoOriginal" class="form-control fw-bold text-end" placeholder="0.00" step="0.01" required />
+                        <div class="col-12">
+                            <div class="alert alert-info py-2 small mb-0 border-0">
+                                <i class="ti ti-info-circle me-1"></i>
+                                El saldo inicial de la cuenta será igual al importe registrado y su estado será <strong>PENDIENTE</strong> de cobro.
                             </div>
                         </div>
-
-                        <div class="col-md-6 mt-4 pt-3 border-top">
-                            <label class="form-label fw-bold">Saldo Pendiente Actual ($)</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light">$</span>
-                                <input asp-for="SaldoPendiente" class="form-control fw-bold text-primary text-end" placeholder="0.00" step="0.01" required />
-                            </div>
-                        </div>
-
-                        <div class="col-12 d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                            <a asp-action="Index" class="btn btn-sm btn-outline-secondary px-4">CANCELAR</a>
-                            <button type="submit" class="btn btn-sm btn-primary px-5 py-2 shadow">
-                                <i class="ti ti-device-floppy me-1"></i> GUARDAR CUENTA
-                            </button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
-            </div>
+                <div class="card-footer bg-light-subtle d-flex justify-content-end gap-2 px-4 py-3">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="ti ti-device-floppy me-1"></i> REGISTRAR CUENTA
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

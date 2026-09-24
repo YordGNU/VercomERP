@@ -101,7 +101,7 @@ public class ContratoEconomicoController : Controller
         if (ModelState.IsValid)
         {
             contract.EntidadId = _entidadProvider.CurrentEntidadId;
-            var result = await _commercialService.UpdateContractAsync(contract);
+            var result = await _commercialService.UpdateContractAsync(contract, vm.DocumentoContrato);
             if (result.Succeeded)
             {
                 return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });

@@ -61,14 +61,14 @@
                         <tr>
                             <td class="ps-3">Salario por Tiempo / Resultados</td>
                             <td class="text-end">@Model.SalarioDevengado.ToString("N2")</td>
-                            <td class="text-end pe-3">-</td>
+                           <td class="pe-3">-</td>
                         </tr>
                         @foreach (var c in Model.NominaDetalleConceptos)
                         {
                             <tr>
                                 <td class="ps-3 small">@c.Concepto.Nombre</td>
                                 <td class="text-end">@(c.Monto > 0 ? c.Monto.ToString("N2") : "-")</td>
-                                <td class="text-end pe-3">@(c.Monto < 0 ? Math.Abs(c.Monto).ToString("N2") : "-")</td>
+                               <td class="pe-3">@(c.Monto < 0 ? Math.Abs(c.Monto).ToString("N2") : "-")</td>
                             </tr>
                         }
                     </tbody>
@@ -76,7 +76,7 @@
                         <tr>
                             <td class="ps-3 text-uppercase">Totales:</td>
                             <td class="text-end">@Model.SalarioDevengado.ToString("N2")</td>
-                            <td class="text-end pe-3 text-danger">@Model.TotalDeducciones.ToString("N2")</td>
+                           <td class="pe-3 text-danger">@Model.TotalDeducciones.ToString("N2")</td>
                         </tr>
                     </tfoot>
                 </table>

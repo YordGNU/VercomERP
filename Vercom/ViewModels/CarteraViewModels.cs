@@ -54,5 +54,5 @@ public static class CarteraCatalogos
     public static readonly string[] TiposDocumento = { "FACTURA", "ORDEN", "RECEPCION", "CONTRATO", "AJUSTE", "OTROS" };
     public static readonly string[] Estados = { "PENDIENTE", "PARCIAL", "PAGADA" };
     public static readonly string[] Monedas = { "CUP", "MLC" };
-    public static readonly string[] FormasPago = { "EFECTIVO", "TRANSFERENCIA", "CHEQUE", "TARJETA", "OTRO" };
+    public static readonly string[] FormasPago = { "EFECTIVO", "CHEQUE", "ENZONA", "TRANSFERMOVIL" };
 }

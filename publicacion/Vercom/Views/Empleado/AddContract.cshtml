@@ -7,7 +7,7 @@
         <h4 class="page-main-title m-0">@Model.Title</h4>
     </div>
 </div>
-<form asp-action="AddContract" method="post" enctype="multipart/form-data">
+<form asp-action="AddContract" method="post" enctype="multipart/form-data" id="addContractForm">
     @Html.AntiForgeryToken()
     <div class="row justify-content-center">
     <div class="col-lg-8">
@@ -15,7 +15,7 @@
             <div class="card-header bg-success bg-opacity-10 py-3">
                 <h5 class="m-0 fw-bold"><i class="ti ti-file-certificate me-2 text-success"></i>Nuevo Contrato Laboral para: @Model.NombreEmpleado </h5>
                 <input type="hidden" asp-for="Contrato.Estado" value="VIGENTE" />
-                <input type="hidden" asp-for="EmpreadoID" value="@Model.Contrato.EmpleadoId" />
+                <input type="hidden" asp-for="EmpleadoId" value="@Model.Contrato.EmpleadoId" />
             </div>
             <div class="card-body p-4">
                 <div class="row g-4">
@@ -72,7 +72,7 @@
 @section Scripts {
     <script>
         $(document).ready(function() {
-            // 3. Información de Escala Salarial 
+            // 1. Información de Escala Salarial 
              const cargoId = $('#ddlCargo').val();
              if (cargoId) {
                     fetch(`/Cargo/GetScale?id=${cargoId}`)
@@ -93,6 +93,31 @@
                 } else {
                     $('#scaleInfo').hide();
             }
+
+            // 2. Recargar Escala Salarial
+            $('#ddlCargo').on('change', function() {
+                const cargoId = $(this).val();
+                if (cargoId) {
+                    fetch(`/Cargo/GetScale?id=${cargoId}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.min || data.max) {
+                                $('#lblMin').text(data.min ? data.min.toLocaleString() : '0');
+                                $('#lblMax').text(data.max ? data.max.toLocaleString() : 'N/A');
+                                $('#scaleInfo').fadeIn();
+
+                                // Sugerir el mínimo en el salario pactado si está vacío
+                                if (!$('#txtSalario').val() || $('#txtSalario').val() == "0") {
+                                    $('#txtSalario').val(data.min);
+                                }
+                            } else {
+                                $('#scaleInfo').hide();
+                            }
+                        });
+                } else {
+                    $('#scaleInfo').hide();
+                }
+            });
 
             // 4. Lógica de Periodo de Contrato según Tipo
             $('#ddlTipoContrato, #txtFechaInicio').on('change', function() {
@@ -119,6 +144,9 @@
 
             // Disparar lógica inicial del contrato
             $('#ddlTipoContrato').trigger('change');
+
+            // 5. Inicializar envío AJAX
+            window.SubmitAjaxForm('addContractForm');
         });
     </script>
     @{

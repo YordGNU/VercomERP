@@ -18,7 +18,7 @@
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <form asp-action="Create" method="post" id="invoiceForm">
         @Html.AntiForgeryToken()
         <div asp-validation-summary="All" class="alert alert-danger py-2 small border-0 mb-4 shadow-sm"></div>
@@ -172,7 +172,7 @@
                 </td>
                 <td><input name="Invoice.FacturaVentaDetalles[${rowCount}].Cantidad" type="number" step="0.01" class="form-control text-center fw-bold input-qty" value="1.00" onchange="calculateTotals()" required /></td>
                 <td><input name="Invoice.FacturaVentaDetalles[${rowCount}].PrecioUnitario" type="number" step="0.01" class="form-control text-end input-price" value="0.00" onchange="calculateTotals()" required /></td>
-                <td class="text-end pe-4 fw-bold text-dark label-line-total">0.00</td>
+               <td class="pe-4 fw-bold text-dark label-line-total">0.00</td>
                 <td>
                     <button type="button" class="btn btn-sm btn-icon btn-ghost-danger border-0" onclick="this.closest('tr').remove(); calculateTotals();">
                         <i class="ti ti-trash"></i>
@@ -254,7 +254,12 @@
                 .then(res => res.json())
                 .then(data => {
                     if (!data.succeeded) {
-                        toastr.error(data.message, "Riesgo de Crédito");
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Riesgo de Crédito',
+                            text: data.message,
+                            confirmButtonColor: '#3085d6'
+                        });
                         $('#btnSubmit').prop('disabled', true);
                     }
                 });
@@ -263,6 +268,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             addRow();
             $('#Invoice_ClienteId').on('change', calculateTotals);
+            window.SubmitAjaxForm('invoiceForm');
         });
     </script>
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}

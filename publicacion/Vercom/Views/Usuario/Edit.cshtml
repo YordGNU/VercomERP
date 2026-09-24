@@ -11,10 +11,10 @@
         <p class="text-muted small mb-0">Gestión de datos personales y asignación de perfiles.</p>
     </div>
 </div>
-<div class="container-xxl">
+<div class="row">
     <div class="row justify-content-center">
         <div class="col-lg-10">
-            <form asp-action="Edit" method="post">
+            <form asp-action="Edit" method="post" id="editUserForm">
                 @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="Usuario.Id" name="Usuario.Id" />
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-4 shadow-sm"></div>
@@ -163,4 +163,9 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            window.SubmitAjaxForm('editUserForm');
+        });
+    </script>
 }

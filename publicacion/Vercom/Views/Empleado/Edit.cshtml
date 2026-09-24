@@ -95,6 +95,13 @@
                         <label asp-for="Empleado.CuentaBancariaPago" class="form-label fw-bold">Cuenta Bancaria</label>
                         <input asp-for="Empleado.CuentaBancariaPago" class="form-control font-monospace" placeholder="92..." />
                     </div>
+                    <div class="mt-3">
+                        <label asp-for="Empleado.TurnoTrabajoId" class="form-label fw-bold">Turno de Trabajo</label>
+                        <select asp-for="Empleado.TurnoTrabajoId" class="form-select select2" asp-items="Model.Turnos">
+                            <option value="">-- Sin turno asignado --</option>
+                        </select>
+                        <small class="text-muted tiny">Define el horario base para el control de retardos.</small>
+                    </div>
                 </div>
             </div>
 

@@ -18,7 +18,7 @@
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <div class="row justify-content-center">
         <div class="col-lg-10">
             <div class="card shadow-sm border-0">
@@ -51,13 +51,21 @@
 
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Caja Asociada (Tesorería)</label>
-                            <select asp-for="Dispositivo.CajaId" name="Dispositivo.CajaId" class="form-control form-select w-100 select2" asp-items="ViewBag.CajaId" required>
+                            <select asp-for="Dispositivo.CajaId" name="Dispositivo.CajaId" class="form-control form-select w-100 select2" asp-items="Model.Cajas" required>
                                 <option value="">-- Seleccione Arca de Fondos --</option>
                             </select>
                         </div>
 
                         <div class="col-md-12">
-                            <label class="form-label fw-bold">Identificador de Hardware (UUID/IMEI)</label>
+                            <label class="form-label fw-bold">Almacén / Inventario de Venta</label>
+                            <select asp-for="Dispositivo.AlmacenId" name="Dispositivo.AlmacenId" class="form-control form-select w-100 select2" asp-items="Model.Almacenes" required>
+                                <option value="">-- Seleccione Almacén --</option>
+                            </select>
+                            <small class="text-muted">El dispositivo descuenta de este almacén el stock de sus ventas.</small>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Identificador de Hardware (MAC/UUID/IMEI)</label>
                             <input asp-for="Dispositivo.IdentificadorHardware" name="Dispositivo.IdentificadorHardware" class="form-control font-monospace" placeholder="ID único del dispositivo físico" maxlength="100" />
                             <small class="text-muted">Se utiliza para el blindaje de seguridad y evitar clones de terminales.</small>
                         </div>
@@ -65,11 +73,12 @@
                         <div class="col-12 mt-4 pt-3 border-top">
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <div class="form-check form-switch p-3 bg-light rounded-3">
-                                        <input class="form-check-input ms-0 me-2" type="checkbox" asp-for="Dispositivo.Estado" value="ACTIVO" checked>
-                                        <label class="form-check-label fw-bold text-success">Habilitar Sincronización Cloud</label>
-                                        <p class="text-muted tiny mb-0 mt-1">Permite recibir ventas offline desde este dispositivo.</p>
-                                    </div>
+                                    <label class="form-label fw-bold">Estado Operativo</label>
+                                    <select asp-for="Dispositivo.Estado" name="Dispositivo.Estado" class="form-select">
+                                        <option value="ACTIVO">ACTIVO</option>
+                                        <option value="BLOQUEADO">BLOQUEADO</option>
+                                        <option value="MANTENIMIENTO">MANTENIMIENTO</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Versión de App Requerida</label>

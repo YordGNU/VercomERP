@@ -53,10 +53,44 @@ public class PosSyncBackgroundWorker : BackgroundService
 
         foreach (var pending in pendingList)
         {
-            // Los pendientes del formato nuevo (VentaPosPayload) se procesan bajo
-            // JWT vía /api/pos/sincronizacion/.../procesar; aquí solo legacy.
+            // Formato nuevo (VentaPosPayload): se procesa con la MISMA implementación que
+            // usa la API JWT (/api/pos/sincronizacion/.../procesar), es decir
+            // PosSincronizacionService.ProcesarAsync — transacción SERIALIZABLE, reintento
+            // acotado de interbloqueo 1205 y decremento atómico condicional.
+            // Esto elimina la doble facturación (una para worker-legacy y otra para JWT)
+            // y actúa además como red de seguridad: si el terminal queda offline y nunca
+            // vuelve a llamar /procesar, el worker absorbe la venta en vez de dejarla
+            // PENDIENTE-huérfana para siempre.
             if (pending.PayloadJson.IndexOf("TipoMovimientoId", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                var syncService = scope.ServiceProvider.GetRequiredService<PosSincronizacionService>();
+
+                var result = await syncService.ProcesarAsync(pending.DispositivoPosId, pending.IdempotencyKey, ct);
+
+                if (result.Conflict)
+                {
+                    // Carrera entre el worker y el endpoint JWT: la transacción del servicio
+                    // es SERIALIZABLE y reintenta 1205; se deja PENDIENTE para el siguiente
+                    // barrido en vez de marcarla ERROR.
+                    continue;
+                }
+
+                if (result.Error is not null)
+                {
+                    // El servicio no persiste la venta en caso de error de validación; se
+                    // marca aquí para no reprocesarla sin fin (poison). El reintento del
+                    // dispositivo por JWT seguirá siendo la ruta normal.
+                    pending.Estado = "ERROR";
+                    pending.MensajeError = result.Error;
+                    pending.IntentosProcesamiento++;
+                    await context.SaveChangesAsync(ct);
+                }
+
+                // Si result.Result no es null y no hay conflicto, el servicio ya marcó la
+                // venta como PROCESADO (CommitAsync con SERIALIZABLE) y este SaveChanges
+                // es un no-op seguro.
                 continue;
+            }
 
             try
             {

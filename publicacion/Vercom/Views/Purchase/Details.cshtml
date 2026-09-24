@@ -43,7 +43,7 @@
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <div class="row">
         <!-- Columna Izquierda: Información de la Orden -->
         <div class="col-lg-8">
@@ -121,7 +121,7 @@
                                             </span>
                                         </td>
                                         <td class="text-end">@det.PrecioUnitario.ToString("C2")</td>
-                                        <td class="text-end fw-bold">@(det.SubtotalLinea?.ToString("C2") ?? "0.00")</td>
+                                       <td class="fw-bold">@(det.SubtotalLinea?.ToString("C2") ?? "0.00")</td>
                                     </tr>
                                 }
                             </tbody>
@@ -134,7 +134,7 @@
                             <table class="table table-sm table-borderless">
                                 <tr>
                                     <th class="text-muted">Subtotal:</th>
-                                    <td class="text-end fw-bold">@Model.Subtotal.ToString("C2")</td>
+                                   <td class="fw-bold">@Model.Subtotal.ToString("C2")</td>
                                 </tr>
                                 <tr class="border-top">
                                     <th class="h4 fw-bold">TOTAL @Model.Moneda:</th>

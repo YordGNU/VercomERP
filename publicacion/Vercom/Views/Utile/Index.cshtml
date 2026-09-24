@@ -107,9 +107,10 @@
                         body: formData
                     }).then(res => res.json()).then(data => {
                         if (data.success) {
-                            location.reload();
+                            window.SwalAlert('success', data.message);
+                            setTimeout(() => location.reload(), 1500);
                         } else {
-                            toastr.error(data.message);
+                            Swal.fire('Error', data.message, 'error');
                         }
                     });
                 }

@@ -57,7 +57,7 @@
 <!-- Modal de Cálculo -->
 <div class="modal fade" id="calcPayrollModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <form asp-action="Calculate" method="post" class="w-100">
+        <form asp-action="Calculate" method="post" class="w-100" id="calcPayrollForm">
             @Html.AntiForgeryToken()
             <div class="modal-content shadow-lg border-0 rounded-4">
                 <div class="modal-header border-0 bg-primary text-white p-4">
@@ -147,6 +147,8 @@
                 dom: '<"row align-items-center"<"col-md-6"l><"col-md-6"f>>rt<"row align-items-center"<"col-md-5"i><"col-md-7"p>>',
                 responsive: true,
             });
+
+            window.SubmitAjaxForm('calcPayrollForm');
         });
     </script>
 }

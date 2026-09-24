@@ -87,7 +87,10 @@ public sealed class PosSincronizacionService
     private async Task<(VentaPosPendienteDto? Result, string? Error, bool Conflict)> ProcesarCoreAsync(Guid deviceId, string key, CancellationToken cancellationToken)
     {
         await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
-        var pending = await _db.PosVentaPendientes.FirstOrDefaultAsync(x => x.DispositivoPosId == deviceId && x.IdempotencyKey == key, cancellationToken);
+        // IgnoreQueryFilters: el query filter global (entidad) depende del HttpContext,
+        // que no existe en el scope del background worker => excluiría TODAS las filas.
+        var pending = await _db.PosVentaPendientes.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(x => x.DispositivoPosId == deviceId && x.IdempotencyKey == key, cancellationToken);
         if (pending is null) return (null, null, false);
         if (pending.Estado == "PROCESADO") return (Map(pending), null, false);
         if (pending.Estado != "PENDIENTE") return (Map(pending), null, true);
@@ -100,20 +103,20 @@ public sealed class PosSincronizacionService
         if (error is not null) return (null, error, false);
         var data = sale!;
 
-        var device = await _db.DispositivoPos.AsNoTracking().FirstOrDefaultAsync(x => x.Id == deviceId, cancellationToken);
+        var device = await _db.DispositivoPos.AsNoTracking().IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == deviceId, cancellationToken);
         if (device is null || device.EntidadId != data.EntidadId || device.AlmacenId != data.AlmacenId) return (null, "La venta no corresponde al dispositivo POS.", false);
 
-        var entidadValida = await _db.Entidads.AnyAsync(x => x.Id == data.EntidadId && x.Activo, cancellationToken);
-        var sucursalValida = await _db.Sucursals.AnyAsync(x => x.Id == data.SucursalId && x.EntidadId == data.EntidadId && x.Activo, cancellationToken);
-        var clienteValido = await _db.Clientes.AnyAsync(x => x.Id == data.ClienteId && x.EntidadId == data.EntidadId && x.Activo, cancellationToken);
-        var almacenValido = await _db.Almacens.AnyAsync(x => x.Id == data.AlmacenId && x.EntidadId == data.EntidadId && x.Activo, cancellationToken);
+        var entidadValida = await _db.Entidads.IgnoreQueryFilters().AnyAsync(x => x.Id == data.EntidadId && x.Activo, cancellationToken);
+        var sucursalValida = await _db.Sucursals.IgnoreQueryFilters().AnyAsync(x => x.Id == data.SucursalId && x.EntidadId == data.EntidadId && x.Activo, cancellationToken);
+        var clienteValido = await _db.Clientes.IgnoreQueryFilters().AnyAsync(x => x.Id == data.ClienteId && x.EntidadId == data.EntidadId && x.Activo, cancellationToken);
+        var almacenValido = await _db.Almacens.IgnoreQueryFilters().AnyAsync(x => x.Id == data.AlmacenId && x.EntidadId == data.EntidadId && x.Activo, cancellationToken);
         var tipoMovimientoValido = await _db.TipoMovimientos.AnyAsync(x => x.Id == data.TipoMovimientoId, cancellationToken);
         if (!entidadValida || !sucursalValida || !clienteValido || !almacenValido || !tipoMovimientoValido)
             return (null, "Una referencia de la venta no existe o está inactiva.", false);
 
         var ids = data.Lineas.Select(x => x.ProductoId).Distinct().ToList();
-        var products = await _db.Productos.Where(x => x.Activo && ids.Contains(x.Id)).ToDictionaryAsync(x => x.Id, cancellationToken);
-        var stock = await _db.Existencia.Where(x => x.AlmacenId == data.AlmacenId && ids.Contains(x.ProductoId)).ToDictionaryAsync(x => x.ProductoId, cancellationToken);
+        var products = await _db.Productos.IgnoreQueryFilters().Where(x => x.Activo && ids.Contains(x.Id)).ToDictionaryAsync(x => x.Id, cancellationToken);
+        var stock = await _db.Existencia.IgnoreQueryFilters().Where(x => x.AlmacenId == data.AlmacenId && ids.Contains(x.ProductoId)).ToDictionaryAsync(x => x.ProductoId, cancellationToken);
 
         // Validación por SUMA de cantidades por producto (varias líneas del mismo artículo),
         // no línea a línea, para evitar dejar stock negativo.
@@ -131,7 +134,11 @@ public sealed class PosSincronizacionService
         if (Math.Abs(data.Pagos.Sum(x => x.Monto - (x.VueltoEntregado ?? 0m)) - total) > 0.01m)
             return (null, "Los pagos no coinciden con el total de la venta.", false);
 
-        var session = await _db.SesionCajaPos.FirstOrDefaultAsync(x => x.Id == pending.SesionCajaPosId, cancellationToken);
+        // IgnoreQueryFilters: el query filter global (vía caja → entidad) depende del HttpContext;
+        // en el scope del worker no existe y vaciaría la sesión. La pertenencia a la caja/entidad
+        // ya se valida explícitamente por ids aquí abajo (data.CajaId, data.EntidadId).
+        var session = await _db.SesionCajaPos.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(x => x.Id == pending.SesionCajaPosId, cancellationToken);
         if (session is null) return (null, "La sesión POS no existe.", false);
         if (session.Estado != "ABIERTA") return (null, "La sesión de caja está cerrada; procese la venta antes del cierre.", true);
 

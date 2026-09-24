@@ -28,7 +28,7 @@
         </a>
         @if (esActivo)
         {
-            <a asp-action="Terminate" asp-route-id="@empleado.Id" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Procesar baja de este empleado?')">
+            <a href="javascript:void(0)" class="btn btn-sm btn-outline-danger" onclick="terminateEmployee('@Url.Action("Terminate", new { id = empleado.Id })')">
                 <i class="ti ti-user-x me-1"></i> Dar de Baja
             </a>
         }
@@ -497,17 +497,22 @@
 <!-- SCRIPTS -->
 <!-- ============================================================ -->
 @section Scripts {
-    <script src="~/js/plugins/toastr/toastr.min.js"></script>
-    <link href="~/css/plugins/toastr/toastr.min.css" rel="stylesheet" />
-
     <script>
-        toastr.options = {
-            closeButton: true,
-            progressBar: true,
-            positionClass: "toast-top-right",
-            timeOut: "5000",
-            extendedTimeOut: "2000"
-        };
+        function terminateEmployee(url) {
+            Swal.fire({
+                title: '¿Confirmar Baja Laboral?',
+                text: "Esta acción marcará al trabajador como BAJA y cerrará sus contratos vigentes. ¿Desea continuar?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'SÍ, PROCESAR BAJA',
+                cancelButtonText: 'CANCELAR'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = url;
+                }
+            });
+        }
 
         $(document).ready(function () {
             // ============================================================
@@ -565,11 +570,11 @@
                     var maxSaldo = parseFloat(diasInput.attr('max'));
 
                     if (isNaN(dias) || dias <= 0) {
-                        toastr.warning('Ingrese un número válido de días (mínimo 0.5).');
+                        window.SwalAlert('warning', 'Ingrese un número válido de días (mínimo 0.5).');
                         return;
                     }
                     if (dias > maxSaldo) {
-                        toastr.warning('No hay suficiente saldo. Disponible: ' + maxSaldo.toFixed(1) + ' días.');
+                        window.SwalAlert('warning', 'No hay suficiente saldo. Disponible: ' + maxSaldo.toFixed(1) + ' días.');
                         return;
                     }
 
@@ -584,20 +589,20 @@
                         data: form.serialize(),
                         success: function (response) {
                             if (response.success) {
-                                toastr.success(response.message);
+                                window.SwalAlert('success', response.message);
                                 setTimeout(function () {
                                     $('#modalVacacionEmpleado').modal('hide');
                                     location.reload();
                                 }, 1500);
                             } else {
-                                toastr.error(response.message);
+                                Swal.fire('Error', response.message, 'error');
                                 $btn.prop('disabled', false).html(
                                     '<i class="ti ti-check me-1"></i> Registrar Disfrute'
                                 );
                             }
                         },
                         error: function () {
-                            toastr.error('Error al registrar el disfrute.');
+                            Swal.fire('Error', 'Error al registrar el disfrute.', 'error');
                             $btn.prop('disabled', false).html(
                                 '<i class="ti ti-check me-1"></i> Registrar Disfrute'
                             );
@@ -673,15 +678,15 @@
                         .then(res => res.json())
                         .then(data => {
                             if (data.success) {
-                                toastr.success(data.message);
+                                window.SwalAlert('success', data.message);
                                 setTimeout(function () { location.reload(); }, 1000);
                             } else {
-                                toastr.error(data.message);
+                                Swal.fire('Error', data.message, 'error');
                                 $btn.prop('disabled', false).html('<i class="ti ti-arrow-back"></i> Devolver');
                             }
                         })
                         .catch(() => {
-                            toastr.error('Error al procesar la devolución.');
+                            Swal.fire('Error', 'Error al procesar la devolución.', 'error');
                             $btn.prop('disabled', false).html('<i class="ti ti-arrow-back"></i> Devolver');
                         });
                     }

@@ -1,104 +1,182 @@
-﻿@model Vercom.Models.Proveedor
+﻿@model Vercom.ViewModels.ProviderFormViewModel
 @{
     ViewData["Title"] = "Editar Proveedor";
+    var esActivo = Model.Provider.Activo;
 }
-
 <div class="page-title-head d-flex align-items-center p-3 mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Actualizar Datos de Proveedor</h4>
-        <p class="text-muted small mb-0">Gestión de suministradores y cuentas de pasivo (RF-50).</p>
+        <h4 class="page-main-title m-0 fw-bold">
+            <i class="ti ti-truck-delivery me-2 text-primary"></i> Editar Proveedor
+        </h4>
+        <p class="text-muted small mb-0">
+            Actualice los datos del suministrador: <strong>@Model.Provider.RazonSocial</strong>
+        </p>
     </div>
     <div class="text-end">
         <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
             <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
             <li class="breadcrumb-item"><a href="javascript: void(0);">Comercial</a></li>
-            <li class="breadcrumb-item active">Proveedores</li>
+            <li class="breadcrumb-item"><a asp-action="Index">Proveedores</a></li>
+            <li class="breadcrumb-item active">Editar</li>
         </ol>
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <div class="row justify-content-center">
         <div class="col-lg-10">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-light-subtle py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="m-0 fw-bold text-primary"><i class="ti ti-edit me-2"></i>Editando: @Model.RazonSocial</h5>
-                    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
-                        <i class="ti ti-arrow-left me-1"></i> VOLVER AL LISTADO
-                    </a>
+                    <h5 class="m-0 fw-bold text-primary">
+                        <i class="ti ti-user-cog me-2"></i>Modificación de Datos del Proveedor
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <a asp-action="Details" asp-route-id="@Model.Provider.Id" class="btn btn-outline-info btn-sm">
+                            <i class="ti ti-eye me-1"></i> VER DETALLES
+                        </a>
+                        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                            <i class="ti ti-arrow-left me-1"></i> VOLVER
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body p-4">
-                    <form asp-action="Edit" class="row g-4">
+                    <form asp-action="Edit" asp-route-id="@Model.Provider.Id" method="post" class="row g-4" id="editProviderForm">
                         @Html.AntiForgeryToken()
-                        <input type="hidden" asp-for="Id" />
-                        <input type="hidden" asp-for="EntidadId" />
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
 
+                        <input type="hidden" asp-for="Provider.Id" />
+
+                        @if (Model.Provider.CreadoEn != default)
+                        {
+                            <div class="col-12">
+                                <div class="alert alert-light border py-2 px-3 small d-flex justify-content-between align-items-center mb-0">
+                                    <span>
+                                        <i class="ti ti-clock me-1 text-muted"></i>
+                                        <strong>Registrado:</strong> @Model.Provider.CreadoEn.ToString("dd/MM/yyyy HH:mm")
+                                    </span>
+                                    <span class="badge @(esActivo ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")">
+                                        <i class="ti ti-circle-filled fs-8 me-1"></i> @(esActivo ? "ACTIVO" : "INACTIVO")
+                                    </span>
+                                </div>
+                            </div>
+                        }
+
+                        <div class="col-12">
+                            <h6 class="fw-bold text-muted text-uppercase small mt-1 mb-1"><i class="ti ti-license me-1"></i> Identificación</h6>
+                        </div>
+
                         <div class="col-md-4">
-                            <label asp-for="TipoPersona" class="form-label fw-bold">Tipo de Entidad</label>
-                            <select asp-for="TipoPersona" class="form-select">
+                            <label asp-for="Provider.TipoPersona" class="form-label fw-bold">Tipo de Entidad</label>
+                            <select asp-for="Provider.TipoPersona" class="form-select">
                                 <option value="JURIDICA">PERSONA JURÍDICA (ESTATAL/MIPYME)</option>
                                 <option value="NATURAL">PERSONA NATURAL (TCP/PARTICULAR)</option>
                             </select>
-                            <span asp-validation-for="TipoPersona" class="text-danger small"></span>
+                            <span asp-validation-for="Provider.TipoPersona" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-4">
-                            <label asp-for="Nit" class="form-label fw-bold">Identificación (NIT/CI)</label>
-                            <input asp-for="Nit" class="form-control" maxlength="20" required />
-                            <span asp-validation-for="Nit" class="text-danger small"></span>
+                            <label asp-for="Provider.Nit" class="form-label fw-bold">Identificación (NIT/CI)</label>
+                            <input asp-for="Provider.Nit" class="form-control font-monospace" placeholder="NIT / CI" maxlength="20" required />
+                            <span asp-validation-for="Provider.Nit" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-4">
-                            <label asp-for="RazonSocial" class="form-label fw-bold">Razón Social</label>
-                            <input asp-for="RazonSocial" class="form-control fw-bold" required />
-                            <span asp-validation-for="RazonSocial" class="text-danger small"></span>
+                            <label asp-for="Provider.RazonSocial" class="form-label fw-bold">Razón Social</label>
+                            <input asp-for="Provider.RazonSocial" class="form-control fw-bold" placeholder="Nombre legal de la empresa" maxlength="255" required />
+                            <span asp-validation-for="Provider.RazonSocial" class="text-danger small"></span>
                         </div>
 
                         <div class="col-12">
-                            <label asp-for="Direccion" class="form-label fw-bold">Dirección Fiscal</label>
-                            <input asp-for="Direccion" class="form-control" />
-                            <span asp-validation-for="Direccion" class="text-danger small"></span>
+                            <h6 class="fw-bold text-muted text-uppercase small mt-1 mb-1"><i class="ti ti-map-pin me-1"></i> Ubicación y Contacto</h6>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="Provider.Direccion" class="form-label fw-bold">Dirección Fiscal</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="ti ti-map-pin"></i></span>
+                                <input asp-for="Provider.Direccion" class="form-control" placeholder="Dirección completa para contratos y facturas" />
+                            </div>
+                            <span asp-validation-for="Provider.Direccion" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-6">
-                            <label asp-for="Telefono" class="form-label fw-bold">Teléfono de Contacto</label>
-                            <input asp-for="Telefono" class="form-control" />
-                            <span asp-validation-for="Telefono" class="text-danger small"></span>
+                            <label asp-for="Provider.Telefono" class="form-label fw-bold">Teléfono de Contacto</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="ti ti-phone"></i></span>
+                                <input asp-for="Provider.Telefono" class="form-control" placeholder="+53 ..." />
+                            </div>
+                            <span asp-validation-for="Provider.Telefono" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-6">
-                            <label asp-for="Email" class="form-label fw-bold">Correo Electrónico</label>
-                            <input asp-for="Email" class="form-control" type="email" />
-                            <span asp-validation-for="Email" class="text-danger small"></span>
+                            <label asp-for="Provider.Email" class="form-label fw-bold">Correo Electrónico</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="ti ti-mail"></i></span>
+                                <input asp-for="Provider.Email" class="form-control" type="email" placeholder="ventas@@proveedor.cu" />
+                            </div>
+                            <span asp-validation-for="Provider.Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <h6 class="fw-bold text-muted text-uppercase small mt-1 mb-1"><i class="ti ti-cash-banknote me-1"></i> Financiero y Contabilidad</h6>
                         </div>
 
                         <div class="col-md-6">
-                            <label asp-for="CuentaBancaria" class="form-label fw-bold">Cuenta Bancaria (Pagos)</label>
-                            <input asp-for="CuentaBancaria" class="form-control font-monospace" placeholder="92..." />
-                            <span asp-validation-for="CuentaBancaria" class="text-danger small"></span>
+                            <label asp-for="Provider.CuentaBancaria" class="form-label fw-bold">Cuenta Bancaria (Pagos)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="ti ti-building-bank"></i></span>
+                                <input asp-for="Provider.CuentaBancaria" class="form-control font-monospace" placeholder="92..." />
+                            </div>
+                            <span asp-validation-for="Provider.CuentaBancaria" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-6">
-                            <label asp-for="CuentaContableId" class="form-label fw-bold">Cuenta Contable (CxP)</label>
-                            <select asp-for="CuentaContableId" class="form-select select2" asp-items="ViewBag.CuentaContableId">
+                            <label asp-for="Provider.CuentaContableId" class="form-label fw-bold">Cuenta por Pagar (Contabilidad)</label>
+                            <select asp-for="Provider.CuentaContableId" class="form-select select2-cuenta" asp-items="Model.CuentasContables">
                                 <option value="">-- SELECCIONE CUENTA DE PASIVO --</option>
                             </select>
-                            <span asp-validation-for="CuentaContableId" class="text-danger small"></span>
+                            <span asp-validation-for="Provider.CuentaContableId" class="text-danger small"></span>
                         </div>
 
-                        <div class="col-md-12">
-                            <div class="form-check form-switch mt-2">
-                                <input class="form-check-input" type="checkbox" asp-for="Activo">
-                                <label class="form-check-label fw-bold" asp-for="Activo">Proveedor Activo para Operaciones</label>
+                        <div class="col-12">
+                            <hr class="my-2" />
+                            <h6 class="fw-bold text-muted mb-3">
+                                <i class="ti ti-toggle-right me-1"></i> Estado del Proveedor
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch p-3 border rounded bg-light-subtle">
+                                        <input asp-for="Provider.Activo" class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="activoSwitch" />
+                                        <label class="form-check-label fw-semibold" for="activoSwitch">
+                                            <i class="ti ti-@(esActivo ? "check" : "x") me-1"></i>
+                                            Proveedor <strong>@(esActivo ? "ACTIVO" : "INACTIVO")</strong>
+                                        </label>
+                                        <div class="small text-muted mt-1">
+                                            Un proveedor inactivo no podrá utilizarse en nuevas compras ni contratos.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="alert alert-info py-2 px-3 small border-0 mb-0">
+                                        <i class="ti ti-info-circle me-1"></i>
+                                        Al guardar los cambios, se registrará una entrada en la <strong>bitácora de auditoría</strong> con los valores anteriores y nuevos.
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="col-12 d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                            <a asp-action="Index" class="btn btn-outline-secondary px-4">CANCELAR</a>
-                            <button type="submit" class="btn btn-primary px-5 shadow">
-                                <i class="ti ti-device-floppy me-1"></i> ACTUALIZAR PROVEEDOR
-                            </button>
+                        <div class="col-12 d-flex justify-content-between align-items-center gap-2 mt-4 pt-3 border-top">
+                            <a asp-action="Index" class="btn btn-outline-secondary px-4">
+                                <i class="ti ti-x me-1"></i> CANCELAR
+                            </a>
+                            <div class="d-flex gap-2">
+                                <a asp-action="Details" asp-route-id="@Model.Provider.Id" class="btn btn-outline-info px-4">
+                                    <i class="ti ti-eye me-1"></i> VER
+                                </a>
+                                <button type="submit" class="btn btn-primary px-5 shadow">
+                                    <i class="ti ti-device-floppy me-1"></i> GUARDAR CAMBIOS
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -109,4 +187,23 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function () {
+            $('#activoSwitch').on('change', function () {
+                var label = $(this).closest('.form-check').find('label');
+                var icono = label.find('i');
+                var texto = label.find('strong');
+
+                if ($(this).is(':checked')) {
+                    icono.removeClass('ti-x').addClass('ti-check');
+                    texto.text('ACTIVO');
+                } else {
+                    icono.removeClass('ti-check').addClass('ti-x');
+                    texto.text('INACTIVO');
+                }
+            });
+
+            window.SubmitAjaxForm('editProviderForm');
+        });
+    </script>
 }

@@ -16,7 +16,8 @@
     </div>
 </div>
 <div class="row mt-4">
-    <form asp-action="Create" method="post">
+    <form asp-action="Create" method="post" id="createAssetForm">
+        @Html.AntiForgeryToken()
         <div class="row">
             <!-- Datos del Activo -->
             <div class="col-lg-8">
@@ -71,15 +72,15 @@
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label asp-for="Asset.CuentaActivoId" class="form-label fw-bold small">Cuenta del Activo</label>
-                                <select asp-for="Asset.CuentaActivoId" name="Asset.CuentaActivoId" class="form-select select2" asp-items="Model.CuentasActivo" required></select>
+                                <select asp-for="Asset.CuentaActivoId" name="Asset.CuentaActivoId" class="form-select select2-cuenta" asp-items="Model.CuentasActivo" required></select>
                             </div>
                             <div class="col-md-4">
                                 <label asp-for="Asset.CuentaDepreciacionId" class="form-label fw-bold small">Cta. Dep. Acumulada</label>
-                                <select asp-for="Asset.CuentaDepreciacionId" name="Asset.CuentaDepreciacionId" class="form-select select2" asp-items="Model.CuentasDepreciacion" required></select>
+                                <select asp-for="Asset.CuentaDepreciacionId" name="Asset.CuentaDepreciacionId" class="form-select select2-cuenta" asp-items="Model.CuentasDepreciacion" required></select>
                             </div>
                             <div class="col-md-4">
                                 <label asp-for="Asset.CuentaGastoDepId" class="form-label fw-bold small">Cta. Gasto Depreciación</label>
-                                <select asp-for="Asset.CuentaGastoDepId" name="Asset.CuentaGastoDepId" class="form-select select2" asp-items="Model.CuentasGasto" required></select>
+                                <select asp-for="Asset.CuentaGastoDepId" name="Asset.CuentaGastoDepId" class="form-select select2-cuenta" asp-items="Model.CuentasGasto" required></select>
                             </div>
                         </div>
                     </div>
@@ -118,8 +119,10 @@
 </div>
 
 @section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script>
         function calculateDep() {
+            // ... (resto del código igual)
             const valor = parseFloat(document.getElementsByName('Asset.ValorAdquisicion')[0].value || 0);
             const residual = parseFloat(document.getElementsByName('Asset.ValorResidual')[0].value || 0);
             const meses = parseInt(document.getElementsByName('Asset.VidaUtilMeses')[0].value || 1);
@@ -134,6 +137,9 @@
         }
 
         document.querySelectorAll('input').forEach(i => i.addEventListener('input', calculateDep));
-        document.addEventListener('DOMContentLoaded', calculateDep);
+        document.addEventListener('DOMContentLoaded', () => {
+            calculateDep();
+            window.SubmitAjaxForm('createAssetForm');
+        });
     </script>
 }

@@ -5,11 +5,11 @@
 <div class="page-title-head d-flex align-items-center p-3 mb-4">
     <div class="flex-grow-1">
         <h4 class="page-main-title m-0 fw-bold">Registrar Consecutivo</h4>
-        <p class="text-muted small mb-0">Definición de estructura contable según normas oficiales (RF-10).</p>
+        <p class="text-muted small mb-0">Control de numeración por tipo de documento y serie (RNF-51).</p>
     </div>
     <div class="text-end">
         <ol class="breadcrumb m-0 py-0 mb-0">
-            <li class="breadcrumb-item"><a asp-action="Dashboard/Index">Vercom</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Dashboard" asp-action="Index">Vercom</a></li>
             <li class="breadcrumb-item"><a asp-action="Index">Consecutivo</a></li>
             <li class="breadcrumb-item active">Nuevo Consecutivo</li>
         </ol>
@@ -31,17 +31,30 @@
                         <span asp-validation-for="Consecutivo.TipoDocumento" class="text-danger"></span>
                     </div>
                     <div class="mb-3">
+                        <label asp-for="Consecutivo.SucursalId" class="form-label"></label>
+                        <select asp-for="Consecutivo.SucursalId" class="form-control" asp-items="Model.Sucursales">
+                            <option value="">Central (todas las sucursales)</option>
+                        </select>
+                        <span asp-validation-for="Consecutivo.SucursalId" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Consecutivo.Serie" class="form-label"></label>
+                        <input asp-for="Consecutivo.Serie" class="form-control" placeholder="A" />
+                        <span asp-validation-for="Consecutivo.Serie" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
                         <label asp-for="Consecutivo.UltimoNumero" class="form-label"></label>
                         <input asp-for="Consecutivo.UltimoNumero" class="form-control" />
                         <span asp-validation-for="Consecutivo.UltimoNumero" class="text-danger"></span>
                     </div>
                     <div class="mb-3">
-                        <label asp-for="Consecutivo.Serie" class="form-label"></label>
-                        <input asp-for="Consecutivo.Serie" class="form-control" />
-                        <span asp-validation-for="Consecutivo.Serie" class="text-danger"></span>
+                        <label asp-for="Consecutivo.LongitudPadding" class="form-label"></label>
+                        <input asp-for="Consecutivo.LongitudPadding" class="form-control" />
+                        <span asp-validation-for="Consecutivo.LongitudPadding" class="text-danger"></span>
                     </div>
                     <div class="mb-3">
                         <button type="submit" class="btn btn-primary">Guardar</button>
+                        <a asp-action="Index" class="btn btn-light">Cancelar</a>
                     </div>
                 </form>
             </div>
@@ -51,4 +64,3 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }
-

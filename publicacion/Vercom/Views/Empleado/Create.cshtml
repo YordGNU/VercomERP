@@ -16,7 +16,7 @@
         </ol>
     </div>
 </div>
-<form asp-action="Create" method="post" enctype="multipart/form-data">
+<form asp-action="Create" method="post" enctype="multipart/form-data" id="createEmployeeForm">
     @Html.AntiForgeryToken()
     <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-4 shadow-sm"></div>
     <input type="hidden" asp-for="Empleado.Estado" value="ACTIVO" />
@@ -111,6 +111,13 @@
                         <div class="col-md-4">
                             <label asp-for="Contrato.JornadaHorasSemana" class="form-label fw-bold">Jornada Semanal (Horas)</label>
                             <input asp-for="Contrato.JornadaHorasSemana" type="number" class="form-control" value="44" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Empleado.TurnoTrabajoId" class="form-label fw-bold">Turno de Trabajo</label>
+                            <select asp-for="Empleado.TurnoTrabajoId" class="form-select select2" asp-items="Model.Turnos">
+                                <option value="">-- Sin turno asignado --</option>
+                            </select>
+                            <small class="text-muted tiny">Define el horario base para el control de retardos.</small>
                         </div>
 
                         <div class="col-12">
@@ -252,6 +259,9 @@
 
             // Disparar lógica inicial del contrato
             $('#ddlTipoContrato').trigger('change');
+
+            // 5. Inicializar envío AJAX
+            window.SubmitAjaxForm('createEmployeeForm');
         });
     </script>
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }

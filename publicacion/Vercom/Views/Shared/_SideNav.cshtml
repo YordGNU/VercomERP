@@ -186,6 +186,10 @@
                                 <li class="side-nav-item"><a asp-controller="Empleado" asp-action="Create" class="side-nav-link text-success">+ Nuevo Empleado</a></li>
                             }
                             <li class="side-nav-item"><a asp-controller="RegistroAsistencia" asp-action="Console" class="side-nav-link">Control de Asistencia</a></li>
+                            @if (await PuedeAsync("RRHH.REPORTE.VER"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="ReporteAsistencia" asp-action="Mensual" class="side-nav-link">Reportes de Asistencia</a></li>
+                            }
                             @if (await PuedeAsync("RRHH.NOMINA.VER"))
                             {
                                 <li class="side-nav-item"><a asp-controller="Nomina" asp-action="Index" class="side-nav-link">Nómina de Salarios</a></li>
@@ -200,6 +204,7 @@
                             }
                             <li class="side-nav-item"><a asp-controller="ConceptoNomina" asp-action="Index" class="side-nav-link">Conceptos Salariales</a></li>
                             <li class="side-nav-item"><a asp-controller="TipoAusencium" asp-action="Index" class="side-nav-link">Tipos de Ausencia</a></li>                                         
+                            <li class="side-nav-item"><a asp-controller="TurnoTrabajo" asp-action="Index" class="side-nav-link">Turnos y Horarios</a></li>
                         </ul>
                     </div>
                 </li>
@@ -254,12 +259,12 @@
                 <li class="side-nav-item">
                     <a data-bs-toggle="collapse" href="#sidebarPos" class="side-nav-link">
                         <span class="menu-icon"><i class="ti ti-device-desktop"></i></span>
-                        <span class="menu-text"> Punto de Venta (POS) </span>
+                        <span class="menu-text"> P. Venta POS </span>
                         <span class="menu-arrow"></span>
                     </a>
                     <div class="collapse" id="sidebarPos">
                         <ul class="sub-menu">
-                            <li class="side-nav-item"><a href="/POS" class="side-nav-link fw-bold text-success">🖥️ Abrir Terminal de Caja</a></li>
+                            <li class="side-nav-item"><a href="/POS" class="side-nav-link fw-bold text-success">🖥️ Abrir terminal</a></li>
                             <li class="side-nav-title text-primary small mt-2">Administración POS</li>
                             @if (await PuedeAsync("INTEGRACION.POS.VER"))
                             {
@@ -370,7 +375,6 @@
                     </div>
                 </li>
             }
-
         </ul>
     </div>
 </div>

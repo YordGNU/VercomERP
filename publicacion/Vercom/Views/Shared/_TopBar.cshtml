@@ -78,7 +78,7 @@
                         <div style="max-height: 300px;" data-simplebar="" id="notification-stock">
                             <!-- Dinámico -->
                         </div>
-                        <a href="javascript:void(0);" class="dropdown-item text-center text-reset text-decoration-underline link-offset-2 fw-bold notify-item border-top border-light py-2">Ver todo</a>
+                        <a href="@Url.Action("Index", "Notificacion")" class="dropdown-item text-center text-reset text-decoration-underline link-offset-2 fw-bold notify-item border-top border-light py-2">Ver todo</a>
                     </div>
                 </div>
             </div>            
@@ -187,8 +187,7 @@
             if (res.success) {
                 bootstrap.Modal.getInstance(document.getElementById('feedbackModal')).hide();
                 document.getElementById('fbMensaje').value = '';
-                if (typeof toastr !== 'undefined') toastr.success("Su mensaje ha sido enviado al equipo de soporte.", "Gracias!");
-                else alert("Gracias! Su mensaje ha sido enviado.");
+                window.SwalAlert('success', "Su mensaje ha sido enviado al equipo de soporte.", "¡Gracias!");
             }
         });
     }

@@ -291,7 +291,10 @@ public class AccountingService : IAccountingService
             entry.PeriodoId = period.Id;
             entry.TotalDebe = totalDebe;
             entry.TotalHaber = totalHaber;
-            entry.Estado = "BORRADOR";
+            // Solo se fuerza BORRADOR si el llamador no indicó estado explícito
+            // (p. ej. cobros/pagos de cartera solicitan CONTABILIZADO y no deben volver a borrador).
+            if (string.IsNullOrWhiteSpace(entry.Estado))
+                entry.Estado = "BORRADOR";
             entry.CreadoEn = DateTimeOffset.Now;
 
             // 3. Generar número consecutivo seguro (RNF-51) si no viene asignado

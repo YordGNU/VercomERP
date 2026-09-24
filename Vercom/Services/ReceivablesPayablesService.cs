@@ -96,9 +96,10 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
 
     public async Task<(bool Succeeded, string Message)> RecordCollectionAsync(Guid cxcId, decimal amount, string paymentMethod, string? reference, Guid userId)
     {
-        var cxc = await _context.CuentaPorCobrars.FindAsync(cxcId);
+        var cxc = await _context.CuentaPorCobrars.AsNoTracking().FirstOrDefaultAsync(c => c.Id == cxcId);
         if (cxc == null) return (false, "Cuenta por cobrar no encontrada.");
         if (amount > cxc.SaldoPendiente) return (false, "El monto del cobro excede el saldo pendiente.");
+        if (!EsFormaPagoAdmitida(paymentMethod)) return (false, "Forma de pago no admitida.");
 
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -109,7 +110,7 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
                 EntidadId = cxc.EntidadId,
                 Fecha = DateOnly.FromDateTime(DateTime.Now),
                 Concepto = $"COBRO A CLIENTE - REF: {reference}",
-                ModuloOrigen = "CARTERA",
+                ModuloOrigen = "CONTABILIDAD",
                 TipoComprobanteId = 3, // Ingreso
                 Estado = "CONTABILIZADO",
                 CreadoPor = userId,
@@ -145,6 +146,16 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
             var result = await _accountingService.CreateEntryAsync(entry);
             if (!result.Succeeded) throw new Exception(result.Message);
 
+            // Actualización atómica del saldo con guarda de concurrencia: si dos cobros
+            // simultáneos compiten, solo uno supera el WHERE y el otro se aborta sin sobregirar.
+            var rows = await _context.CuentaPorCobrars
+                .Where(c => c.Id == cxcId && c.SaldoPendiente >= amount)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(c => c.SaldoPendiente, c => c.SaldoPendiente - amount)
+                    .SetProperty(c => c.Estado, c => c.SaldoPendiente - amount == 0 ? "PAGADA" : "PARCIAL"));
+
+            if (rows == 0) throw new Exception("El saldo del documento cambió; verifique e intente de nuevo.");
+
             _context.PagoAplicados.Add(new PagoAplicado
             {
                 Id = Guid.NewGuid(),
@@ -156,9 +167,6 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
                 AsientoId = entry.Id,
                 Tipo = "COBRO"
             });
-
-            cxc.SaldoPendiente -= amount;
-            cxc.Estado = cxc.SaldoPendiente == 0 ? "PAGADA" : "PARCIAL";
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
@@ -174,9 +182,10 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
 
     public async Task<(bool Succeeded, string Message)> RecordPaymentAsync(Guid cxpId, decimal amount, string paymentMethod, string? reference, Guid userId)
     {
-        var cxp = await _context.CuentaPorPagars.FindAsync(cxpId);
+        var cxp = await _context.CuentaPorPagars.AsNoTracking().FirstOrDefaultAsync(c => c.Id == cxpId);
         if (cxp == null) return (false, "Cuenta por pagar no encontrada.");
         if (amount > cxp.SaldoPendiente) return (false, "El monto del pago excede el saldo pendiente.");
+        if (!EsFormaPagoAdmitida(paymentMethod)) return (false, "Forma de pago no admitida.");
 
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -187,7 +196,7 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
                 EntidadId = cxp.EntidadId,
                 Fecha = DateOnly.FromDateTime(DateTime.Now),
                 Concepto = $"PAGO A PROVEEDOR - REF: {reference}",
-                ModuloOrigen = "CARTERA",
+                ModuloOrigen = "CONTABILIDAD",
                 TipoComprobanteId = 4, // Egreso
                 Estado = "CONTABILIZADO",
                 CreadoPor = userId,
@@ -223,6 +232,15 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
             var result = await _accountingService.CreateEntryAsync(entry);
             if (!result.Succeeded) throw new Exception(result.Message);
 
+            // Actualización atómica del saldo con guarda de concurrencia (ver RecordCollectionAsync).
+            var rows = await _context.CuentaPorPagars
+                .Where(c => c.Id == cxpId && c.SaldoPendiente >= amount)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(c => c.SaldoPendiente, c => c.SaldoPendiente - amount)
+                    .SetProperty(c => c.Estado, c => c.SaldoPendiente - amount == 0 ? "PAGADA" : "PARCIAL"));
+
+            if (rows == 0) throw new Exception("El saldo del documento cambió; verifique e intente de nuevo.");
+
             _context.PagoAplicados.Add(new PagoAplicado
             {
                 Id = Guid.NewGuid(),
@@ -235,9 +253,6 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
                 Tipo = "PAGO"
             });
 
-            cxp.SaldoPendiente -= amount;
-            cxp.Estado = cxp.SaldoPendiente == 0 ? "PAGADA" : "PARCIAL";
-
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
@@ -248,6 +263,12 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
             await transaction.RollbackAsync();
             return (false, $"Error al pagar: {ex.Message}");
         }
+    }
+
+    private static bool EsFormaPagoAdmitida(string? formaPago)
+    {
+        // Solo formas almacenables (pago_aplicado.forma_pago = nvarchar(20)) y admitidas por el CHECK de la BD.
+        return formaPago is "EFECTIVO" or "CHEQUE" or "ENZONA" or "TRANSFERMOVIL";
     }
 
     private static (int Page, int PageSize, int Skip) NormalizePaging(int page, int pageSize)
@@ -483,6 +504,15 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
         {
             var existing = await _context.CuentaPorCobrars.FindAsync(item.Id);
             if (existing == null) return (false, "No existe.");
+
+            // El saldo pendiente se recalcula de los pagos aplicados: el valor del formulario
+            // no se toma en cuenta para impedir manipulación del saldo sin asiento.
+            var pagos = await _context.PagoAplicados
+                .Where(p => p.CuentaPorCobrarId == existing.Id)
+                .SumAsync(p => (decimal?)p.Monto) ?? 0;
+            var nuevoSaldo = item.MontoOriginal - pagos;
+            if (nuevoSaldo < 0) return (false, "El importe original no puede ser menor que el total ya aplicado.");
+
             existing.ClienteId = item.ClienteId;
             existing.DocumentoOrigenTipo = item.DocumentoOrigenTipo;
             existing.DocumentoOrigenId = item.DocumentoOrigenId;
@@ -490,9 +520,9 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
             existing.FechaEmision = item.FechaEmision;
             existing.FechaVencimiento = item.FechaVencimiento;
             existing.MontoOriginal = item.MontoOriginal;
-            existing.SaldoPendiente = item.SaldoPendiente;
+            existing.SaldoPendiente = nuevoSaldo;
             existing.Moneda = item.Moneda;
-            existing.Estado = item.Estado;
+            existing.Estado = nuevoSaldo == 0 ? "PAGADA" : (pagos > 0 ? "PARCIAL" : "PENDIENTE");
             existing.EntidadId = entidadId;
             await _context.SaveChangesAsync();
             return (true, "Cuenta por cobrar actualizada.");
@@ -524,6 +554,14 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
         {
             var existing = await _context.CuentaPorPagars.FindAsync(item.Id);
             if (existing == null) return (false, "No existe.");
+
+            // El saldo pendiente se recalcula de los pagos aplicados (ver UpdateCxCAsync).
+            var pagos = await _context.PagoAplicados
+                .Where(p => p.CuentaPorPagarId == existing.Id)
+                .SumAsync(p => (decimal?)p.Monto) ?? 0;
+            var nuevoSaldo = item.MontoOriginal - pagos;
+            if (nuevoSaldo < 0) return (false, "El importe original no puede ser menor que el total ya aplicado.");
+
             existing.ProveedorId = item.ProveedorId;
             existing.DocumentoOrigenTipo = item.DocumentoOrigenTipo;
             existing.DocumentoOrigenId = item.DocumentoOrigenId;
@@ -531,9 +569,9 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
             existing.FechaEmision = item.FechaEmision;
             existing.FechaVencimiento = item.FechaVencimiento;
             existing.MontoOriginal = item.MontoOriginal;
-            existing.SaldoPendiente = item.SaldoPendiente;
+            existing.SaldoPendiente = nuevoSaldo;
             existing.Moneda = item.Moneda;
-            existing.Estado = item.Estado;
+            existing.Estado = nuevoSaldo == 0 ? "PAGADA" : (pagos > 0 ? "PARCIAL" : "PENDIENTE");
             existing.EntidadId = entidadId;
             await _context.SaveChangesAsync();
             return (true, "Cuenta por pagar actualizada.");

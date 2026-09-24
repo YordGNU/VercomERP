@@ -1,0 +1,55 @@
+@model IEnumerable<Vercom.Models.TurnoTrabajo>
+@{
+    ViewBag.Title = "Gestión de Turnos de Trabajo";
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Turnos de Trabajo y Horarios</h4>
+        <p class="text-muted small mb-0">Configuración de jornadas para control de retardos y asistencia.</p>
+    </div>
+    <div class="text-end">
+        <a asp-action="Create" class="btn btn-primary"><i class="ti ti-plus me-1"></i> NUEVO TURNO</a>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+                <thead class="thead-sm text-uppercase fs-xxs">
+                    <tr>
+                        <th class="ps-4">Código</th>
+                        <th>Nombre del Turno</th>
+                        <th class="text-center">Hora Entrada</th>
+                        <th class="text-center">Hora Salida</th>
+                        <th class="text-center">Tolerancia</th>
+                        <th class="text-center">Nocturno</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="ps-4 fw-bold">@item.Codigo</td>
+                            <td>@item.Nombre</td>
+                            <td class="text-center font-monospace">@item.HoraEntrada.ToString("HH:mm")</td>
+                            <td class="text-center font-monospace">@item.HoraSalida.ToString("HH:mm")</td>
+                            <td class="text-center">@item.ToleranciaMinutos min</td>
+                            <td class="text-center">
+                                @if (item.EsNocturno)
+                                {
+                                    <span class="badge bg-dark">SÍ</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">NO</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

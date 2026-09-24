@@ -1,111 +1,206 @@
-﻿@model Vercom.Models.Cliente
+﻿@model Vercom.ViewModels.ClientFormViewModel
 @{
     ViewData["Title"] = "Editar Cliente";
+    var esActivo = Model.Client.Activo;
 }
-
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
+<div class="page-title-head d-flex align-items-center">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Actualizar Datos de Cliente</h4>
-        <p class="text-muted small mb-0">Modificación de perfil comercial y límites de riesgo (RF-50).</p>
+        <h4 class="page-main-title m-0">
+            <i class="ti ti-user-edit me-2 text-primary"></i> Editar Cliente
+        </h4>
+        <p class="text-muted small mb-0">
+            Actualice los datos del cliente: <strong>@Model.Client.NombreRazonSocial</strong>
+        </p>
     </div>
     <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Ventas</a></li>
-            <li class="breadcrumb-item active">Clientes</li>
+        <ol class="breadcrumb m-0 py-0">
+            <li class="breadcrumb-item"><a asp-controller="Dashboard" asp-action="Index">Inicio</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">Clientes</a></li>
+            <li class="breadcrumb-item active">Editar</li>
         </ol>
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <div class="row justify-content-center">
         <div class="col-lg-10">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-light-subtle py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="m-0 fw-bold text-primary"><i class="ti ti-edit me-2"></i>Editando: @Model.NombreRazonSocial</h5>
-                    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
-                        <i class="ti ti-arrow-left me-1"></i> VOLVER AL LISTADO
-                    </a>
+                    <h5 class="m-0 fw-bold text-primary">
+                        <i class="ti ti-user-cog me-2"></i>Modificación de Datos del Cliente
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <a asp-action="Details" asp-route-id="@Model.Client.Id" class="btn btn-outline-info btn-sm">
+                            <i class="ti ti-eye me-1"></i> VER DETALLES
+                        </a>
+                        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                            <i class="ti ti-arrow-left me-1"></i> VOLVER
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body p-4">
-                    <form asp-action="Edit" class="row g-4">
+                    <form asp-action="Edit" method="post" class="row g-4" id="editClientForm">
                         @Html.AntiForgeryToken()
-                        <input type="hidden" asp-for="Id" />
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
 
+                        <!-- ✅ Campo oculto para el ID del cliente -->
+                        <input type="hidden" asp-for="Client.Id" />
+
+                        <!-- ============================================================ -->
+                        <!-- INFORMACIÓN DE AUDITORÍA (SOLO LECTURA) -->
+                        <!-- ============================================================ -->
+                        @if (Model.Client.CreadoEn != default)
+                        {
+                            <div class="col-12">
+                                <div class="alert alert-light border py-2 px-3 small d-flex justify-content-between align-items-center mb-0">
+                                    <span>
+                                        <i class="ti ti-clock me-1 text-muted"></i>
+                                        <strong>Creado:</strong> @Model.Client.CreadoEn.ToString("dd/MM/yyyy HH:mm")
+                                    </span>
+                                    <span class="badge @(esActivo ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")">
+                                        <i class="ti ti-circle-filled fs-8 me-1"></i> @(esActivo ? "ACTIVO" : "INACTIVO")
+                                    </span>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- ============================================================ -->
+                        <!-- TIPO DE CLIENTE / IDENTIFICACIÓN / SEGMENTO -->
+                        <!-- ============================================================ -->
                         <div class="col-md-4">
-                            <label asp-for="TipoPersona" class="form-label fw-bold">Tipo de Cliente</label>
-                            <select asp-for="TipoPersona" class="form-select">
+                            <label asp-for="Client.TipoPersona" class="form-label fw-bold">Tipo de Cliente</label>
+                            <select asp-for="Client.TipoPersona" class="form-select">
                                 <option value="JURIDICA">PERSONA JURÍDICA (EMPRESA)</option>
                                 <option value="NATURAL">PERSONA NATURAL (PARTICULAR)</option>
                             </select>
+                            <span asp-validation-for="Client.TipoPersona" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-4">
-                            <label asp-for="NitOCi" class="form-label fw-bold">Identificación (NIT/CI)</label>
-                            <input asp-for="NitOCi" class="form-control" maxlength="20" required />
+                            <label asp-for="Client.NitOCi" class="form-label fw-bold">Identificación (NIT/CI)</label>
+                            <input asp-for="Client.NitOCi" class="form-control" placeholder="00000000000" maxlength="20" required />
+                            <span asp-validation-for="Client.NitOCi" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-4">
-                            <label asp-for="Segmento" class="form-label fw-bold">Segmento Mercantil</label>
-                            <select asp-for="Segmento" class="form-select">
+                            <label asp-for="Client.Segmento" class="form-label fw-bold">Segmento Mercantil</label>
+                            <select asp-for="Client.Segmento" class="form-select">
                                 <option value="MINORISTA">MINORISTA (PÚBLICO)</option>
                                 <option value="MAYORISTA">MAYORISTA (CORPORATIVO)</option>
                             </select>
+                            <span asp-validation-for="Client.Segmento" class="text-danger small"></span>
                         </div>
 
+                        <!-- ============================================================ -->
+                        <!-- NOMBRE / LISTA DE PRECIOS -->
+                        <!-- ============================================================ -->
                         <div class="col-md-8">
-                            <label asp-for="NombreRazonSocial" class="form-label fw-bold">Nombre / Razón Social</label>
-                            <input asp-for="NombreRazonSocial" class="form-control fw-bold" required />
+                            <label asp-for="Client.NombreRazonSocial" class="form-label fw-bold">Nombre Completo o Razón Social</label>
+                            <input asp-for="Client.NombreRazonSocial" class="form-control" placeholder="Ej: Tierra Prometida SURL" maxlength="255" required />
+                            <span asp-validation-for="Client.NombreRazonSocial" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-4">
-                            <label asp-for="ListaPrecioId" class="form-label fw-bold">Lista de Precios</label>
-                            <select asp-for="ListaPrecioId" class="form-select select2" asp-items="ViewBag.ListaPrecioId">
+                            <label asp-for="Client.ListaPrecioId" class="form-label fw-bold">Lista de Precios Asignada</label>
+                            <select asp-for="Client.ListaPrecioId" class="form-select select2" asp-items="Model.ListasPrecio">
                                 <option value="">-- PRECIOS GENERALES --</option>
                             </select>
+                            <span asp-validation-for="Client.ListaPrecioId" class="text-danger small"></span>
                         </div>
 
+                        <!-- ============================================================ -->
+                        <!-- DIRECCIÓN -->
+                        <!-- ============================================================ -->
                         <div class="col-12">
-                            <label asp-for="Direccion" class="form-label fw-bold">Dirección Fiscal / Residencia</label>
-                            <input asp-for="Direccion" class="form-control" />
+                            <label asp-for="Client.Direccion" class="form-label fw-bold">Dirección Fiscal / Residencia</label>
+                            <input asp-for="Client.Direccion" class="form-control" placeholder="Calle, #, Municipio, Provincia" />
+                            <span asp-validation-for="Client.Direccion" class="text-danger small"></span>
                         </div>
 
+                        <!-- ============================================================ -->
+                        <!-- CONTACTO -->
+                        <!-- ============================================================ -->
                         <div class="col-md-6">
-                            <label asp-for="Telefono" class="form-label fw-bold">Teléfono</label>
-                            <input asp-for="Telefono" class="form-control" />
-                        </div>
-
-                        <div class="col-md-6">
-                            <label asp-for="Email" class="form-label fw-bold">Correo Electrónico</label>
-                            <input asp-for="Email" class="form-control" type="email" />
-                        </div>
-
-                        <div class="col-md-6">
-                            <label asp-for="LimiteCredito" class="form-label fw-bold">Límite de Crédito Permitido ($)</label>
+                            <label asp-for="Client.Telefono" class="form-label fw-bold">Teléfono de Contacto</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light">$</span>
-                                <input asp-for="LimiteCredito" class="form-control text-end fw-bold text-danger" type="number" step="0.01" />
+                                <span class="input-group-text"><i class="ti ti-phone"></i></span>
+                                <input asp-for="Client.Telefono" class="form-control" placeholder="+53 5xxxxxxx" />
                             </div>
+                            <span asp-validation-for="Client.Telefono" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-6">
-                            <label asp-for="CuentaContableId" class="form-label fw-bold">Cuenta Contable (Contabilidad)</label>
-                            <select asp-for="CuentaContableId" class="form-select select2" asp-items="ViewBag.CuentaContableId" required></select>
+                            <label asp-for="Client.Email" class="form-label fw-bold">Correo Electrónico</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="ti ti-mail"></i></span>
+                                <input asp-for="Client.Email" class="form-control" placeholder="cliente@ejemplo.cu" />
+                            </div>
+                            <span asp-validation-for="Client.Email" class="text-danger small"></span>
                         </div>
 
-                        <div class="col-md-12">
-                            <div class="form-check form-switch mt-2">
-                                <input class="form-check-input" type="checkbox" asp-for="Activo">
-                                <label class="form-check-label fw-bold" asp-for="Activo">Cliente Activo para Operaciones</label>
+                        <!-- ============================================================ -->
+                        <!-- CRÉDITO / CUENTA CONTABLE -->
+                        <!-- ============================================================ -->
+                        <div class="col-md-6">
+                            <label asp-for="Client.LimiteCredito" class="form-label fw-bold">Límite de Crédito Permitido ($)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input asp-for="Client.LimiteCredito" class="form-control text-end fw-bold text-danger" placeholder="0.00" type="number" step="0.01" />
+                            </div>
+                            <span asp-validation-for="Client.LimiteCredito" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Client.CuentaContableId" class="form-label fw-bold">Cuenta por Cobrar (Contabilidad)</label>
+                            <select asp-for="Client.CuentaContableId" class="form-select select2-cuenta" asp-items="Model.CuentasContables" required></select>
+                            <span asp-validation-for="Client.CuentaContableId" class="text-danger small"></span>
+                        </div>
+
+                        <!-- ============================================================ -->
+                        <!-- ESTADO DEL CLIENTE -->
+                        <!-- ============================================================ -->
+                        <div class="col-12">
+                            <hr class="my-2" />
+                            <h6 class="fw-bold text-muted mb-3">
+                                <i class="ti ti-toggle-right me-1"></i> Estado del Cliente
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch p-3 border rounded bg-light-subtle">
+                                        <input asp-for="Client.Activo" class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="activoSwitch" />
+                                        <label class="form-check-label fw-semibold" for="activoSwitch">
+                                            <i class="ti ti-@(esActivo ? "check" : "x") me-1"></i>
+                                            Cliente <strong>@(esActivo ? "ACTIVO" : "INACTIVO")</strong>
+                                        </label>
+                                        <div class="small text-muted mt-1">
+                                            Un cliente inactivo no podrá utilizarse en nuevas facturas ni operaciones.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="alert alert-info py-2 px-3 small border-0 mb-0">
+                                        <i class="ti ti-info-circle me-1"></i>
+                                        Al guardar los cambios, se registrará una entrada en la <strong>bitácora de auditoría</strong> con los valores anteriores y nuevos.
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="col-12 d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                            <a asp-action="Index" class="btn btn-outline-secondary px-4">CANCELAR</a>
-                            <button type="submit" class="btn btn-primary px-5 shadow">
-                                <i class="ti ti-device-floppy me-1"></i> ACTUALIZAR CLIENTE
-                            </button>
+                        <!-- ============================================================ -->
+                        <!-- BOTONES DE ACCIÓN -->
+                        <!-- ============================================================ -->
+                        <div class="col-12 d-flex justify-content-between align-items-center gap-2 mt-4 pt-3 border-top">
+                            <a asp-action="Index" class="btn btn-outline-secondary px-4">
+                                <i class="ti ti-x me-1"></i> CANCELAR
+                            </a>
+                            <div class="d-flex gap-2">
+                                <a asp-action="Details" asp-route-id="@Model.Client.Id" class="btn btn-outline-info px-4">
+                                    <i class="ti ti-eye me-1"></i> VER
+                                </a>
+                                <button type="submit" class="btn btn-primary px-5 shadow">
+                                    <i class="ti ti-device-floppy me-1"></i> GUARDAR CAMBIOS
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -115,5 +210,29 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(document).ready(function() {       
+
+            // Actualizar el texto del switch Activo/Inactivo dinámicamente
+            $('#activoSwitch').on('change', function() {
+                var label = $(this).closest('.form-check').find('label');
+                var icono = label.find('i');
+                var texto = label.find('strong');
+
+                if ($(this).is(':checked')) {
+                    icono.removeClass('ti-x').addClass('ti-check');
+                    texto.text('ACTIVO');
+                } else {
+                    icono.removeClass('ti-check').addClass('ti-x');
+                    texto.text('INACTIVO');
+                }
+            });
+
+            // Enviar el formulario por AJAX (si tienes la función global definida)
+            window.SubmitAjaxForm('editClientForm');
+        });
+    </script>
 }

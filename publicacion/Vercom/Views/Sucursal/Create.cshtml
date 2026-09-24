@@ -1,6 +1,12 @@
 ﻿@model Vercom.Models.Sucursal
 @{
     ViewBag.Title = "Nueva Sucursal";
+    var provincias = new[]
+    {
+        "Pinar del Río", "Artemisa", "La Habana", "Mayabeque", "Matanzas", "Cienfuegos",
+        "Villa Clara", "Sancti Spíritus", "Ciego de Ávila", "Camagüey", "Las Tunas",
+        "Granma", "Holguín", "Santiago de Cuba", "Guantánamo", "Isla de la Juventud"
+    };
 }
 
 <div class="page-title-head d-flex align-items-center p-3 mb-4">
@@ -8,84 +14,115 @@
         <h4 class="page-main-title m-0 fw-bold">Registrar Nueva Sucursal</h4>
         <p class="text-muted small mb-0">Alta de unidades organizativas para el control descentralizado.</p>
     </div>
-    <div class="text-end">
+    <div class="text-end d-none d-md-block">
         <ol class="breadcrumb m-0 py-0">
             <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
             <li class="breadcrumb-item"><a href="javascript: void(0);">Administración</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">Sucursales</a></li>
             <li class="breadcrumb-item active">Nueva Sucursal</li>
         </ol>
     </div>
 </div>
 
-<div class="row mt-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card">
-                <form asp-action="Create" method="post">
-                    <div class="card-body">
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+<div class="row justify-content-center mt-2">
+    <div class="col-lg-9">
+        <div class="card shadow-sm border-0">
+            <form asp-action="Create" method="post" id="createBranchForm">
+                @Html.AntiForgeryToken()
+                <div class="card-body p-4">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small shadow-sm border-0"></div>
 
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label asp-for="Codigo" class="form-label fw-bold">Código Interno</label>
-                                <input asp-for="Codigo" class="form-control" placeholder="ej: SUC_01" required />
-                                <span asp-validation-for="Codigo" class="text-danger small"></span>
-                            </div>
-                            <div class="col-md-8">
-                                <label asp-for="Nombre" class="form-label fw-bold">Nombre descriptivo</label>
-                                <input asp-for="Nombre" class="form-control" placeholder="ej: Sucursal Centro" required />
-                                <span asp-validation-for="Nombre" class="text-danger small"></span>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label asp-for="Tipo" class="form-label fw-bold">Tipo de Establecimiento</label>
-                                <select asp-for="Tipo" class="form-select">
-                                    <option value="TIENDA">Punto de Venta / Tienda</option>
-                                    <option value="ALMACEN">Almacén de Distribución</option>
-                                    <option value="PRODUCCION">Planta de Producción</option>
-                                    <option value="OFICINA">Oficina Administrativa</option>
-                                    <option value="MIXTO">Uso Mixto</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="Telefono" class="form-label fw-bold">Teléfono de Contacto</label>
-                                <input asp-for="Telefono" class="form-control" />
-                            </div>
-
-                            <div class="col-12">
-                                <label asp-for="Direccion" class="form-label fw-bold">Dirección Física</label>
-                                <input asp-for="Direccion" class="form-control" required />
-                            </div>
-
-                            <div class="col-md-6">
-                                <label asp-for="Municipio" class="form-label fw-bold">Municipio</label>
-                                <input asp-for="Municipio" class="form-control" />
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="Provincia" class="form-label fw-bold">Provincia</label>
-                                <input asp-for="Provincia" class="form-control" />
-                            </div>
-
-                            <div class="col-md-12 mt-4">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" asp-for="Activo" checked>
-                                    <label class="form-check-label fw-bold" asp-for="Activo">Sucursal Habilitada</label>
-                                </div>
+                    <h6 class="fw-bold text-uppercase text-primary mb-3"><i class="ti ti-building me-1"></i> Identificación</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label asp-for="Codigo" class="form-label fw-bold">Código Interno</label>
+                            <input asp-for="Codigo" class="form-control" placeholder="ej: SUC_01" required />
+                            <span asp-validation-for="Codigo" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-8">
+                            <label asp-for="Nombre" class="form-label fw-bold">Nombre descriptivo</label>
+                            <input asp-for="Nombre" class="form-control" placeholder="ej: Sucursal Centro" required />
+                            <span asp-validation-for="Nombre" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Tipo" class="form-label fw-bold">Tipo de Establecimiento</label>
+                            <select asp-for="Tipo" class="form-select">
+                                <option value="">-- Seleccione --</option>
+                                <option value="TIENDA">Punto de Venta / Tienda</option>
+                                <option value="ALMACEN">Almacén de Distribución</option>
+                                <option value="PRODUCCION">Planta de Producción</option>
+                                <option value="OFICINA">Oficina Administrativa</option>
+                                <option value="MIXTO">Uso Mixto</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Telefono" class="form-label fw-bold">Teléfono de Contacto</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="ti ti-phone"></i></span>
+                                <input asp-for="Telefono" class="form-control" placeholder="+53 7 ..." />
                             </div>
                         </div>
                     </div>
-                    <div class="card-footer bg-light d-flex justify-content-end gap-2">
-                        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
-                        <button type="submit" class="btn btn-primary px-4">
-                            <i class="ti ti-device-floppy me-1"></i> REGISTRAR SUCURSAL
-                        </button>
+
+                    <h6 class="fw-bold text-uppercase text-primary mb-3"><i class="ti ti-map-pin me-1"></i> Ubicación Geográfica</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <label asp-for="Direccion" class="form-label fw-bold">Dirección Física</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="ti ti-map-pin"></i></span>
+                                <input asp-for="Direccion" class="form-control" placeholder="Calle, #, entre..." required />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Provincia" class="form-label fw-bold">Provincia</label>
+                            <input asp-for="Provincia" class="form-control" list="listProvincias" placeholder="Seleccione o escriba..." />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Municipio" class="form-label fw-bold">Municipio</label>
+                            <input asp-for="Municipio" class="form-control" placeholder="ej: Playa" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Latitud" class="form-label fw-bold">Latitud <small class="text-muted fw-normal">(opcional)</small></label>
+                            <input asp-for="Latitud" type="number" step="0.000001" min="-90" max="90" class="form-control" placeholder="ej: 23.113592" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Longitud" class="form-label fw-bold">Longitud <small class="text-muted fw-normal">(opcional)</small></label>
+                            <input asp-for="Longitud" type="number" step="0.000001" min="-180" max="180" class="form-control" placeholder="ej: -82.366596" />
+                        </div>
+                        <div class="col-12">
+                            @await Html.PartialAsync("_MapPicker", Model)
+                        </div>
+                        <datalist id="listProvincias">
+                            @foreach (var p in provincias)
+                            {
+                                <option value="@p"></option>
+                            }
+                        </datalist>
                     </div>
-                </form>
-            </div>
+
+                    <h6 class="fw-bold text-uppercase text-primary mb-3"><i class="ti ti-settings me-1"></i> Estado</h6>
+                    <div class="form-check form-switch form-switch-lg">
+                        <input class="form-check-input" type="checkbox" asp-for="Activo" checked>
+                        <label class="form-check-label fw-bold" asp-for="Activo">Sucursal Habilitada</label>
+                        <small class="text-muted d-block">Solo las unidades habilitadas participan en operaciones y reportes.</small>
+                    </div>
+                </div>
+                <div class="card-footer bg-light-subtle d-flex justify-content-end gap-2 px-4 py-3">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="ti ti-device-floppy me-1"></i> REGISTRAR SUCURSAL
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            window.SubmitAjaxForm('createBranchForm');
+        });
+    </script>
 }

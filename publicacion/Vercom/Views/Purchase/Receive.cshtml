@@ -17,9 +17,18 @@
         </ol>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            window.SubmitAjaxForm('receivePurchaseForm');
+        });
+    </script>
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
 <div class="row justify-content-center">
     <div class="col-lg-10">
-        <form asp-action="Receive" method="post">
+        <form asp-action="Receive" method="post" id="receivePurchaseForm">
             @Html.AntiForgeryToken()
             <input type="hidden" name="id" value="@Model.Id" />
 
@@ -71,14 +80,14 @@
                                                     <span class="badge bg-success-subtle text-success fw-bold">@det.CantidadSolicitada.ToString("N2")</span>
                                                 </td>
                                                 <td class="text-end">@det.PrecioUnitario.ToString("C2")</td>
-                                                <td class="text-end fw-bold pe-4">@(det.SubtotalLinea?.ToString("C2") ?? "0.00")</td>
+                                               <td class="fw-bold pe-4">@(det.SubtotalLinea?.ToString("C2") ?? "0.00")</td>
                                             </tr>
                                         }
                                     </tbody>
                                     <tfoot class="bg-light-subtle">
                                         <tr>
                                             <td colspan="4" class="text-end text-uppercase fw-bold">Impacto en Pasivo Corriente:</td>
-                                            <td class="text-end text-primary fw-bold pe-4 fs-18">@Model.Total.ToString("C2")</td>
+                                           <td class="text-primary fw-bold pe-4 fs-18">@Model.Total.ToString("C2")</td>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -97,6 +106,15 @@
         </form>     
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            window.SubmitAjaxForm('receivePurchaseForm');
+        });
+    </script>
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
 
   
 

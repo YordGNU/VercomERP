@@ -21,7 +21,7 @@
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <div class="row">
         <!-- Columna Izquierda: Tarjeta de Estado y Ubicación -->
         <div class="col-lg-4">
@@ -66,6 +66,28 @@
                         <i class="ti ti-phone me-2 text-primary"></i>
                         <span class="small fw-bold">@(Model.Telefono ?? "Sin teléfono")</span>
                     </div>
+                    <hr class="my-3">
+                    <div class="d-flex align-items-center">
+                        <i class="ti ti-coordinates me-2 text-primary"></i>
+                        <span class="small fw-bold">
+                            @if (Model.Latitud.HasValue && Model.Longitud.HasValue)
+                            {
+                                <text>@Model.Latitud.Value.ToString("0.000000"), @Model.Longitud.Value.ToString("0.000000") </text>
+                            }
+                            else
+                            {
+                                <text>Sin coordenadas</text>
+                            }
+                        </span>
+                    </div>
+                    @if (Model.Latitud.HasValue && Model.Longitud.HasValue)
+                    {
+                        <div class="mt-2">
+                            <a asp-action="Mapa" class="btn btn-sm btn-outline-primary w-100">
+                                <i class="ti ti-map-2 me-1"></i> VER EN EL MAPA
+                            </a>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
@@ -100,13 +122,28 @@
                 </div>
             </div>
 
-            <div class="row row-cards g-3">
+            <div class="row row-cards g-3 mb-3">
                 <div class="col-sm-6 col-lg-4">
                     <div class="card card-sm shadow-none border-light">
                         <div class="card-body">
                             <div class="row align-items-center">
                                 <div class="col-auto">
                                     <span class="bg-primary text-white avatar"><i class="ti ti-users fs-20"></i></span>
+                                </div>
+                                <div class="col">
+                                    <div class="font-weight-medium fw-bold">@Model.Empleados.Count</div>
+                                    <div class="text-muted small">Empleados</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                    <div class="card card-sm shadow-none border-light">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="bg-info text-white avatar"><i class="ti ti-user-shield fs-20"></i></span>
                                 </div>
                                 <div class="col">
                                     <div class="font-weight-medium fw-bold">@Model.Usuarios.Count</div>
@@ -136,11 +173,71 @@
                         <div class="card-body">
                             <div class="row align-items-center">
                                 <div class="col-auto">
-                                    <span class="bg-info text-white avatar"><i class="ti ti-cash fs-20"></i></span>
+                                    <span class="bg-warning text-white avatar"><i class="ti ti-cash fs-20"></i></span>
                                 </div>
                                 <div class="col">
                                     <div class="font-weight-medium fw-bold">@Model.Cajas.Count</div>
                                     <div class="text-muted small">Cajas POS</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                    <div class="card card-sm shadow-none border-light">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="bg-danger text-white avatar"><i class="ti ti-device-mobile fs-20"></i></span>
+                                </div>
+                                <div class="col">
+                                    <div class="font-weight-medium fw-bold">@Model.DispositivoPos.Count</div>
+                                    <div class="text-muted small">Dispositivos POS</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                    <div class="card card-sm shadow-none border-light">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="bg-secondary text-white avatar"><i class="ti ti-coins fs-20"></i></span>
+                                </div>
+                                <div class="col">
+                                    <div class="font-weight-medium fw-bold">@Model.CentroCostos.Count</div>
+                                    <div class="text-muted small">Centros de costo</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                    <div class="card card-sm shadow-none border-light">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="bg-primary-subtle text-primary avatar"><i class="ti ti-archive fs-20"></i></span>
+                                </div>
+                                <div class="col">
+                                    <div class="font-weight-medium fw-bold">@Model.ActivoFijos.Count</div>
+                                    <div class="text-muted small">Activos fijos</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                    <div class="card card-sm shadow-none border-light">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="bg-success-subtle text-success avatar"><i class="ti ti-hash fs-20"></i></span>
+                                </div>
+                                <div class="col">
+                                    <div class="font-weight-medium fw-bold">@Model.Consecutivos.Count</div>
+                                    <div class="text-muted small">Consecutivos</div>
                                 </div>
                             </div>
                         </div>

@@ -1,0 +1,204 @@
+@model Vercom.Models.CuentaPorCobrar
+@{
+    ViewBag.Title = "Ficha de Cuenta por Cobrar";
+    var fmt = new System.Globalization.CultureInfo("es-CU");
+    var hoy = DateOnly.FromDateTime(DateTime.Now);
+    var diasVenc = hoy.DayNumber - Model.FechaVencimiento.DayNumber;
+    var badgeEstado = Model.Estado switch
+    {
+        "PAGADA" => "bg-success-subtle text-success",
+        "PARCIAL" => "bg-warning-subtle text-warning",
+        _ => "bg-primary-subtle text-primary"
+    };
+    var badgeAnt = Model.Estado == "PAGADA" ? "badge-soft-success"
+        : diasVenc <= 0 ? "badge-soft-success"
+        : diasVenc <= 30 ? "badge-soft-warning"
+        : "badge-soft-danger";
+}
+
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">Ficha de Cuenta por Cobrar</h4>
+        <p class="text-muted small mb-0">Detalle del título de crédito y su trazabilidad de cobros.</p>
+    </div>
+    <div class="text-end d-flex flex-wrap align-items-center gap-2 justify-content-end">
+        <a asp-action="Index" class="btn btn-outline-secondary shadow-sm"><i class="ti ti-arrow-left me-1"></i> Volver</a>
+        @if (Model.Estado != "PAGADA")
+        {
+            <a asp-action="Index" asp-route-aplicar="@Model.Id" class="btn btn-success shadow-sm"><i class="ti ti-cash me-1"></i> APLICAR COBRO</a>
+        }
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary shadow-sm"><i class="ti ti-edit me-1"></i> EDITAR</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm mb-0 h-100">
+            <div class="card-body p-3">
+                <div class="text-muted small fw-bold text-uppercase mb-1">Importe original</div>
+                <div class="fs-4 fw-bold">@Model.MontoOriginal.ToString("N2", fmt)</div>
+                <span class="badge bg-light text-muted">@Model.Moneda</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm mb-0 h-100">
+            <div class="card-body p-3">
+                <div class="text-muted small fw-bold text-uppercase mb-1">Saldo pendiente</div>
+                <div class="fs-4 fw-bold text-primary">@Model.SaldoPendiente.ToString("N2", fmt)</div>
+                <span class="badge @badgeEstado">@Model.Estado</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm mb-0 h-100">
+            <div class="card-body p-3">
+                <div class="text-muted small fw-bold text-uppercase mb-1">Vencimiento</div>
+                <div class="fs-5 fw-bold">@Model.FechaVencimiento.ToString("dd/MM/yyyy")</div>
+                <span class="badge @badgeAnt">
+                    @if (Model.Estado == "PAGADA") { <text>Al día</text> }
+                    else if (diasVenc <= 0) { <text>@(-diasVenc) días restantes</text> }
+                    else { <text>@diasVenc días vencido</text> }
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm mb-0 h-100">
+            <div class="card-body p-3">
+                <div class="text-muted small fw-bold text-uppercase mb-1">Cobrado</div>
+                <div class="fs-4 fw-bold text-success">@Model.PagoAplicados.Sum(p => p.Monto).ToString("N2", fmt)</div>
+                <span class="text-muted small">@Model.PagoAplicados.Count() pagos</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-light-subtle py-3">
+                <h5 class="m-0 fw-bold"><i class="ti ti-report-money me-2 text-primary"></i> Información del Título</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="text-muted small fw-bold text-uppercase">Cliente deudor</div>
+                        <div class="fw-semibold">@Model.Cliente.NombreRazonSocial</div>
+                        <div class="text-muted small">@Model.Cliente.NitOCi</div>
+                        @if (!string.IsNullOrEmpty(Model.Cliente.Telefono))
+                        {
+                            <div class="text-muted small"><i class="ti ti-phone me-1"></i>@Model.Cliente.Telefono</div>
+                        }
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-muted small fw-bold text-uppercase">Referencia</div>
+                        <div>
+                            <span class="badge bg-primary-subtle text-primary">@Model.DocumentoOrigenTipo</span>
+                            <code class="ms-1">@(string.IsNullOrEmpty(Model.DocumentoOrigenNumero) ? "S/N" : Model.DocumentoOrigenNumero)</code>
+                        </div>
+                        <div class="text-muted small mt-2">Emisión: @Model.FechaEmision.ToString("dd/MM/yyyy")</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-muted small fw-bold text-uppercase">Moneda</div>
+                        <div class="fw-semibold">@Model.Moneda</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-muted small fw-bold text-uppercase">Registro</div>
+                        <div class="fw-semibold">@Model.CreadoEn.ToString("dd/MM/yyyy HH:mm")</div>
+                        @if (Model.AsientoOrigen != null)
+                        {
+                            <a asp-controller="AsientoContable" asp-action="Details" asp-route-id="@Model.AsientoOrigenId" class="small">
+                                <i class="ti ti-book-2 me-1 text-success"></i> Comprobante @Model.AsientoOrigen.NumeroComprobante
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-light-subtle py-3">
+                <h5 class="m-0 fw-bold"><i class="ti ti-list-check me-2 text-primary"></i> Resumen</h5>
+            </div>
+            <div class="card-body p-4">
+                <ul class="list-unstyled mb-0 row-gap-2 d-flex flex-column">
+                    <li class="d-flex justify-content-between">
+                        <span class="text-muted">Importe original</span>
+                        <span class="fw-bold">@Model.MontoOriginal.ToString("N2", fmt)</span>
+                    </li>
+                    <li class="d-flex justify-content-between">
+                        <span class="text-muted">Total cobrado</span>
+                        <span class="fw-bold text-success">@Model.PagoAplicados.Sum(p => p.Monto).ToString("N2", fmt)</span>
+                    </li>
+                    <li class="d-flex justify-content-between border-top pt-2">
+                        <span class="fw-bold">Saldo pendiente</span>
+                        <span class="fw-bold text-primary">@Model.SaldoPendiente.ToString("N2", fmt)</span>
+                    </li>
+                    <li class="d-flex justify-content-between">
+                        <span class="text-muted">Antigüedad</span>
+                        <span class="badge @badgeAnt">@(Model.Estado == "PAGADA" ? "Al día" : diasVenc <= 0 ? $"{Math.Abs(diasVenc)} días" : $"{diasVenc} días vencido")</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-light-subtle py-3">
+                <h5 class="m-0 fw-bold"><i class="ti ti-history me-2 text-primary"></i> Trazabilidad de Cobros</h5>
+            </div>
+            @if (Model.PagoAplicados.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="fw-bold text-uppercase small">Fecha</th>
+                                <th class="fw-bold text-uppercase small">Forma de pago</th>
+                                <th class="fw-bold text-uppercase small">Referencia</th>
+                                <th class="fw-bold text-uppercase small">Comprobante</th>
+                                <th class="fw-bold text-uppercase small text-end">Monto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in Model.PagoAplicados.OrderByDescending(p => p.Fecha))
+                            {
+                                <tr>
+                                    <td class="small">@p.Fecha.ToString("dd/MM/yyyy")</td>
+                                    <td><span class="badge badge-soft-primary">@p.FormaPago</span></td>
+                                    <td class="small">@(string.IsNullOrEmpty(p.ReferenciaExterna) ? "—" : p.ReferenciaExterna)</td>
+                                    <td class="small">
+                                        @if (p.AsientoId != null)
+                                        {
+                                            <a asp-controller="AsientoContable" asp-action="Details" asp-route-id="@p.AsientoId"><i class="ti ti-book-2 me-1 text-success"></i> @p.AsientoId.Value.ToString("N")[..8]</a>
+                                        }
+                                        else { <span class="text-muted">—</span> }
+                                    </td>
+                                    <td class="text-end fw-semibold small">@p.Monto.ToString("N2", fmt)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <div class="avatar-lg bg-light text-muted rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                        <i class="ti ti-cash-off fs-32"></i>
+                    </div>
+                    <h5>Sin cobros registrados</h5>
+                    <p class="text-muted small">Cuando se apliquen cobros sobre esta cuenta, aparecerán aquí.</p>
+                    @if (Model.Estado != "PAGADA")
+                    {
+                        <a asp-action="Index" asp-route-aplicar="@Model.Id" class="btn btn-success btn-sm mt-1"><i class="ti ti-cash me-1"></i> Aplicar cobro</a>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

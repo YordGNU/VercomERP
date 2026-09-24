@@ -29,7 +29,7 @@ public interface ICommercialService
     Task<ContratoEconomico?> GetContractByIdAsync(Guid id);
     Task<EconomicContractViewModel> GetContractFormContextAsync(ContratoEconomico? existing = null);
     Task<(bool Succeeded, string Message)> CreateContractAsync(ContratoEconomico contract, IFormFile? document);
-    Task<(bool Succeeded, string Message)> UpdateContractAsync(ContratoEconomico contract);
+    Task<(bool Succeeded, string Message)> UpdateContractAsync(ContratoEconomico contract, IFormFile? document);
 
     // Topes de Precio MFP
     Task<IEnumerable<TopePrecioMfp>> GetPriceLimitsAsync(string? search = null);
@@ -400,20 +400,67 @@ public class CommercialService : ICommercialService
         }
     }
 
-    public async Task<(bool Succeeded, string Message)> UpdateContractAsync(ContratoEconomico contract)
+    public async Task<(bool Succeeded, string Message)> UpdateContractAsync(ContratoEconomico contract, IFormFile? document)
     {
+        string? uploadedRelativePath = null; // Para limpiar si falla la transacción
         try
         {
+            // Ya se valida la existencia de la contraparte en el POST (RF-50),
+            // aquí se confirma por seguridad.
+            if (contract.TerceroTipo == "CLIENTE" && (contract.ClienteId == null || !await _context.Clientes.AnyAsync(x => x.Id == contract.ClienteId)))
+                return (false, "Falta el cliente para un contrato de venta.");
+
+            if (contract.TerceroTipo == "PROVEEDOR" && (contract.ProveedorId == null || !await _context.Proveedors.AnyAsync(x => x.Id == contract.ProveedorId)))
+                return (false, "Falta el proveedor para un contrato de compra.");
+
             var existing = await _context.ContratoEconomicos.FindAsync(contract.Id);
             if (existing == null) return (false, "El contrato no existe.");
 
+            // ============================================================
+            // 1. GUARDAR NUEVO DOCUMENTO (si se adjuntó uno)
+            // ============================================================
+            if (document != null && document.Length > 0)
+            {
+                var uploadResult = await _fileStorage.SaveFileAsync(
+                    file: document,
+                    subFolder: "contracts",
+                    prefix: $"ce_{contract.NumeroContrato}");
+
+                if (!uploadResult.Success)
+                    return (false, uploadResult.Message);
+
+                uploadedRelativePath = uploadResult.RelativePath;
+
+                _logger.LogInformation(
+                    "Documento de contrato actualizado: {Path} para contrato {NumeroContrato}",
+                    uploadedRelativePath, contract.NumeroContrato);
+            }
+
+            // ============================================================
+            // 2. ACTUALIZAR EL CONTRATO
+            // ============================================================
             _context.Entry(existing).CurrentValues.SetValues(contract);
             existing.EntidadId = _entidadProvider.CurrentEntidadId; // Preservar multi-inquilino
+
+            // Reemplazar (o quitar) el documento en la entidad
+            if (uploadedRelativePath != null)
+            {
+                // Borrar documento anterior si existía y es distinto
+                if (!string.IsNullOrEmpty(existing.DocumentoUrl) && existing.DocumentoUrl != uploadedRelativePath)
+                    await _fileStorage.DeleteFileAsync(existing.DocumentoUrl);
+
+                existing.DocumentoUrl = uploadedRelativePath;
+            }
 
             await _context.SaveChangesAsync();
             return (true, "Contrato económico actualizado.");
         }
-        catch (Exception ex) { return (false, ex.Message); }
+        catch (Exception ex)
+        {
+            if (uploadedRelativePath != null)
+                await _fileStorage.DeleteFileAsync(uploadedRelativePath);
+            return (false, ex.Message);
+        }
     }
 
     public async Task<IEnumerable<TopePrecioMfp>> GetPriceLimitsAsync(string? search = null)

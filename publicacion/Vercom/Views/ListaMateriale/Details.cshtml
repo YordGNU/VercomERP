@@ -26,7 +26,7 @@
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <div class="row">
         <div class="col-lg-12">
             <div class="card shadow-sm border-0">
@@ -39,9 +39,9 @@
                         <thead class="thead-sm text-uppercase fs-xxs">
                                 <tr>
                                     <th class="ps-4">Insumo / Materia Prima</th>
-                                    <th  class="text-center">Cant. Neta</th>
+                                    <th>Cant. Neta</th>
                                   <th>U.M.</th>
-                                    <th  class="text-center">Merma Est. (%)</th>
+                                    <th>Merma Est. (%)</th>
                                     <th>Cant. Bruta Total</th>
                                 </tr>
                             </thead>
@@ -59,7 +59,7 @@
                                         <td >
                                             <span class="text-danger fw-bold">@det.PorcentajeMerma.ToString("N2")%</span>
                                         </td>
-                                        <td class="text-end pe-4 fw-bold text-primary">
+                                       <td class="pe-4 fw-bold text-primary">
                                             @((det.CantidadRequerida * (1 + (det.PorcentajeMerma / 100))).ToString("N4"))
                                         </td>
                                     </tr>

@@ -8,19 +8,14 @@
         <h4 class="page-main-title m-0 fw-bold">Gestión de Precios Máximos (MFP)</h4>
         <p class="text-muted small mb-0">Control de topes oficiales para productos minoristas y servicios (Resoluciones MFP).</p>
     </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Comercial</a></li>
-            <li class="breadcrumb-item active">Topes MFP</li>
-        </ol>
+    <div class="text-end">      
         <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
             <i class="ti ti-plus"></i> NUEVO TOPE
         </a>
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <!-- Sección de Filtros -->
     <div class="col-12 mb-4">
         <div class="card shadow-sm border-0">
@@ -43,79 +38,81 @@
             </div>
         </div>
     </div>
-
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-light-subtle">
-            <h5 class="m-0 fw-bold"><i class="ti ti-list-check me-2 text-primary"></i>Nomenclador de Precios Limitados</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table id="priceLimitsTable" class="table table-striped table-hover dt-responsive">
-                <thead class="thead-sm text-uppercase fs-xxs">
-                        <tr>
-                            <th>Producto / Familia</th>
-                            <th>Precio Máx. ($)</th>
-                          <th>Vigencia</th>
-                            <th>Resolución de Referencia</th>
-                          <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model)
-                        {
-                            var isVigente = item.VigenteHasta == null || item.VigenteHasta >= DateOnly.FromDateTime(DateTime.Now);
-                            <tr>
-                                <td>
-                                    @if(item.Producto != null) {
-                                        <div class="fw-bold">@item.Producto.Nombre</div>
-                                        <small class="text-muted text-uppercase tiny">Artículo Individual</small>
-                                    } else {
-                                        <div class="fw-bold text-primary">@item.Familia?.Nombre</div>
-                                        <small class="text-muted text-uppercase tiny">Familia de Productos</small>
-                                    }
-                                </td>
-                                <td class="text-end fw-bold text-danger">@item.PrecioMaximo.ToString("N2")</td>
-                                <td small">
-                                    <div class="text-muted">Desde: @item.VigenteDesde.ToString("dd/MM/yyyy")</div>
-                                    <div class="fw-bold">Hasta: @(item.VigenteHasta?.ToString("dd/MM/yyyy") ?? "Indefinido")</div>
-                                </td>
-                                <td class="small italic">@(item.ResolucionReferencia ?? "-")</td>
-                                <td >
-                                    <span class="badge @(isVigente ? "bg-success" : "bg-secondary") small">@(isVigente ? "ACTIVO" : "VENCIDO")</span>
-                                </td>
-                                <td>
-                                    <div class="btn-group">
-                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline py-1 px-2" title="Editar">
-                                            <i class="ti ti-edit"></i>
-                                        </a>
-                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline py-1 px-2" title="Ver Historial">
-                                            <i class="ti ti-eye"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-            @if (!Model.Any())
-            {
-                <div class="text-center py-5">
-                    <i class="ti ti-lock-off fs-48 text-muted mb-3 d-block"></i>
-                    <h4 class="fw-bold">Sin regulaciones de precios</h4>
-                    <p class="text-muted small">Configure aquí los topes máximos establecidos por el MFP para el control legal en facturación.</p>
-                    <a asp-action="Create" class="btn btn-sm btn-primary mt-2">DEFINIR NUEVA REGULACIÓN</a>
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light-subtle">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-list-check me-2 text-primary"></i>Nomenclador de Precios Limitados</h5>
                 </div>
-            }
+                <div class="card-body">                   
+                    @if (!Model.Any())
+                    {
+                        <div class="text-center py-5">
+                            <i class="ti ti-lock-off fs-48 text-muted mb-3 d-block"></i>
+                            <h4 class="fw-bold">Sin regulaciones de precios</h4>
+                            <p class="text-muted small">Configure aquí los topes máximos establecidos por el MFP para el control legal en facturación.</p>
+                            <a asp-action="Create" class="btn btn-sm btn-primary mt-2">DEFINIR NUEVA REGULACIÓN</a>
+                        </div>
+                    }
+                    else
+                    {
+                        <table id="priceLimitsTable" class="table table-striped table-hover dt-responsive">
+                            <thead class="thead-sm text-uppercase fs-xxs">
+                                <tr>
+                                    <th>Producto / Familia</th>
+                                    <th>Precio Máx. ($)</th>
+                                    <th>Vigencia</th>
+                                    <th>Resolución de Referencia</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    var isVigente = item.VigenteHasta == null || item.VigenteHasta >= DateOnly.FromDateTime(DateTime.Now);
+                                    <tr>
+                                        <td>
+                                            @if (item.Producto != null)
+                                            {
+                                                <div class="fw-bold">@item.Producto.Nombre</div>
+                                                <small class="text-muted text-uppercase tiny">Artículo Individual</small>
+                                            }
+                                            else
+                                            {
+                                                <div class="fw-bold text-primary">@item.Familia?.Nombre</div>
+                                                <small class="text-muted text-uppercase tiny">Familia de Productos</small>
+                                            }
+                                        </td>
+                                       <td class="fw-bold text-danger">@item.PrecioMaximo.ToString("N2")</td>
+                                        <td small">
+                                            <div class="text-muted">Desde: @item.VigenteDesde.ToString("dd/MM/yyyy")</div>
+                                            <div class="fw-bold">Hasta: @(item.VigenteHasta?.ToString("dd/MM/yyyy") ?? "Indefinido")</div>
+                                        </td>
+                                        <td class="small italic">@(item.ResolucionReferencia ?? "-")</td>
+                                        <td>
+                                            <span class="badge @(isVigente ? "bg-success" : "bg-secondary") small">@(isVigente ? "ACTIVO" : "VENCIDO")</span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline py-1 px-2" title="Editar">
+                                                    <i class="ti ti-edit"></i>
+                                                </a>
+                                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline py-1 px-2" title="Ver Historial">
+                                                    <i class="ti ti-eye"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            </div>
         </div>
     </div>
 </div>
-
-<style>
-    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
-</style>
-
 @section Scripts {
     <script>
         $(document).ready(function () {

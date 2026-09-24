@@ -8,7 +8,6 @@
         <h4 class="page-main-title m-0 text-danger">Cierre de Ejercicio @Model.Year</h4>
     </div>
 </div>
-
 <div class="row mt-4">
     <div class="row justify-content-center">
         <div class="col-lg-8">
@@ -42,7 +41,7 @@
                         }
                     </ul>
 
-                    <form asp-action="ExecuteYearly" method="post">
+                    <form asp-action="ExecuteYearly" method="post" id="yearlyClosureForm">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="year" value="@Model.Year" />
 
@@ -61,3 +60,10 @@
         </div>
     </div>
 </div>
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            window.SubmitAjaxForm('yearlyClosureForm');
+        });
+    </script>
+}

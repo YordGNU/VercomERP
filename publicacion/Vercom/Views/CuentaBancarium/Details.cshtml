@@ -26,7 +26,7 @@
     </div>
 </div>
 
-<div class="container-xxl">
+<div class="row">
     <div class="row">
         <!-- Tarjeta de Saldo Estilo Wallet -->
         <div class="col-lg-4">
@@ -112,7 +112,7 @@
                                         <td >
                                             <span class="badge @(isCredit ? "badge-soft-success" : "badge-soft-danger") tiny fw-bold">@m.Tipo</span>
                                         </td>
-                                        <td class="text-end fw-bold @(isCredit ? "text-success" : "text-danger")">
+                                       <td class="fw-bold @(isCredit ? "text-success" : "text-danger")">
                                             @(isCredit ? "" : "-")@m.Monto.ToString("N2")
                                         </td>
                                         <td >
