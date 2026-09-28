@@ -4,80 +4,224 @@
 }
 
 <div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
+    <div class="flex-grow-1 me-3">
         <h4 class="page-main-title m-0 fw-bold">Gestión de Seguridad: Perfiles de Acceso</h4>
         <p class="text-muted small mb-0">Definición de roles y matrices de permisos según segregación de funciones (Res. 60/2011).</p>
     </div>
     <div class="text-end">
-        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
-            <i class="ti ti-shield-plus"></i> CREAR NUEVO ROL
+        <a asp-action="Create" class="btn btn-primary shadow-sm">
+            <i class="ti ti-shield-plus me-1"></i> CREAR NUEVO ROL
         </a>
     </div>
 </div>
 
-<div class="row">
-    <div class="row">
-        @foreach (var item in Model)
-        {
-            <div class="col-xl-4 col-md-6 mb-4">
-                <div class="card h-100 border-top border-primary border-3 shadow-sm">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="fw-bold m-0 text-primary">@item.Nombre</h5>
-                            @if(item.EsSistema) {
-                                <span class="badge bg-danger-subtle text-danger small">SISTEMA</span>
-                            }
-                        </div>
-                        <p class="text-muted small mb-4" style="min-height: 40px;">
-                            @(item.Descripcion ?? "Sin descripción asignada.")
-                        </p>
-
-                        <div class="d-flex justify-content-between align-items-center py-2 px-3 bg-light rounded-3 mb-4">
-                            <div class="small">
-                                <i class="ti ti-key me-1"></i> <span class="fw-bold">@item.Permisos.Count</span> Permisos
-                            </div>
-                            <div class="small">
-                                <i class="ti ti-users me-1"></i> <span class="fw-bold">@item.UsuarioRols.Count</span> Usuarios
-                            </div>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
-                                <i class="ti ti-eye me-1"></i> VER MATRIZ
-                            </a>
-                            <div class="d-flex gap-2">
-                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-ghost-secondary flex-grow-1">
-                                    <i class="ti ti-edit"></i>
-                                </a>
-                                @if(!item.EsSistema) {
-                                    <button type="button" class="btn btn-sm btn-ghost-danger flex-grow-1" onclick="confirmDelete('@item.Id')">
-                                        <i class="ti ti-trash"></i>
-                                    </button>
-                                }
-                            </div>
-                        </div>
-                    </div>
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-3">
+        <div class="row g-3 align-items-center">
+            <div class="col-lg-5 col-xl-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent"><i class="ti ti-search"></i></span>
+                    <input type="text" id="rolSearch" class="form-control" placeholder="Buscar por nombre o código..." aria-label="Buscar roles">
+                    <button type="button" id="rolSearchClear" class="btn btn-ghost-secondary" title="Limpiar búsqueda" style="display:none;">
+                        <i class="ti ti-x"></i>
+                    </button>
                 </div>
             </div>
-        }
+            <div class="col-lg-7 text-lg-end">
+                <span class="text-muted small"><i class="ti ti-hash me-1"></i><span id="rolCount" class="fw-bold text-body">@Model.Count()</span> rol(es) definido(s)</span>
+            </div>
+        </div>
     </div>
 </div>
 
+@if (!Model.Any())
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+            <div class="avatar avatar-xl bg-primary-subtle text-primary rounded-circle mb-3 mx-auto">
+                <i class="ti ti-shield fs-48"></i>
+            </div>
+            <h4 class="fw-bold mb-1">Aún no hay roles definidos</h4>
+            <p class="text-muted">Crea el primer perfil de acceso para empezar a asignar permisos y usuarios.</p>
+            <a asp-action="Create" class="btn btn-primary mt-3">
+                <i class="ti ti-shield-plus me-1"></i> CREAR NUEVO ROL
+            </a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row mb-3" id="rolGrid">
+        @foreach (var item in Model)
+        {
+            var descripcion = string.IsNullOrWhiteSpace(item.Descripcion) ? null : item.Descripcion;
+            var usuarios = item.UsuarioRols.Select(ur => ur.Usuario).DistinctBy(u => u.Id).ToList();
+            var modulos = item.Permisos.Select(p => p.Modulo).Distinct().ToList();
+            var tieneFecha = item.CreadoEn != default(DateTimeOffset);
+            var fechaCreado = tieneFecha ? item.CreadoEn.ToLocalTime().ToString("dd/MM/yyyy") : null;
+            var sinPermisos = item.Permisos.Count == 0;
+            <div class="col-xl-4 col-md-6 mb-4">
+                <div class="card h-100 transition-all hover-shadow">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="avatar-lg bg-primary-subtle text-primary rounded-3 d-flex align-items-center justify-content-center me-3" style="width: 54px; height: 54px;">
+                                <i class="ti ti-user fs-28"></i>
+                            </div>
+                            <div class="flex-grow-1 overflow-hidden">
+                                <h5 class="mb-1 text-truncate fw-bold">
+                                    <a asp-action="File" asp-route-id="@item.Id" class="text-dark text-decoration-none">@item.Nombre </a>
+                                </h5>
+                                <p class="text-primary mb-0 small fw-semibold text-uppercase">@item.Codigo</p>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn  btn-outline py-1 px-2 border-0" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                 <li><a class="dropdown-item py-2" asp-action="Edit" asp-route-id="@item.Id"><i class="ti ti-edit me-2 text-info"></i> Editar Datos</a></li>
+                                 <li>                             
+                                @if (!item.EsSistema)
+                                {
+                                     <li><a class="dropdown-item py-2" asp-action="Delete" asp-route-id="@item.Id"><i class="ti ti-trash me-2 text-info"></i> Eliminar</a>
+                                     </li>                                   
+                                }
+                                else
+                                {
+                                    <li><a class="dropdown-item py-2" asp-action="" title="Los roles de sistema no pueden eliminarse"><i class="ti ti-lock me-2 text-info"></i> Eliminar</a>
+                                    </li>   
+                                
+                                }
+                                </ul>
+                            </div>
+                        </div>                  
+                        <div class="mb-3">
+                            @if (descripcion != null)
+                            {
+                                <p class="text-muted small mb-0">@descripcion</p>
+                            }
+                            else
+                            {
+                                <p class="text-muted small fst-italic mb-0"><i class="ti ti-pencil-off me-1"></i>Sin descripción definida.</p>
+                            }
+                            @if (fechaCreado != null)
+                            {
+                                <div class="tiny text-muted mt-1"><i class="ti ti-calendar me-1"></i>Creado el @fechaCreado</div>
+                            }
+                        </div>
+                        <div class="row g-2 text-center mb-3">
+                            <div class="col-4 @(sinPermisos ? "opacity-50" : "")" title="@item.Permisos.Count capacidades habilitadas">
+                                <div class="bg-light rounded py-2">
+                                    <div class="fw-bold text-primary">@item.Permisos.Count</div>
+                                    <div class="tiny text-muted fw-bold text-uppercase">permisos</div>
+                                </div>
+                            </div>
+                            <div class="col-4 @(modulos.Count == 0 ? "opacity-50" : "")" title="@modulos.Count módulos con acceso">
+                                <div class="bg-light rounded py-2">
+                                    <div class="fw-bold text-primary">@modulos.Count</div>
+                                    <div class="tiny text-muted fw-bold text-uppercase">módulos</div>
+                                </div>
+                            </div>
+                            <div class="col-4 @(usuarios.Count == 0 ? "opacity-50" : "")" title="@usuarios.Count usuarios con este rol">
+                                <div class="bg-light rounded py-2">
+                                    <div class="fw-bold text-primary">@usuarios.Count</div>
+                                    <div class="tiny text-muted fw-bold text-uppercase">usuarios</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            @if (usuarios.Any())
+                            {
+                                <div class="d-flex flex-wrap gap-1">
+                                    @foreach (var u in usuarios.Take(2))
+                                    {
+                                        <span class="badge bg-light-subtle text-muted border" title="@u.NombreCompleto · @u.NombreUsuario">
+                                            <i class="ti ti-user me-1"></i>@u.NombreCompleto
+                                        </span>
+                                    }
+                                    @if (usuarios.Count > 2)
+                                    {
+                                        <span class="badge bg-secondary-subtle text-secondary border" title="Lista completa en Detalle">+@(usuarios.Count - 2) más</span>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="tiny text-muted"><i class="ti ti-user-off me-1"></i>Sin usuarios asignados</span>
+                            }
+                        </div>
+                        <div class="d-grid gap-2 mt-auto">
+                            @if (sinPermisos)
+                            {
+                                <a asp-action="ManagePermissions" asp-route-id="@item.Id" class="btn btn-warning shadow-sm">
+                                    <i class="ti ti-lock-access me-1"></i> CONFIGURAR PERMISOS
+                                </a>
+                            }
+                            else
+                            {
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-primary">
+                                    <i class="ti ti-eye me-1"></i> VER MATRIZ DE ACCESO
+                                </a>
+                            }                          
+                        </div>
+                    </div>
+                </div>
+            </div>       
+        }
+    </div>
+
+    <div id="rolEmptySearch" class="card border-0 shadow-sm" style="display:none;">
+        <div class="card-body text-center py-5">
+            <div class="avatar avatar-xl bg-light-subtle text-muted rounded-circle mb-3 mx-auto">
+                <i class="ti ti-search-off fs-48"></i>
+            </div>
+            <h5 class="fw-bold mb-1">Sin coincidencias</h5>
+            <p class="text-muted mb-0">Ningún rol coincide con la búsqueda. Prueba con otro término.</p>
+        </div>
+    </div>
+}
+
+<form asp-action="Delete" method="post" id="deleteRolForm" class="d-none">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" id="deleteRolId" />
+</form>
+
 @section Scripts {
     <script>
-        function confirmDelete(id) {
-            Swal.fire({
-                title: '¿Eliminar Rol?',
-                text: "Esta acción afectará el acceso de todos los usuarios vinculados.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                confirmButtonText: 'ELIMINAR'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Acción de borrado vía AJAX o Form oculto
-                }
+        $(document).ready(function () {
+            function applyFilter() {
+                var q = ($('#rolSearch').val() || '').trim().toLowerCase();
+                var visible = 0;
+                $('#rolGrid .rol-card').each(function () {
+                    var match = !q || ($(this).data('buscar') || '').indexOf(q) >= 0;
+                    $(this).toggle(match);
+                    if (match) visible++;
+                });
+                $('#rolCount').text(visible);
+                $('#rolEmptySearch').toggle(!visible);
+                $('#rolSearchClear').toggle(q.length > 0);
+            }
+
+            $('#rolSearch').on('input', applyFilter);
+            $('#rolSearchClear').on('click', function () {
+                $('#rolSearch').val('').trigger('input');
+                $('#rolSearch').trigger('focus');
             });
-        }
+
+            $('.rol-delete').on('click', function () {
+                var id = $(this).data('id');
+                Swal.fire({
+                    title: '¿Eliminar rol?',
+                    text: 'Esta acción revocará el acceso de todos los usuarios vinculados a este rol.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    confirmButtonText: 'ELIMINAR',
+                    cancelButtonText: 'Cancelar'
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        $('#deleteRolId').val(id);
+                        $('#deleteRolForm').trigger('submit');
+                    }
+                });
+            });
+        });
     </script>
 }

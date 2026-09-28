@@ -60,6 +60,9 @@ public interface IInventoryService
     Task<(bool Succeeded, string Message, MovimientoInventario? Movement)> ProcessMovementAsync(MovimientoInventario movement);
     Task<decimal> GetStockAsync(Guid almacenId, Guid productoId);
     Task<List<Existencium>> GetLowStockAlertsAsync(Guid entidadId);
+    /// <summary>Genera el asiento contable canónico (Inventario ↔ contrapartida) de un
+    /// movimiento ya persistido que se procesó por fuera de ProcessMovementAsync (p. ej. POS).</summary>
+    Task GenerateAccountingEntryForExistingMovementAsync(MovimientoInventario movement, CancellationToken ct = default);
     Task<List<ExistenciaLote>> GetExpiryAlertsAsync(Guid entidadId, int daysThreshold);
     Task<List<KardexRowViewModel>> GetKardexByProductAsync(Guid productoId, Guid? almacenId = null);
     Task<(bool Succeeded, string Message)> TransferBetweenWarehousesAsync(Guid origenId, Guid destinoId, List<MovimientoInventarioDetalle> items, Guid userId);
@@ -534,6 +537,7 @@ public class InventoryService : IInventoryService
         ("AJUSTE_POSITIVO", "Ajuste por Sobrante", "ENTRADA", true),
         ("AJUSTE_NEGATIVO", "Ajuste por Faltante", "SALIDA", true),
         ("CONSUMO_PRODUCCION", "Consumo en Producción", "SALIDA", true),
+        ("DEVOLUCION_PRODUCCION", "Devolución de Materiales a Producción", "ENTRADA", true),
         ("ENTRADA_PRODUCCION", "Entrada de Producto Terminado", "ENTRADA", true),
         ("VENTA_POS", "Venta en Punto de Venta", "SALIDA", true),
     };
@@ -740,6 +744,7 @@ public class InventoryService : IInventoryService
                 }
 
                 index++;
+                var stockAdj = await _context.Existencia.FirstOrDefaultAsync(e => e.AlmacenId == count.AlmacenId && e.ProductoId == detail.ProductoId);
                 var adjustment = new MovimientoInventario
                 {
                     EntidadId = entidadId,
@@ -757,7 +762,8 @@ public class InventoryService : IInventoryService
                 {
                     Id = Guid.NewGuid(),
                     ProductoId = detail.ProductoId,
-                    Cantidad = Math.Abs(detail.Diferencia ?? 0)
+                    Cantidad = Math.Abs(detail.Diferencia ?? 0),
+                    CostoUnitario = stockAdj?.CostoPromedio
                 });
 
                 var res = await ProcessMovementAsync(adjustment);
@@ -782,6 +788,13 @@ public class InventoryService : IInventoryService
         {
             if (transaction != null) await transaction.DisposeAsync();
         }
+    }
+
+    public async Task GenerateAccountingEntryForExistingMovementAsync(MovimientoInventario movement, CancellationToken ct = default)
+    {
+        var tipo = await _context.TipoMovimientos.FirstOrDefaultAsync(t => t.Id == movement.TipoMovimientoId, ct);
+        if (tipo == null) return;
+        await CreateAccountingEntryAsync(movement, tipo);
     }
 
     private async Task CreateAccountingEntryAsync(MovimientoInventario movement, TipoMovimiento tipo)
@@ -823,50 +836,65 @@ public class InventoryService : IInventoryService
 
             // Cuentas del Producto (RF-35)
             var invAccId = prod.CuentaInventarioId;
-            var expenseAccId = prod.CuentaCostoVentaId;
-            var incomeAccId = prod.CuentaIngresoId;
+            if (invAccId == null)
+            {
+                // Fallback a cuenta genérica de inventario (mantiene el comportamiento de compras).
+                var ctaInv = await _paramService.ObtenerValorVigenteAsync(movement.EntidadId, "CTA_INV_GENERICA") ?? "183.0010";
+                var genAcc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaInv && c.EntidadId == movement.EntidadId);
+                invAccId = genAcc?.Id;
+            }
 
+            var expenseAccId = prod.CuentaCostoVentaId;
             if (invAccId == null) continue;
+
+            // Contrapartida contable según el tipo de movimiento:
+            // - RECEPCION / DEVOLUCION_SALIDA -> acredita CxP proveedores (no ingresos).
+            // - DEVOLUCION_ENTRADA / VALE_ENTREGA / VENTA_POS -> costo de venta del producto.
+            // - AJUSTE_POSITIVO -> ingreso por ajuste; AJUSTE_NEGATIVO -> pérdida por ajuste.
+            // - CONSUMO/DESVIACION_PRODUCCION -> debita WIP; ENTRADA_PRODUCCION/DEVOLUCION_PRODUCCION -> acredita WIP.
+            Guid? contraAccId = null;
+
+            switch (tipo.Codigo)
+            {
+                case "RECEPCION":
+                case "DEVOLUCION_SALIDA":
+                    var ctaCpp = await _paramService.ObtenerValorVigenteAsync(movement.EntidadId, "CTA_CXP_PROVEEDORES") ?? "405.0020";
+                    var cppAcc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaCpp && c.EntidadId == movement.EntidadId);
+                    contraAccId = cppAcc?.Id;
+                    break;
+                case "AJUSTE_POSITIVO":
+                    var ctaAjuste = await _paramService.ObtenerValorVigenteAsync(movement.EntidadId, "CTA_INGRESO_AJUSTE_INV") ?? "930.0010";
+                    var ajusteAcc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaAjuste && c.EntidadId == movement.EntidadId);
+                    contraAccId = ajusteAcc?.Id;
+                    break;
+                case "AJUSTE_NEGATIVO":
+                    var ctaPerdida = await _paramService.ObtenerValorVigenteAsync(movement.EntidadId, "CTA_PERDIDA_INVENTARIO") ?? "850.0010";
+                    var perdidaAcc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaPerdida && c.EntidadId == movement.EntidadId);
+                    contraAccId = perdidaAcc?.Id;
+                    break;
+                case "CONSUMO_PRODUCCION":
+                case "ENTRADA_PRODUCCION":
+                case "DEVOLUCION_PRODUCCION":
+                    var ctaWip = await _paramService.ObtenerValorVigenteAsync(movement.EntidadId, "CTA_WIP") ?? "185.0010";
+                    var wipAcc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaWip && c.EntidadId == movement.EntidadId);
+                    contraAccId = wipAcc?.Id;
+                    break;
+                default:
+                    contraAccId = tipo.Naturaleza == "ENTRADA" ? null : expenseAccId;
+                    break;
+            }
+
+            if (contraAccId == null) continue;
 
             if (tipo.Naturaleza == "ENTRADA")
             {
                 // DEBE: Inventario | HABER: Contrapartida
-                Guid? contraAccId = null;
-
-                if (tipo.Codigo == "AJUSTE_POSITIVO")
-                {
-                    var cta = await _paramService.ObtenerValorVigenteAsync(movement.EntidadId, "CTA_INGRESO_AJUSTE_INV") ?? "930.0010";
-                    var acc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == cta && c.EntidadId == movement.EntidadId);
-                    contraAccId = acc?.Id;
-                }
-                else
-                {
-                    contraAccId = incomeAccId;
-                }
-
-                if (contraAccId == null) continue;
-
                 entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = invAccId.Value, Debe = monto, Haber = 0, Glosa = $"Alta Inventario {prod.Nombre}" });
                 entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = contraAccId.Value, Debe = 0, Haber = monto, Glosa = $"Contrapartida {tipo.Nombre}" });
             }
-            else if (tipo.Naturaleza == "SALIDA")
+            else
             {
                 // DEBE: Contrapartida | HABER: Inventario
-                Guid? contraAccId = null;
-
-                if (tipo.Codigo == "AJUSTE_NEGATIVO")
-                {
-                    var cta = await _paramService.ObtenerValorVigenteAsync(movement.EntidadId, "CTA_PERDIDA_INVENTARIO") ?? "850.0010";
-                    var acc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == cta && c.EntidadId == movement.EntidadId);
-                    contraAccId = acc?.Id;
-                }
-                else
-                {
-                    contraAccId = expenseAccId;
-                }
-
-                if (contraAccId == null) continue;
-
                 entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = contraAccId.Value, Debe = monto, Haber = 0, Glosa = $"Costo/Gasto {prod.Nombre}" });
                 entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = invAccId.Value, Debe = 0, Haber = monto, Glosa = $"Baja Inventario {prod.Nombre}" });
             }

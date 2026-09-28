@@ -10,26 +10,18 @@
         <h4 class="page-main-title m-0 fw-bold">Sucursales y Puntos de Venta</h4>
         <p class="text-muted small mb-0">Gestión de ubicaciones físicas, almacenes y áreas de producción.</p>
     </div>
-    <div class="text-end d-flex align-items-center gap-3">
-        <div class="d-none d-md-block">
-            <ol class="breadcrumb m-0 py-0 mb-1 justify-content-end">
-                <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-                <li class="breadcrumb-item"><a href="javascript: void(0);">Administración</a></li>
-                <li class="breadcrumb-item active">Sucursales</li>
-            </ol>
-        </div>
-        <a asp-action="Mapa" class="btn btn-outline-primary shadow-sm"><i class="ti ti-map-2 me-1"></i> VER MAPA</a>
+    <div class="text-end d-flex align-items-center gap-3">      
+        <a asp-action="Mapa" class="btn btn-info shadow-sm"><i class="ti ti-map-2 me-1"></i> VER MAPA</a>
         <a asp-action="Create" class="btn btn-primary shadow-sm">
             <i class="ti ti-plus me-1"></i> NUEVA SUCURSAL
         </a>
     </div>
 </div>
-
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-3">
         <div class="card border-0 shadow-sm mb-0">
             <div class="card-body p-3 d-flex align-items-center gap-3">
-                <span class="avatar bg-primary-subtle text-primary"><i class="ti ti-building-community fs-20"></i></span>
+                <span class="avatar-lg rounded-3 d-flex align-items-center justify-content-center me-0 bg-primary-subtle text-primary"><i class="ti ti-building-community fs-20"></i></span>
                 <div>
                     <div class="fs-5 fw-bold mb-0">@Model.TotalSucursales</div>
                     <div class="text-muted small">Sucursales</div>
@@ -40,7 +32,7 @@
     <div class="col-sm-6 col-xl-3">
         <div class="card border-0 shadow-sm mb-0">
             <div class="card-body p-3 d-flex align-items-center gap-3">
-                <span class="avatar bg-success-subtle text-success"><i class="ti ti-circle-check fs-20"></i></span>
+                <span class="avatar-lg rounded-3 d-flex align-items-center justify-content-center me-0 bg-success-subtle text-success"><i class="ti ti-circle-check fs-20"></i></span>
                 <div>
                     <div class="fs-5 fw-bold mb-0">@Model.Activas</div>
                     <div class="text-muted small">Unidades activas</div>
@@ -51,7 +43,7 @@
     <div class="col-sm-6 col-xl-3">
         <div class="card border-0 shadow-sm mb-0">
             <div class="card-body p-3 d-flex align-items-center gap-3">
-                <span class="avatar bg-danger-subtle text-danger"><i class="ti ti-circle-x fs-20"></i></span>
+                <span class="avatar-lg rounded-3 d-flex align-items-center justify-content-center me-0 bg-danger-subtle text-danger"><i class="ti ti-circle-x fs-20"></i></span>
                 <div>
                     <div class="fs-5 fw-bold mb-0">@Model.Inactivas</div>
                     <div class="text-muted small">Unidades inactivas</div>
@@ -62,7 +54,7 @@
     <div class="col-sm-6 col-xl-3">
         <div class="card border-0 shadow-sm mb-0">
             <div class="card-body p-3 d-flex align-items-center gap-3">
-                <span class="avatar bg-info-subtle text-info"><i class="ti ti-map-pin fs-20"></i></span>
+                <span class="avatar-lg rounded-3 d-flex align-items-center justify-content-center me-0 bg-info-subtle text-info"><i class="ti ti-map-pin fs-20"></i></span>
                 <div>
                     <div class="fs-5 fw-bold mb-0">@Model.Tipos.Count</div>
                     <div class="text-muted small">Tipos de establecimiento</div>
@@ -143,7 +135,7 @@
                 <div class="card-body p-3 d-flex flex-column">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div class="d-flex gap-2 align-items-center">
-                            <span class="avatar bg-light text-primary"><i class="ti ti-building-store fs-22"></i></span>
+                            <span class="avatar-lg rounded-3 d-flex align-items-center justify-content-center me-0 bg-light text-primary"><i class="ti ti-building-store fs-22"></i></span>
                             <div>
                                 <span class="badge @tipoBadge text-uppercase mb-1">@tipo</span>
                                 <h5 class="card-title mb-0 fs-14 text-truncate" style="max-width: 210px;">@item.Nombre</h5>
@@ -185,11 +177,7 @@
                     <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center">
                         <span class="badge @(item.Activo ? "badge-soft-success" : "badge-soft-danger")">
                             <i class="ti ti-circle-filled me-1"></i> @(item.Activo ? "ACTIVA" : "INACTIVA")
-                        </span>
-                        <div class="btn-list">
-                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i> VER</a>
-                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"><i class="ti ti-edit"></i> EDITAR</a>
-                        </div>
+                        </span>                       
                     </div>
                 </div>
             </div>
@@ -199,7 +187,7 @@
     @if (!Model.Items.Any())
     {
         <div class="col-12 text-center py-5">
-            <div class="avatar-lg bg-light text-muted rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+            <div class="avatar-lg rounded-3 d-flex align-items-center justify-content-center me-0-lg bg-light text-muted rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
                 <i class="ti ti-search-off fs-40"></i>
             </div>
             <h4>Sin resultados</h4>

@@ -97,11 +97,12 @@ public class ContratoEconomicoController : Controller
         ModelState.Remove("Contract.Cliente");
         ModelState.Remove("Contract.Proveedor");
         ModelState.Remove("Contract.EntidadId");
+        ModelState.Remove("Contract.Estado");
 
         if (ModelState.IsValid)
         {
             contract.EntidadId = _entidadProvider.CurrentEntidadId;
-            var result = await _commercialService.UpdateContractAsync(contract, vm.DocumentoContrato);
+            var result = await _commercialService.UpdateContractAsync(contract, vm.DocumentoContrato, vm.QuitarDocumento);
             if (result.Succeeded)
             {
                 return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });

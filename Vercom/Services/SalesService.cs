@@ -93,7 +93,7 @@ public class SalesService : ISalesService
             Almacenes = new SelectList(await _context.Almacens.Where(a => a.Activo && a.EsPuntoVenta).ToListAsync(), "Id", "Nombre"),
             Contratos = new SelectList(await _context.ContratoEconomicos.Where(c => c.Estado == "VIGENTE" && c.TerceroTipo == "CLIENTE").ToListAsync(), "Id", "NumeroContrato"),
             ProductosDisponibles = await _context.Productos
-                .Where(p => p.Activo && (p.Tipo == "TERMINADO" || p.Tipo == "ELABORADO"))
+                .Where(p => p.Activo && p.Tipo == "TERMINADO")
                 .Select(p => new { p.Id, p.Nombre, p.PrecioVentaActual, p.Codigo })
                 .ToListAsync()
         };
@@ -124,7 +124,6 @@ public class SalesService : ISalesService
 
             decimal totalTax = 0;
             decimal subtotal = 0;
-            decimal totalCostoReal = 0;
 
             // Pre-validar todos los productos y topes antes de iniciar movimientos
             foreach (var detail in invoice.FacturaVentaDetalles)
@@ -195,7 +194,6 @@ public class SalesService : ISalesService
                 var detFac = invoice.FacturaVentaDetalles.First(d => d.ProductoId == detMov.ProductoId);
                 detFac.CostoUnitarioVenta = detMov.CostoUnitario ?? 0;
                 detFac.MovimientoInventarioId = movSalida.Id;
-                totalCostoReal += (decimal)(detFac.CostoUnitarioVenta * detFac.Cantidad);
             }
 
             invoice.Subtotal = subtotal;
@@ -270,7 +268,7 @@ public class SalesService : ISalesService
                     }
 
                     // B. HABER: Ingresos e Impuestos
-                    var ctaVentas = await _paramService.ObtenerValorVigenteAsync(invoice.EntidadId, "CTA_VENTAS_GENERAL") ?? "500.0100";
+                    var ctaVentas = await _paramService.ObtenerValorVigenteAsync(invoice.EntidadId, "CTA_VENTAS_GENERAL") ?? "900";
                     var ctaImp = await _paramService.ObtenerValorVigenteAsync(invoice.EntidadId, "CTA_IMP_VENTAS") ?? "440.0001";
 
                     var salesAcc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaVentas && c.EntidadId == invoice.EntidadId);
@@ -280,22 +278,6 @@ public class SalesService : ISalesService
                     {
                         var taxAcc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaImp && c.EntidadId == invoice.EntidadId);
                         if (taxAcc != null) entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = taxAcc.Id, Haber = invoice.ImpuestoVentasTotal, Glosa = "Impuesto sobre Ventas" });
-                    }
-
-                    // C. COSTO DE VENTA (RF-35): DEBE Costo / HABER Inventario
-                    if (totalCostoReal > 0)
-                    {
-                        var ctaCosto = await _paramService.ObtenerValorVigenteAsync(invoice.EntidadId, "CTA_COSTO_VENTAS") ?? "810";
-                        var ctaInv = await _paramService.ObtenerValorVigenteAsync(invoice.EntidadId, "CTA_INV_GENERICA") ?? "183.0010";
-
-                        var costAcc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaCosto && c.EntidadId == invoice.EntidadId);
-                        var invAcc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaInv && c.EntidadId == invoice.EntidadId);
-
-                        if (costAcc != null && invAcc != null)
-                        {
-                            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = costAcc.Id, Debe = totalCostoReal, Glosa = "Costo de Mercancía Vendida" });
-                            entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = invAcc.Id, Haber = totalCostoReal, Glosa = "Baja de Inventario por Venta" });
-                        }
                     }
 
                     if (entry.AsientoDetalles.Sum(d => d.Debe) == entry.AsientoDetalles.Sum(d => d.Haber))

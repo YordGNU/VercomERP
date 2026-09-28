@@ -8,11 +8,13 @@ public sealed class PosCajaService
 {
     private readonly AppDbContext _db;
     private readonly INotificationService _notifications;
+    private readonly ArqueoCajaContableService _arqueo;
 
-    public PosCajaService(AppDbContext db, INotificationService notifications)
+    public PosCajaService(AppDbContext db, INotificationService notifications, ArqueoCajaContableService arqueo)
     {
         _db = db;
         _notifications = notifications;
+        _arqueo = arqueo;
     }
 
     public async Task<(SesionCajaPosDto? Sesion, string? Error, bool Conflict)> AbrirAsync(AbrirSesionCajaPosRequest request, CancellationToken cancellationToken)
@@ -91,10 +93,50 @@ public sealed class PosCajaService
         session.FechaCierre = DateTimeOffset.UtcNow;
         session.MontoCierreDeclarado = request.MontoCierreDeclarado;
         session.MontoCierreSistema = session.MontoApertura + session.TotalEfectivo;
-        session.DiferenciaArqueo = request.MontoCierreDeclarado - session.MontoCierreSistema;
-        session.Estado = "CERRADA";
-        await _db.SaveChangesAsync(cancellationToken);
+        var diferencia = request.MontoCierreDeclarado - (session.MontoCierreSistema ?? 0m);
+
+        if (diferencia != 0)
+        {
+            var asientoId = await ContabilizarYGuardarCierreAsync(session, diferencia, cancellationToken);
+            if (asientoId == Guid.Empty)
+                return (null, "No se pudo contabilizar el arqueo: revise la configuración de cuentas contables.", false);
+        }
+        else
+        {
+            session.Estado = "CERRADA";
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+
         return (Map(session), null, false);
+    }
+
+    // Cierra la sesión y contabiliza la diferencia de arqueo de forma atómica: la transacción
+    // externa hace que el asiento (CreateEntryAsync reusa la transacción activa), el enlace
+    // AsientoCierreId y el cierre se persistan juntos; si el asiento falla, la sesión queda
+    // ABIERTA y el cajero puede reintentar.
+    private async Task<Guid> ContabilizarYGuardarCierreAsync(SesionCajaPo session, decimal diferencia, CancellationToken cancellationToken)
+    {
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            var res = await _arqueo.ContabilizarAsync(session.Id, session.CajaId, session.CajeroId, diferencia, session.FechaCierre, cancellationToken);
+            if (!res.Succeeded || res.Entry is null)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return Guid.Empty;
+            }
+
+            session.AsientoCierreId = res.Entry.Id;
+            session.Estado = "CERRADA";
+            await _db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return res.Entry.Id;
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return Guid.Empty;
+        }
     }
 
     private static SesionCajaPosDto Map(SesionCajaPo x) => new()

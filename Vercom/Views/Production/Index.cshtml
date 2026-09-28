@@ -30,7 +30,7 @@
         @foreach (var item in Model.OrderByDescending(o => o.CreadoEn))
         {
             var statusColor = item.Estado switch {
-                "FINALIZADA" => "success",
+                "TERMINADA" => "success",
                 "EN_PROCESO" => "info",
                 "CANCELADA" => "danger",
                 _ => "warning"

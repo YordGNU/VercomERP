@@ -284,7 +284,7 @@
                                         <td class="text-center small">@s.FechaApertura.ToString("dd/MM HH:mm")</td>
                                         <td class="text-end">@Money(s.MontoApertura)</td>
                                         <td class="text-end fw-bold text-success">@Money(s.TotalVentas)</td>
-                                        <td class="text-center">@s.CantidadFacturas</td>
+                                        <td>@s.CantidadFacturas</td>
                                     </tr>
                                 }
                             </tbody>
@@ -364,7 +364,7 @@
                                 {
                                     <tr>
                                         <td class="fw-bold">@alert.Producto?.Nombre</td>
-                                        <td class="text-center"><span class="badge badge-soft-danger fs-13">@alert.Cantidad.ToString("N0")</span></td>
+                                        <td><span class="badge badge-soft-danger fs-13">@alert.Cantidad.ToString("N0")</span></td>
                                         <td class="text-center text-muted">@alert.StockMinimo.ToString("N0")</td>
                                         <td>
                                             <a asp-controller="Purchase" asp-action="Create" class="btn btn-sm btn-outline py-0 px-2 text-primary">Comprar</a>
@@ -416,7 +416,7 @@
                                         <td class="fw-bold">@l.Producto?.Nombre</td>
                                         <td class="small text-muted">@l.Almacen?.Nombre</td>
                                         <td class="font-monospace small">@l.Lote</td>
-                                        <td class="text-center"><span class="badge badge-soft-danger">@l.FechaVencimiento?.ToString("dd/MM/yyyy")</span></td>
+                                        <td><span class="badge badge-soft-danger">@l.FechaVencimiento?.ToString("dd/MM/yyyy")</span></td>
                                         <td class="text-end">@l.Cantidad.ToString("N2")</td>
                                     </tr>
                                 }
@@ -449,7 +449,7 @@
                                     <tr>
                                         <td class="fw-bold">@c.NumeroContrato</td>
                                         <td class="small">@(c.Cliente?.NombreRazonSocial ?? c.Proveedor?.RazonSocial)</td>
-                                        <td class="text-center">
+                                        <td>
                                             <span class="badge bg-warning-subtle text-warning">@c.FechaFin?.ToString("dd/MM/yyyy")</span>
                                         </td>
                                         <td class="pe-4">

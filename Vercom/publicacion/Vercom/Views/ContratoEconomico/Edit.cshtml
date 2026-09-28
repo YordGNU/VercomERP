@@ -11,7 +11,8 @@
         <ol class="breadcrumb m-0 py-0">
             <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
             <li class="breadcrumb-item"><a href="javascript: void(0);">Comercial</a></li>
-            <li class="breadcrumb-item active">Contratos</li>
+            <li class="breadcrumb-item"><a asp-action="Index">Contratos</a></li>
+            <li class="breadcrumb-item active">Editar</li>
         </ol>
     </div>
 </div>
@@ -22,15 +23,15 @@
                  <div class="card-header bg-light-subtle py-3 d-flex justify-content-between align-items-center">
                     <h5 class="m-0 fw-bold text-primary"><i class="ti ti-file-certificate me-2"></i>Editar Contrato Económico @Model.Contract.NumeroContrato
                     </h5>
-                    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    <a asp-action="Index" class="btn btn-secondary btn-sm">
                         <i class="ti ti-arrow-left me-1"></i> VOLVER
                     </a>
                 </div>
                 <div class="card-body p-4">
-                    <form asp-action="Create" class="row g-4" id="editContractForm">
+                    <form asp-action="Edit" asp-route-id="@Model.Contract.Id" class="row g-4" id="editContractForm">
                         @Html.AntiForgeryToken()
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
-                        <input asp-for="Contract.Estado" type="hidden" value="VIGENTE" />
+                        <input asp-for="Contract.Id" type="hidden" />                 
                         <div class="col-md-4">
                             <label class="form-label fw-bold">Tipo de Contraparte</label>
                             <select asp-for="Contract.TerceroTipo" name="Contract.TerceroTipo" class="form-select w-100 fw-bold" id="terceroTipo" required>
@@ -89,17 +90,31 @@
                             <label class="form-label">Monto Total Pactado ($)</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0">$</span>
-                                <input asp-for="Contract.MontoTotal" name="Contract.MontoTotal" class="form-control w-grow" placeholder="0.00" type="number" step="0.01" />
+                                <input asp-for="Contract.MontoTotal" name="Contract.MontoTotal" class="form-control" placeholder="0.00" type="number" step="0.01" />
                             </div>
                             <small class="text-muted italic">Dejar vacío para monto indeterminado.</small>
                             <span asp-validation-for="Contract.MontoTotal" class="text-danger small"></span>
                         </div>
                         <div class="col-md-8">
                             <label class="form-label fw-bold">Adjuntar Contrato Digitalizado (Word/PDF)</label>
+                            @if (!string.IsNullOrEmpty(Model.Contract.DocumentoUrl))
+                            {
+                                <div class="d-flex align-items-center justify-content-between bg-light border rounded-3 p-2 mb-2">
+                                    <div class="d-flex align-items-center overflow-hidden me-3">
+                                        <i class="ti ti-file-certificate fs-20 text-primary me-2"></i>
+                                        <a href="@Model.Contract.DocumentoUrl" target="_blank" class="small text-primary text-truncate">Documento actual</a>
+                                    </div>
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input text-danger" asp-for="QuitarDocumento" id="quitarDocumento" />
+                                        <label class="form-check-label small text-danger" for="quitarDocumento">Quitar documento</label>
+                                    </div>
+                                </div>
+                            }
                             <div class="input-group">
                                 <span class="input-group-text"><i class="ti ti-link"></i></span>
                                 <input type="file" asp-for="DocumentoContrato" class="form-control" accept=".doc,.docx,.pdf" />
                             </div>
+                            <small class="text-muted italic">Máx. 10 MB. @(Model.Contract.DocumentoUrl != null ? "Si adjunta uno nuevo, reemplaza al actual." : "")</small>
                         </div>    
                         <div class="col-12 d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                             <a asp-action="Index" class="btn btn-sm btn-outline px-4">CANCELAR</a>
@@ -124,6 +139,9 @@
             };
             $('#terceroTipo').change(toggleDivs);
             toggleDivs();
+            $('#quitarDocumento').on('change', function() {
+                if (this.checked) $('#DocumentoContrato').val('');
+            });
             window.SubmitAjaxForm('editContractForm');
         });
     </script>

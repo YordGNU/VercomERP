@@ -59,7 +59,7 @@ public class ConsecutivoService : IConsecutivoService
                     SucursalId = sucursalId,
                     TipoDocumento = tipoDocumento,
                     Serie = serie,
-                    UltimoNumero = 0,
+                    UltimoNumero = 1,
                     LongitudPadding = 8,
                     ActualizadoEn = DateTimeOffset.Now
                 };

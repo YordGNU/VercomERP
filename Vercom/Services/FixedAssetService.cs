@@ -70,7 +70,7 @@ public class FixedAssetService : IFixedAssetService
             .ToListAsync();
 
         var cuentasGasto = await _context.CuentaContables
-            .Where(c => c.EntidadId == entidadId && c.Activo && c.AceptaMovimiento && c.Clase == "GASTO" && c.Codigo.StartsWith("8"))
+            .Where(c => c.EntidadId == entidadId && c.Activo && c.AceptaMovimiento && c.Clase == "GASTOS" && c.Codigo.StartsWith("8"))
             .OrderBy(c => c.Codigo)
             .Select(c => new { c.Id, Display = $"{c.Codigo} - {c.Nombre}" })
             .ToListAsync();
@@ -157,10 +157,12 @@ public class FixedAssetService : IFixedAssetService
             Concepto = $"DEPRECIACIÓN MENSUAL {period.Mes}/{period.Anio}",
             ModuloOrigen = "ACTIVOS_FIJOS",
             Estado = "CONTABILIZADO",
+            CreadoPor = _entidadProvider.CurrentUsuarioId,
             CreadoEn = DateTimeOffset.Now
         };
 
         decimal totalDepreciacion = 0;
+        var rows = new List<(ActivoFijo Asset, decimal Cuota)>();
 
         foreach (var asset in assets)
         {
@@ -187,24 +189,31 @@ public class FixedAssetService : IFixedAssetService
                 Glosa = $"Acum. Dep. {asset.CodigoInventario}"
             });
 
-            asset.DepreciacionAcumulada += cuotaMensual;
+            rows.Add((asset, cuotaMensual));
             totalDepreciacion += cuotaMensual;
-
-            _context.ActivoFijoDepreciacions.Add(new ActivoFijoDepreciacion
-            {
-                Id = Guid.NewGuid(),
-                ActivoFijoId = asset.Id,
-                PeriodoId = periodId,
-                Monto = cuotaMensual,
-                AsientoId = entry.Id,
-                CalculadoEn = DateTimeOffset.Now
-            });
         }
 
         if (totalDepreciacion > 0)
         {
+            // El asiento se persiste primero (con sus detalles) para que las filas
+            // de activo_fijo_depreciacion, dependientes vía FK asiento_id, se inserten
+            // en un SaveChanges posterior (EF no conoce esa dependencia y las insertaría antes).
             var result = await _accountingService.CreateEntryAsync(entry);
             if (!result.Succeeded) return (false, result.Message);
+
+            foreach (var (asset, cuota) in rows)
+            {
+                asset.DepreciacionAcumulada += cuota;
+                _context.ActivoFijoDepreciacions.Add(new ActivoFijoDepreciacion
+                {
+                    Id = Guid.NewGuid(),
+                    ActivoFijoId = asset.Id,
+                    PeriodoId = periodId,
+                    Monto = cuota,
+                    AsientoId = entry.Id,
+                    CalculadoEn = DateTimeOffset.Now
+                });
+            }
 
             await _context.SaveChangesAsync();
             return (true, $"Depreciación generada por un total de {totalDepreciacion:C}.");
@@ -233,6 +242,10 @@ public class FixedAssetService : IFixedAssetService
             {
                 Id = Guid.NewGuid(),
                 EntidadId = asset.EntidadId,
+                PeriodoId = (await _context.PeriodoContables
+                    .Where(p => p.EntidadId == asset.EntidadId && p.Estado == "ABIERTO")
+                    .OrderByDescending(p => p.Anio).ThenByDescending(p => p.Mes)
+                    .Select(p => (Guid?)p.Id).FirstOrDefaultAsync()) ?? Guid.Empty,
                 Fecha = DateOnly.FromDateTime(DateTime.Now),
                 Concepto = $"BAJA DE ACTIVO {asset.CodigoInventario}: {reason}",
                 ModuloOrigen = "ACTIVOS_FIJOS",
@@ -255,8 +268,8 @@ public class FixedAssetService : IFixedAssetService
             var valorNeto = asset.ValorAdquisicion - asset.DepreciacionAcumulada;
             if (valorNeto > 0)
             {
-                // Buscar cuenta de gastos por pérdida de activos (ej: 7xx)
-                var lossAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "701" && c.EntidadId == asset.EntidadId);
+                // Buscar cuenta de gasto por pérdida de venta/baja de activos fijos tangibles (catálogo real MFP).
+                var lossAccount = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == "845.0050" && c.EntidadId == asset.EntidadId);
                 if (lossAccount != null)
                 {
                     entry.AsientoDetalles.Add(new AsientoDetalle

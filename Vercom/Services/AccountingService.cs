@@ -161,7 +161,7 @@ public class AccountingService : IAccountingService
         {
             Account = existing ?? new CuentaContable { Activo = true, Moneda = "CUP", Nivel = 1 },
             CuentasPadre = new SelectList(cuentasPadre, "Id", "Display"),
-            Clases = new SelectList(new[] { "ACTIVO", "PASIVO", "PATRIMONIO", "INGRESO", "GASTO", "ORDEN" }),
+            Clases = new SelectList(new[] { "ACTIVO", "PASIVO", "PATRIMONIO", "INGRESOS", "GASTOS", "ORDEN" }),
             Naturalezas = new SelectList(new[] { "DEUDORA", "ACREEDORA" })
         };
     }

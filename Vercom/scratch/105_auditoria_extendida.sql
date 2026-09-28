@@ -15,7 +15,7 @@ BEGIN
                 ELSE 'DELETE' END,
            'comercial.cliente',
            COALESCE((SELECT CAST(id AS NVARCHAR(36)) FROM inserted), (SELECT CAST(id AS NVARCHAR(36)) FROM deleted)),
-           '::1', 'DB'
+           '::1', 'ERP'
 END;
 GO
 
@@ -33,7 +33,7 @@ BEGIN
                 ELSE 'DELETE' END,
            'comercial.proveedor',
            COALESCE((SELECT CAST(id AS NVARCHAR(36)) FROM inserted), (SELECT CAST(id AS NVARCHAR(36)) FROM deleted)),
-           '::1', 'DB'
+           '::1', 'ERP'
 END;
 GO
 
@@ -51,6 +51,6 @@ BEGIN
                 ELSE 'DELETE' END,
            'inventario.producto',
            COALESCE((SELECT CAST(id AS NVARCHAR(36)) FROM inserted), (SELECT CAST(id AS NVARCHAR(36)) FROM deleted)),
-           '::1', 'DB'
+           '::1', 'ERP'
 END;
 GO

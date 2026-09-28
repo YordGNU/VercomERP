@@ -67,6 +67,7 @@ public class EconomicContractViewModel
     public IEnumerable<SelectListItem> Proveedores { get; set; } = new List<SelectListItem>();
     public string Title { get; set; } = "Contrato Económico";
     public IFormFile? DocumentoContrato { get; set; }
+    public bool QuitarDocumento { get; set; }
 }
 
 public class PriceLimitFormViewModel

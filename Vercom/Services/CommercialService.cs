@@ -29,7 +29,7 @@ public interface ICommercialService
     Task<ContratoEconomico?> GetContractByIdAsync(Guid id);
     Task<EconomicContractViewModel> GetContractFormContextAsync(ContratoEconomico? existing = null);
     Task<(bool Succeeded, string Message)> CreateContractAsync(ContratoEconomico contract, IFormFile? document);
-    Task<(bool Succeeded, string Message)> UpdateContractAsync(ContratoEconomico contract, IFormFile? document);
+    Task<(bool Succeeded, string Message)> UpdateContractAsync(ContratoEconomico contract, IFormFile? document, bool quitarDocumento = false);
 
     // Topes de Precio MFP
     Task<IEnumerable<TopePrecioMfp>> GetPriceLimitsAsync(string? search = null);
@@ -336,12 +336,41 @@ public class CommercialService : ICommercialService
         if (!string.IsNullOrEmpty(status))
             query = query.Where(c => c.Estado == status);
 
-        return await query.OrderByDescending(c => c.FechaFirma).ToListAsync();
+        var result = await query.OrderByDescending(c => c.FechaFirma).ToListAsync();
+        await RecalcularVencimientosAsync(result); // Estado es del servidor: marcar VENCIDO al expirar
+        return result;
     }
 
     public async Task<ContratoEconomico?> GetContractByIdAsync(Guid id)
     {
-        return await _context.ContratoEconomicos.Include(c => c.Cliente).Include(c => c.Proveedor).FirstOrDefaultAsync(m => m.Id == id);
+        var row = await _context.ContratoEconomicos.Include(c => c.Cliente).Include(c => c.Proveedor).FirstOrDefaultAsync(m => m.Id == id);
+        await RecalcularVencimientosAsync(new[] { row });
+        return row;
+    }
+
+    /// <summary>
+    /// Marca como VENCIDO todo contrato VIGENTE cuya FechaFin ya pasó (una sola escritura al final).
+    /// No revierte otros estados (RESCINDIDO se conserva).
+    /// </summary>
+    private async Task RecalcularVencimientosAsync(IEnumerable<ContratoEconomico?>? rows)
+    {
+        if (rows == null) return;
+        try
+        {
+            var hoy = DateOnly.FromDateTime(DateTime.Now);
+            var vencidos = rows
+                .Where(c => c != null && c.Estado == "VIGENTE" && c.FechaFin.HasValue && c.FechaFin.Value < hoy)
+                .ToList();
+            if (vencidos.Count == 0) return;
+
+            foreach (var c in vencidos) c!.Estado = "VENCIDO";
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Se marcaron {Count} contratos como VENCIDO por expiración de fecha.", vencidos.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning("No se pudieron recalcular los contratos vencidos: {Msg}", ex.Message);
+        }
     }
 
     public async Task<EconomicContractViewModel> GetContractFormContextAsync(ContratoEconomico? existing = null)
@@ -400,7 +429,7 @@ public class CommercialService : ICommercialService
         }
     }
 
-    public async Task<(bool Succeeded, string Message)> UpdateContractAsync(ContratoEconomico contract, IFormFile? document)
+    public async Task<(bool Succeeded, string Message)> UpdateContractAsync(ContratoEconomico contract, IFormFile? document, bool quitarDocumento = false)
     {
         string? uploadedRelativePath = null; // Para limpiar si falla la transacción
         try
@@ -439,20 +468,35 @@ public class CommercialService : ICommercialService
             // ============================================================
             // 2. ACTUALIZAR EL CONTRATO
             // ============================================================
+            var prevEstado = existing.Estado;
+            var documentoAnterior = existing.DocumentoUrl; // para borrar del disco solo tras commit exitoso
             _context.Entry(existing).CurrentValues.SetValues(contract);
             existing.EntidadId = _entidadProvider.CurrentEntidadId; // Preservar multi-inquilino
 
-            // Reemplazar (o quitar) el documento en la entidad
+            // El Estado es responsabilidad del servidor: el formulario nunca lo modifica.
+            existing.Estado = RecalcularEstadoContrato(prevEstado, contract.FechaFin);
+
+            // Gestión del documento: reemplazar si se adjuntó uno nuevo; quitar si lo pide el usuario.
             if (uploadedRelativePath != null)
             {
-                // Borrar documento anterior si existía y es distinto
-                if (!string.IsNullOrEmpty(existing.DocumentoUrl) && existing.DocumentoUrl != uploadedRelativePath)
-                    await _fileStorage.DeleteFileAsync(existing.DocumentoUrl);
-
                 existing.DocumentoUrl = uploadedRelativePath;
+            }
+            else if (quitarDocumento)
+            {
+                existing.DocumentoUrl = null;
             }
 
             await _context.SaveChangesAsync();
+
+            // Tras el commit exitoso, eliminar del disco el documento anterior (solo si ya no se usa).
+            if (!string.IsNullOrEmpty(documentoAnterior) && existing.DocumentoUrl != documentoAnterior)
+            {
+                var del = await _fileStorage.DeleteFileAsync(documentoAnterior);
+                if (!del.Success)
+                    _logger.LogWarning("No se pudo eliminar el documento anterior ({Url}) de un contrato: {Msg}",
+                        documentoAnterior, del.Message);
+            }
+
             return (true, "Contrato económico actualizado.");
         }
         catch (Exception ex)
@@ -461,6 +505,14 @@ public class CommercialService : ICommercialService
                 await _fileStorage.DeleteFileAsync(uploadedRelativePath);
             return (false, ex.Message);
         }
+    }
+
+    private static string RecalcularEstadoContrato(string? prevEstado, DateOnly? fechaFin)
+    {
+        if (fechaFin.HasValue && fechaFin.Value < DateOnly.FromDateTime(DateTime.Now))
+            return "VENCIDO";
+
+        return string.IsNullOrEmpty(prevEstado) || prevEstado == "VENCIDO" ? "VIGENTE" : prevEstado;
     }
 
     public async Task<IEnumerable<TopePrecioMfp>> GetPriceLimitsAsync(string? search = null)

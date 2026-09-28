@@ -91,8 +91,8 @@
                                     <tr>
                                         <td class="ps-4 fw-semibold text-primary">@(p.Sucursal?.Nombre ?? "GLOBAL / CENTRAL")</td>
                                         <td class="text-center fw-bold">@p.PlazasAprobadas</td>
-                                        <td class="text-center">@cubiertas</td>
-                                        <td class="text-center">
+                                        <td>@cubiertas</td>
+                                        <td>
                                             @if (diff > 0) { <span class="badge bg-warning-subtle text-warning">VACANTE (@diff)</span> }
                                             else if (diff < 0) { <span class="badge bg-danger-subtle text-danger">SOBREGIRADO (@Math.Abs(diff))</span> }
                                             else { <span class="badge bg-success-subtle text-success">COMPLETO</span> }

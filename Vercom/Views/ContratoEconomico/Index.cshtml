@@ -34,17 +34,17 @@
                         <label class="form-label small fw-bold">Tipo</label>
                         <select name="type" class="form-select">
                             <option value="">-- Todos --</option>
-                            <!option value="CLIENTE" @(ViewBag.CurrentType == "CLIENTE" ? "selected" : "")>VENTAS</!option>
-                            <!option value="PROVEEDOR" @(ViewBag.CurrentType == "PROVEEDOR" ? "selected" : "")>COMPRAS</!option>
+                            <option value="CLIENTE" selected="@(ViewBag.CurrentType == "CLIENTE")">VENTAS</option>
+                            <option value="PROVEEDOR" selected="@(ViewBag.CurrentType == "PROVEEDOR")">COMPRAS</option>
                         </select>
                     </div>
                     <div class="col-lg-2">
                         <label class="form-label small fw-bold">Estado</label>
                         <select name="status" class="form-select">
                             <option value="">-- Todos --</option>
-                            <!option value="VIGENTE" @(ViewBag.CurrentStatus == "VIGENTE" ? "selected" : "")>VIGENTES</!option>
-                            <!option value="VENCIDO" @(ViewBag.CurrentStatus == "VENCIDO" ? "selected" : "")>VENCIDOS</!option>
-                            <!option value="RESCINDIDO" @(ViewBag.CurrentStatus == "RESCINDIDO" ? "selected" : "")>RESCINDIDOS</!option>
+                            <option value="VIGENTE" selected="@(ViewBag.CurrentStatus == "VIGENTE")">VIGENTES</option>
+                            <option value="VENCIDO" selected="@(ViewBag.CurrentStatus == "VENCIDO")">VENCIDOS</option>
+                            <option value="RESCINDIDO" selected="@(ViewBag.CurrentStatus == "RESCINDIDO")">RESCINDIDOS</option>
                         </select>
                     </div>
                     <div class="col-lg-5 d-flex gap-2">

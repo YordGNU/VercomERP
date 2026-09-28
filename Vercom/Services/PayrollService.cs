@@ -373,9 +373,26 @@ public class PayrollService : IPayrollService
             var totalDevengado = period.NominaDetalles.Sum(d => d.SalarioDevengado);
             var totalNeto = period.NominaDetalles.Sum(d => d.SalarioNeto);
 
-            // Sumar retenciones por tipo
-            var totalRetSS = Math.Abs(period.NominaDetalles.SelectMany(d => d.NominaDetalleConceptos).Where(c => c.ConceptoId == 6).Sum(c => c.Monto));
-            var totalRetIRP = Math.Abs(period.NominaDetalles.SelectMany(d => d.NominaDetalleConceptos).Where(c => c.ConceptoId == 7).Sum(c => c.Monto));
+            // Sumar retenciones por código de concepto (no por IDs fijos) para no depender de la configuración
+            var conceptosNomina = await _context.ConceptoNominas
+                .Where(c => c.EntidadId == period.EntidadId || c.EntidadId == Guid.Empty)
+                .ToListAsync();
+            var idRetSS = conceptosNomina.FirstOrDefault(c => c.Codigo == "CONT_SS_TRAB")?.Id;
+            var idRetIRP = conceptosNomina.FirstOrDefault(c => c.Codigo == "IMP_INGRESOS_PERS")?.Id;
+
+            var retConceptos = period.NominaDetalles.SelectMany(d => d.NominaDetalleConceptos).ToList();
+            var totalRetSS = idRetSS.HasValue ? Math.Abs(retConceptos.Where(c => c.ConceptoId == idRetSS.Value).Sum(c => c.Monto)) : 0m;
+            var totalRetIRP = idRetIRP.HasValue ? Math.Abs(retConceptos.Where(c => c.ConceptoId == idRetIRP.Value).Sum(c => c.Monto)) : 0m;
+
+            // Fallback: si la configuración de conceptos no permite desglosar las retenciones,
+            // usar el total de deducciones que reportó el cálculo (Devengado - Neto) contabilizándolo
+            // en la cuenta de retención de SS, garantizando siempre la partida doble.
+            var totalDeducciones = period.NominaDetalles.Sum(d => d.TotalDeducciones);
+            if (totalRetSS + totalRetIRP != totalDeducciones)
+            {
+                totalRetSS = totalDeducciones;
+                totalRetIRP = 0m;
+            }
 
             // 1. Obtener Tasas Dinámicas (RF-23)
             var tasaSSPatronal = await _paramService.ObtenerValorNumericoVigenteAsync(period.EntidadId, "TASA_SS_PATRONAL");

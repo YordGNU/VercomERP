@@ -4,12 +4,13 @@
     var isMaster = User.Identity?.Name == "master";
 }
 
-<div class="page-title-head d-flex align-items-center">
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Información Legal: @Model.RazonSocial</h4>
+        <h4 class="page-main-title m-0 fw-bold">Información Legal</h4>
+        <p class="text-muted small mb-0">Entidad: @Model.RazonSocial</p>
     </div>
-    <div class="text-end">
-        @if (isMaster)
+    <div class="text-end d-flex align-items-center gap-3">      
+     @if (isMaster)
         {
             <a asp-action="Index" class="btn btn-sm btn-outline-secondary me-2">Volver al Listado</a>
         }
@@ -18,7 +19,6 @@
         </a>
     </div>
 </div>
-
 <div class="row mt-4">
     <div class="row">
         <!-- Resumen General -->

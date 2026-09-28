@@ -48,6 +48,7 @@ builder.Services.AddScoped<IExportService, ExportService>();
 // Servicios POS (JWT / API móvil)
 builder.Services.AddScoped<PosAuthService>();
 builder.Services.AddScoped<PosCatalogoService>();
+builder.Services.AddScoped<ArqueoCajaContableService>();
 builder.Services.AddScoped<PosCajaService>();
 builder.Services.AddScoped<PosSincronizacionService>();
 builder.Services.AddScoped<PosSeguridadService>();

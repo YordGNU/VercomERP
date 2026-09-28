@@ -238,10 +238,16 @@ public class AuthService : IAuthService
         var entidadId = _entidadProvider.CurrentEntidadId;
 
         if (isMaster)
-            return await _context.Rols.OrderBy(r => r.Codigo).ToListAsync();
+            return await _context.Rols
+                .Include(r => r.Permisos)
+                .Include(r => r.UsuarioRols).ThenInclude(ur => ur.Usuario)
+                .OrderBy(r => r.Codigo)
+                .ToListAsync();
 
         // El Administrador local solo ve roles de sistema (lectura) y los de su propia entidad
         return await _context.Rols
+            .Include(r => r.Permisos)
+            .Include(r => r.UsuarioRols).ThenInclude(ur => ur.Usuario)
             .Where(r => r.EsSistema || r.EntidadId == entidadId)
             .OrderBy(r => r.Codigo)
             .ToListAsync();

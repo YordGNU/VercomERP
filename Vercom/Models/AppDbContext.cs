@@ -2136,7 +2136,7 @@ entity.Property(e => e.DocumentoOrigenId).HasColumnName("documento_origen_id");
                 .HasColumnName("id");
             entity.Property(e => e.FacturaId).HasColumnName("factura_id");
             entity.Property(e => e.FormaPago)
-                .HasMaxLength(20)
+                .HasMaxLength(24)
                 .HasColumnName("forma_pago");
             entity.Property(e => e.Monto)
                 .HasColumnType("numeric(16, 2)")
@@ -2888,7 +2888,7 @@ entity.Property(e => e.DocumentoOrigenId).HasColumnName("documento_origen_id");
             entity.Property(e => e.CuentaPorPagarId).HasColumnName("cuenta_por_pagar_id");
             entity.Property(e => e.Fecha).HasColumnName("fecha");
             entity.Property(e => e.FormaPago)
-                .HasMaxLength(20)
+                .HasMaxLength(24)
                 .HasColumnName("forma_pago");
             entity.Property(e => e.Monto)
                 .HasColumnType("numeric(18, 2)")
@@ -4244,6 +4244,7 @@ entity.Property(e => e.DocumentoOrigenId).HasColumnName("documento_origen_id");
             entity.Property(e => e.IntentoNumero)
                 .HasDefaultValue((short)1)
                 .HasColumnName("intento_numero");
+            entity.Property(e => e.MensajeError).HasColumnName("mensaje_error");
             entity.Property(e => e.PayloadJson).HasColumnName("payload_json");
             entity.Property(e => e.ProximoReintentoEn).HasColumnName("proximo_reintento_en");
             entity.Property(e => e.SuscripcionId).HasColumnName("suscripcion_id");

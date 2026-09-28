@@ -40,7 +40,7 @@
                         <tr>
                             <td class="fw-bold">@meses[item.Mes ?? 1] @item.Anio</td>
                             <td><span class="badge @statusClass">@item.Estado</span></td>
-                            <td class="text-center">@item.PlanProduccionDetalles.Count</td>
+                            <td>@item.PlanProduccionDetalles.Count</td>
                             <td class="small">@(item.Presupuesto?.Nombre ?? "N/A")</td>
                             <td class="text-muted">@item.CreadoEn.ToString("dd/MM/yyyy")</td>
                             <td>

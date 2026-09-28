@@ -48,7 +48,7 @@ public class ReportingService : IReportingService
             Id = Guid.NewGuid(),
             EntidadId = entidadId,
             PeriodoId = periodId,
-            Tipo = "MENSUAL",
+            Tipo = "MFP",
             Estado = "GENERADO",
             GeneradoEn = DateTimeOffset.Now
         };

@@ -41,14 +41,16 @@ public class PosService : IPosService
     private readonly IConsecutivoService _consecutivoService;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly INotificationService _notifications;
+    private readonly ArqueoCajaContableService _arqueo;
 
-    public PosService(AppDbContext context, Security.IEntidadProvider entidadProvider, IConsecutivoService consecutivoService, IServiceScopeFactory serviceScopeFactory, INotificationService notifications)
+    public PosService(AppDbContext context, Security.IEntidadProvider entidadProvider, IConsecutivoService consecutivoService, IServiceScopeFactory serviceScopeFactory, INotificationService notifications, ArqueoCajaContableService arqueo)
     {
         _context = context;
         _entidadProvider = entidadProvider;
         _consecutivoService = consecutivoService;
         _serviceScopeFactory = serviceScopeFactory;
         _notifications = notifications;
+        _arqueo = arqueo;
     }
 
     public async Task<IEnumerable<DispositivoPo>> GetDevicesAsync()
@@ -161,12 +163,37 @@ public class PosService : IPosService
         session.MontoCierreSistema = session.MontoApertura + session.TotalEfectivo;
         session.FechaCierre = DateTimeOffset.UtcNow;
         session.MontoCierreDeclarado = declaredAmount;
-        session.DiferenciaArqueo = declaredAmount - session.MontoCierreSistema;
         session.ObservacionesCierre = notes;
         session.SupervisorConciliacionId = supervisorId;
-        session.Estado = "CERRADA";
 
-        await _context.SaveChangesAsync();
+        var diferencia = (declaredAmount - (session.MontoCierreSistema ?? 0m));
+        if (diferencia != 0)
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var res = await _arqueo.ContabilizarAsync(session.Id, session.CajaId, session.CajeroId, diferencia, session.FechaCierre, default);
+                if (!res.Succeeded || res.Entry is null)
+                {
+                    await transaction.RollbackAsync();
+                    return (false, "No se pudo contabilizar el arqueo: revise la configuración de cuentas contables.");
+                }
+                session.AsientoCierreId = res.Entry.Id;
+                session.Estado = "CERRADA";
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                return (false, "No se pudo contabilizar el arqueo: revise la configuración de cuentas contables.");
+            }
+        }
+        else
+        {
+            session.Estado = "CERRADA";
+            await _context.SaveChangesAsync();
+        }
 
         await _notifications.NotifyEntityAsync(session.DispositivoPos.EntidadId, "Sesión de caja cerrada",
             $"{session.DispositivoPos.Nombre} cerró la sesión: {session.TotalVentas:N2} en ventas, {session.CantidadFacturas} facturas, diferencia de arqueo {session.DiferenciaArqueo:N2}.", "info");

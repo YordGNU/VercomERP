@@ -463,6 +463,9 @@ public class HRService : IHRService
             certificate.CreadoEn = DateTimeOffset.Now;
             _context.CertificadoMedicos.Add(certificate);
 
+            var incapacidad = await _context.TipoAusencia.FirstOrDefaultAsync(t => t.Codigo == "05");
+            var tipoAusenciaId = incapacidad?.Id;
+
             for (var date = certificate.FechaInicio; date <= certificate.FechaFin; date = date.AddDays(1))
             {
                 var attendance = new RegistroAsistencium
@@ -470,7 +473,7 @@ public class HRService : IHRService
                     Id = Guid.NewGuid(),
                     EmpleadoId = certificate.EmpleadoId,
                     Fecha = date,
-                    TipoAusenciaId = 1,
+                    TipoAusenciaId = tipoAusenciaId,
                     Observaciones = $"AUT: Certificado #{certificate.NumeroCertificado}"
                 };
                 _context.RegistroAsistencia.Add(attendance);

@@ -348,7 +348,7 @@ CREATE TABLE contabilidad.pago_aplicado (
     cuenta_por_pagar_id UNIQUEIDENTIFIER REFERENCES contabilidad.cuenta_por_pagar(id),
     fecha               DATE NOT NULL,
     monto               NUMERIC(18,2) NOT NULL,
-    forma_pago          NVARCHAR(20) NOT NULL CHECK (forma_pago IN ('EFECTIVO','TRANSFERMOVIL','ENZONA','TRANSFERENCIA_BANCARIA','CHEQUE')),
+    forma_pago          NVARCHAR(24) NOT NULL CHECK (forma_pago IN ('EFECTIVO','TRANSFERMOVIL','ENZONA','TRANSFERENCIA_BANCARIA','CHEQUE')),
     asiento_id          UNIQUEIDENTIFIER REFERENCES contabilidad.asiento_contable(id),
     referencia_externa  NVARCHAR(100),
     CONSTRAINT chk_pago_destino CHECK (
@@ -1114,7 +1114,7 @@ CREATE TABLE comercial.factura_venta_detalle (
 CREATE TABLE comercial.forma_pago_venta (
     id                  UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     factura_id          UNIQUEIDENTIFIER NOT NULL REFERENCES comercial.factura_venta(id) ON DELETE CASCADE,
-    forma_pago          NVARCHAR(20) NOT NULL CHECK (forma_pago IN ('EFECTIVO','TRANSFERMOVIL','ENZONA','TRANSFERENCIA_BANCARIA','CHEQUE','CREDITO')),
+    forma_pago          NVARCHAR(24) NOT NULL CHECK (forma_pago IN ('EFECTIVO','TRANSFERMOVIL','ENZONA','TRANSFERENCIA_BANCARIA','CHEQUE','CREDITO')),
     monto               NUMERIC(16,2) NOT NULL,
     referencia_externa  NVARCHAR(100),
     vuelto_entregado    NUMERIC(16,2) DEFAULT 0
@@ -1242,6 +1242,44 @@ GROUP BY ac.entidad_id, ad.cuenta_id, c.codigo, c.nombre, c.clase, c.naturaleza,
 GO
 
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Base para balance general y estado de resultados. Los reportes NCC (RF-13) se construyen agregando esta vista por clase de cuenta.', @level0type=N'SCHEMA', @level0name=N'contabilidad', @level1type=N'VIEW', @level1name=N'v_saldo_cuenta';
+GO
+
+-- ============================================================================
+-- VISTA v_arqueo_caja (conciliación de arqueo de sesión de caja POS, item 21)
+-- ============================================================================
+CREATE VIEW contabilidad.v_arqueo_caja AS
+SELECT
+    s.id AS sesion_id,
+    s.caja_id,
+    c.nombre AS caja_nombre,
+    s.dispositivo_pos_id,
+    dp.nombre AS dispositivo_nombre,
+    s.cajero_id,
+    u.nombre_completo AS cajero_nombre,
+    s.fecha_apertura,
+    s.fecha_cierre,
+    s.monto_apertura,
+    s.total_efectivo,
+    s.monto_cierre_sistema,
+    s.monto_cierre_declarado,
+    s.diferencia_arqueo,
+    s.observaciones_cierre,
+    s.supervisor_conciliacion_id,
+    s.estado,
+    s.asiento_cierre_id,
+    a.numero_comprobante AS asiento_numero,
+    CASE
+        WHEN s.diferencia_arqueo IS NOT NULL AND s.diferencia_arqueo <> 0 AND s.asiento_cierre_id IS NULL THEN 'PENDIENTE'
+        WHEN s.asiento_cierre_id IS NOT NULL THEN 'CONTABILIZADO'
+        ELSE 'SIN_DIFERENCIA'
+    END AS estado_conciliacion
+FROM integracion.sesion_caja_pos s
+LEFT JOIN contabilidad.caja c ON c.id = s.caja_id
+LEFT JOIN integracion.dispositivo_pos dp ON dp.id = s.dispositivo_pos_id
+LEFT JOIN nucleo.usuario u ON u.id = s.cajero_id
+LEFT JOIN contabilidad.asiento_contable a ON a.id = s.asiento_cierre_id;
+GO
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Conciliación de arqueo de caja POS: diferencia declarada vs sistema y su estado contable (item 21).', @level0type=N'SCHEMA', @level0name=N'contabilidad', @level1type=N'VIEW', @level1name=N'v_arqueo_caja';
 GO
 
 -- ============================================================================
@@ -1423,6 +1461,7 @@ CREATE TABLE integracion.webhook_entrega (
     id                  UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     suscripcion_id      UNIQUEIDENTIFIER NOT NULL REFERENCES integracion.webhook_suscripcion(id),
     payload_json        NVARCHAR(MAX) NOT NULL CHECK (ISJSON(payload_json) = 1),
+    mensaje_error       NVARCHAR(MAX),
     intento_numero      SMALLINT NOT NULL DEFAULT 1,
     codigo_respuesta_http SMALLINT,
     exitoso             BIT NOT NULL DEFAULT 0,

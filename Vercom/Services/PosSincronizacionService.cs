@@ -11,11 +11,17 @@ public sealed class PosSincronizacionService
 {
     private readonly AppDbContext _db;
     private readonly INotificationService _notifications;
+    private readonly IInventoryService _inventory;
+    private readonly IAccountingService _accounting;
+    private readonly IParametroSistemaService _parametros;
 
-    public PosSincronizacionService(AppDbContext db, INotificationService notifications)
+    public PosSincronizacionService(AppDbContext db, INotificationService notifications, IInventoryService inventory, IAccountingService accounting, IParametroSistemaService parametros)
     {
         _db = db;
         _notifications = notifications;
+        _inventory = inventory;
+        _accounting = accounting;
+        _parametros = parametros;
     }
 
     public async Task<(VentaPosPendienteDto? Result, string? Error, bool Conflict, bool Accepted)> RecibirAsync(RecibirVentaPosRequest request, CancellationToken cancellationToken)
@@ -147,7 +153,7 @@ public sealed class PosSincronizacionService
         var movementId = Guid.NewGuid();
         var facturaFecha = data.Fecha == default ? pending.FechaVentaLocal : data.Fecha;
 
-        _db.FacturaVenta.Add(new FacturaVentum
+        var invoice = new FacturaVentum
         {
             Id = invoiceId,
             EntidadId = data.EntidadId,
@@ -167,10 +173,12 @@ public sealed class PosSincronizacionService
             Total = total,
             Moneda = data.Moneda,
             Estado = "EMITIDA",
+            CreadoPor = session.CajeroId,
             CreadoEn = now
-        });
+        };
+        _db.FacturaVenta.Add(invoice);
 
-        _db.MovimientoInventarios.Add(new MovimientoInventario
+        var movement = new MovimientoInventario
         {
             Id = movementId,
             EntidadId = data.EntidadId,
@@ -182,8 +190,10 @@ public sealed class PosSincronizacionService
             ReferenciaExternaId = invoiceId,
             Canal = "POS",
             DispositivoPosId = deviceId,
+            CreadoPor = session.CajeroId,
             CreadoEn = now
-        });
+        };
+        _db.MovimientoInventarios.Add(movement);
 
         foreach (var line in data.Lineas)
         {
@@ -202,7 +212,7 @@ public sealed class PosSincronizacionService
                 SubtotalLinea = Math.Round(gross - lineDiscount, 2),
                 MovimientoInventarioId = movementId
             });
-            _db.MovimientoInventarioDetalles.Add(new MovimientoInventarioDetalle
+            movement.MovimientoInventarioDetalles.Add(new MovimientoInventarioDetalle
             {
                 Id = Guid.NewGuid(),
                 MovimientoId = movementId,
@@ -243,6 +253,11 @@ public sealed class PosSincronizacionService
         session.TotalOtrosMedios += data.Pagos.Where(x => x.FormaPago is not "EFECTIVO" and not "TRANSFERMOVIL" and not "ENZONA").Sum(x => x.Monto);
         session.CantidadFacturas++;
 
+        // Contabilidad de la venta POS (P0-4): la factura y el movimiento se crean aquí
+        // (fuera de SalesService/InventoryService), así que registramos los asientos de
+        // venta (caja/ingresos) y de costo (inventario/costo) dentro de la misma transacción.
+        await CrearAsientoVentaYCosteAsync(data, invoice, movement, subtotal, discount, tax, total, facturaFecha, session.CajeroId, cancellationToken);
+
         pending.Estado = "PROCESADO";
         pending.FacturaId = invoiceId;
         pending.ProcesadoEn = now;
@@ -255,6 +270,75 @@ public sealed class PosSincronizacionService
             $"{device.Nombre}: venta {data.Serie}{data.NumeroFactura} por {total:N2} {data.Moneda}.", "success");
 
         return (Map(pending), null, false);
+    }
+
+    // Asiento de VENTA (caja / ingresos: replica el patrón contable de SalesService) y de
+    // COSTO (inventario / costo de venta: delegado a InventoryService, fuente única contable).
+    private async Task CrearAsientoVentaYCosteAsync(VentaPosPayload data, FacturaVentum invoice, MovimientoInventario movement,
+        decimal subtotal, decimal discount, decimal tax, decimal total, DateTimeOffset facturaFecha, Guid cajeroId, CancellationToken ct)
+    {
+        var tipoCompIng = await _db.TipoComprobantes.FirstOrDefaultAsync(t => t.Codigo == "ING", ct);
+        if (tipoCompIng != null)
+        {
+            var period = await _accounting.GetOrCreateActivePeriodAsync(data.EntidadId, facturaFecha.DateTime);
+            if (period != null && period.Estado == "ABIERTO")
+            {
+                var entry = new AsientoContable
+                {
+                    Id = Guid.NewGuid(),
+                    EntidadId = data.EntidadId,
+                    PeriodoId = period.Id,
+                    Fecha = DateOnly.FromDateTime(facturaFecha.DateTime),
+                    Concepto = $"VENTA POS {data.Serie}-{data.NumeroFactura}",
+                    ModuloOrigen = "VENTAS",
+                    DocumentoOrigenTipo = "FACTURA_VENTA",
+                    DocumentoOrigenId = invoice.Id,
+                    TipoComprobanteId = tipoCompIng.Id,
+                    CreadoPor = cajeroId,
+                    CreadoEn = DateTimeOffset.UtcNow,
+                    Estado = "CONTABILIZADO"
+                };
+
+                var ctaCaja = (await _parametros.ObtenerValorVigenteAsync(data.EntidadId, "CTA_CAJA_MN")) ?? "101";
+                var ctaVentas = (await _parametros.ObtenerValorVigenteAsync(data.EntidadId, "CTA_VENTAS_GENERAL")) ?? "900";
+                var ctaImp = (await _parametros.ObtenerValorVigenteAsync(data.EntidadId, "CTA_IMP_VENTAS")) ?? "440.0001";
+
+                var totalPagado = data.Pagos.Sum(x => x.Monto - (x.VueltoEntregado ?? 0m));
+                var cajaAcc = totalPagado > 0
+                    ? await _db.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaCaja && c.EntidadId == data.EntidadId, ct)
+                    : null;
+
+                if (cajaAcc != null) entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = cajaAcc.Id, Debe = Math.Round(totalPagado, 2), Glosa = "Cobro Efectivo" });
+                if (invoice.Total - totalPagado > 0)
+                {
+                    var ctaCxC = (await _parametros.ObtenerValorVigenteAsync(data.EntidadId, "CTA_CXC_CLIENTES")) ?? "135";
+                    var cxcAcc = await _db.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaCxC && c.EntidadId == data.EntidadId, ct);
+                    if (cxcAcc != null) entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = cxcAcc.Id, Debe = Math.Round(invoice.Total - totalPagado, 2), Glosa = "Venta a Crédito" });
+                }
+
+                var ventasAcc = await _db.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaVentas && c.EntidadId == data.EntidadId, ct);
+                if (ventasAcc != null) entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = ventasAcc.Id, Haber = Math.Round(subtotal - discount, 2), Glosa = "Ingresos por Ventas" });
+
+                if (tax > 0)
+                {
+                    var impAcc = await _db.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaImp && c.EntidadId == data.EntidadId, ct);
+                    if (impAcc != null) entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = impAcc.Id, Haber = Math.Round(tax, 2), Glosa = "Impuesto sobre Ventas" });
+                }
+
+                if (entry.AsientoDetalles.Sum(d => d.Debe) == entry.AsientoDetalles.Sum(d => d.Haber))
+                {
+                    var res = await _accounting.CreateEntryAsync(entry);
+                    if (res.Succeeded) invoice.AsientoId = entry.Id;
+                }
+            }
+            else if (period == null)
+            {
+                // Sin periodo contable abierto no hay asiento de venta (misma salvaguarda que SalesService).
+            }
+        }
+
+        // Asiento de COSTO (inventario ↔ costo): reutiliza la lógica canónica de InventoryService.
+        await _inventory.GenerateAccountingEntryForExistingMovementAsync(movement, ct);
     }
 
     private async Task<PosVentaPendiente?> FindAsync(Guid deviceId, string key, CancellationToken token) =>

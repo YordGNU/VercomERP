@@ -23,7 +23,7 @@ public class ConceptoNominaController : Controller
     }
 
     [Authorize(Policy = "RRHH.NOMINA.CREAR")]
-    public IActionResult Create() => View(new ConceptoNomina { Activo = true, Tipo = "DEVENGADO" });
+    public IActionResult Create() => View(new ConceptoNomina { Activo = true, Tipo = "DEVENGO" });
 
     [HttpPost]
     [ValidateAntiForgeryToken]

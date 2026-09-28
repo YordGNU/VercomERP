@@ -1,38 +1,110 @@
 @model Vercom.ViewModels.RolPermissionsViewModel
 @{
-    ViewBag.Title = "Seguridad - Permisos de Rol";
+    ViewBag.Title = "Permisos del Rol";
 }
 
-<div class="page-title-head d-flex align-items-center">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">@Model.Title: <span class="text-primary">@Model.Rol.Nombre</span></h4>
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
+    <div class="flex-grow-1 me-3">
+        <h4 class="page-main-title m-0 fw-bold">Matriz de Acceso</h4>
+        <p class="text-muted small mb-0">
+            <span class="fw-semibold text-primary">@Model.Rol.Nombre</span> · <span class="font-monospace">@Model.Rol.Codigo</span>
+        </p>
+    </div>
+    <div class="text-end">
+        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">Seguridad</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">Roles</a></li>
+            <li class="breadcrumb-item active">Permisos</li>
+        </ol>
+        <a asp-action="Details" asp-route-id="@Model.Rol.Id" class="btn btn-sm btn-outline-secondary">
+            <i class="ti ti-arrow-left me-1"></i> VOLVER AL ROL
+        </a>
     </div>
 </div>
 
-<div class="row mt-4">
-    <form asp-action="ManagePermissions" method="post" id="managePermissionsForm">
-        @Html.AntiForgeryToken()
-        <input type="hidden" name="id" value="@Model.Rol.Id" />
+@if (Model.Rol.EsSistema)
+{
+    <div class="alert alert-danger d-flex align-items-start mb-4 shadow-sm" role="alert">
+        <i class="ti ti-lock fs-18 me-2 mt-1"></i>
+        <div>
+            <span class="fw-bold">Rol de sistema.</span>
+            Solo el Administrador Global puede modificar esta matriz; los cambios quedan auditados de forma inmutable.
+        </div>
+    </div>
+}
 
-        <div class="row">
+<form asp-action="ManagePermissions" method="post" id="managePermissionsForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" value="@Model.Rol.Id" />
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body py-3">
+            <div class="row g-3 align-items-center">
+                <div class="col-lg-5 col-xl-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent"><i class="ti ti-search"></i></span>
+                        <input type="text" id="permSearch" class="form-control" placeholder="Buscar permiso por código o descripción..." aria-label="Buscar permisos">
+                        <button type="button" id="permSearchClear" class="btn btn-ghost-secondary" title="Limpiar búsqueda" style="display:none;">
+                            <i class="ti ti-x"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-lg-7 d-flex flex-wrap align-items-center gap-2 justify-content-lg-end">
+                    <span class="badge bg-primary-subtle text-primary fs-14 px-3 py-2">
+                        <i class="ti ti-checkbox me-1"></i><span id="selCount">0</span> / <span id="selTotal">0</span> seleccionados
+                    </span>
+                    <span class="ms-lg-2 d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="selTodos">
+                            <i class="ti ti-square-check me-1"></i> TODOS
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="selNinguno">
+                            <i class="ti ti-square-rounded me-1"></i> NINGUNO
+                        </button>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.Modules.Any())
+    {
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <div class="avatar avatar-xl bg-light-subtle text-muted rounded-circle mb-3 mx-auto">
+                    <i class="ti ti-folder-off fs-48"></i>
+                </div>
+                <h5 class="fw-bold mb-1">No hay módulos de permisos disponibles</h5>
+                <p class="text-muted mb-0">Contacta al Administrador Global para registrar capacidades en el sistema.</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row" id="permModules">
             @foreach (var module in Model.Modules.OrderBy(m => m.ModuleName))
             {
-                <div class="col-md-6 col-xl-4 mb-4">
+                var perms = module.Permissions.OrderBy(p => p.Codigo).ToList();
+                var seleccionados = perms.Count(p => p.IsSelected);
+                <div class="col-md-6 col-xl-4 mb-4 module-card" data-modulo="@module.ModuleName.ToLowerInvariant()">
                     <div class="card h-100 shadow-sm border-top border-primary border-3">
-                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                            <h5 class="card-title mb-0 text-uppercase small fw-bold">@module.ModuleName</h5>
-                            <span class="badge bg-primary-subtle text-primary">@module.Permissions.Count(p => p.IsSelected) / @module.Permissions.Count</span>
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center gap-2">
+                            <div class="d-flex align-items-center gap-2 flex-shrink-0" style="min-width:0">
+                                <input type="checkbox" class="form-check-input m-0 module-toggle-all flex-shrink-0" title="Seleccionar / quitar todo el módulo">
+                                <h5 class="card-title mb-0 small fw-bold text-uppercase text-truncate">@module.ModuleName</h5>
+                            </div>
+                            <span class="badge bg-primary-subtle text-primary module-count flex-shrink-0">@seleccionados / @perms.Count</span>
                         </div>
                         <div class="card-body">
-                            @foreach (var perm in module.Permissions.OrderBy(p => p.Codigo))
+                            @foreach (var perm in perms)
                             {
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" name="selectedPermissions" value="@perm.Id" id="perm_@perm.Id" @(perm.IsSelected ? "checked" : "")>
-                                    <label class="form-check-label" for="perm_@perm.Id">
-                                        <span class="fw-bold d-block small">@perm.Codigo</span>
-                                        <span class="text-muted extra-small">@perm.Descripcion</span>
-                                    </label>
-                                </div>
+                                <label class="form-check d-flex align-items-start gap-2 mb-2">
+                                    <input class="form-check-input perm-check mt-1 flex-shrink-0" type="checkbox" name="selectedPermissions" value="@perm.Id" id="perm_@perm.Id" data-codigo="@perm.Codigo.ToLowerInvariant()" data-desc="@(perm.Descripcion ?? "").ToLowerInvariant()" @(perm.IsSelected ? "checked" : "")>
+                                    <span class="d-block">
+                                        <span class="font-monospace fw-semibold small d-block text-body">@perm.Codigo</span>
+                                        <span class="text-muted tiny">@perm.Descripcion</span>
+                                    </span>
+                                </label>
                             }
                         </div>
                     </div>
@@ -40,24 +112,103 @@
             }
         </div>
 
-        <div class="card sticky-bottom shadow-lg border-0 mb-4">
-            <div class="card-body d-flex justify-content-between align-items-center">
-                <p class="mb-0 text-muted italic">RF-02: La asignación de permisos es auditada de forma inmutable (RF-03).</p>
-                <div class="d-flex gap-2">
-                    <a asp-action="Index" class="btn btn-outline-secondary">Volver</a>
-                    <button type="submit" class="btn btn-primary px-5 fw-bold">
-                        <i class="ti ti-shield-check me-1"></i> ACTUALIZAR MATRIZ DE ACCESO
-                    </button>
+        <div id="permEmptySearch" class="card border-0 shadow-sm" style="display:none;">
+            <div class="card-body text-center py-5">
+                <div class="avatar avatar-xl bg-light-subtle text-muted rounded-circle mb-3 mx-auto">
+                    <i class="ti ti-search-off fs-48"></i>
                 </div>
+                <h5 class="fw-bold mb-1">Sin coincidencias</h5>
+                <p class="text-muted mb-0">Ningún permiso coincide con la búsqueda.</p>
             </div>
         </div>
-    </form>
-</div>
+    }
+
+    <div class="card sticky-bottom shadow-lg border-0 mb-4">
+        <div class="card-body d-flex justify-content-between align-items-center">
+            <p class="mb-0 text-muted small">
+                <i class="ti ti-shield-check me-1"></i><span id="selCountFooter">0</span> de <span id="selTotalFooter">0</span> permisos seleccionados · Los cambios se auditan de forma inmutable (RF-03).
+            </p>
+            <div class="d-flex gap-2 flex-shrink-0">
+                <a asp-action="Index" class="btn btn-outline-secondary">Volver</a>
+                <button type="submit" class="btn btn-primary px-5 fw-bold">
+                    <i class="ti ti-shield-check me-1"></i> ACTUALIZAR MATRIZ DE ACCESO
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
 
 @section Scripts {
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
+            var $checks = $('#permModules .perm-check');
+            var $modules = $('#permModules .module-card');
+
+            function updateCounters() {
+                var sel = $('#permModules .perm-check:checked').length;
+                var total = $checks.length;
+                $('#selCount, #selCountFooter').text(sel);
+                $('#selTotal, #selTotalFooter').text(total);
+                $modules.each(function () {
+                    var $card = $(this);
+                    var modSel = $card.find('.perm-check:checked').length;
+                    var modTotal = $card.find('.perm-check').length;
+                    $card.find('.module-count').text(modSel + ' / ' + modTotal);
+                    $card.find('.module-toggle-all').prop('checked', modTotal > 0 && modSel === modTotal)
+                        .prop('indeterminate', modSel > 0 && modSel < modTotal);
+                });
+            }
+
+            function applyFilter() {
+                if (!$modules.length) return;
+                var q = ($('#permSearch').val() || '').trim().toLowerCase();
+                var visibleModules = 0;
+                $modules.each(function () {
+                    var $card = $(this);
+                    $card.show();
+                    var modMatch = !q || ($card.data('modulo') || '').indexOf(q) >= 0;
+                    var permVisible = 0;
+                    $card.find('.perm-check').each(function () {
+                        var $p = $(this);
+                        var match = modMatch || ($p.data('codigo') || '').indexOf(q) >= 0 || ($p.data('desc') || '').indexOf(q) >= 0;
+                        $p.closest('label').toggle(match);
+                        if (match) permVisible++;
+                    });
+                    if (q && !modMatch && permVisible === 0) {
+                        $card.hide();
+                    } else {
+                        visibleModules++;
+                    }
+                });
+                $('#permEmptySearch').toggle(!visibleModules);
+                $('#permSearchClear').toggle(q.length > 0);
+            }
+
+            $('#permSearch').on('input', applyFilter);
+            $('#permSearchClear').on('click', function () {
+                $('#permSearch').val('').trigger('input');
+                $('#permSearch').trigger('focus');
+            });
+
+            $modules.find('.module-toggle-all').on('change', function () {
+                var $card = $(this).closest('.module-card');
+                $card.find('.perm-check').prop('checked', this.checked);
+                updateCounters();
+            });
+
+            $checks.on('change', updateCounters);
+
+            $('#selTodos').on('click', function () {
+                $checks.prop('checked', true);
+                updateCounters();
+            });
+            $('#selNinguno').on('click', function () {
+                $checks.prop('checked', false);
+                updateCounters();
+            });
+
             window.SubmitAjaxForm('managePermissionsForm');
+            updateCounters();
         });
     </script>
 }

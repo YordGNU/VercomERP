@@ -143,4 +143,18 @@ public class RolController : Controller
 
         return Json(new { success = false, message = result.Message });
     }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "SEGURIDAD.ROL.ASIGNAR")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var result = await _authService.DeleteRolAsync(id);
+        if (result.Succeeded)
+        {
+            return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
+        }
+
+        return Json(new { success = false, message = result.Message });
+    }
 }
