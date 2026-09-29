@@ -2935,6 +2935,8 @@ entity.Property(e => e.DocumentoOrigenId).HasColumnName("documento_origen_id");
             entity.Property(e => e.Tipo)
                 .HasMaxLength(20)
                 .HasColumnName("tipo");
+            entity.Property(e => e.Onat).HasMaxLength(50).HasColumnName("onat");
+            entity.Property(e => e.Direccion).HasMaxLength(200).HasColumnName("direccion");
 
             entity.HasOne(d => d.Entidad).WithMany(p => p.PaqueteInformacions)
                 .HasForeignKey(d => d.EntidadId)

@@ -3,17 +3,11 @@
     ViewBag.Title = "Cuentas Bancarias";
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Saldos y Disponibilidad Bancaria</h4>
-        <p class="text-muted small mb-0">Control de cuentas en instituciones financieras para cobros y pagos corporativos.</p>
-    </div>
-    <div class="text-end">
-        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
-            <i class="ti ti-plus"></i> AÑADIR CUENTA BANCARIA
-        </a>
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = "Saldos y Disponibilidad Bancaria",
+    Subtitle = "Control de cuentas en instituciones financieras para cobros y pagos corporativos.",
+    PrimaryAction = new Vercom.ViewModels.ActionLinkModel { Controller = "CuentaBancarium", Action = "Create", Text = "AÑADIR CUENTA BANCARIA", Icon = "ti ti-plus" }
+}' />
 
 <div class="row">
     <div class="row">

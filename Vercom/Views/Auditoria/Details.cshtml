@@ -3,11 +3,9 @@
     ViewBag.Title = "Detalle de Auditoría";
 }
 
-<div class="page-title-head d-flex align-items-center">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Detalle de Transacción: @Model.Id</h4>
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = "Detalle de Transacción: " + Model.Id
+}' />
 
 <div class="row mt-4">
     <div class="row">

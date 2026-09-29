@@ -2,19 +2,15 @@
 @{
     ViewBag.Title = Model.Title;
 }
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Registrar Consecutivo</h4>
-        <p class="text-muted small mb-0">Control de numeración por tipo de documento y serie (RNF-51).</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-0">
-            <li class="breadcrumb-item"><a asp-controller="Dashboard" asp-action="Index">Vercom</a></li>
-            <li class="breadcrumb-item"><a asp-action="Index">Consecutivo</a></li>
-            <li class="breadcrumb-item active">Nuevo Consecutivo</li>
-        </ol>
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = "Registrar Consecutivo",
+    Subtitle = "Control de numeración por tipo de documento y serie (RNF-51).",
+    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
+        new() { Text = "Vercom", Url = Url.Action("Index", "Dashboard") },
+        new() { Text = "Consecutivo", Url = Url.Action("Index") },
+        new() { Text = "Nuevo Consecutivo", IsActive = true }
+    }
+}' />
 <div class="row">
     <div class="col-lg-6">
         <div class="card">

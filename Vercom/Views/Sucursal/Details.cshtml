@@ -1,4 +1,5 @@
 @model Vercom.Models.Sucursal
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewBag.Title = "Detalles de Sucursal";
 }
@@ -111,7 +112,7 @@
                             </tr>
                             <tr>
                                 <td class="text-muted fw-bold small">ENTIDAD PROPIETARIA</td>
-                                <td class="fw-bold">@Model.Entidad.RazonSocial</td>
+                                <td class="fw-bold">@EntidadDisplay.Name</td>
                             </tr>
                             <tr>
                                 <td class="text-muted fw-bold small">FECHA DE ALTA</td>

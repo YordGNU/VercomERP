@@ -1,27 +1,19 @@
 ﻿@model Vercom.Models.ConceptoNomina
-
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Editar Concepto de Nómina";
 }
 
-
-
-<h4>ConceptoNomina</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-       <div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Editar ConceptoNomina</h4>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">ConceptoNomina</a></li>
-            <li class="breadcrumb-item active">Editar</li>
-        </ol>
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = "Editar Concepto de Nómina",
+    Subtitle = "Modificación de parámetros del concepto salarial.",
+    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
+        new() { Text = "Vercom", Url = "javascript: void(0);" },
+        new() { Text = "RRHH", Url = "javascript: void(0);" },
+        new() { Text = "Conceptos", Url = Url.Action("Index") },
+        new() { Text = "Editar", IsActive = true }
+    }
+}' />
 
 <div class="row">
     <div class="row">

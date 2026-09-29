@@ -20,6 +20,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="10.0.2" />
     <PackageReference Include="NuGet.Protocol" Version="7.9.0" />
+    <PackageReference Include="QuestPDF" Version="2025.12.2" />
     <PackageReference Include="Uno.UI" Version="5.6.99" />
   </ItemGroup>
 

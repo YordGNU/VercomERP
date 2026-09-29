@@ -223,10 +223,10 @@ Instrucciones y contexto aprendidos en sesiones anteriores. Es la fuente de memo
 | Producción | 100% | E2E OP completo + E2E equipos/mantenimiento (Schedule→Pending→Complete) + E2E plan sugerido persistido (bug #8 SUGERIDO→BORRADOR); NP-06 adoptada (merma registro-solo, baja stock vía movimiento) |
 | Activo Fijo | 100% | E2E completo (crear→dep 822/378→guard ya-procesada→baja 845.0050) + Update/Delete guard + **baja con pérdida** (item 20) + 3 bugs corregidos; nota 106 resuelta |
 | Integridad/auditoría | 100% | P1: 0 asientos descuadrados, vistas ejecutan, auditoría ERP/POS/API |
-Global del diagnóstico P0–P3: **≈ 100%** — 14/14 módulos 100% con evidencia E2E + decisiones NP-01..NP-10 adoptadas; los 2 items de construcción (21/22) son backlog, no deuda del diagnóstico. Harness último run: 26 PASS e2e / 0 FAIL.
+Global del diagnóstico P0–P3: **≈ 100%** — 14/14 módulos 100% con evidencia E2E + decisiones NP-01..NP-10 adoptadas; los 2 items de construcción (21/22) **COMPLETADOS** (validados E2E + revert limpio). Harness último run: **31 PASS e2e / 0 FAIL** (items 1-20 + 10 actualizado + 21 + 22).
 
 ## P3: Notas de producto — DECISIONES ADOPTADAS (2026-09-27, ok del dueño del producto)
-Regla del repo cumplida: ninguna se implementó sin decisión. Todas las NP-01..NP-10 cerradas con decisión adoptada. Código verificado = **26 PASS e2e / 0 FAIL** en `erp_hr_harness`.
+Regla del repo cumplida: ninguna se implementó sin decisión. Todas las NP-01..NP-10 cerradas con decisión adoptada. **Scripts de maestra NP-01/03/04 ejecutados en BD real.** Código verificado = **31 PASS e2e / 0 FAIL** en `erp_hr_harness`.
 
 | ID | Decisión adoptada | Acción que cierra el módulo |
 |----|---|---|
@@ -242,9 +242,9 @@ Regla del repo cumplida: ninguna se implementó sin decisión. Todas las NP-01..
 | NP-10 | Aceptar moneda canónica: cada asiento queda en su moneda; conversión MLC↔CUP solo si se exige reporte consolidado (futuro). | Documentar |
 | 105 latente | NO aplicar triggers: `AuditInterceptor` ya audita (evita doble auditoría). | Documentar |
 
-## Backlog de construcción (items nuevos, decisiones NP-05 y NP-07)
-- **item 21 — Caja/Banco:** al cerrar sesión POS, asiento de arqueo cuando `DiferenciaArqueo ≠ 0` (faltante/sobrante a cuenta definida) + vista de conciliación de arqueo en BD. Validar E2E cuando se implemente.
-- **item 22 — Reportes:** paquete MFP físico (archivos exportados + tipos ONAT/DIRECCION + controlador REST + `GeneradoPor`) reemplazando el paquete simulado; validar E2E anti contrabando/generación real cuando se implemente.
+## Backlog de construcción (items nuevos, decisiones NP-05 y NP-07) — **COMPLETADOS**
+- **item 21 — Caja/Banco:** al cerrar sesión POS, asiento de arqueo cuando `DiferenciaArqueo ≠ 0` (sobrante → 930.0020 / faltante → 850.0020; cuenta caja = Caja.CuentaContableId) + vista `v_arqueo_caja` en BD. **Implementado y validado E2E** (bloque 21: sobrante +50, faltante −50, AsientoCierreId ligado, vista=CONTABILIZADO, revert limpio).
+- **item 22 — Reportes:** paquete MFP físico (PDF/ZIP con QuestPDF + System.IO.Compression, datos ONAT/DIRECCION, endpoints REST POST `/api/reports/generate-package` y GET `/api/reports/package/{id}/download`, `GeneradoPor` seteado). **Implementado y validado E2E** (bloque 22 + item 10 actualizado: paquete generado, ZIP existe, Tipo=MFP, Estado=GENERADO, GeneradoPor≠NULL, Onat/Direccion poblados, revert limpio).
 
 ## Operación pendiente (no es desarrollo)
 - Ejecutar `CloseFiscalYearAsync` sobre el ejercicio contable real (cierre de periodos + cierre anual) cuando la administración lo disponga — mecanismo 100% validado (item 19, año 2098 de prueba revertido).

@@ -14,6 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IEntidadProvider, HttpContextEntidadProvider>();
+builder.Services.AddSingleton<IEntidadDisplayService, EntidadDisplayService>();
 builder.Services.AddScoped<AuditInterceptor>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAdminService, AdminService>();

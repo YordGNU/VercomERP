@@ -4,18 +4,15 @@
     ViewData["Title"] = "Crear Detalle de Conteo Físico";
 }
 
-<div class="page-title-head d-flex align-items-center">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Crear Detalle de Conteo Físico</h4>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Inventario</a></li>
-            <li class="breadcrumb-item active">Detalle de Conteo</li>
-        </ol>
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = "Crear Detalle de Conteo Físico",
+    Subtitle = "Registro de nuevo detalle de conteo físico.",
+    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
+        new() { Text = "Vercom", Url = "javascript: void(0);" },
+        new() { Text = "Inventario", Url = "javascript: void(0);" },
+        new() { Text = "Detalle de Conteo", IsActive = true }
+    }
+}' />
 
 <div class="row">
     <div class="row">

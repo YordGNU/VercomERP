@@ -1,5 +1,5 @@
 -- ============================================================================
--- ESQUEMA COMPLETO SQL SERVER � ERP Sociedad Mercantil Tierra Prometida S.U.R.L.
+-- ESQUEMA COMPLETO SQL SERVER � ERP Sociedad Mercantil yordanisvc@gmail.com
 -- CORREGIDO: �ndice filtrado, orden de GO y ejecuci�n de sp_addextendedproperty
 -- ============================================================================
 
@@ -1184,7 +1184,9 @@ CREATE TABLE reportes.paquete_informacion (
     tipo                NVARCHAR(20) NOT NULL CHECK (tipo IN ('DIRECCION','ONAT','MFP')),
     estado              NVARCHAR(15) NOT NULL DEFAULT 'GENERADO' CHECK (estado IN ('GENERADO','ENVIADO')),
     generado_por        UNIQUEIDENTIFIER REFERENCES nucleo.usuario(id),
-    generado_en         DATETIMEOFFSET NOT NULL DEFAULT SYSDATETIMEOFFSET()
+    generado_en         DATETIMEOFFSET NOT NULL DEFAULT SYSDATETIMEOFFSET(),
+    onat                NVARCHAR(50) NULL,
+    direccion           NVARCHAR(200) NULL
 );
 
 CREATE TABLE reportes.reporte_generado (

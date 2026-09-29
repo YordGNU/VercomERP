@@ -1,4 +1,4 @@
-# Plan de Desarrollo ERP — "Tierra Prometida S.U.R.L." (Metodología XP)
+# Plan de Desarrollo ERP — "yordanisvc@gmail.com" (Metodología XP)
 
 ## 1. Contexto y marco regulatorio cubano
 Antes de definir módulos, el sistema debe alinearse con la normativa vigente:

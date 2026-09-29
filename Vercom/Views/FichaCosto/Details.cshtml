@@ -3,28 +3,16 @@
     ViewBag.Title = "Ficha de Costo v." + Model.Version;
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Ingeniería de Costos: @Model.Producto.Nombre</h4>
-        <p class="text-muted small mb-0">Estructura detallada según metodología del MFP para el cálculo de precios.</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Producción</a></li>
-            <li class="breadcrumb-item"><a asp-action="Index">Fichas</a></li>
-            <li class="breadcrumb-item active">Detalle</li>
-        </ol>
-        <div class="btn-list">
-            <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
-                <i class="ti ti-arrow-left me-1"></i> VOLVER
-            </a>
-            <button onclick="window.print()" class="btn btn-sm btn-light">
-                <i class="ti ti-printer me-1"></i> IMPRIMIR FICHA
-            </button>
-        </div>
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = "Ingeniería de Costos: " + Model.Producto.Nombre,
+    Subtitle = "Estructura detallada según metodología del MFP para el cálculo de precios.",
+    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
+        new() { Text = "Vercom", Url = "javascript: void(0);" },
+        new() { Text = "Producción", Url = "javascript: void(0);" },
+        new() { Text = "Fichas", Url = Url.Action("Index") },
+        new() { Text = "Detalle", IsActive = true }
+    }
+}' />
 
 <div class="row">
     <div class="row">

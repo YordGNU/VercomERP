@@ -78,6 +78,7 @@ public class UsuarioController : Controller
         if (id != usuario.Id) return NotFound();
 
         ModelState.Remove("Usuario.Entidad");
+        ModelState.Remove("Usuario.HashPassword");
 
         if (ModelState.IsValid)
         {

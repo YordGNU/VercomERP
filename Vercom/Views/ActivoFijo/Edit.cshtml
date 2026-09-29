@@ -3,11 +3,10 @@
     ViewBag.Title = "Editar Activo";
 }
 
-<div class="page-title-head d-flex align-items-center">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">@Model.Title</h4>
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = Model.Title,
+    Subtitle = "Modificación de datos del activo fijo."
+}' />
 
 <div class="row mt-4">
     <form asp-action="Edit" method="post" id="editAssetForm">

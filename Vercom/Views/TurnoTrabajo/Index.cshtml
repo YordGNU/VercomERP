@@ -3,15 +3,11 @@
     ViewBag.Title = "Gestión de Turnos de Trabajo";
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Turnos de Trabajo y Horarios</h4>
-        <p class="text-muted small mb-0">Configuración de jornadas para control de retardos y asistencia.</p>
-    </div>
-    <div class="text-end">
-        <a asp-action="Create" class="btn btn-primary"><i class="ti ti-plus me-1"></i> NUEVO TURNO</a>
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = "Turnos de Trabajo y Horarios",
+    Subtitle = "Configuración de jornadas para control de retardos y asistencia.",
+    PrimaryAction = new Vercom.ViewModels.ActionLinkModel { Controller = "TurnoTrabajo", Action = "Create", Text = "NUEVO TURNO", Icon = "ti ti-plus" }
+}' />
 
 <div class="card shadow-sm border-0">
     <div class="card-body">

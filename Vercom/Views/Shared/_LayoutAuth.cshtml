@@ -13,21 +13,10 @@
     <!-- App css -->
     <link id="app-style" href="~/css/app.min.css" rel="stylesheet" type="text/css">
     <link href="~/css/animate.css" rel="stylesheet" type="text/css">
-    <style>
-        body {
-            background-color: #f8f9fa;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-        }
-        .auth-container {
-            width: 100%;
-            max-width: 450px;
-            padding: 20px;
-        }
-    </style>
+    @if (IsSectionDefined("Styles"))
+    {
+        @RenderSection("Styles", required: false)
+    }
 </head>
 <body>
     <div class="auth-container animate__animated animate__fadeIn">

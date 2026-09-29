@@ -1,4 +1,5 @@
 @model Vercom.Models.OrdenCompra
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewBag.Title = "Orden de Compra: " + Model.NumeroOrden;
 }
@@ -52,7 +53,7 @@
                     <!-- Cabecera Documento -->
                     <div class="row mb-5">
                         <div class="col-6">
-                            <h2 class="fw-bold text-primary mb-1">@Model.Entidad.RazonSocial</h2>
+                            <h2 class="fw-bold text-primary mb-1">@EntidadDisplay.Name</h2>
                             <p class="text-muted mb-0 small">NIT: @Model.Entidad.Nit | REEUP: @Model.Entidad.CodigoReeup</p>
                             <p class="text-muted small">@Model.Entidad.DireccionLegal</p>
                         </div>

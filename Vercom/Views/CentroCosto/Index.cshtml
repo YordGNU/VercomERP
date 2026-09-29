@@ -3,19 +3,16 @@
     ViewBag.Title = "Centros de Costo";
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Gestión de Centros de Costo</h4>
-        <p class="text-muted small mb-0">Nomenclador para la imputación analítica de gastos y recursos por unidad.</p>
-    </div> 
-     <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Contabilidad</a></li>
-            <li class="breadcrumb-item active">Centros de costo</li>
-        </ol>       
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = "Gestión de Centros de Costo",
+    Subtitle = "Nomenclador para la imputación analítica de gastos y recursos por unidad.",
+    PrimaryAction = new Vercom.ViewModels.ActionLinkModel { Controller = "CentroCosto", Action = "Create", Text = "NUEVO CENTRO DE COSTO", Icon = "ti ti-plus" },
+    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
+        new() { Text = "Vercom", Url = "javascript: void(0);" },
+        new() { Text = "Contabilidad", Url = "javascript: void(0);" },
+        new() { Text = "Centros de costo", IsActive = true }
+    }
+}' />
 <div class="row">
     <div class="card">
          <div class="card-header border-light justify-content-between">

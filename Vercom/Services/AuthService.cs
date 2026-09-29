@@ -173,7 +173,11 @@ public class AuthService : IAuthService
 
             if (existing == null) return (false, "Usuario no encontrado.");
 
+            // HashPassword nunca se edita desde el formulario de perfil;
+            // lo preservamos para no anularlo con null en SetValues.
+            var storedHashPassword = existing.HashPassword;
             _context.Entry(existing).CurrentValues.SetValues(usuario);
+            existing.HashPassword = storedHashPassword;
 
             if (!_entidadProvider.IsMaster)
             {

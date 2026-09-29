@@ -1,0 +1,88 @@
+@model Vercom.ViewModels.FormCardModel
+@{
+    var formId = Model.FormId ?? "formCard";
+    var showHeader = !string.IsNullOrEmpty(Model.Title);
+}
+<div class="row">
+    <div class="row justify-content-center">
+        <div class="@(Model.ColumnClass ?? "col-lg-10")">
+            <div class="card shadow-sm border-0">
+                @if (showHeader)
+                {
+                    <div class="card-header bg-light-subtle py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="m-0 fw-bold text-primary">@(Model.Icon != null ? $"<i class=\"{Model.Icon} me-2\"></i>" : "")@Model.Title</h5>
+                        @if (!string.IsNullOrEmpty(Model.BackUrl))
+                        {
+                            <a href="@Model.BackUrl" class="btn btn-outline-secondary btn-sm">
+                                <i class="ti ti-arrow-left me-1"></i> VOLVER
+                            </a>
+                        }
+                    </div>
+                }
+                <div class="card-body p-4">
+                    <form asp-controller="@Model.Controller" asp-action="@Model.Action" method="post" class="row g-4" id="@formId">
+                        @Html.AntiForgeryToken()
+                        @if (Model.ShowValidationSummary)
+                        {
+                            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm col-12"></div>
+                        }
+                        @foreach (var field in Model.Fields)
+                        {
+                            <div class="@field.ColumnClass">
+                                <label asp-for="@field.Expression" class="form-label fw-bold">@field.Label</label>
+                                @field.InputHtml
+                                <span asp-validation-for="@field.Expression" class="text-danger small"></span>
+                            </div>
+                        }
+                        @if (Model.FooterFields?.Any() == true)
+                        {
+                            <div class="col-12">
+                                <hr class="my-2" />
+                                @foreach (var field in Model.FooterFields)
+                                {
+                                    <div class="@field.ColumnClass">@field.InputHtml</div>
+                                }
+                            </div>
+                        }
+                        <div class="col-12 d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            @if (!string.IsNullOrEmpty(Model.BackUrl))
+                            {
+                                <a href="@Model.BackUrl" class="btn btn-outline-secondary px-4">DESCARTAR</a>
+                            }
+                            <button type="submit" class="btn btn-primary px-5 shadow">
+                                <i class="@(Model.SubmitIcon ?? "ti ti-device-floppy") me-1"></i> @Model.SubmitText
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(document).ready(function () {
+            window.SubmitAjaxForm('@formId');
+            @if (Model.InitializeSelect2) {
+                <text>
+                $('.select2, .select2-cuenta').each(function() {
+                    $(this).select2({
+                        width: '100%',
+                        placeholder: $(this).data('placeholder') || '-- Seleccione --',
+                        allowClear: true,
+                        language: {
+                            noResults: function() { return "No se encontraron resultados"; },
+                            searching: function() { return "Buscando..."; }
+                        },
+                        dropdownParent: $(this).closest('.modal').length ? $(this).closest('.modal') : $(document).body
+                    });
+                });
+                </text>
+            }
+        });
+    </script>
+}

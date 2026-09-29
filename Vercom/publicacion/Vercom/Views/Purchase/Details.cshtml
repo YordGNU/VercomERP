@@ -115,7 +115,7 @@
                                             <small class="text-muted">U.M: @det.Producto.UnidadMedida.Codigo</small>
                                         </td>
                                         <td class="text-center fw-bold">@det.CantidadSolicitada.ToString("N2")</td>
-                                        <td class="text-center">
+                                        <td>
                                             <span class="badge @(det.CantidadRecibida >= det.CantidadSolicitada ? "bg-success-subtle text-success" : "bg-warning-subtle text-warning")">
                                                 @det.CantidadRecibida.ToString("N2")
                                             </span>

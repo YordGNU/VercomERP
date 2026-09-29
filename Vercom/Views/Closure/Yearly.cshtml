@@ -3,11 +3,9 @@
     ViewBag.Title = "Cierre de Ejercicio Fiscal";
 }
 
-<div class="page-title-head d-flex align-items-center">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 text-danger">Cierre de Ejercicio @Model.Year</h4>
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = "Cierre de Ejercicio " + Model.Year
+}' />
 <div class="row mt-4">
     <div class="row justify-content-center">
         <div class="col-lg-8">

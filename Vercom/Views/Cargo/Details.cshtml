@@ -3,16 +3,10 @@
     ViewBag.Title = "Detalle de Cargo: " + Model.Nombre;
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Ficha de Puesto: @Model.Nombre</h4>
-        <p class="text-muted small mb-0">Especificaciones funcionales, nivel salarial y ocupación de plantilla.</p>
-    </div>
-    <div class="text-end d-flex gap-2">
-        <a asp-action="Index" class="btn btn-sm btn-outline-secondary"><i class="ti ti-arrow-left"></i> VOLVER</a>
-        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary"><i class="ti ti-edit"></i> EDITAR CARGO</a>
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = "Ficha de Puesto: " + Model.Nombre,
+    Subtitle = "Especificaciones funcionales, nivel salarial y ocupación de plantilla."
+}' />
 
 <div class="row">
     <div class="row">

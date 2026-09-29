@@ -3,20 +3,10 @@
     ViewBag.Title = "Detalle de Activo Fijo";
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">@Model.Descripcion</h4>
-        <p class="text-muted small mb-0">Código de Inventario: <span class="fw-bold">@Model.CodigoInventario</span></p>
-    </div>
-    <div class="text-end d-flex gap-2">
-        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
-            <i class="ti ti-arrow-left me-1"></i> VOLVER
-        </a>
-        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
-            <i class="ti ti-edit me-1"></i> EDITAR
-        </a>
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = Model.Descripcion,
+    Subtitle = "Código de Inventario: " + Model.CodigoInventario
+}' />
 
 <div class="row">
     <div class="row">
@@ -133,9 +123,4 @@
     </div>
 </div>
 
-<style>
-    .badge-soft-success { background-color: #ecfdf5; color: #059669; }
-    .badge-soft-danger { background-color: #fef2f2; color: #dc2626; }
-    .badge-soft-secondary { background-color: #f3f4f6; color: #4b5563; }
-    .tiny { font-size: 0.65rem; }
-</style>
+

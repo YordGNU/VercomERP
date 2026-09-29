@@ -1,4 +1,5 @@
 @model IEnumerable<Vercom.Models.Feedback>
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewBag.Title = "Bandeja de Feedback y Soporte";
 }
@@ -50,7 +51,7 @@
                                     <span class="badge badge-soft-@typeColor">@item.Tipo</span>
                                 </td>
                                 <td>
-                                    <div class="fw-bold">@item.Entidad.RazonSocial</div>
+                                    <div class="fw-bold">@EntidadDisplay.Name</div>
                                     <small class="text-muted tiny">Por: @item.Usuario.NombreCompleto</small>
                                 </td>
                                 <td style="max-width: 400px;">

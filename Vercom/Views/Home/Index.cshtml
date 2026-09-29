@@ -1,45 +1,131 @@
-<div class="page-title-head d-flex align-items-center">
+@{
+    ViewData["Title"] = "Dashboard";
+}
+<div class="page-title-head d-flex align-items-center p-3 mb-4">
     <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Gesti�n de Home</h4>
+        <h4 class="page-main-title m-0 fw-bold">Dashboard Ejecutivo</h4>
+        <p class="text-muted small mb-0">Visión consolidada del estado de la entidad.</p>
     </div>
     <div class="text-end">
         <ol class="breadcrumb m-0 py-0">
             <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Home</a></li>
-            <li class="breadcrumb-item active">Listado</li>
+            <li class="breadcrumb-item active">Dashboard</li>
         </ol>
     </div>
 </div>
 
-<div class="row">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                 <div class="card-header border-light justify-content-between">
-                    <h4 class="card-title">Listado de Home</h4>
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-3 d-flex align-items-center gap-3">
+                <span class="avatar bg-primary-subtle text-primary"><i class="ti ti-users fs-20"></i></span>
+                <div>
+                    <div class="fs-5 fw-bold mb-0" id="stat-total-usuarios">—</div>
+                    <div class="text-muted small">Usuarios</div>
                 </div>
-                <div class="card-body">@{
-    ViewData["Title"] = "Home Page";
-}
-@Html.ActionLink("Entidad", "Index", "Entidad", null, new { @class = "btn btn-primary" })    
-  
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-3 d-flex align-items-center gap-3">
+                <span class="avatar bg-success-subtle text-success"><i class="ti ti-device-desktop fs-20"></i></span>
+                <div>
+                    <div class="fs-5 fw-bold mb-0" id="stat-pos-activos">—</div>
+                    <div class="text-muted small">Terminales POS Activas</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-3 d-flex align-items-center gap-3">
+                <span class="avatar bg-warning-subtle text-warning"><i class="ti ti-cash fs-20"></i></span>
+                <div>
+                    <div class="fs-5 fw-bold mb-0" id="stat-cxc-pendiente">—</div>
+                    <div class="text-muted small">CxC Pendientes ($)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-3 d-flex align-items-center gap-3">
+                <span class="avatar bg-info-subtle text-info"><i class="ti ti-package fs-20"></i></span>
+                <div>
+                    <div class="fs-5 fw-bold mb-0" id="stat-stock-bajo">—</div>
+                    <div class="text-muted small">Alertas Stock Bajo</div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center py-3">
+                <h5 class="m-0 fw-bold"><i class="ti ti-chart-line me-2 text-primary"></i>Ventas Recientes</h5>
+                <a asp-controller="Sales" asp-action="Index" class="btn btn-sm btn-outline-primary">Ver todas</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="recentSalesTable">
+                        <thead class="thead-light">
+                            <tr>
+                                <th scope="col">Nº Factura</th>
+                                <th scope="col">Cliente</th>
+                                <th scope="col">Fecha</th>
+                                <th scope="col" class="text-end">Total</th>
+                                <th scope="col">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">Cargando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center py-3">
+                <h5 class="m-0 fw-bold"><i class="ti ti-alert-circle me-2 text-danger"></i>Acciones Requeridas</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush" id="pendingActions">
+                    <div class="list-group-item px-3 py-3 text-center text-muted small">Cargando...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     <script>
-     $(document).ready(function () {
-            #dataTable.DataTable();
+        $(document).ready(function () {
+            // Cargar estadísticas
+            $.get('/Dashboard/Stats', function (data) {
+                if (data) {
+                    $('#stat-total-usuarios').text(data.totalUsuarios ?? '—');
+                    $('#stat-pos-activos').text(data.posActivos ?? '—');
+                    $('#stat-cxc-pendiente').text(data.cxcPendiente ? '$' + Number(data.cxcPendiente).toLocaleString('es-ES', { minimumFractionDigits: 2 }) : '—');
+                    $('#stat-stock-bajo').text(data.stockBajo ?? '—');
+                }
+            });
+
+            // Cargar ventas recientes
+            $.get('/Dashboard/RecentSales', function (html) {
+                $('#recentSalesTable tbody').html(html);
+            });
+
+            // Cargar acciones pendientes
+            $.get('/Dashboard/PendingActions', function (html) {
+                $('#pendingActions').html(html);
+            });
         });
     </script>
 }
-
-

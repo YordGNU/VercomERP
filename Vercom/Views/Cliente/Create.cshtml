@@ -4,18 +4,15 @@
     ViewData["Title"] = "Crear Cliente";
 }
 
-<div class="page-title-head d-flex align-items-center">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Crear Cliente</h4>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Ventas</a></li>
-            <li class="breadcrumb-item active">Clientes</li>
-        </ol>
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = "Crear Cliente",
+    Subtitle = "Registro de nuevo cliente en el directorio comercial.",
+    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
+        new() { Text = "Vercom", Url = "javascript: void(0);" },
+        new() { Text = "Ventas", Url = "javascript: void(0);" },
+        new() { Text = "Clientes", IsActive = true }
+    }
+}' />
 
 <div class="row">
     <div class="row justify-content-center">

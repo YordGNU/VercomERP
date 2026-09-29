@@ -3,65 +3,233 @@
     Layout = "_LayoutAuth";
 }
 
-<div class="card p-4">
-    <div class="text-center mb-4">
-        <img src="~/css/images/logo.svg" alt="Vercom" style="height: 50px;" class="mb-3">
-        <h2 class="fw-bold">Vercom Elite</h2>
-        <p class="text-muted">Inicia sesión en tu cuenta operativa</p>
+<div class="login-container">
+    <!-- Hero Section (lado izquierdo en desktop) -->
+    <div class="login-hero">
+        <div class="hero-content">
+            <div class="hero-branding">
+                <img src="~/css/images/logo.svg" alt="yordanisvc@gmail.com" class="hero-logo" />
+                <h1 class="hero-title">Tierra Prometida</h1>
+                <p class="hero-subtitle">Sistema ERP Integral</p>
+            </div>
+
+            <div class="hero-info">
+                <div class="info-item">
+                    <span class="info-icon">🔐</span>
+                    <div>
+                        <h3>Seguridad Garantizada</h3>
+                        <p>Cifrado de datos y auditoría inmutable conforme a Resolución 60/2011</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <span class="info-icon">📊</span>
+                    <div>
+                        <h3>Conformidad Regulatoria</h3>
+                        <p>Alineado con NCC/NCIF, ONAT y marcos legales cubanos</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <span class="info-icon">⚡</span>
+                    <div>
+                        <h3>On-Premise Confiable</h3>
+                        <p>Disponible offline con sincronización automática</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <form asp-action="Login" method="post">
-        <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+    <!-- Form Section (lado derecho en desktop) -->
+    <div class="login-form-wrapper">
+        <form asp-action="Login" method="post" class="login-form" novalidate>
+            <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
 
-        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
-
-        <div class="mb-3">
-            <label class="form-label small fw-bold">Usuario</label>
-            <div class="input-group">
-                <span class="input-group-text bg-light"><i class="ti ti-user fs-18"></i></span>
-                <input type="text" name="username" class="form-control" placeholder="nombre.usuario" required autofocus />
+            <div class="form-header">
+                <h2>Acceso al Sistema</h2>
+                <p>Ingresa tus credenciales para continuar</p>
             </div>
-        </div>
 
-        <div class="mb-3">
-            <div class="d-flex justify-content-between">
-                <label class="form-label small fw-bold">Contraseña</label>
-                <a href="javascript:void(0);" class="text-muted small">¿Olvidó su clave?</a>
+            <!-- Validation Summary -->
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <div class="d-flex gap-2">
+                    <span class="alert-icon">⚠</span>
+                    <div>
+                        <strong>Error de autenticación</strong>
+                        <p class="mb-0 small mt-1">Verifica tu usuario y contraseña. Si se repite, contacta al administrador.</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
             </div>
-            <div class="input-group">
-                <span class="input-group-text bg-light"><i class="ti ti-lock fs-18"></i></span>
-                <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" required />
-                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                    <i class="ti ti-eye fs-18"></i>
-                </button>
+
+            <!-- Username Field -->
+            <div class="form-group">
+                <label for="username" class="form-label">Usuario</label>
+                <div class="input-wrapper">
+                    <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        class="form-control form-control-lg" 
+                        placeholder="nombre.usuario"
+                        autocomplete="username"
+                        required 
+                        autofocus
+                        aria-label="Nombre de usuario"
+                        aria-describedby="username-hint" />
+                </div>
+                <small id="username-hint" class="form-text">Usa el formato: nombre.apellido</small>
             </div>
-        </div>
 
-        <div class="mb-3 form-check">
-            <input type="checkbox" name="rememberMe" class="form-check-input" id="rememberMe" value="true">
-            <label class="form-check-label small" for="rememberMe">Recordarme en este equipo</label>
-        </div>
+            <!-- Password Field -->
+            <div class="form-group">
+                <div class="d-flex justify-content-between align-items-baseline">
+                    <label for="password" class="form-label">Contraseña</label>
+                    <a href="@Url.Action("ForgotPassword", "Account")" class="link-secondary small">¿Olvidó su clave?</a>
+                </div>
+                <div class="input-wrapper password-wrapper">
+                    <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        class="form-control form-control-lg" 
+                        placeholder="••••••••"
+                        autocomplete="current-password"
+                        required
+                        aria-label="Contraseña"
+                        aria-describedby="password-requirements" />
+                    <button 
+                        class="btn-toggle-password" 
+                        type="button" 
+                        id="togglePassword"
+                        aria-label="Mostrar contraseña"
+                        aria-pressed="false">
+                        <svg class="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        <svg class="eye-off-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                    </button>
+                </div>
+                <small id="password-requirements" class="form-text">Mínimo 12 caracteres con mayúscula, minúscula, número y símbolo</small>
+            </div>
 
-        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">ENTRAR AL SISTEMA</button>
-    </form>
+            <!-- Remember Me Checkbox -->
+            <div class="form-check form-check-custom">
+                <input 
+                    type="checkbox" 
+                    id="rememberMe" 
+                    name="rememberMe" 
+                    class="form-check-input" 
+                    value="true">
+                <label class="form-check-label" for="rememberMe">
+                    Recordarme en este equipo
+                </label>
+            </div>
 
-    <div class="mt-4 text-center">
-        <p class="small text-muted">&copy; 2026 Tierra Prometida S.U.R.L.</p>
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-login w-100">
+                <span class="btn-text">Acceder al Sistema</span>
+                <span class="btn-loading" style="display: none;">
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Autenticando...
+                </span>
+            </button>
+
+            <!-- Footer -->
+            <div class="login-footer">
+                <p class="text-muted small">
+                    &copy; 2024 - 2026 VERCOM | yordanisvc@gmail.com 
+                </p>
+            </div>
+        </form>
     </div>
 </div>
 
+@section Styles {  
+ <link href="~/css/login.style.css" rel="stylesheet" type="text/css">
+}
+
 @section Scripts {
     <script>
-        document.getElementById('togglePassword').addEventListener('click', function() {
-            const pwd = document.getElementById('password');
-            const icon = this.querySelector('i');
-            if (pwd.type === 'password') {
-                pwd.type = 'text';
-                icon.classList.replace('ti-eye', 'ti-eye-off');
-            } else {
-                pwd.type = 'password';
-                icon.classList.replace('ti-eye-off', 'ti-eye');
-            }
+        // ============================================
+        // Toggle Password Visibility
+        // ============================================
+        const togglePasswordBtn = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+        const eyeIcon = togglePasswordBtn.querySelector('.eye-icon');
+        const eyeOffIcon = togglePasswordBtn.querySelector('.eye-off-icon');
+
+        if (togglePasswordBtn) {
+            togglePasswordBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                const isPassword = passwordInput.type === 'password';
+                passwordInput.type = isPassword ? 'text' : 'password';
+                
+                // Toggle icons
+                eyeIcon.style.display = isPassword ? 'none' : 'block';
+                eyeOffIcon.style.display = isPassword ? 'block' : 'none';
+                
+                // Update aria-label
+                this.setAttribute('aria-label', isPassword ? 'Ocultar contraseña' : 'Mostrar contraseña');
+                this.setAttribute('aria-pressed', isPassword ? 'true' : 'false');
+            });
+        }
+
+        // ============================================
+        // Form Submission Handler
+        // ============================================
+        const loginForm = document.querySelector('.login-form');
+        if (loginForm) {
+            loginForm.addEventListener('submit', function (e) {
+                // Validación básica en cliente
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value;
+
+                if (!username || !password) {
+                    e.preventDefault();
+                    alert('Por favor, ingresa usuario y contraseña');
+                    return;
+                }
+
+                // Mostrar estado de carga
+                const submitBtn = loginForm.querySelector('button[type="submit"]');
+                const btnText = submitBtn.querySelector('.btn-text');
+                const btnLoading = submitBtn.querySelector('.btn-loading');
+                
+                if (btnText && btnLoading) {
+                    submitBtn.disabled = true;
+                    btnText.style.display = 'none';
+                    btnLoading.style.display = 'block';
+                }
+            });
+        }
+
+        // ============================================
+        // Auto-focus en campo de usuario
+        // ============================================
+        const usernameInput = document.getElementById('username');
+        if (usernameInput && !usernameInput.value) {
+            usernameInput.focus();
+        }
+
+        // ============================================
+        // Cerrar alertas (Bootstrap dismiss)
+        // ============================================
+        document.querySelectorAll('.btn-close').forEach(btn => {
+            btn.addEventListener('click', function () {
+                this.closest('.alert').style.display = 'none';
+            });
         });
     </script>
 }

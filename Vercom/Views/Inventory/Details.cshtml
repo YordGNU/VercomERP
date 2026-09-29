@@ -1,4 +1,5 @@
 @model Vercom.Models.MovimientoInventario
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewBag.Title = "Detalle de Operación";
     var isEntrada = Model.TipoMovimiento.Naturaleza == "ENTRADA";
@@ -27,7 +28,7 @@
             <!-- Cabecera del Documento -->
             <div class="row mb-5">
                 <div class="col-6">
-                    <h2 class="fw-bold text-primary mb-1">@Model.Entidad.RazonSocial</h2>
+                    <h2 class="fw-bold text-primary mb-1">@EntidadDisplay.Name</h2>
                     <p class="text-muted mb-0">NIT: @Model.Entidad.Nit</p>
                     <p class="text-muted">@Model.Entidad.DireccionLegal</p>
                 </div>

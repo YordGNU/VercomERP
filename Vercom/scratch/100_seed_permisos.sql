@@ -1,6 +1,6 @@
 -- ================================================================
 -- SEED DE PERMISOS, ROLES Y ASIGNACIONES
--- ERP Vercom - Tierra Prometida S.U.R.L.
+-- ERP Vercom - yordanisvc@gmail.com
 -- ================================================================
 -- INSTRUCCIONES:
 --   1. Reemplazar @EntidadId con el ID real de la entidad

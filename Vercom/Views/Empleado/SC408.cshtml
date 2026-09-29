@@ -1,4 +1,5 @@
 @model IEnumerable<Vercom.Services.SC408Row>
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
     var emp = ViewBag.Employee as Vercom.Models.Empleado;
     ViewBag.Title = "Modelo SC-4-08: " + emp?.Nombres;
@@ -29,7 +30,7 @@
                 <div class="col-4 text-end">
                     <div class="border p-2 border-dark d-inline-block text-start">
                         <small class="fw-bold tiny d-block">ENTIDAD / SURL:</small>
-                        <strong>@emp?.Entidad.RazonSocial</strong>
+                        <strong>@EntidadDisplay.Name</strong>
                     </div>
                 </div>
             </div>

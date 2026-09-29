@@ -1,27 +1,19 @@
 ﻿@model Vercom.Models.VEjecucionPresupuesto
-
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Crear Ejecución de Presupuesto";
 }
 
-
-
-<h4>VEjecucionPresupuesto</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-       <div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Crear VEjecucionPresupuesto</h4>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">VEjecucionPresupuesto</a></li>
-            <li class="breadcrumb-item active">Crear</li>
-        </ol>
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = "Crear Ejecución de Presupuesto",
+    Subtitle = "Registro de ejecución presupuestaria.",
+    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
+        new() { Text = "Vercom", Url = "javascript: void(0);" },
+        new() { Text = "Contabilidad", Url = "javascript: void(0);" },
+        new() { Text = "Presupuestos", Url = Url.Action("Index") },
+        new() { Text = "Crear", IsActive = true }
+    }
+}' />
 
 <div class="row">
     <div class="row">

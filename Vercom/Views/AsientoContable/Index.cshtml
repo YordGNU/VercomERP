@@ -1,23 +1,20 @@
 ﻿@using Vercom.Security
 @inject IEntidadProvider EntidadProvider
 @model Vercom.ViewModels.AsientoIndexViewModel
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewBag.Title = Model.Title;
     var isMaster = EntidadProvider.IsMaster;
 }
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-     <div class="flex-grow-1">
-         <h4 class="fs-sm text-uppercase fw-bold m-0">Libro Diario de Comprobantes</h4>
-         <p class="text-muted small mb-0">Registro cronológico de todas las operaciones económicas de la entidad.</p>
-     </div>
-     <div class="text-end">
-         <ol class="breadcrumb m-0 py-0">
-             <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>     
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Contabilidad</a></li>
-             <li class="breadcrumb-item active">Asiento contable</li>
-         </ol>
-     </div>
-</div>   
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = "Libro Diario de Comprobantes",
+    Subtitle = "Registro cronológico de todas las operaciones económicas de la entidad.",
+    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
+        new() { Text = "Vercom", Url = "javascript: void(0);" },
+        new() { Text = "Contabilidad", Url = "javascript: void(0);" },
+        new() { Text = "Asiento contable", IsActive = true }
+    }
+}' />
 <div class="card">
     <div class="card-body">
         <form method="get" class="row g-1 align-items-center">
@@ -70,7 +67,7 @@
                                 <td class="text-numeric fw-bold text-primary">@item.NumeroComprobante.ToString("D8")</td>
                                 @if (isMaster) {
                                     <td>
-                                        <div class="fw-bold small text-uppercase">@item.Entidad?.NombreComercial</div>
+                                        <div class="fw-bold small text-uppercase">@EntidadDisplay.Name</div>
                                     </td>
                                 }
                                  <td>@item.Fecha.ToString("dd/MM/yyyy")</td>
@@ -79,18 +76,20 @@
                                 <td class="text-numeric fw-bold">@item.TotalDebe.ToString("N2")</td>
                                 <td class="text-numeric fw-bold">@item.TotalHaber.ToString("N2")</td>
                                 <td><span class="badge @statusClass">@item.Estado</span></td>
-                                <td>
-                                   <div class="d-flex justify-content-end gap-1">
-                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-light btn-icon btn-sm rounded-circle"title="Ver Detalles">
-                                            <i class="ti ti-eye"></i>
-                                        </a>
-                                        @if (item.Estado == "BORRADOR") {
-                                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline py-1 px-2 text-danger" title="Eliminar">
-                                                <i class="ti ti-trash"></i>
-                                            </a>
-                                        }
-                                    </div>
-                                </td>
+<td>
+                                    <div class="d-flex justify-content-end gap-1">
+                                         <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-light btn-icon btn-sm rounded-circle" title="Ver Detalles" aria-label="Ver detalles del asiento @item.NumeroComprobante">
+                                             <i class="ti ti-eye" aria-hidden="true"></i>
+                                         </a>
+                                         @if (item.Estado == "BORRADOR") {
+                                             <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este asiento?');">
+                                                 <button type="submit" class="btn btn-sm btn-outline py-1 px-2 text-danger" title="Eliminar" aria-label="Eliminar asiento @item.NumeroComprobante">
+                                                     <i class="ti ti-trash" aria-hidden="true"></i>
+                                                 </button>
+                                             </form>
+                                         }
+                                     </div>
+                                 </td>
                             </tr>
                         }
                         </tbody>

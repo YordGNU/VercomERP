@@ -1,0 +1,52 @@
+@model Vercom.ViewModels.PageTitleHeadModel
+@{
+    var showBreadcrumb = Model.ShowBreadcrumb;
+    var showAction = Model.PrimaryAction != null;
+    var primaryActionUrl = "";
+    if (showAction)
+    {
+        primaryActionUrl = Url.Action(Model.PrimaryAction.Action, Model.PrimaryAction.Controller);
+        if (!string.IsNullOrEmpty(Model.PrimaryAction.Id))
+        {
+            primaryActionUrl += $"?id={Model.PrimaryAction.Id}";
+        }
+    }
+}
+<div class="page-title-head d-flex align-items-center @(Model.Padding ? "p-3" : "") mb-4">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0 fw-bold">@Model.Title</h4>
+        @if (!string.IsNullOrEmpty(Model.Subtitle))
+        {
+            <p class="text-muted small mb-0">@Model.Subtitle</p>
+        }
+    </div>
+    <div class="text-end d-flex align-items-center gap-3">
+        @if (showAction)
+        {
+            <a href="@primaryActionUrl" class="btn btn-primary shadow-sm">
+                @if (!string.IsNullOrEmpty(Model.PrimaryAction.Icon)) { <i class="@Model.PrimaryAction.Icon me-1"></i> }
+                @Model.PrimaryAction.Text
+            </a>
+        }
+        @if (showBreadcrumb && Model.BreadcrumbItems?.Any() == true)
+        {
+            <ol class="breadcrumb m-0 py-0">
+                @foreach (var item in Model.BreadcrumbItems)
+                {
+                    if (item.IsActive)
+                    {
+                        <li class="breadcrumb-item active" aria-current="page">@item.Text</li>
+                    }
+                    else if (!string.IsNullOrEmpty(item.Url))
+                    {
+                        <li class="breadcrumb-item"><a href="@item.Url">@item.Text</a></li>
+                    }
+                    else
+                    {
+                        <li class="breadcrumb-item">@item.Text</li>
+                    }
+                }
+            </ol>
+        }
+    </div>
+</div>

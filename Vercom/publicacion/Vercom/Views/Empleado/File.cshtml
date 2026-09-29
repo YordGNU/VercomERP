@@ -221,7 +221,7 @@
                                              <td>@(c.FechaFin?.ToString("dd/MM/yyyy") ?? "Indefinido")</td>
                                             <td><span class="badge badge-soft-info">@c.TipoContrato</span></td>
                                             <td class="text-numeric fw-bold text-success">@c.SalarioPactado.ToString("N2")</td>
-                                            <td class="text-center">
+                                            <td>
                                                 @if (hasDoc)
                                                 {
                                                     var isPdf = c.DocumentoUrl.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);

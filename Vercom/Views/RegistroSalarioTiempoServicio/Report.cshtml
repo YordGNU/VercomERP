@@ -23,7 +23,7 @@
             <div class="row mb-4">
                 <div class="col-md-6">
                     <p class="mb-1"><strong>Trabajador:</strong> @empName</p>
-                    <p class="mb-0"><strong>Entidad:</strong> @User.FindFirst("EntidadNombre")?.Value</p>
+                    <p class="mb-0"><strong>Entidad:</strong> @EntidadDisplay.Name</p>
                 </div>
             </div>
             <table class="table table-bordered table-sm align-middle text-center">
@@ -40,7 +40,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @{
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
+@{
                         decimal cumul = 0;
                     }
                     @foreach (var row in Model)

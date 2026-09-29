@@ -1,4 +1,5 @@
 @model Vercom.Models.Usuario
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewBag.Title = "Perfil de Usuario";
 }
@@ -52,7 +53,7 @@
                         </div>
                         <div class="d-flex justify-content-between">
                             <span class="text-muted fw-bold">ENTIDAD:</span>
-                            <span class="text-truncate" title="@Model.Entidad.RazonSocial">@Model.Entidad.RazonSocial</span>
+                            <span class="text-truncate" title="@EntidadDisplay.Name">@EntidadDisplay.Name</span>
                         </div>
                     </div>
                 </div>

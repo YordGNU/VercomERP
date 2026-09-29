@@ -81,7 +81,7 @@
                             <td class="text-center fw-bold text-warning">@row.Vacaciones</td>
                             <td class="text-center fw-bold text-warning">@row.Incapacidades</td>
                             <td class="text-center fw-bold text-warning">@row.OtrasAusencias</td>
-                            <td class="text-center">
+                            <td>
                                 @if (row.CantidadRetardos > 0)
                                 {
                                     <span class="badge bg-danger">@row.CantidadRetardos (@row.MinutosRetardo min)</span>
@@ -91,7 +91,7 @@
                                     <span class="text-muted">0</span>
                                 }
                             </td>
-                            <td class="text-center">
+                            <td>
                                 @if (row.CantidadSalidasTempranas > 0)
                                 {
                                     <span class="badge bg-danger">@row.CantidadSalidasTempranas</span>

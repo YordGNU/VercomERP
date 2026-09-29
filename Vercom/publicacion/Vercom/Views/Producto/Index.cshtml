@@ -139,7 +139,7 @@
                 <table id="productsTable" class="table table-striped table-hover dt-responsive mb-0 w-100">
                     <thead class="thead-sm text-uppercase fs-xxs bg-light">
                         <tr>
-                            <th style="width: 10px;" class="text-center">
+                            <th class="text-center">
                                 <input type="checkbox" id="selectAll" class="form-check-input" />
                             </th>
                             <th>Código</th>
@@ -167,7 +167,7 @@
                             };
 
                             <tr>
-                                <td class="text-center">
+                                <td>
                                     <input type="checkbox" class="row-checkbox form-check-input" data-id="@item.Id" />
                                 </td>
                                 <td class="fw-bold text-primary">@item.Codigo</td>
@@ -182,10 +182,10 @@
                                 <td><span class="small text-muted">@item.Familia?.Nombre</span></td>
                                 <td class="text-center small fw-bold">@item.UnidadMedida?.Codigo</td>
                                 <td class="text-end fw-bold text-success">@item.PrecioVentaActual?.ToString("N2")</td>
-                                <td class="text-center">
+                                <td>
                                     <span class="badge @typeClass">@item.Tipo</span>
                                 </td>
-                                <td class="text-center">
+                                <td>
                                     @if (item.Activo)
                                     {
                                         <span class="badge badge-soft-success">

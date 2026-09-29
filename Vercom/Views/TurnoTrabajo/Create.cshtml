@@ -3,12 +3,10 @@
     ViewBag.Title = "Nuevo Turno de Trabajo";
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Crear Turno de Trabajo</h4>
-        <p class="text-muted small mb-0">Defina el intervalo horario y las tolerancias permitidas.</p>
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = "Crear Turno de Trabajo",
+    Subtitle = "Defina el intervalo horario y las tolerancias permitidas."
+}' />
 
 <div class="row justify-content-center">
     <div class="col-md-6">

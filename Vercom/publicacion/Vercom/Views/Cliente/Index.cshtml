@@ -3,18 +3,16 @@
     ViewData["Title"] = "Cartera de Clientes";
     var estado = Model.Activo switch { true => "activa", false => "inactiva", _ => "" };
 }
-
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Gestión Comercial: Cartera de Clientes</h4>
-        <p class="text-muted small mb-0">Directorio unificado de clientes corporativos y consumidores finales.</p>
-    </div>
-    <div class="text-end d-flex align-items-center gap-3"> 
-        <a asp-action="Create" class="btn btn-primary shadow-sm">
-            <i class="ti ti-user-plus me-1"></i> REGISTRAR CLIENTE
-        </a>
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = "Gestión Comercial: Cartera de Clientes",
+    Subtitle = "Directorio unificado de clientes corporativos y consumidores finales.",
+    PrimaryAction = new Vercom.ViewModels.ActionLinkModel { Controller = "Cliente", Action = "Create", Text = "REGISTRAR CLIENTE", Icon = "ti ti-user-plus" },
+    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
+        new() { Text = "Vercom", Url = "javascript: void(0);" },
+        new() { Text = "Ventas", Url = "javascript: void(0);" },
+        new() { Text = "Clientes", IsActive = true }
+    }
+}' />
 
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-3">
@@ -145,18 +143,18 @@
                                 <code class="text-muted small">NIT/CI: @item.NitOCi</code>
                             </div>
                         </div>
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-icon btn-light border" data-bs-toggle="dropdown" type="button" title="Acciones">
-                                <i class="ti ti-dots-vertical"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                                <li><h6 class="dropdown-header small text-uppercase">Acciones</h6></li>
-                                <li><a class="dropdown-item" asp-action="Details" asp-route-id="@item.Id"><i class="ti ti-eye me-1 text-primary"></i> Detalles</a></li>
-                                <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@item.Id"><i class="ti ti-edit me-1 text-info"></i> Editar</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" asp-controller="Sales" asp-action="Create" asp-route-clienteId="@item.Id"><i class="ti ti-receipt me-1 text-success"></i> Nueva venta</a></li>
-                            </ul>
-                        </div>
+<div class="dropdown">
+                             <button class="btn btn-sm btn-icon btn-light border" data-bs-toggle="dropdown" type="button" title="Acciones" aria-label="Acciones para @item.NombreRazonSocial">
+                                 <i class="ti ti-dots-vertical" aria-hidden="true"></i>
+                             </button>
+                             <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                 <li><h6 class="dropdown-header small text-uppercase">Acciones</h6></li>
+                                 <li><a class="dropdown-item" asp-action="Details" asp-route-id="@item.Id"><i class="ti ti-eye me-1 text-primary" aria-hidden="true"></i> Detalles</a></li>
+                                 <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@item.Id"><i class="ti ti-edit me-1 text-info" aria-hidden="true"></i> Editar</a></li>
+                                 <li><hr class="dropdown-divider"></li>
+                                 <li><a class="dropdown-item" asp-controller="Sales" asp-action="Create" asp-route-clienteId="@item.Id"><i class="ti ti-receipt me-1 text-success" aria-hidden="true"></i> Nueva venta</a></li>
+                             </ul>
+                         </div>
                     </div>
 
                     <div class="d-flex justify-content-between align-items-center bg-light-subtle border rounded-2 px-2 py-2 mb-3">
@@ -245,7 +243,3 @@
 <div class="text-center text-muted small mt-2">
     Mostrando @Model.Items.Count() de @Model.TotalItems clientes
 </div>
-
-<style>
-    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
-</style>

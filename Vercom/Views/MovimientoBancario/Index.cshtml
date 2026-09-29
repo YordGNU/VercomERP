@@ -31,7 +31,7 @@
                 <tbody>
                     @foreach (var item in Model)
                     {
-                        var isEntry = item.Tipo == "CREDITO" || item.Tipo == "INGRESO";
+                        var isEntry = item.Tipo == "CREDITO";
                         var amountClass = isEntry ? "text-success" : "text-danger";
 
                         <tr>

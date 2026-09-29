@@ -16,6 +16,10 @@ public partial class PaqueteInformacion
 
     public DateTimeOffset GeneradoEn { get; set; }
 
+    public string? Onat { get; set; }
+
+    public string? Direccion { get; set; }
+
     public virtual Entidad Entidad { get; set; } = null!;
 
     public virtual Usuario? GeneradoPorNavigation { get; set; }

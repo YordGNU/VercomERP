@@ -3,19 +3,15 @@
     ViewBag.Title = Model.Title;
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">@Model.Title</h4>
-        <p class="text-muted small mb-0">Habilitación de nuevas áreas de almacenamiento y puntos de despacho.</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Inventario</a></li>
-            <li class="breadcrumb-item active">Nuevo Almacén</li>
-        </ol>
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = Model.Title,
+    Subtitle = "Habilitación de nuevas áreas de almacenamiento y puntos de despacho.",
+    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
+        new() { Text = "Vercom", Url = "javascript: void(0);" },
+        new() { Text = "Inventario", Url = "javascript: void(0);" },
+        new() { Text = "Nuevo Almacén", IsActive = true }
+    }
+}' />
 
 <div class="row mt-4">
     <div class="row justify-content-center">

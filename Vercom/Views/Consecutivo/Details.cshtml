@@ -1,5 +1,6 @@
 @model Vercom.Models.Consecutivo
 
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewBag.Title = "Detalle del Consecutivo";
 }
@@ -31,7 +32,7 @@
                     <dt class="col-sm-4">Sucursal</dt>
                     <dd class="col-sm-8">@(Model.Sucursal?.Nombre ?? "Central (todas)")</dd>
                     <dt class="col-sm-4">Entidad</dt>
-                    <dd class="col-sm-8">@Model.Entidad?.NombreComercial</dd>
+                    <dd class="col-sm-8">@EntidadDisplay.Name</dd>
                     <dt class="col-sm-4">Último número</dt>
                     <dd class="col-sm-8"><span class="badge bg-success fs-6 px-3 py-2 text-numeric">@Model.UltimoNumero</span></dd>
                     <dt class="col-sm-4">Longitud de relleno</dt>

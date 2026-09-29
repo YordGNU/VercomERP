@@ -3,22 +3,16 @@
     ViewBag.Title = "Plan de Mantenimiento";
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Planificación de Mantenimientos Preventivos</h4>
-        <p class="text-muted small mb-0">Control de paradas programadas y reparaciones para garantizar la continuidad operativa.</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Producción</a></li>
-            <li class="breadcrumb-item active">Mantenimiento</li>
-        </ol>
-        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
-            <i class="ti ti-calendar-plus me-1"></i> NUEVA PROGRAMACIÓN
-        </a>
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = "Planificación de Mantenimientos Preventivos",
+    Subtitle = "Control de paradas programadas y reparaciones para garantizar la continuidad operativa.",
+    PrimaryAction = new Vercom.ViewModels.ActionLinkModel { Controller = "MantenimientoProgramado", Action = "Create", Text = "NUEVA PROGRAMACIÓN", Icon = "ti ti-calendar-plus" },
+    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
+        new() { Text = "Vercom", Url = "javascript: void(0);" },
+        new() { Text = "Producción", Url = "javascript: void(0);" },
+        new() { Text = "Mantenimiento", IsActive = true }
+    }
+}' />
 
 <div class="row">
     <div class="card shadow-sm border-0">

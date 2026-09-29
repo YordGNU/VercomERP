@@ -3,27 +3,10 @@
     ViewBag.Title = "Detalle de Comprobante";
 }
 
-<div class="page-title-head d-flex align-items-center">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Comprobante de @Model.TipoComprobante.Nombre</h4>
-    </div>
-    <div class="text-end d-flex gap-2">
-        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Volver al Diario</a>
-        @if (Model.Estado == "BORRADOR")
-        {
-            <form asp-action="Post" method="post">
-                <input type="hidden" name="id" value="@Model.Id" />
-                <button type="submit" class="btn btn-sm btn-success"><i class="ti ti-check me-1"></i> CONTABILIZAR</button>
-            </form>
-        }
-        @if (Model.Estado == "CONTABILIZADO")
-        {
-            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#reverseModal">
-                <i class="ti ti-rotate-2 me-1"></i> REVERTIR
-            </button>
-        }
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = "Comprobante de " + Model.TipoComprobante.Nombre,
+    Subtitle = "Detalle del comprobante contable."
+}' />
 
 <div class="row mt-4">
     <div class="card border-0 shadow-sm">

@@ -1,4 +1,5 @@
 @model Vercom.Models.FacturaVentum
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewBag.Title = "Factura de Venta #" + Model.NumeroFactura;
 }
@@ -25,7 +26,7 @@
             <!-- Cabecera -->
             <div class="row mb-5">
                 <div class="col-6">
-                    <h2 class="fw-bold text-primary mb-1">@Model.Entidad.RazonSocial</h2>
+                    <h2 class="fw-bold text-primary mb-1">@EntidadDisplay.Name</h2>
                     <p class="text-muted mb-0">NIT: @Model.Entidad.Nit | REEUP: @Model.Entidad.CodigoReeup</p>
                     <p class="text-muted">@Model.Entidad.DireccionLegal</p>
                 </div>
@@ -120,7 +121,7 @@
 
             <div class="row mt-5 pt-4 text-center small text-muted">
                 <div class="col-12">
-                    <p>Este documento es un comprobante fiscal válido emitido por el sistema ERP de Tierra Prometida S.U.R.L.</p>
+                    <p>Este documento es un comprobante fiscal válido emitido por el sistema ERP de yordanisvc@gmail.com</p>
                 </div>
             </div>
         </div>

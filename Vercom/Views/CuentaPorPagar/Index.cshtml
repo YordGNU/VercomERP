@@ -7,24 +7,16 @@
     var hoy = DateOnly.FromDateTime(DateTime.Now);
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Cuentas por Pagar</h4>
-        <p class="text-muted small mb-0">Cartera de pagos a proveedores, antigüedad de saldos y procesamiento de pagos.</p>
-    </div>
-    <div class="text-end d-flex align-items-center gap-3">
-        <div class="d-none d-md-block">
-            <ol class="breadcrumb m-0 py-0 mb-1 justify-content-end">
-                <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-                <li class="breadcrumb-item"><a href="javascript: void(0);">Contabilidad</a></li>
-                <li class="breadcrumb-item active">Cuentas por Pagar</li>
-            </ol>
-        </div>
-        <a asp-action="Create" class="btn btn-primary shadow-sm">
-            <i class="ti ti-plus me-1"></i> REGISTRAR
-        </a>
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = "Cuentas por Pagar",
+    Subtitle = "Cartera de pagos a proveedores, antigüedad de saldos y procesamiento de pagos.",
+    PrimaryAction = new Vercom.ViewModels.ActionLinkModel { Controller = "CuentaPorPagar", Action = "Create", Text = "REGISTRAR", Icon = "ti ti-plus" },
+    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
+        new() { Text = "Vercom", Url = "javascript: void(0);" },
+        new() { Text = "Contabilidad", Url = "javascript: void(0);" },
+        new() { Text = "Cuentas por Pagar", IsActive = true }
+    }
+}' />
 
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-3">

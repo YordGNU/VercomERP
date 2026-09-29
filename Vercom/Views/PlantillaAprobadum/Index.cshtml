@@ -1,6 +1,7 @@
 @using Vercom.Security
 @inject IEntidadProvider EntidadProvider
 @model Vercom.ViewModels.PlantillaStatusViewModel
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewBag.Title = "Plantilla de Cargos";
     var isMaster = EntidadProvider.IsMaster;
@@ -79,7 +80,7 @@
                         </td>
                         @if (isMaster)
                         {
-                            <td><small class="fw-bold text-uppercase">@row.EntidadNombre</small></td>
+                            <td><small class="fw-bold text-uppercase">@EntidadDisplay.Name</small></td>
                         }
                         <td>
                             <span class="badge badge-outline text-muted">@row.Sucursal</span>

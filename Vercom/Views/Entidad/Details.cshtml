@@ -1,4 +1,5 @@
 @model Vercom.Models.Entidad
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewBag.Title = "Perfil de la Entidad";
     var isMaster = User.Identity?.Name == "master";
@@ -7,7 +8,7 @@
 <div class="page-title-head d-flex align-items-center p-3 mb-4">
     <div class="flex-grow-1">
         <h4 class="page-main-title m-0 fw-bold">Información Legal</h4>
-        <p class="text-muted small mb-0">Entidad: @Model.RazonSocial</p>
+        <p class="text-muted small mb-0">Entidad: @EntidadDisplay.Name</p>
     </div>
     <div class="text-end d-flex align-items-center gap-3">      
      @if (isMaster)
@@ -28,8 +29,8 @@
                     <div class="avatar-xl bg-primary-subtle text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
                         <i class="ti ti-building-community fs-40"></i>
                     </div>
-                    <h4 class="mb-1">@Model.NombreComercial</h4>
-                    <p class="text-muted">@Model.RazonSocial</p>
+                    <h4 class="mb-1">@EntidadDisplay.Name</h4>
+                    <p class="text-muted">@EntidadDisplay.Name</p>
                     <span class="badge @(Model.Activo ? "bg-success" : "bg-danger") mb-3">@(Model.Activo ? "OPERATIVA" : "SUSPENDIDA")</span>
 
                     <div class="border-top pt-3 text-start small">

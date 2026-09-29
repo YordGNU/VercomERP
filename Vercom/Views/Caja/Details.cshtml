@@ -3,20 +3,16 @@
     ViewBag.Title = "Detalles de Caja";
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Gestión de Arca: @Model.Nombre</h4>
-        <p class="text-muted small mb-0">Detalle técnico, ubicación y estado financiero de la caja seleccionada.</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Tesorería</a></li>
-            <li class="breadcrumb-item"><a asp-action="Index">Cajas</a></li>
-            <li class="breadcrumb-item active">Detalles</li>
-        </ol>      
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = "Gestión de Arca: " + Model.Nombre,
+    Subtitle = "Detalle técnico, ubicación y estado financiero de la caja seleccionada.",
+    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
+        new() { Text = "Vercom", Url = "javascript: void(0);" },
+        new() { Text = "Tesorería", Url = "javascript: void(0);" },
+        new() { Text = "Cajas", Url = Url.Action("Index") },
+        new() { Text = "Detalles", IsActive = true }
+    }
+}' />
 
 <div class="row">
     <div class="row">

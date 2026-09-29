@@ -3,18 +3,15 @@
     ViewBag.Title = Model.Title;
 }
 
-<div class="page-title-head d-flex align-items-center">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">@Model.Title</h4>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Contabilidad</a></li>
-            <li class="breadcrumb-item active">Alta de Activo</li>
-        </ol>
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = Model.Title,
+    Subtitle = "Alta de nuevo activo fijo con configuración de depreciación.",
+    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
+        new() { Text = "Vercom", Url = "javascript: void(0);" },
+        new() { Text = "Contabilidad", Url = "javascript: void(0);" },
+        new() { Text = "Alta de Activo", IsActive = true }
+    }
+}' />
 <div class="row mt-4">
     <form asp-action="Create" method="post" id="createAssetForm">
         @Html.AntiForgeryToken()

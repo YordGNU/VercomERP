@@ -3,17 +3,11 @@
 @{
     ViewData["Title"] = "Index";
 }
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Control de numeraci�n</h4>
-        <p class="text-muted small mb-0">Control de numeraci�n por tipo de documento (Consecutivo).</p>
-    </div>
-    <div class="text-end">
-        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
-            <i class="ti ti-plus"></i> NUEVO CONSECUTIVO
-        </a>
-    </div>
-</div>
+<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
+    Title = "Control de Numeración",
+    Subtitle = "Control de numeración por tipo de documento (Consecutivo).",
+    PrimaryAction = new Vercom.ViewModels.ActionLinkModel { Controller = "Consecutivo", Action = "Create", Text = "NUEVO CONSECUTIVO", Icon = "ti ti-plus" }
+}' />
 <div class="row">
     @foreach (var item in Model)
     {
