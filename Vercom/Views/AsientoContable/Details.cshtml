@@ -3,10 +3,10 @@
     ViewBag.Title = "Detalle de Comprobante";
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Comprobante de " + Model.TipoComprobante.Nombre,
-    Subtitle = "Detalle del comprobante contable."
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Comprobante de ", Subtitle = "Detalle del comprobante contable.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row mt-4">
     <div class="card border-0 shadow-sm">

@@ -1,22 +1,12 @@
-﻿@model Vercom.Models.Merma
+@model Vercom.ViewModels.MermaFormViewModel
 @{
     ViewBag.Title = "Reportar Merma";
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold text-danger">Registro de Ineficiencia Extraordinaria</h4>
-        <p class="text-muted small mb-0">Captación de desperdicios, roturas o mermas fuera de la norma técnica.</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Producción</a></li>
-            <li class="breadcrumb-item"><a asp-action="Index">Mermas</a></li>
-            <li class="breadcrumb-item active">Nuevo Reporte</li>
-        </ol>
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Mermas</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Registro de Ineficiencia Extraordinaria", Subtitle = "Captación de desperdicios, roturas o mermas fuera de la norma técnica.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row justify-content-center">
@@ -32,19 +22,19 @@
 
                         <div class="col-md-7">
                             <label class="form-label fw-bold">Orden de Producción (Origen)</label>
-                            <select asp-for="OrdenProduccionId" class="form-control form-select w-100 select2" asp-items="ViewBag.OrdenProduccionId">
+                            <select asp-for="Merma.OrdenProduccionId" class="form-control form-select w-100 select2" asp-items="ViewBag.OrdenProduccionId">
                                 <option value="">-- Merma no vinculada a OP (Ajuste Directo) --</option>
                             </select>
                         </div>
 
                         <div class="col-md-5">
                             <label class="form-label fw-bold">Fecha de Ocurrencia</label>
-                            <input asp-for="Fecha" type="date" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                            <input asp-for="Merma.Fecha" type="date" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
                         </div>
 
                         <div class="col-md-12">
                             <label class="form-label fw-bold">Artículo / Insumo Afectado</label>
-                            <select asp-for="ProductoId" class="form-control form-select w-100 select2" asp-items="ViewBag.ProductoId" required>
+                            <select asp-for="Merma.ProductoId" class="form-control form-select w-100 select2" asp-items="ViewBag.ProductoId" required>
                                 <option value="">-- Buscar en Catálogo --</option>
                             </select>
                         </div>
@@ -52,15 +42,15 @@
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Cantidad Desperdiciada</label>
                             <div class="input-group">
-                                <input asp-for="Cantidad" type="number" step="0.0001" class="form-control fw-bold text-danger" placeholder="0.0000" required />
+                                <input asp-for="Merma.Cantidad" type="number" step="0.0001" class="form-control fw-bold text-danger" placeholder="0.0000" required />
                                 <span class="input-group-text bg-light tiny">U.M.</span>
                             </div>
-                            <span asp-validation-for="Cantidad" class="text-danger small"></span>
+                            <span asp-validation-for="Merma.Cantidad" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Causa del Desperdicio</label>
-                            <select asp-for="Causa" class="form-select" required>
+                            <select asp-for="Merma.Causa" class="form-select" required>
                                 <option value="DURANTE_PROCESO">Desperdicio en Proceso</option>
                                 <option value="ROTURA_MAQUINARIA">Falla Técnica / Maquinaria</option>
                                 <option value="ERROR_HUMANO">Error de Operación</option>
@@ -71,7 +61,7 @@
 
                         <div class="col-12">
                             <label class="form-label fw-bold">Observaciones / Justificación Técnica</label>
-                            <textarea asp-for="Observaciones" class="form-control" rows="3" placeholder="Describa brevemente cómo ocurrió la pérdida..."></textarea>
+                            <textarea asp-for="Merma.Observaciones" class="form-control" rows="3" placeholder="Describa brevemente cómo ocurrió la pérdida..."></textarea>
                         </div>
 
                         <div class="col-12 d-flex justify-content-end gap-2 mt-4 pt-3 border-top">

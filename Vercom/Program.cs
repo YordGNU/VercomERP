@@ -45,6 +45,7 @@ builder.Services.AddScoped<IConsecutivoService, ConsecutivoService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 builder.Services.AddScoped<IExportService, ExportService>();
+builder.Services.AddScoped<IImportacionService, ImportacionService>();
 
 // Servicios POS (JWT / API móvil)
 builder.Services.AddScoped<PosAuthService>();

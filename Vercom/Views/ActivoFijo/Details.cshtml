@@ -3,10 +3,10 @@
     ViewBag.Title = "Detalle de Activo Fijo";
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = Model.Descripcion,
-    Subtitle = "Código de Inventario: " + Model.CodigoInventario
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "", Subtitle = "Código de Inventario: ", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row">

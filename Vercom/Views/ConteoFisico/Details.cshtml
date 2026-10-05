@@ -4,16 +4,10 @@
     var diffCount = Model.ConteoFisicoDetalles.Count(d => d.Diferencia != 0);
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Auditoría de Stock: " + Model.Almacen.Nombre,
-    Subtitle = "Resultados del levantamiento físico vs. existencias en sistema.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Inventario", Url = "javascript: void(0);" },
-        new() { Text = "Conteos", Url = Url.Action("Index") },
-        new() { Text = "Auditoría", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Auditoría de Stock: ", Subtitle = "Resultados del levantamiento físico vs. existencias en sistema.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row">

@@ -22,7 +22,7 @@ public class ParametroSistemaController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Edit(Guid id)
+    public async Task<IActionResult> Edit(int id)
     {
         var vm = await _adminService.GetParameterFormContextAsync(id);
         return View(vm);
@@ -30,19 +30,34 @@ public class ParametroSistemaController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(Guid id, ParametroFormViewModel vm)
+    public async Task<IActionResult> Edit(int id, ParametroFormViewModel vm)
     {
         var entry = vm.Parametro;
-        if (id == Guid.Empty) return NotFound();
+        if (id == 0) return Json(new { success = false, message = "El identificador del parámetro no es válido." });
 
         ModelState.Remove("Parametro.Entidad");
 
         if (ModelState.IsValid)
         {
             var result = await _adminService.SaveParameterAsync(entry);
-            if (result.Succeeded) return RedirectToAction(nameof(Index));
-            ModelState.AddModelError("", result.Message);
+            if (result.Succeeded)
+            {
+                return Json(new
+                {
+                    success = true,
+                    message = result.Message ?? "Parámetro actualizado correctamente.",
+                    redirectUrl = Url.Action(nameof(Index))
+                });
+            }
+
+            return Json(new { success = false, message = result.Message ?? "No se pudo guardar el parámetro." });
         }
-        return View(vm);
+
+        return Json(new
+        {
+            success = false,
+            message = "Revise los campos señalados.",
+            errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToArray()
+        });
     }
 }

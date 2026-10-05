@@ -18,7 +18,7 @@
 }
 
 
-<link href="~/ccs/plugins/leaflet/leaflet.css" />
+<link href="~/css/plugins/leaflet/leaflet.css" rel="stylesheet" />
 <style>
     #mapa { height: calc(100vh - 220px); min-height: 420px; border-radius: .75rem; z-index: 1; }
     .leaflet-container { font-family: inherit; }
@@ -26,15 +26,10 @@
     .map-panel .list-group-item:hover { background: #f1f5f9; }
 </style>
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Mapa de Sucursales</h4>
-        <p class="text-muted small mb-0">Ubicación geográfica de almacenes, tiendas, oficinas y áreas de producción.</p>
-    </div>
-    <div class="text-end">
-        <a asp-action="Index" class="btn btn-light shadow-sm"><i class="ti ti-arrow-left me-1"></i> Volver al listado</a>
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Volver al listado</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Mapa de Sucursales", Subtitle = "Ubicación geográfica de almacenes, tiendas, oficinas y áreas de producción.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row g-3">
     <div class="col-lg-8">

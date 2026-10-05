@@ -3,9 +3,10 @@
     ViewBag.Title = "Detalle de Auditoría";
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Detalle de Transacción: " + Model.Id
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Detalle de Transacción: ", Subtitle = "", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row mt-4">
     <div class="row">

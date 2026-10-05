@@ -1,18 +1,10 @@
-﻿@model IEnumerable<Vercom.Models.ActivoFijo>
-@{
-    ViewBag.Title = "Submayor de Activos Fijos";
-}
+@model IEnumerable<Vercom.Models.ActivoFijo>
+@{ ViewBag.Title = "Activos Fijos"; }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Medios Básicos y Activos Tangibles",
-    Subtitle = "Control de propiedad, planta y equipo con cálculo de depreciación integrada.",
-    PrimaryAction = new Vercom.ViewModels.ActionLinkModel { Controller = "ActivoFijo", Action = "Create", Text = "NUEVO ACTIVO", Icon = "ti ti-plus" },
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Contabilidad", Url = "javascript: void(0);" },
-        new() { Text = "Activos Fijos", IsActive = true }
-    }
-}' />
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVO ACTIVO</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Activos Fijos", Subtitle = "Control de propiedad, planta y equipo con cálculo de depreciación integrada.", Icon = "ti-building-warehouse", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 <div class="row">
     <div class="card">
          <div class="card-header border-light justify-content-between">

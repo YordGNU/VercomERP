@@ -49,11 +49,25 @@ public class CuentaBancariumController : Controller
         if (ModelState.IsValid)
         {
             var result = await _cashBankService.CreateBankAccountAsync(account);
-            if (result.Succeeded) return RedirectToAction(nameof(Index));
-            ModelState.AddModelError("", result.Message);
+            if (result.Succeeded)
+            {
+                return Json(new
+                {
+                    success = true,
+                    message = result.Message ?? "Cuenta bancaria creada correctamente.",
+                    redirectUrl = Url.Action(nameof(Index))
+                });
+            }
+
+            return Json(new { success = false, message = result.Message ?? "No se pudo crear la cuenta bancaria." });
         }
-        var contextVm = await _cashBankService.GetBankAccountFormContextAsync(account);
-        return View(contextVm);
+
+        return Json(new
+        {
+            success = false,
+            message = "Revise los campos señalados.",
+            errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToArray()
+        });
     }
 
     [Authorize(Policy = "CONTABILIDAD.CUENTA.EDITAR")]
@@ -73,7 +87,7 @@ public class CuentaBancariumController : Controller
     public async Task<IActionResult> Edit(Guid id, BankAccountFormViewModel vm)
     {
         var account = vm.BankAccount;
-        if (id != account.Id) return NotFound();
+        if (id != account.Id) return Json(new { success = false, message = "La cuenta bancaria no corresponde al registro seleccionado." });
 
         ModelState.Remove("BankAccount.Entidad");
         ModelState.Remove("BankAccount.CuentaContable");
@@ -81,10 +95,24 @@ public class CuentaBancariumController : Controller
         if (ModelState.IsValid)
         {
             var result = await _cashBankService.UpdateBankAccountAsync(account);
-            if (result.Succeeded) return RedirectToAction(nameof(Index));
-            ModelState.AddModelError("", result.Message);
+            if (result.Succeeded)
+            {
+                return Json(new
+                {
+                    success = true,
+                    message = result.Message ?? "Cuenta bancaria actualizada correctamente.",
+                    redirectUrl = Url.Action(nameof(Index))
+                });
+            }
+
+            return Json(new { success = false, message = result.Message ?? "No se pudo actualizar la cuenta bancaria." });
         }
-        var contextVm = await _cashBankService.GetBankAccountFormContextAsync(account);
-        return View(contextVm);
+
+        return Json(new
+        {
+            success = false,
+            message = "Revise los campos señalados.",
+            errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToArray()
+        });
     }
 }

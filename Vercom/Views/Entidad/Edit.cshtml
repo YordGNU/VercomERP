@@ -1,13 +1,12 @@
-﻿@model Vercom.Models.Entidad
+@model Vercom.Models.Entidad
 @{
     ViewBag.Title = "Editar Entidad";
 }
 
-<div class="page-title-head d-flex align-items-center">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 text-primary">Modificar Datos Legales</h4>
-    </div>
-</div>
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Modificar Datos Legales", Subtitle = "", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row mt-4">
     <div class="row justify-content-center">

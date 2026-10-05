@@ -1,16 +1,11 @@
-﻿@model Vercom.ViewModels.CajaFormViewModel
+@model Vercom.ViewModels.CajaFormViewModel
 @{
     ViewData["Title"] = "Crear Caja";
 }
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Configurar Nueva Arca / Caja",
-    Subtitle = "Habilitación de cajas físicas para el manejo de efectivo y cobros POS.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Tesorería", Url = "javascript: void(0);" },
-        new() { Text = "Nueva Caja", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Configurar Nueva Arca / Caja", Subtitle = "Habilitación de cajas físicas para el manejo de efectivo y cobros POS.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row justify-content-center">

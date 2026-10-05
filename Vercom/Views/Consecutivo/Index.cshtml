@@ -1,13 +1,10 @@
 @model IEnumerable<Vercom.Models.Consecutivo>
+@{ ViewBag.Title = "Consecutivos"; }
 
-@{
-    ViewData["Title"] = "Index";
-}
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Control de Numeración",
-    Subtitle = "Control de numeración por tipo de documento (Consecutivo).",
-    PrimaryAction = new Vercom.ViewModels.ActionLinkModel { Controller = "Consecutivo", Action = "Create", Text = "NUEVO CONSECUTIVO", Icon = "ti ti-plus" }
-}' />
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVO CONCEPTO</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Consecutivos", Subtitle = "Control de numeración de documentos.", Icon = "ti-list-numbers", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 <div class="row">
     @foreach (var item in Model)
     {
@@ -29,7 +26,7 @@
                     </div>
                     <div class="text-center py-3 bg-light-subtle border rounded-3 mb-2">
                         <h2 class="fw-bold text-success mb-0 text-numeric">@item.UltimoNumero</h2>
-                        <p class="small text-muted text-uppercase mb-0 fw-bold">Ultimo n�mero</p>
+                        <p class="small text-muted text-uppercase mb-0 fw-bold">Ultimo número</p>
                     </div>
                     <div class="bg-light-subtle border rounded-3 p-1 mb-2">
                         <div class="row g-0 text-center">

@@ -68,6 +68,24 @@ public class InventoryController : Controller
         ModelState.Remove("Movement.Entidad");
         ModelState.Remove("Movement.TipoMovimiento");
         ModelState.Remove("Movement.EntidadId");
+        ModelState.Remove("Movement.Movimiento");
+        ModelState.Remove("Movement.MovimientoInventario");
+        ModelState.Remove("Movement.Canal");
+        ModelState.Remove("Movement.CreadoPor");
+        ModelState.Remove("Movement.CreadoEn");
+        ModelState.Remove("Movement.AsientoId");
+        ModelState.Remove("Movement.Id");
+        ModelState.Remove("Movement.DispositivoPosId");
+        ModelState.Remove("Movement.ReferenciaExternaTipo");
+        ModelState.Remove("Movement.ReferenciaExternaId");
+
+        var navSuffixes = new[] { ".Producto", ".Movimiento", ".MovimientoInventario", ".Entidad", ".TipoMovimiento" };
+        foreach (var key in ModelState.Keys
+            .Where(k => k != null && navSuffixes.Any(s => k.EndsWith(s, StringComparison.Ordinal)))
+            .ToList())
+        {
+            ModelState.Remove(key);
+        }
 
         if (ModelState.IsValid)
         {

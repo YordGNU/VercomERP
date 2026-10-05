@@ -1,18 +1,13 @@
-﻿@model Vercom.Models.Cargo
+@model Vercom.Models.Cargo
 
 @{
     ViewData["Title"] = "Editar Cargo";
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Editar Cargo: " + Model.Nombre,
-    Subtitle = "Definición de responsabilidades y rangos salariales.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "RRHH", Url = "javascript: void(0);" },
-        new() { Text = "Cargos", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = "Editar Cargo: ", Subtitle = "Definición de responsabilidades y rangos salariales.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row justify-content-center">

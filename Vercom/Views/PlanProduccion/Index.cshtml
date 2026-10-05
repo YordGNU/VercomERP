@@ -4,22 +4,10 @@
     var meses = new[] { "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Planificación Mensual de Producción</h4>
-        <p class="text-muted small mb-0">Gestión de metas de fabricación alineadas con el presupuesto corporativo.</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Producción</a></li>
-            <li class="breadcrumb-item active">Planificación</li>
-        </ol>
-        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
-            <i class="ti ti-calendar-plus me-1"></i> NUEVO PLAN MENSUAL
-        </a>
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVO PLAN MENSUAL</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Planificación Mensual de Producción", Subtitle = "Gestión de metas de fabricación alineadas con el presupuesto corporativo.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="card shadow-sm border-0">

@@ -3,9 +3,10 @@
     ViewBag.Title = "Cierre de Ejercicio Fiscal";
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Cierre de Ejercicio " + Model.Year
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Cierre de Ejercicio ", Subtitle = "", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 <div class="row mt-4">
     <div class="row justify-content-center">
         <div class="col-lg-8">

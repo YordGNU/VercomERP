@@ -2,26 +2,12 @@
 @model IEnumerable<Vercom.Models.CuentaContable>
 @inject IAuthorizationService AuthorizationService
 @inject Vercom.Services.IEntidadDisplayService EntidadDisplay
-@{
-    ViewBag.Title = "Plan de Cuentas";
-    var canCreate = (await AuthorizationService.AuthorizeAsync(User, "CONTABILIDAD.CUENTA.CREAR")).Succeeded;
-}
+@{ ViewBag.Title = "Plan de Cuentas"; var canCreate = (await AuthorizationService.AuthorizeAsync(User, "CONTABILIDAD.CUENTA.CREAR")).Succeeded; }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Plan de Cuentas Institucional",
-    Subtitle = "Gestión del nomenclador oficial según normativas del MFP.",
-    PrimaryAction = canCreate ? new Vercom.ViewModels.ActionLinkModel {
-        Controller = "CuentaContable",
-        Action = "Create",
-        Text = "NUEVA CUENTA",
-        Icon = "ti ti-plus"
-    } : null,
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Contabilidad", Url = "javascript: void(0);" },
-        new() { Text = "Plan de Cuentas", IsActive = true }
-    }
-}' />
+@{ var headerActions = canCreate ? "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVA CUENTA</a>" : null; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Plan de Cuentas Institucional", Subtitle = "Gestión del nomenclador oficial según normativas del MFP.", Icon = "ti-list-tree", Tone = "primary", ActionsHtml = headerActions != null ? new Microsoft.AspNetCore.Html.HtmlString(headerActions) : null }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="card">
     <div class="card-header border-light justify-content-between">
@@ -105,7 +91,7 @@
     <script>
         $(document).ready(function () {
             $('#accountsTable').DataTable({
-                pageLength: 25,
+                pageLength: 100,
                 language: { url: '@Url.Content("~/lib/i18n/es-ES.json")' },
                 order: [[1, 'asc']],
                 dom: '<"row align-items-center"<"col-md-6"l><"col-md-6"f>>rt<"row align-items-center"<"col-md-5"i><"col-md-7"p>>',

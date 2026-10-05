@@ -3,16 +3,10 @@
     ViewBag.Title = "Ficha de Costo v." + Model.Version;
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Ingeniería de Costos: " + Model.Producto.Nombre,
-    Subtitle = "Estructura detallada según metodología del MFP para el cálculo de precios.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Producción", Url = "javascript: void(0);" },
-        new() { Text = "Fichas", Url = Url.Action("Index") },
-        new() { Text = "Detalle", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Ingeniería de Costos: ", Subtitle = "Estructura detallada según metodología del MFP para el cálculo de precios.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row">

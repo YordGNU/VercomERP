@@ -1,27 +1,8 @@
-@model IEnumerable<Vercom.Models.DispositivoPo>
 @using System.Linq
-@{
-    ViewBag.Title = "Dispositivos POS";
-    var sesiones = (Dictionary<Guid, Vercom.Models.SesionCajaPo>?)ViewBag.SesionesActivas ?? new();
-    var now = DateTimeOffset.Now;
-    var total = Model.Count();
-    var online = Model.Count(d => d.Estado == "ACTIVO" && d.UltimaSincronizacion.HasValue && d.UltimaSincronizacion.Value > now.AddMinutes(-30));
-    var desconectados = Model.Count(d => d.Estado == "ACTIVO" && !(d.UltimaSincronizacion.HasValue && d.UltimaSincronizacion.Value > now.AddMinutes(-30)));
-    var noActivos = Model.Count(d => d.Estado != "ACTIVO");
-    var turnosAbiertos = Model.Select(d => d.CajaId).Distinct().Count(c => sesiones.ContainsKey(c));
-}
+@model IEnumerable<Vercom.Models.DispositivoPo>
+@{ ViewBag.Title = "Dispositivos POS"; var total = Model?.Count() ?? 0; var online = Model?.Count(d => d.Estado == "ACTIVO" && d.UltimaSincronizacion.HasValue && d.UltimaSincronizacion.Value > DateTimeOffset.Now.AddMinutes(-30)) ?? 0; var desconectados = Model?.Count(d => d.Estado == "ACTIVO" && (!d.UltimaSincronizacion.HasValue || d.UltimaSincronizacion.Value <= DateTimeOffset.Now.AddMinutes(-30))) ?? 0; var noActivos = Model?.Count(d => d.Estado != "ACTIVO") ?? 0; var turnosAbiertos = Model?.Count(d => d.SesionCajaPo != null && d.SesionCajaPo.FechaCierre == null) ?? 0; var sesiones = (Dictionary<Guid, Vercom.Models.SesionCajaPo>?)ViewBag.SesionesActivas ?? new(); var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-device-laptop me-1'></i> REGISTRAR DISPOSITIVO</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Puntos de Venta", Title = "Gestión de Terminales de Venta (POS)", Subtitle = "Administración de hardware, licencias y sincronización de dispositivos móviles.", Icon = "ti-device-laptop", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Gestión de Terminales de Venta (POS)</h4>
-        <p class="text-muted small mb-0">Administración de hardware, licencias y sincronización de dispositivos móviles.</p>
-    </div>
-    <div class="text-end">
-            <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
-            <i class="ti ti-device-laptop me-1"></i> REGISTRAR DISPOSITIVO
-        </a>
-    </div>
-</div>
 
 <div class="container-xxl mt-4">
     <div class="row g-3 mb-4">

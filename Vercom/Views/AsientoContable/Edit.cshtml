@@ -1,19 +1,13 @@
-﻿@model Vercom.Models.AsientoContable
+@model Vercom.Models.AsientoContable
 @inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewData["Title"] = "Editar Asiento";
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Editar Asiento Contable",
-    Subtitle = "Modificación de datos del comprobante contable.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Contabilidad", Url = "javascript: void(0);" },
-        new() { Text = "Asiento contable", Url = Url.Action("Index") },
-        new() { Text = "Editar", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Editar Asiento Contable", Subtitle = "Modificación de datos del comprobante contable.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row">

@@ -1,19 +1,13 @@
-﻿@model Vercom.Models.ConceptoNomina
+@model Vercom.Models.ConceptoNomina
 @inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewData["Title"] = "Editar Concepto de Nómina";
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Editar Concepto de Nómina",
-    Subtitle = "Modificación de parámetros del concepto salarial.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "RRHH", Url = "javascript: void(0);" },
-        new() { Text = "Conceptos", Url = Url.Action("Index") },
-        new() { Text = "Editar", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Editar Concepto de Nómina", Subtitle = "Modificación de parámetros del concepto salarial.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row">

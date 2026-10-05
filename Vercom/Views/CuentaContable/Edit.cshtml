@@ -1,18 +1,12 @@
-﻿@model Vercom.ViewModels.AccountFormViewModel
+@model Vercom.ViewModels.AccountFormViewModel
 @{
     ViewBag.Title = "Editar Cuenta Contable";
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Actualizar Cuenta: " + Model.Account.Codigo,
-    Subtitle = "Modificación de descriptivos y atributos de control del Libro Mayor.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Contabilidad", Url = "javascript: void(0);" },
-        new() { Text = "Catálogo", Url = Url.Action("Index") },
-        new() { Text = "Editar", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Actualizar Cuenta: ", Subtitle = "Modificación de descriptivos y atributos de control del Libro Mayor.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row justify-content-center">

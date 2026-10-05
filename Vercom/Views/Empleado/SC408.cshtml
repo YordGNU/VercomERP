@@ -5,18 +5,10 @@
     ViewBag.Title = "Modelo SC-4-08: " + emp?.Nombres;
 }
 
-<div class="page-title-head d-flex align-items-center mb-4 print-hide">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Registro de Salarios y Tiempo de Servicio</h4>
-        <p class="text-muted small mb-0">Certificación oficial para trámites de seguridad social (SC-4-08).</p>
-    </div>
-    <div class="text-end">
-        <button onclick="window.print()" class="btn btn-sm btn-primary">
-            <i class="ti ti-printer me-1"></i> IMPRIMIR MODELO
-        </button>
-        <a asp-action="File" asp-route-id="@emp?.Id" class="btn btn-sm btn-outline-secondary">VOLVER</a>
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("File") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> VOLVER</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = "Registro de Salarios y Tiempo de Servicio", Subtitle = "Certificación oficial para trámites de seguridad social (SC-4-08).", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="card border-dark shadow-none" style="background: white;">

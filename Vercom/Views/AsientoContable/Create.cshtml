@@ -1,16 +1,11 @@
-﻿@model Vercom.ViewModels.AsientoCreateViewModel
+@model Vercom.ViewModels.AsientoCreateViewModel
 @{
     ViewBag.Title = Model.Title;
 }
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = Model.Title,
-    Subtitle = "Registro de comprobante de diario con validación de partida doble (RF-11).",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Contabilidad", Url = "javascript: void(0);" },
-        new() { Text = "Nuevo Asiento", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "", Subtitle = "Registro de comprobante de diario con validación de partida doble (RF-11).", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 <form asp-action="Create" method="post" id="asientoForm">
     @Html.AntiForgeryToken()
     <div class="row">

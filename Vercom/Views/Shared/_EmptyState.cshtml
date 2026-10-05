@@ -1,0 +1,50 @@
+@model Vercom.ViewModels.EmptyStateModel
+@{
+    var tone = string.IsNullOrWhiteSpace(Model.Tone) ? "light" : Model.Tone;
+}
+@if (Model.InTable)
+{
+    <tr class="ux-empty-row">
+        <td colspan="@Math.Max(1, Model.Colspan)" class="p-0 border-0">
+            <div class="ux-empty ux-tone-@tone">
+                @if (!string.IsNullOrWhiteSpace(Model.Icon))
+                {
+                    <span class="ux-empty-icon"><i class="ti @Model.Icon"></i></span>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.Title))
+                {
+                    <span class="ux-empty-title">@Model.Title</span>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.Description))
+                {
+                    <span class="ux-empty-text">@Model.Description</span>
+                }
+                @if (Model.ActionHtml != null)
+                {
+                    <div class="mt-2">@Model.ActionHtml</div>
+                }
+            </div>
+        </td>
+    </tr>
+}
+else
+{
+    <div class="ux-empty ux-tone-@tone">
+        @if (!string.IsNullOrWhiteSpace(Model.Icon))
+        {
+            <span class="ux-empty-icon"><i class="ti @Model.Icon"></i></span>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.Title))
+        {
+            <span class="ux-empty-title">@Model.Title</span>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.Description))
+        {
+            <span class="ux-empty-text">@Model.Description</span>
+        }
+        @if (Model.ActionHtml != null)
+        {
+            <div class="mt-2">@Model.ActionHtml</div>
+        }
+    </div>
+}

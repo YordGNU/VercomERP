@@ -1,21 +1,12 @@
-﻿@model Vercom.Models.UnidadMedidum
+@model Vercom.ViewModels.UnidadFormViewModel
 @{
     ViewBag.Title = "Editar Unidad de Medida";
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Gestión de Catálogo: Unidades</h4>
-        <p class="text-muted small mb-0">Actualización de magnitudes físicas de inventario.</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Inventario</a></li>
-            <li class="breadcrumb-item active">Unidades</li>
-        </ol>
-    </div>
-</div>
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Gestión de Catálogo: Unidades", Subtitle = "Actualización de magnitudes físicas de inventario.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row justify-content-center">
@@ -30,23 +21,23 @@
                 <div class="card-body p-4">
                     <form asp-action="Edit" method="post" class="row g-4" id="editUnitForm">
                         @Html.AntiForgeryToken()
-                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="Unidad.Id" />
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
 
                         <div class="col-md-4">
                             <label class="form-label fw-bold">Sigla / Código</label>
-                            <input asp-for="Codigo" class="form-control fw-bold text-primary bg-light" readonly />
+                            <input asp-for="Unidad.Codigo" class="form-control fw-bold text-primary bg-light" readonly />
                         </div>
 
                         <div class="col-md-8">
                             <label class="form-label fw-bold">Nombre de la Unidad</label>
-                            <input asp-for="Nombre" class="form-control fw-bold" required maxlength="50" />
-                            <span asp-validation-for="Nombre" class="text-danger small"></span>
+                            <input asp-for="Unidad.Nombre" class="form-control fw-bold" required maxlength="50" />
+                            <span asp-validation-for="Unidad.Nombre" class="text-danger small"></span>
                         </div>
 
                         <div class="col-12 mt-2">
                             <div class="form-check form-switch p-3 bg-light-subtle border rounded-3">
-                                <input class="form-check-input ms-0 me-2" type="checkbox" asp-for="EsFraccionable">
+                                <input class="form-check-input ms-0 me-2" type="checkbox" asp-for="Unidad.EsFraccionable">
                                 <label class="form-check-label fw-bold">Permitir Cantidades Fraccionarias (Decimales)</label>
                             </div>
                         </div>

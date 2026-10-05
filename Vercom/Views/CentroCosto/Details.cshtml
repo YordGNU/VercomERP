@@ -3,10 +3,10 @@
     ViewBag.Title = "Detalle de Centro de Costo";
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = Model.Nombre,
-    Subtitle = "Código: " + Model.Codigo
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "", Subtitle = "Código: ", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row">

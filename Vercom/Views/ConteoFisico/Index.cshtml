@@ -1,18 +1,10 @@
 @model IEnumerable<Vercom.Models.ConteoFisico>
-@{
-    ViewBag.Title = "Conteos Físicos";
-}
+@{ ViewBag.Title = "Conteos Físicos"; }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Gestión de Inventario Físico",
-    Subtitle = "Control de existencias mediante conteos periódicos y ajustes automáticos.",
-    PrimaryAction = new Vercom.ViewModels.ActionLinkModel { Controller = "ConteoFisico", Action = "Start", Text = "INICIAR NUEVO CONTEO", Icon = "ti ti-scan" },
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Inventario", Url = "javascript: void(0);" },
-        new() { Text = "Conteos", IsActive = true }
-    }
-}' />
+@{ var headerActions = "<button type='button' class='btn btn-sm btn-primary' data-bs-toggle='modal' data-bs-target='#startCountModal'><i class='ti ti-scan me-1'></i> INICIAR PROCESO</button>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Conteos Físicos", Subtitle = "Toma física de existencias para conciliación con kardex.", Icon = "ti-scale", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="card">

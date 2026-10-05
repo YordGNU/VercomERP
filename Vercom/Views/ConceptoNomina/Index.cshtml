@@ -1,14 +1,10 @@
 @model IEnumerable<Vercom.Models.ConceptoNomina>
+@{ ViewBag.Title = "Conceptos de Nómina"; }
 
-@{
-    ViewData["Title"] = "Index";
-}
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVO CONCEPTO</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = "Conceptos de Nómina", Subtitle = "Catálogo de devengados, deducciones y aportes para el cálculo de nómina.", Icon = "ti-list-details", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Configuración de Conceptos de Nómina",
-    Subtitle = "Definición de devengos, deducciones y aportes patronales (RF-23).",
-    PrimaryAction = new Vercom.ViewModels.ActionLinkModel { Controller = "ConceptoNomina", Action = "Create", Text = "NUEVO CONCEPTO", Icon = "ti ti-plus" }
-}' />
+
 
 <div class="row">
     <div class="card">

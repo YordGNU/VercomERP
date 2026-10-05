@@ -1,18 +1,12 @@
-﻿@model Vercom.Models.MantenimientoProgramado
+@model Vercom.ViewModels.MantenimientoFormViewModel
 @{
     ViewBag.Title = "Programar Mantenimiento";
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Planificación de Servicio Técnico",
-    Subtitle = "Programación de intervenciones preventivas o correctivas sobre activos productivos.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Producción", Url = "javascript: void(0);" },
-        new() { Text = "Mantenimiento", Url = Url.Action("Index") },
-        new() { Text = "Nuevo", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Planificación de Servicio Técnico", Subtitle = "Programación de intervenciones preventivas o correctivas sobre activos productivos.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row justify-content-center">
@@ -28,20 +22,20 @@
 
                         <div class="col-md-12">
                             <label class="form-label fw-bold">Equipo / Maquinaria</label>
-                            <select asp-for="EquipoId" class="form-control form-select w-100 select2" asp-items="ViewBag.EquipoId" required>
+                            <select asp-for="Mantenimiento.EquipoId" class="form-control form-select w-100 select2" asp-items="ViewBag.EquipoId" required>
                                 <option value="">-- Seleccione Maquinaria --</option>
                             </select>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Fecha Programada</label>
-                            <input asp-for="FechaProgramada" type="date" class="form-control" value="@DateTime.Now.AddDays(7).ToString("yyyy-MM-dd")" required />
-                            <span asp-validation-for="FechaProgramada" class="text-danger small"></span>
+                            <input asp-for="Mantenimiento.FechaProgramada" type="date" class="form-control" value="@DateTime.Now.AddDays(7).ToString("yyyy-MM-dd")" required />
+                            <span asp-validation-for="Mantenimiento.FechaProgramada" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Tipo de Mantenimiento</label>
-                            <select asp-for="Tipo" class="form-select" required>
+                            <select asp-for="Mantenimiento.Tipo" class="form-select" required>
                                 <option value="PREVENTIVO">Mantenimiento Preventivo</option>
                                 <option value="CORRECTIVO">Mantenimiento Correctivo (Rotura)</option>
                                 <option value="REVISIÓN">Revisión Técnica / Calibración</option>
@@ -50,21 +44,21 @@
 
                         <div class="col-md-12">
                             <label class="form-label fw-bold">Descripción del Trabajo a Realizar</label>
-                            <textarea asp-for="Descripcion" class="form-control" rows="3" placeholder="Ej: Cambio de filtros, lubricación de ejes..."></textarea>
-                            <span asp-validation-for="Descripcion" class="text-danger small"></span>
+                            <textarea asp-for="Mantenimiento.Descripcion" class="form-control" rows="3" placeholder="Ej: Cambio de filtros, lubricación de ejes..."></textarea>
+                            <span asp-validation-for="Mantenimiento.Descripcion" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Costo Estimado ($)</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input asp-for="Costo" class="form-control text-end" placeholder="0.00" step="0.01" />
+                                <input asp-for="Mantenimiento.Costo" class="form-control text-end" placeholder="0.00" step="0.01" />
                             </div>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Responsable Técnico</label>
-                            <input asp-for="ResponsableId" class="form-control" placeholder="Nombre del técnico o proveedor..." />
+                            <input asp-for="Mantenimiento.ResponsableId" class="form-control" placeholder="Nombre del técnico o proveedor..." />
                             <small class="text-muted tiny">Persona encargada de la ejecución.</small>
                         </div>
 

@@ -1,18 +1,13 @@
-﻿@model Vercom.Models.ConteoFisico
+@model Vercom.Models.ConteoFisico
 
 @{
     ViewData["Title"] = "Crear Conteo Físico";
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Crear Conteo Físico",
-    Subtitle = "Registro de nuevo conteo físico de inventario.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Inventario", Url = "javascript: void(0);" },
-        new() { Text = "Conteos Físicos", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Crear Conteo Físico", Subtitle = "Registro de nuevo conteo físico de inventario.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row">

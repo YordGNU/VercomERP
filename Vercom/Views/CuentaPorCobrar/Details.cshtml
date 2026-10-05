@@ -16,16 +16,10 @@
         : "badge-soft-danger";
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Ficha de Cuenta por Cobrar",
-    Subtitle = "Detalle del título de crédito y su trazabilidad de cobros.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Contabilidad", Url = "javascript: void(0);" },
-        new() { Text = "Cuentas por Cobrar", Url = Url.Action("Index") },
-        new() { Text = "Ficha", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Ficha de Cuenta por Cobrar", Subtitle = "Detalle del título de crédito y su trazabilidad de cobros.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row g-3 mb-4">
     <div class="col-md-3">

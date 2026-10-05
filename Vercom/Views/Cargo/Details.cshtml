@@ -3,10 +3,10 @@
     ViewBag.Title = "Detalle de Cargo: " + Model.Nombre;
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Ficha de Puesto: " + Model.Nombre,
-    Subtitle = "Especificaciones funcionales, nivel salarial y ocupación de plantilla."
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = "Ficha de Puesto: ", Subtitle = "Especificaciones funcionales, nivel salarial y ocupación de plantilla.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row">

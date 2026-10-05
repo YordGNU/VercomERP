@@ -1,23 +1,8 @@
 @model IEnumerable<Vercom.Models.PeriodoContable>
-@{
-    ViewBag.Title = "Periodos Contables";
-    var meses = new[] { "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
-}
+@{ ViewBag.Title = "Periodos Contables"; var meses = new[] { "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" }; }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Control de Periodos Fiscales</h4>
-        <p class="text-muted small mb-0">Gestión de aperturas y cierres mensuales para el reporte de estados financieros.</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Contabilidad</a></li>
-            <li class="breadcrumb-item active">Periodos</li>
-        </ol>
-    </div>
-</div>
-<div class="row">   
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Control de Periodos Fiscales", Subtitle = "Gestión de aperturas y cierres mensuales para el reporte de estados financieros.", Icon = "ti-calendar-event", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' /><div class="row">   
     @foreach (var item in Model)    {
         var isClosed = item.Estado == "CERRADO";   
         <div class="col-md-4">
@@ -31,7 +16,7 @@
                         <span class="badge @(isClosed ? "bg-danger" : "bg-success")">@item.Estado</span>
                     </div>
                     <div class="small text-muted mb-3">
-                        <i class="ti ti-calendar-range me-1"></i> @item.FechaInicio.ToString("dd/MM") al @item.FechaFin.ToString("dd/MM")
+                        <i class="ti ti-calendar-event me-1"></i> @item.FechaInicio.ToString("dd/MM") al @item.FechaFin.ToString("dd/MM")
                     </div>        
                     @if (isClosed)
                     {
@@ -62,7 +47,7 @@
                 </div>
                 <div class="modal-body text-center">
                     <i class="ti ti-alert-triangle fs-48 text-warning mb-3"></i>
-                    <h4>�Cerrar el periodo <span id="periodNameLabel"></span>?</h4>
+                    <h4>¿Cerrar el periodo <span id="periodNameLabel"></span>?</h4>
                     <p class="text-muted">
                         Al cerrar el periodo, ya no se podrán registrar nuevos asientos contables.
                         Esta acción es definitiva y asegura la integridad de los estados financieros.
@@ -70,7 +55,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger px-4">S�, CERRAR PERIODO</button>
+                    <button type="submit" class="btn btn-danger px-4">Sí, CERRAR PERIODO</button>
                 </div>
             </div>
         </form>
@@ -86,6 +71,4 @@
         }
     </script>
 }
-
-
 

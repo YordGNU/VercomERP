@@ -3,20 +3,10 @@
     ViewBag.Title = Model.Title;
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Nueva Orden de Compra</h4>
-        <p class="text-muted small mb-0">Gestión de aprovisionamiento y solicitudes a proveedores (RF-51).</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Comercial</a></li>
-            <li class="breadcrumb-item"><a asp-action="Index">Compras</a></li>
-            <li class="breadcrumb-item active">Nueva Orden</li>
-        </ol>
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Compras</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Nueva Orden de Compra", Subtitle = "Gestión de aprovisionamiento y solicitudes a proveedores (RF-51).", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <form asp-action="Create" method="post" id="purchaseForm">

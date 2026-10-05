@@ -68,11 +68,13 @@ public class SalesService : ISalesService
     public async Task<FacturaVentum?> GetInvoiceByIdAsync(Guid id)
     {
         return await _context.FacturaVenta
+            .Include(f => f.Entidad)
+            .Include(f => f.Sucursal)
             .Include(f => f.Cliente)
             .Include(f => f.Contrato)
             .Include(f => f.FacturaVentaDetalles).ThenInclude(d => d.Producto).ThenInclude(p => p.UnidadMedida)
             .Include(f => f.FormaPagoVenta)
-            .Include(f => f.Asiento)
+            .Include(f => f.Asiento).ThenInclude(a => a.AsientoDetalles)
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 
@@ -94,7 +96,7 @@ public class SalesService : ISalesService
             Contratos = new SelectList(await _context.ContratoEconomicos.Where(c => c.Estado == "VIGENTE" && c.TerceroTipo == "CLIENTE").ToListAsync(), "Id", "NumeroContrato"),
             ProductosDisponibles = await _context.Productos
                 .Where(p => p.Activo && p.Tipo == "TERMINADO")
-                .Select(p => new { p.Id, p.Nombre, p.PrecioVentaActual, p.Codigo })
+                .Select(p => new { p.Id, p.Nombre, p.PrecioVentaActual, p.Codigo, p.AplicaImpuestoVentas })
                 .ToListAsync()
         };
 

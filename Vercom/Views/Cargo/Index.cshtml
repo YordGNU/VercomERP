@@ -1,13 +1,10 @@
 @model IEnumerable<Vercom.Models.Cargo>
+@{ ViewData["Title"] = "Index"; ViewBag.Title = "Gestión de Cargos"; }
 
-@{
-    ViewData["Title"] = "Index";
-}
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Nomenclador de Cargos y Ocupaciones",
-    Subtitle = "Definición de perfiles laborales y escalas salariales base.",
-    PrimaryAction = new Vercom.ViewModels.ActionLinkModel { Controller = "Cargo", Action = "Create", Text = "NUEVO CARGO", Icon = "ti ti-plus" }
-}' />
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVO CARGO</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = "Nomenclador de Cargos y Ocupaciones", Subtitle = "Definición de perfiles laborales y escalas salariales base.", Icon = "ti-briefcase", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="card">

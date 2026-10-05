@@ -1,19 +1,13 @@
-﻿@model Vercom.Models.VSaldoCuentum
+@model Vercom.Models.VSaldoCuentum
 @inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewData["Title"] = "Crear Saldo de Cuenta";
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Crear Saldo de Cuenta",
-    Subtitle = "Registro de saldo de cuenta contable.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Contabilidad", Url = "javascript: void(0);" },
-        new() { Text = "Saldos", Url = Url.Action("Index") },
-        new() { Text = "Crear", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Crear Saldo de Cuenta", Subtitle = "Registro de saldo de cuenta contable.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row">

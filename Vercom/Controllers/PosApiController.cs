@@ -12,11 +12,13 @@ public class PosApiController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly IPosService _posService;
+    private readonly IImportacionService _importService;
 
-    public PosApiController(IAuthService authService, IPosService posService)
+    public PosApiController(IAuthService authService, IPosService posService, IImportacionService importacion)
     {
         _authService = authService;
         _posService = posService;
+        _importService = importacion;
     }
 
     [HttpPost("login")]
@@ -81,4 +83,19 @@ public class PosApiController : ControllerBase
         var res = await _posService.GetCatalogForPosAsync(since);
         return Ok(res);
     }
+
+    [HttpGet("importacion/test-conexion")]
+    public async Task<IActionResult> TestConnection(ConexionRequest conexion)
+    {
+        var res = await _importService.TestConexionAsync(conexion);
+        if (res.Exitoso)
+        {
+            return Ok(res);
+        }
+        else
+        {
+            return StatusCode(500, res.Mensaje);
+        }
+    }
+
 }

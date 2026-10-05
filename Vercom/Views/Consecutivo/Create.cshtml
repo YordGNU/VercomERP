@@ -1,16 +1,11 @@
-﻿@model Vercom.ViewModels.ConsecutivoFormViewModel
+@model Vercom.ViewModels.ConsecutivoFormViewModel
 @{
     ViewBag.Title = Model.Title;
 }
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Registrar Consecutivo",
-    Subtitle = "Control de numeración por tipo de documento y serie (RNF-51).",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = Url.Action("Index", "Dashboard") },
-        new() { Text = "Consecutivo", Url = Url.Action("Index") },
-        new() { Text = "Nuevo Consecutivo", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Registrar Consecutivo", Subtitle = "Control de numeración por tipo de documento y serie (RNF-51).", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 <div class="row">
     <div class="col-lg-6">
         <div class="card">

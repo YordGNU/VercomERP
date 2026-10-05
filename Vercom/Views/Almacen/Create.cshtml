@@ -1,17 +1,12 @@
-﻿@model Vercom.ViewModels.AlmacenFormViewModel
+@model Vercom.ViewModels.AlmacenFormViewModel
 @{
     ViewBag.Title = Model.Title;
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = Model.Title,
-    Subtitle = "Habilitación de nuevas áreas de almacenamiento y puntos de despacho.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Inventario", Url = "javascript: void(0);" },
-        new() { Text = "Nuevo Almacén", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = Model.Title, Subtitle = "Habilitación de nuevas áreas de almacenamiento y puntos de despacho.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row mt-4">
     <div class="row justify-content-center">

@@ -51,8 +51,8 @@ public class SalesController : Controller
         var entidadId = _entidadProvider.CurrentEntidadId;
         var vm = await _salesService.GetSalesCreateContextAsync();
 
-        ViewBag.TaxRate = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "TASA_IMP_VENTAS");
-        if (ViewBag.TaxRate == 0) ViewBag.TaxRate = 10.0m; // Default 10%
+        var tasaImpuesto = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "TAX_VENTA");
+        ViewBag.TaxRate = tasaImpuesto * 100m;
 
         return View(vm);
     }
@@ -77,9 +77,35 @@ public class SalesController : Controller
         ModelState.Remove("Invoice.Entidad");
         ModelState.Remove("Invoice.Sucursal");
         ModelState.Remove("Invoice.Contrato");
+        ModelState.Remove("Invoice.Produtos");
+        ModelState.Remove("Invoice.FacturaVenta");
+        ModelState.Remove("Invoice.FormaPagoVentaEntity");
         ModelState.Remove("Invoice.NumeroFactura");
         ModelState.Remove("Invoice.EntidadId");
+        ModelState.Remove("Invoice.SucursalId");
+        ModelState.Remove("Invoice.CreadoPor");
         ModelState.Remove("Invoice.CreadoEn");
+        ModelState.Remove("Invoice.Fecha");
+        ModelState.Remove("Invoice.CanalVenta");
+        ModelState.Remove("Invoice.Moneda");
+        ModelState.Remove("Invoice.Estado");
+        ModelState.Remove("Invoice.Total");
+        ModelState.Remove("Invoice.Subtotal");
+        ModelState.Remove("Invoice.ImpuestoVentasTotal");
+        ModelState.Remove("Invoice.AsientoId");
+        ModelState.Remove("Invoice.CuentaPorCobrarId");
+        ModelState.Remove("Invoice.DispositivoPosId");
+        ModelState.Remove("Invoice.SesionCajaPosId");
+        ModelState.Remove("Invoice.MotivoAnulacion");
+        ModelState.Remove("Invoice.Factura");
+        ModelState.Remove("Invoice.FacturaVentum");
+        ModelState.Remove("Invoice.FacturaVentaDetalle");
+
+        var serverManagedSuffixes = new[] { ".Producto", ".Factura", ".Entidad", ".Sucursal", ".Cliente", ".Almacen", ".Contrato", ".FormaPago" };
+        var serverManagedKeys = ModelState.Keys
+            .Where(k => k != null && serverManagedSuffixes.Any(s => k.EndsWith(s, StringComparison.Ordinal)))
+            .ToList();
+        foreach (var key in serverManagedKeys) ModelState.Remove(key);
 
         if (ModelState.IsValid)
         {

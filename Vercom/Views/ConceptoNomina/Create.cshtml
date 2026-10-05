@@ -1,16 +1,11 @@
-﻿@model Vercom.Models.ConceptoNomina
+@model Vercom.Models.ConceptoNomina
 @{
     ViewData["Title"] = "Create";
 }
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Crear Concepto de Nómina",
-    Subtitle = "Parametrización de cálculos salariales y deducciones fiscales.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "RRHH", Url = "javascript: void(0);" },
-        new() { Text = "Conceptos", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Crear Concepto de Nómina", Subtitle = "Parametrización de cálculos salariales y deducciones fiscales.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 <div class="row">
     <div class="row justify-content-center">
         <div class="col-lg-10">

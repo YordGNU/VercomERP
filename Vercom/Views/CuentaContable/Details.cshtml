@@ -5,16 +5,10 @@
     var balance = await AccountingService.GetAccountBalanceAsync(Model.Id);
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Cuenta: " + Model.Codigo + " - " + Model.Nombre,
-    Subtitle = "Atributos técnicos, jerarquía y saldo actual en el Libro Mayor.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Contabilidad", Url = "javascript: void(0);" },
-        new() { Text = "Catálogo", Url = Url.Action("Index") },
-        new() { Text = "Ficha", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Cuenta: ", Subtitle = "Atributos técnicos, jerarquía y saldo actual en el Libro Mayor.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
             <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary">
                 <i class="ti ti-edit me-1"></i> EDITAR CUENTA
             </a>

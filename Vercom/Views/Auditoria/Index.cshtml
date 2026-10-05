@@ -1,12 +1,15 @@
+
+
+
+
 @model Vercom.ViewModels.AuditIndexViewModel
 @using Vercom.Helpers
-@{
-    ViewBag.Title = Model.Title;
-}
+@{ ViewBag.Title = Model.Title; }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = Model.Title
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = Model.Title, Subtitle = "Seguimiento de eventos críticos y operaciones sensibles del sistema.", Icon = "ti-shield-check", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row mt-4">
     <div class="col-lg-12">
@@ -134,7 +137,6 @@
                     tr.addClass('shown');
                 }
             });
-            window.SubmitAjaxForm('filterAuditForm');
         });
     </script>
 }

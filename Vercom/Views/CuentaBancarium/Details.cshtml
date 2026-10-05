@@ -3,16 +3,10 @@
     ViewBag.Title = "Estado de Cuenta Bancaria";
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Cuenta: " + Model.Banco + " - " + Model.NumeroCuenta,
-    Subtitle = "Monitoreo de liquidez, conciliación y movimientos bancarios.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Tesorería", Url = "javascript: void(0);" },
-        new() { Text = "Bancos", Url = Url.Action("Index") },
-        new() { Text = "Estado", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Cuenta: ", Subtitle = "Monitoreo de liquidez, conciliación y movimientos bancarios.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row">

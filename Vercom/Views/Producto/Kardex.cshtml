@@ -4,30 +4,17 @@
     ViewBag.Title = "Kardex de Producto: " + product?.Nombre;
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Reporte de Kardex: @product?.Nombre</h4>
-        <p class="text-muted small mb-0">Trazabilidad histórica de movimientos, saldos y costos del artículo.</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Inventario</a></li>
-            <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@product?.Id">Ficha Técnica</a></li>
-            <li class="breadcrumb-item active">Kardex</li>
-        </ol>
-        <button onclick="window.print()" class="btn btn-sm btn-light">
-            <i class="ti ti-printer me-1"></i> IMPRIMIR REPORTE
-        </button>
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("Details") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Ficha Técnica</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Reporte de Kardex: " + product + "?.Nombre", Subtitle = "Trazabilidad histórica de movimientos, saldos y costos del artículo.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="card shadow-sm border-0">
         <div class="card-header bg-light-subtle d-flex justify-content-between align-items-center">
             <h5 class="m-0 fw-bold"><i class="ti ti-history me-2 text-primary"></i>Hoja de Movimiento Auxiliar</h5>
             <div class="small">
-                <span class="text-muted">Unidad de Medida:</span> <strong class="text-dark">@product?.UnidadMedida.Nombre</strong>
+                <span class="text-muted">Unidad de Medida:</span> <strong class="text-dark">@(product?.UnidadMedida?.Nombre ?? "-")</strong>
             </div>
         </div>
         <div class="card-body">

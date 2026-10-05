@@ -1,12 +1,12 @@
-﻿@model Vercom.ViewModels.BankAccountFormViewModel
+@model Vercom.ViewModels.BankAccountFormViewModel
 @{
     ViewBag.Title = Model.Title;
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = Model.Title,
-    Subtitle = "Alta de cuentas en instituciones financieras para la gestión de tesorería."
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "", Subtitle = "Alta de cuentas en instituciones financieras para la gestión de tesorería.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <form asp-action="Create" method="post" id="createBankAccountForm">

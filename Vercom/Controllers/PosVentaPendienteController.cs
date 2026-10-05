@@ -38,9 +38,12 @@ public class PosVentaPendienteController : Controller
     public async Task<IActionResult> Process(Guid id)
     {
         var result = await _posService.ProcessPendingSaleAsync(id);
-        if (result.Succeeded) TempData["Success"] = result.Message;
-        else TempData["Error"] = result.Message;
 
-        return RedirectToAction(nameof(Index));
+        return Json(new
+        {
+            success = result.Succeeded,
+            message = result.Message,
+            redirectUrl = result.Succeeded ? Url.Action(nameof(Index)) : null
+        });
     }
 }

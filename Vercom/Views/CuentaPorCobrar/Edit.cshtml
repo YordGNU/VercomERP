@@ -1,4 +1,4 @@
-﻿@model Vercom.ViewModels.CxCFormViewModel
+@model Vercom.ViewModels.CxCFormViewModel
 @{
     ViewBag.Title = "Editar Cuenta por Cobrar";
     var fmt = new System.Globalization.CultureInfo("es-CU");
@@ -10,16 +10,10 @@
     };
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Editar Cuenta por Cobrar",
-    Subtitle = "Mantenimiento del título de crédito y su saldo vigente.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Contabilidad", Url = "javascript: void(0);" },
-        new() { Text = "Cuentas por Cobrar", Url = Url.Action("Index") },
-        new() { Text = "Editar", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Editar Cuenta por Cobrar", Subtitle = "Mantenimiento del título de crédito y su saldo vigente.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row justify-content-center mt-2">
     <div class="col-lg-9">

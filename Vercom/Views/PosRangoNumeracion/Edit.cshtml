@@ -1,19 +1,13 @@
-﻿@model Vercom.Models.PosRangoNumeracion
+@model Vercom.Models.PosRangoNumeracion
 @inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewData["Title"] = "Editar Rango de Numeración POS";
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Editar Rango de Numeración POS",
-    Subtitle = "Modificación de rango de numeración para facturación offline.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Ventas", Url = "javascript: void(0);" },
-        new() { Text = "Rangos", Url = Url.Action("Index") },
-        new() { Text = "Editar", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Editar Rango de Numeración POS", Subtitle = "Modificación de rango de numeración para facturación offline.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
             <li class="breadcrumb-item active">Editar</li>
         </ol>
     </div>

@@ -1,67 +1,24 @@
 @model Vercom.ViewModels.CxPIndexViewModel
-@{
-    ViewBag.Title = "Cuentas por Pagar";
-    var filtros = new RouteValueDictionary { ["search"] = Model.Search, ["tipo"] = Model.DocumentoTipo, ["estado"] = Model.Estado, ["vencidas"] = Model.VencidasOnly };
-    var aplicarId = Context.Request.Query["aplicar"].ToString();
-    var fmt = new System.Globalization.CultureInfo("es-CU");
-    var hoy = DateOnly.FromDateTime(DateTime.Now);
-}
+@{ ViewBag.Title = "Cuentas por Pagar"; var filtros = new RouteValueDictionary { ["search"] = Model.Search, ["tipo"] = Model.DocumentoTipo, ["estado"] = Model.Estado, ["vencidas"] = Model.VencidasOnly }; var aplicarId = Context.Request.Query["aplicar"].ToString(); var fmt = new System.Globalization.CultureInfo("es-CU"); var hoy = DateOnly.FromDateTime(DateTime.Now); }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Cuentas por Pagar",
-    Subtitle = "Cartera de pagos a proveedores, antigüedad de saldos y procesamiento de pagos.",
-    PrimaryAction = new Vercom.ViewModels.ActionLinkModel { Controller = "CuentaPorPagar", Action = "Create", Text = "REGISTRAR", Icon = "ti ti-plus" },
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Contabilidad", Url = "javascript: void(0);" },
-        new() { Text = "Cuentas por Pagar", IsActive = true }
-    }
-}' />
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> REGISTRAR</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Cuentas por Pagar", Subtitle = "Cartera de pagos a proveedores, antigüedad de saldos y procesamiento de pagos.", Icon = "ti-wallet", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
 
-<div class="row g-3 mb-4">
-    <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm mb-0">
-            <div class="card-body p-3 d-flex align-items-center gap-3">
-                <span class="avatar bg-primary-subtle text-primary"><i class="ti ti-wallet fs-20"></i></span>
-                <div>
-                    <div class="fs-5 fw-bold mb-0">@Model.TotalAbierto.ToString("N2", fmt)</div>
-                    <div class="text-muted small">Total abierto · @Model.DocumentosAbiertos docs.</div>
-                </div>
-            </div>
-        </div>
+
+
+@{ var kpiAbierto = new Vercom.ViewModels.KpiCardModel { Label = "Total abierto", Value = Model.TotalAbierto.ToString("N2", fmt), Icon = "ti-wallet", Tone = "primary" }; var kpiVencido = new Vercom.ViewModels.KpiCardModel { Label = "Vencido (morosidad)", Value = Model.TotalVencido.ToString("N2", fmt), Icon = "ti-alert-triangle", Tone = "danger" }; var kpiPorVencer = new Vercom.ViewModels.KpiCardModel { Label = "Por vencer", Value = Model.TotalPorVencer.ToString("N2", fmt), Icon = "ti-calendar-check", Tone = "success" }; var kpiPagado = new Vercom.ViewModels.KpiCardModel { Label = "Pagado acumulado", Value = Model.TotalAplicado.ToString("N2", fmt), Icon = "ti-arrows-exchange", Tone = "info" }; }
+<div class='row g-2 mb-3'>
+    <div class='col-md-3 col-6'>
+        <partial name='_KpiCard' model='kpiAbierto' />
     </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm mb-0">
-            <div class="card-body p-3 d-flex align-items-center gap-3">
-                <span class="avatar bg-danger-subtle text-danger"><i class="ti ti-alert-triangle fs-20"></i></span>
-                <div>
-                    <div class="fs-5 fw-bold mb-0">@Model.TotalVencido.ToString("N2", fmt)</div>
-                    <div class="text-muted small">Vencido (en mora)</div>
-                </div>
-            </div>
-        </div>
+    <div class='col-md-3 col-6'>
+        <partial name='_KpiCard' model='kpiVencido' />
     </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm mb-0">
-            <div class="card-body p-3 d-flex align-items-center gap-3">
-                <span class="avatar bg-success-subtle text-success"><i class="ti ti-calendar-check fs-20"></i></span>
-                <div>
-                    <div class="fs-5 fw-bold mb-0">@Model.TotalPorVencer.ToString("N2", fmt)</div>
-                    <div class="text-muted small">Por vencer</div>
-                </div>
-            </div>
-        </div>
+    <div class='col-md-3 col-6'>
+        <partial name='_KpiCard' model='kpiPorVencer' />
     </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm mb-0">
-            <div class="card-body p-3 d-flex align-items-center gap-3">
-                <span class="avatar bg-info-subtle text-info"><i class="ti ti-handshake fs-20"></i></span>
-                <div>
-                    <div class="fs-5 fw-bold mb-0">@Model.TotalAplicado.ToString("N2", fmt)</div>
-                    <div class="text-muted small">Pagado acumulado</div>
-                </div>
-            </div>
-        </div>
+    <div class='col-md-3 col-6'>
+        <partial name='_KpiCard' model='kpiPagado' />
     </div>
 </div>
 

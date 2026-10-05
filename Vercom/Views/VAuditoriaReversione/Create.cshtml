@@ -1,19 +1,13 @@
-﻿@model Vercom.Models.VAuditoriaReversione
+@model Vercom.Models.VAuditoriaReversione
 @inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewData["Title"] = "Crear Auditoría de Reversión";
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Crear Auditoría de Reversión",
-    Subtitle = "Registro de auditoría de reversión.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Contabilidad", Url = "javascript: void(0);" },
-        new() { Text = "Auditoría", Url = Url.Action("Index") },
-        new() { Text = "Crear", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Crear Auditoría de Reversión", Subtitle = "Registro de auditoría de reversión.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row">

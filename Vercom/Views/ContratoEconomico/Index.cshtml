@@ -1,23 +1,14 @@
 @using Microsoft.AspNetCore.Authorization
 @inject IAuthorizationService AuthorizationService
 @model IEnumerable<Vercom.Models.ContratoEconomico>
-@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
-@{
-    ViewBag.Title = "Contratos Económicos";
-    var today = DateOnly.FromDateTime(DateTime.Now);
-    var canCreate = (await AuthorizationService.AuthorizeAsync(User, "COMERCIAL.CONTRATO.CREAR")).Succeeded;
-}
+@{ ViewBag.Title = "Contratos Económicos"; }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Relaciones Contractuales (B2B)",
-    Subtitle = "Gestión de convenios comerciales con clientes y proveedores (RF-50).",
-    PrimaryAction = canCreate ? new Vercom.ViewModels.ActionLinkModel {
-        Controller = "ContratoEconomico",
-        Action = "Create",
-        Text = "NUEVO CONTRATO",
-        Icon = "ti ti-file-plus"
-    } : null
-}' />
+@{ var canCreate = (await AuthorizationService.AuthorizeAsync(User, "COMERCIAL.CONTRATO.CREAR")).Succeeded; var headerActions = canCreate ? "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVO CONTRATO</a>" : null; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Contratos Económicos", Subtitle = "Gestión de convenios y condiciones económicas.", Icon = "ti-file-contract", Tone = "primary", ActionsHtml = headerActions != null ? new Microsoft.AspNetCore.Html.HtmlString(headerActions) : null }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
+@{ var today = DateOnly.FromDateTime(DateTime.Now); }
+
 <div class="row">
     <!-- Sección de Filtros -->
     <div class="col-lg-12">

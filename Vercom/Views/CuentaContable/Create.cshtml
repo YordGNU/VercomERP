@@ -1,17 +1,12 @@
-﻿@model Vercom.ViewModels.AccountFormViewModel
+@model Vercom.ViewModels.AccountFormViewModel
 @{
     ViewBag.Title = Model.Title;
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = Model.Title,
-    Subtitle = "Definición de estructura contable según normas oficiales (RF-10).",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Contabilidad", Url = "javascript: void(0);" },
-        new() { Text = "Nueva Cuenta", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "", Subtitle = "Definición de estructura contable según normas oficiales (RF-10).", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 <div class="row">
     <form asp-action="Create" method="post" id="createAccountForm">
         @Html.AntiForgeryToken()

@@ -1,20 +1,13 @@
-﻿@using Vercom.Security
+@using Vercom.Security
 @inject IEntidadProvider EntidadProvider
 @model Vercom.ViewModels.AsientoIndexViewModel
 @inject Vercom.Services.IEntidadDisplayService EntidadDisplay
-@{
-    ViewBag.Title = Model.Title;
-    var isMaster = EntidadProvider.IsMaster;
-}
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Libro Diario de Comprobantes",
-    Subtitle = "Registro cronológico de todas las operaciones económicas de la entidad.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Contabilidad", Url = "javascript: void(0);" },
-        new() { Text = "Asiento contable", IsActive = true }
-    }
-}' />
+@{ ViewBag.Title = Model.Title; var isMaster = EntidadProvider.IsMaster; }
+
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Libro Diario de Comprobantes", Subtitle = "Registro cronológico de todas las operaciones económicas de la entidad.", Icon = "ti-book", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 <div class="card">
     <div class="card-body">
         <form method="get" class="row g-1 align-items-center">

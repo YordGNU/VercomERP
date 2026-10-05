@@ -3,16 +3,10 @@
     ViewBag.Title = "Alertas de Inventario";
 }
 
-<div class="page-title-head d-flex align-items-center">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 text-danger">Stock Crítico y Seguridad</h4>
-    </div>
-    <div class="text-end">
-        <a asp-controller="Purchase" asp-action="Create" class="btn btn-outline-danger">
-            <i class="ti ti-shopping-cart-plus me-1"></i> Generar Orden de Compra
-        </a>
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("Create", "Purchase") + "' class='btn btn-sm btn-outline-danger'><i class='ti ti-shopping-cart-plus me-1'></i> GENERAR ORDEN DE COMPRA</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Alertas de Inventario", Title = "Stock Crítico y Seguridad", Subtitle = "Existencias por agotarse y mínimos de seguridad.", Icon = "ti-alert-triangle", Tone = "danger", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row mt-4">
     <div class="row">
@@ -58,7 +52,7 @@
         {
             <div class="col-12 text-center py-5">
                 <div class="avatar-lg bg-success-subtle text-success rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px;">
-                    <i class="ti ti-check-double fs-40"></i>
+                    <i class="ti ti-checks fs-40"></i>
                 </div>
                 <h3>¡Inventario Saludable!</h3>
                 <p class="text-muted">No se detectan productos por debajo del stock mínimo de seguridad.</p>

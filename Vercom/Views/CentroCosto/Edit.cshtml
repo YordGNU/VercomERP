@@ -1,16 +1,11 @@
-﻿@model Vercom.ViewModels.CentroCostoFormViewModel
+@model Vercom.ViewModels.CentroCostoFormViewModel
 @{
     ViewData["Title"] = "Editar Centro de Costo";
 }
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Editar Centro de Costo",
-    Subtitle = "Imputación analítica de gastos por unidad organizativa.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Contabilidad", Url = "javascript: void(0);" },
-        new() { Text = "Centros de Costo", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Editar Centro de Costo", Subtitle = "Imputación analítica de gastos por unidad organizativa.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row justify-content-center">

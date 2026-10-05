@@ -1,4 +1,4 @@
-﻿@model Vercom.Models.Presupuesto
+@model Vercom.Models.Presupuesto
 
 @{
     ViewData["Title"] = "Edit";
@@ -10,18 +10,10 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-       <div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Editar Presupuesto</h4>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Presupuesto</a></li>
-            <li class="breadcrumb-item active">Editar</li>
-        </ol>
-    </div>
-</div>
+       @{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Ventas", Title = "Editar Presupuesto", Subtitle = "", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row">

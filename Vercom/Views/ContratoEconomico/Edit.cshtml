@@ -1,17 +1,11 @@
-﻿@model Vercom.ViewModels.EconomicContractViewModel
+@model Vercom.ViewModels.EconomicContractViewModel
 @{
     ViewBag.Title = Model.Title;
 }
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Editar Contrato Económico",
-    Subtitle = "Modificación del convenio B2B " + Model.Contract.NumeroContrato + ".",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Comercial", Url = "javascript: void(0);" },
-        new() { Text = "Contratos", Url = Url.Action("Index") },
-        new() { Text = "Editar", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Editar Contrato Económico", Subtitle = "Modificación del convenio B2B ", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 <div class="row">
     <div class="row justify-content-center">
         <div class="col-lg-10">

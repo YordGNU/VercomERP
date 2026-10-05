@@ -5,20 +5,10 @@
     var totalPurchases = Model.OrdenCompras.Where(o => o.Estado == "RECIBIDA").Sum(o => o.Total);
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Proveedor: @Model.RazonSocial</h4>
-        <p class="text-muted small mb-0">Gestión de abastecimiento, pasivos corrientes y acuerdos comerciales.</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Comercial</a></li>
-            <li class="breadcrumb-item"><a asp-action="Index">Proveedores</a></li>
-            <li class="breadcrumb-item active">Ficha</li>
-        </ol>       
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Proveedores</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Ventas", Title = "Proveedor: " + Model.RazonSocial, Subtitle = "Gestión de abastecimiento, pasivos corrientes y acuerdos comerciales.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row">

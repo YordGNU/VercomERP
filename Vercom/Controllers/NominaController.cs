@@ -49,10 +49,13 @@ public class NominaController : Controller
     public async Task<IActionResult> Calculate(short anio, short mes)
     {
         var result = await _payrollService.CalculatePayrollAsync(_entidadProvider.CurrentEntidadId, anio, mes);
-        if (result.Succeeded) TempData["Success"] = result.Message;
-        else TempData["Error"] = result.Message;
 
-        return RedirectToAction(nameof(Index));
+        return Json(new
+        {
+            success = result.Succeeded,
+            message = result.Message,
+            redirectUrl = result.Succeeded ? Url.Action(nameof(Index)) : null
+        });
     }
 
     [HttpPost]
@@ -61,10 +64,13 @@ public class NominaController : Controller
     public async Task<IActionResult> Approve(Guid id)
     {
         var result = await _payrollService.ApprovePayrollAsync(id, _entidadProvider.CurrentUsuarioId);
-        if (result.Succeeded) TempData["Success"] = result.Message;
-        else TempData["Error"] = result.Message;
 
-        return RedirectToAction(nameof(Details), new { id });
+        return Json(new
+        {
+            success = result.Succeeded,
+            message = result.Message,
+            redirectUrl = result.Succeeded ? Url.Action(nameof(Details), new { id }) : null
+        });
     }
 
     [Authorize(Policy = "RRHH.NOMINA.VER")]

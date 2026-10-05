@@ -1,67 +1,22 @@
 @model Vercom.ViewModels.ProviderListViewModel
-@{
-    ViewData["Title"] = "Registro de Proveedores";
-    var estado = Model.Activo switch { true => "activa", false => "inactiva", _ => "" };
-}
+@{ ViewData["Title"] = "Registro de Proveedores"; var estado = Model.Activo switch { true => "activa", false => "inactiva", _ => "" }; }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Gestión de Abastecimiento: Proveedores</h4>
-        <p class="text-muted small mb-0">Directorio de suministradores de bienes y servicios para la S.U.R.L.</p>
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-truck-delivery me-1'></i> NUEVO PROVEEDOR</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Gestión de Abastecimiento", Title = "Proveedores", Subtitle = "Directorio de suministradores de bienes y servicios para la S.U.R.L.", Icon = "ti-building-factory", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+@{ var kpiTotal = new Vercom.ViewModels.KpiCardModel { Label = "Proveedores", Value = Model.Total.ToString(), Icon = "ti-building-factory", Tone = "primary" }; var kpiActivos = new Vercom.ViewModels.KpiCardModel { Label = "Proveedores activos", Value = Model.Activos.ToString(), Icon = "ti-circle-check", Tone = "success" }; var kpiInactivos = new Vercom.ViewModels.KpiCardModel { Label = "Proveedores inactivos", Value = Model.Inactivos.ToString(), Icon = "ti-circle-x", Tone = "danger" }; }
+<div class='row g-2 mb-3'>
+    <div class='col-md-4 col-6'>
+        <partial name='_KpiCard' model='kpiTotal' />
     </div>
-    <div class="text-end d-flex align-items-center gap-3">   
-        <a asp-action="Create" class="btn btn-primary shadow-sm">
-            <i class="ti ti-truck-delivery me-1"></i> NUEVO PROVEEDOR
-        </a>
+    <div class='col-md-4 col-6'>
+        <partial name='_KpiCard' model='kpiActivos' />
+    </div>
+    <div class='col-md-4 col-6'>
+        <partial name='_KpiCard' model='kpiInactivos' />
     </div>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm mb-0">
-            <div class="card-body p-3 d-flex align-items-center gap-3">
-                <span class="avatar bg-primary-subtle text-primary"><i class="ti ti-building-factory fs-20"></i></span>
-                <div>
-                    <div class="fs-5 fw-bold mb-0">@Model.Total</div>
-                    <div class="text-muted small">Proveedores</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm mb-0">
-            <div class="card-body p-3 d-flex align-items-center gap-3">
-                <span class="avatar bg-success-subtle text-success"><i class="ti ti-circle-check fs-20"></i></span>
-                <div>
-                    <div class="fs-5 fw-bold mb-0">@Model.Activos</div>
-                    <div class="text-muted small">Suministradores activos</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm mb-0">
-            <div class="card-body p-3 d-flex align-items-center gap-3">
-                <span class="avatar bg-danger-subtle text-danger"><i class="ti ti-circle-x fs-20"></i></span>
-                <div>
-                    <div class="fs-5 fw-bold mb-0">@Model.Inactivos</div>
-                    <div class="text-muted small">Suministradores inactivos</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm mb-0">
-            <div class="card-body p-3 d-flex align-items-center gap-3">
-                <span class="avatar bg-info-subtle text-info"><i class="ti ti-id-badge fs-20"></i></span>
-                <div>
-                    <div class="fs-5 fw-bold mb-0">@Model.Juridicas <span class="text-muted fs-6 fw-normal">/ @Model.Naturales</span></div>
-                    <div class="text-muted small">Jurídicas / Naturales</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 <div class="card shadow-sm border-0 mb-4">
     <div class="card-body p-3">
         <form asp-action="Index" method="get" class="row g-2 align-items-end">

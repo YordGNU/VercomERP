@@ -1,20 +1,11 @@
-﻿@model Vercom.ViewModels.EmployeeCreateViewModel
+@model Vercom.ViewModels.EmployeeCreateViewModel
 @{
     ViewBag.Title = "Editar Expediente: " + Model.Empleado.Nombres;
 }
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">@Model.Title</h4>
-        <p class="text-muted small mb-0">Alta formal de trabajador con activación de contrato legal (RF-20).</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">RRHH</a></li>
-            <li class="breadcrumb-item active">Nuevo Ingreso</li>
-        </ol>
-    </div>
-</div>
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = Model.Title, Subtitle = "Alta formal de trabajador con activación de contrato legal (RF-20).", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 <form asp-action="Edit" method="post" enctype="multipart/form-data">
     @Html.AntiForgeryToken()
     <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-4 shadow-sm"></div>

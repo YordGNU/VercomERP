@@ -62,11 +62,14 @@ public sealed class NotificacionController : Controller
 
     // ============================ CAMPANA (dropdown + badge) ============================
     [HttpGet]
-    public async Task<IActionResult> Ultimas(int n = 5, bool soloNoLeidas = false)
+    public async Task<IActionResult> Ultimas(int n = 5, bool soloNoLeidas = false, string? tipo = null)
     {
         var q = soloNoLeidas ? Bandeja().Where(x => !x.Leida) : Bandeja();
+        if (!string.IsNullOrEmpty(tipo) && tipo != "todas")
+            q = q.Where(x => x.Tipo == tipo);
+
         var items = await q
-            .OrderByDescending(n => n.CreadoEn)
+            .OrderByDescending(x => x.CreadoEn)
             .Take(Math.Clamp(n, 1, 20))
             .Select(x => new
             {
@@ -75,6 +78,7 @@ public sealed class NotificacionController : Controller
                 x.Mensaje,
                 x.Tipo,
                 x.Leida,
+                x.Enlace,
                 Tiempo = x.CreadoEn.ToString("HH:mm")
             })
             .ToListAsync();

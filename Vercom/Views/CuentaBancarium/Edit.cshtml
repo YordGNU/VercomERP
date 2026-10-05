@@ -1,12 +1,12 @@
-﻿@model Vercom.ViewModels.BankAccountFormViewModel
+@model Vercom.ViewModels.BankAccountFormViewModel
 @{
     ViewBag.Title = "Editar Cuenta Bancaria";
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Actualizar Cuenta Bancaria",
-    Subtitle = "Modificación de parámetros de la cuenta institucional."
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Actualizar Cuenta Bancaria", Subtitle = "Modificación de parámetros de la cuenta institucional.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <form asp-action="Edit" method="post" id="editBankAccountForm">

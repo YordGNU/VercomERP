@@ -1,18 +1,13 @@
-﻿@model Vercom.ViewModels.ClientFormViewModel
+@model Vercom.ViewModels.ClientFormViewModel
 
 @{
     ViewData["Title"] = "Crear Cliente";
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Crear Cliente",
-    Subtitle = "Registro de nuevo cliente en el directorio comercial.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Ventas", Url = "javascript: void(0);" },
-        new() { Text = "Clientes", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Ventas", Title = "Crear Cliente", Subtitle = "Registro de nuevo cliente en el directorio comercial.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row justify-content-center">

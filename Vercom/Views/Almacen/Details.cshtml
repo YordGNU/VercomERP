@@ -4,16 +4,10 @@
     var stockItems = Model.Existencia.Count;
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Almacén: " + Model.Nombre,
-    Subtitle = "Ubicación, tipo de depósito y resumen de existencias locales.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Inventario", Url = "javascript: void(0);" },
-        new() { Text = "Almacenes", Url = Url.Action("Index") },
-        new() { Text = "Detalle", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Almacén: ", Subtitle = "Ubicación, tipo de depósito y resumen de existencias locales.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
         </a>
     </div>
 </div>

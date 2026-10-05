@@ -4,39 +4,8 @@
     var meses = new[] { "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Liquidación de Haberes: @meses[Model.Periodo.Mes] @Model.Periodo.Anio</h4>
-        <p class="text-muted small mb-0">Detalle individual de devengados y retenciones legales del periodo.</p>
-    </div>
-    <div class="text-end d-flex gap-2">
-        <a asp-action="Index" class="btn btn-sm btn-outline"><i class="ti ti-arrow-left"></i> VOLVER</a>
-        @if (Model.Periodo.Estado == "PRENOMINA")
-        {
-            <form asp-action="Approve" method="post" id="approvePayrollForm">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="id" value="@Model.Periodo.Id" />
-                <button type="submit" class="btn btn-sm btn-primary shadow-sm bg-success">
-                    <i class="ti ti-check"></i> APROBAR Y CONTABILIZAR
-                </button>
-            </form>
-        }
-        @if (Model.Periodo.AsientoId.HasValue)
-        {
-            <a asp-controller="AsientoContable" asp-action="Details" asp-route-id="@Model.Periodo.AsientoId" class="btn btn-sm btn-outline text-info">
-                <i class="ti ti-calculator"></i> VER ASIENTO
-            </a>
-        }
-    </div>
-</div>
-
-@section Scripts {
-    <script>
-        $(document).ready(function() {
-            window.SubmitAjaxForm('approvePayrollForm');
-        });
-    </script>
-}
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-arrow-left me-1'></i> VOLVER</a>"; if (Model.Periodo.AsientoId.HasValue) { headerActions += "<a href='" + Url.Action("Details", "AsientoContable", new { id = Model.Periodo.AsientoId }) + "' class='btn btn-sm btn-outline-info'><i class='ti-calculator me-1'></i> VER ASIENTO</a>"; } if (Model.Periodo.Estado == "PRENOMINA") { headerActions += "<form method='post' action='" + Url.Action("Approve") + "' id='approvePayrollForm' class='d-inline'>" + Html.AntiForgeryToken() + "<input type='hidden' name='id' value='" + Model.Periodo.Id + "' /><button type='submit' class='btn btn-sm btn-success shadow-sm'><i class='ti-check me-1'></i> APROBAR Y CONTABILIZAR</button></form>"; } var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Liquidación de Haberes: " + meses[Model.Periodo.Mes] + " " + Model.Periodo.Anio, Subtitle = "Detalle individual de devengados y retenciones legales del periodo.", Icon = "ti-arrow-left", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
 
 <div class="row">
     <!-- Resumen de Costo para la Entidad (Carga Impositiva) -->

@@ -3,10 +3,10 @@
     ViewBag.Title = "Nuevo Turno de Trabajo";
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Crear Turno de Trabajo",
-    Subtitle = "Defina el intervalo horario y las tolerancias permitidas."
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Crear Turno de Trabajo", Subtitle = "Defina el intervalo horario y las tolerancias permitidas.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row justify-content-center">
     <div class="col-md-6">

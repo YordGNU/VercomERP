@@ -3,16 +3,10 @@
     ViewBag.Title = "Detalles de Caja";
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Gestión de Arca: " + Model.Nombre,
-    Subtitle = "Detalle técnico, ubicación y estado financiero de la caja seleccionada.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Tesorería", Url = "javascript: void(0);" },
-        new() { Text = "Cajas", Url = Url.Action("Index") },
-        new() { Text = "Detalles", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Gestión de Arca: ", Subtitle = "Detalle técnico, ubicación y estado financiero de la caja seleccionada.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row">

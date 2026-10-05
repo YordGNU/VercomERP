@@ -27,7 +27,7 @@ public interface IAdminService
 
     // Parámetros del Sistema
     Task<IEnumerable<ParametroSistema>> GetParametersAsync();
-    Task<ParametroFormViewModel> GetParameterFormContextAsync(Guid? id = null);
+    Task<ParametroFormViewModel> GetParameterFormContextAsync(int? id = null);
     Task<(bool Succeeded, string Message)> SaveParameterAsync(ParametroSistema entry);
 
     // Sucursales
@@ -343,7 +343,7 @@ public class AdminService : IAdminService
         return await _context.ParametroSistemas.ToListAsync();
     }
 
-    public async Task<ParametroFormViewModel> GetParameterFormContextAsync(Guid? id = null)
+    public async Task<ParametroFormViewModel> GetParameterFormContextAsync(int? id = null)
     {
         var existing = id.HasValue ? await _context.ParametroSistemas.FindAsync(id.Value) : null;
         return new ParametroFormViewModel

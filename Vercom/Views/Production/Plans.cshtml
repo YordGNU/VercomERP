@@ -4,17 +4,10 @@
     var meses = new[] { "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Planes de Producción (B2M)</h4>
-        <p class="text-muted small mb-0">Gestión de metas de fabricación y proyección de necesidades de stock (RF-44).</p>
-    </div>
-    <div class="text-end">
-        <button type="button" class="btn btn-sm btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#suggestPlanModal">
-            <i class="ti ti-wand me-1"></i> SUGERIR PLAN INTELIGENTE
-        </button>
-    </div>
-</div>
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Planes de Producción (B2M)", Subtitle = "Gestión de metas de fabricación y proyección de necesidades de stock (RF-44).", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="card shadow-sm border-0">

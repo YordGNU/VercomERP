@@ -1,19 +1,8 @@
 @model IEnumerable<Vercom.Models.Rol>
-@{
-    ViewBag.Title = "Seguridad: Roles de Usuario";
-}
+@{ ViewBag.Title = "Seguridad: Roles de Usuario"; }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1 me-3">
-        <h4 class="page-main-title m-0 fw-bold">Gestión de Seguridad: Perfiles de Acceso</h4>
-        <p class="text-muted small mb-0">Definición de roles y matrices de permisos según segregación de funciones (Res. 60/2011).</p>
-    </div>
-    <div class="text-end">
-        <a asp-action="Create" class="btn btn-primary shadow-sm">
-            <i class="ti ti-shield-plus me-1"></i> CREAR NUEVO ROL
-        </a>
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-shield-plus me-1'></i> CREAR NUEVO ROL</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Gestión de Seguridad: Perfiles de Acceso", Subtitle = "Definición de roles y matrices de permisos según segregación de funciones (Res. 60/2011).", Icon = "ti-shield-plus", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
 
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body py-3">

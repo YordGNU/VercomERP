@@ -1,63 +1,24 @@
 @model Vercom.ViewModels.ClientListViewModel
-@{
-    ViewData["Title"] = "Cartera de Clientes";
-    var estado = Model.Activo switch { true => "activa", false => "inactiva", _ => "" };
-}
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Gestión Comercial: Cartera de Clientes",
-    Subtitle = "Directorio unificado de clientes corporativos y consumidores finales.",
-    PrimaryAction = new Vercom.ViewModels.ActionLinkModel { Controller = "Cliente", Action = "Create", Text = "REGISTRAR CLIENTE", Icon = "ti ti-user-plus" },
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Ventas", Url = "javascript: void(0);" },
-        new() { Text = "Clientes", IsActive = true }
-    }
-}' />
+@{ ViewData["Title"] = "Cartera de Clientes"; var estado = Model.Activo switch { true => "activa", false => "inactiva", _ => "" }; }
 
-<div class="row g-3 mb-4">
-    <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm mb-0">
-            <div class="card-body p-3 d-flex align-items-center gap-3">
-                <span class="avatar bg-primary-subtle text-primary"><i class="ti ti-users fs-20"></i></span>
-                <div>
-                    <div class="fs-5 fw-bold mb-0">@Model.Total</div>
-                    <div class="text-muted small">Clientes</div>
-                </div>
-            </div>
-        </div>
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-user-plus me-1'></i> REGISTRAR CLIENTE</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Gestión Comercial", Title = "Cartera de Clientes", Subtitle = "Directorio unificado de clientes corporativos y consumidores finales.", Icon = "ti-users", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
+
+@{ var kpiTotal = new Vercom.ViewModels.KpiCardModel { Label = "Clientes", Value = Model.Total.ToString(), Icon = "ti-users", Tone = "primary" }; var kpiActivos = new Vercom.ViewModels.KpiCardModel { Label = "Clientes activos", Value = Model.Activos.ToString(), Icon = "ti-circle-check", Tone = "success" }; var kpiInactivos = new Vercom.ViewModels.KpiCardModel { Label = "Clientes inactivos", Value = Model.Inactivos.ToString(), Icon = "ti-circle-x", Tone = "danger" }; var kpiSegmento = new Vercom.ViewModels.KpiCardModel { Label = "Minoristas / Mayoristas", Value = Model.Minoristas + " / " + Model.Mayoristas, Icon = "ti-chart-donut", Tone = "info" }; }
+<div class='row g-2 mb-3'>
+    <div class='col-md-3 col-6'>
+        <partial name='_KpiCard' model='kpiTotal' />
     </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm mb-0">
-            <div class="card-body p-3 d-flex align-items-center gap-3">
-                <span class="avatar bg-success-subtle text-success"><i class="ti ti-circle-check fs-20"></i></span>
-                <div>
-                    <div class="fs-5 fw-bold mb-0">@Model.Activos</div>
-                    <div class="text-muted small">Clientes activos</div>
-                </div>
-            </div>
-        </div>
+    <div class='col-md-3 col-6'>
+        <partial name='_KpiCard' model='kpiActivos' />
     </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm mb-0">
-            <div class="card-body p-3 d-flex align-items-center gap-3">
-                <span class="avatar bg-danger-subtle text-danger"><i class="ti ti-circle-x fs-20"></i></span>
-                <div>
-                    <div class="fs-5 fw-bold mb-0">@Model.Inactivos</div>
-                    <div class="text-muted small">Clientes inactivos</div>
-                </div>
-            </div>
-        </div>
+    <div class='col-md-3 col-6'>
+        <partial name='_KpiCard' model='kpiInactivos' />
     </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm mb-0">
-            <div class="card-body p-3 d-flex align-items-center gap-3">
-                <span class="avatar bg-info-subtle text-info"><i class="ti ti-chart-donut fs-20"></i></span>
-                <div>
-                    <div class="fs-5 fw-bold mb-0">@Model.Minoristas <span class="text-muted fs-6 fw-normal">/ @Model.Mayoristas</span></div>
-                    <div class="text-muted small">Minoristas / Mayoristas</div>
-                </div>
-            </div>
-        </div>
+    <div class='col-md-3 col-6'>
+        <partial name='_KpiCard' model='kpiSegmento' />
     </div>
 </div>
 

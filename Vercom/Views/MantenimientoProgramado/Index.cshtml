@@ -1,18 +1,10 @@
 @model IEnumerable<Vercom.Models.MantenimientoProgramado>
-@{
-    ViewBag.Title = "Plan de Mantenimiento";
-}
+@{ ViewBag.Title = "Mantenimiento Programado"; }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Planificación de Mantenimientos Preventivos",
-    Subtitle = "Control de paradas programadas y reparaciones para garantizar la continuidad operativa.",
-    PrimaryAction = new Vercom.ViewModels.ActionLinkModel { Controller = "MantenimientoProgramado", Action = "Create", Text = "NUEVA PROGRAMACIÓN", Icon = "ti ti-calendar-plus" },
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Producción", Url = "javascript: void(0);" },
-        new() { Text = "Mantenimiento", IsActive = true }
-    }
-}' />
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVA PROGRAMACIÓN</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Mantenimiento Programado", Subtitle = "Planificación y seguimiento de mantenimientos preventivos/correctivos.", Icon = "ti-tools", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="card shadow-sm border-0">

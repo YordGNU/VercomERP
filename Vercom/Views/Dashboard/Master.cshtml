@@ -4,141 +4,160 @@
     string Money(decimal v) => v.ToString("N2");
 }
 
-<div class="page-title-head d-flex align-items-center p-1 ">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Monitor Maestro de Ecosistema ERP</h4>
-        <p class="text-muted small mb-0">Visión global de infraestructura, seguridad y entidades registradas.</p>
-    </div>
-    <div class="text-end">
-        <span class="badge badge-soft-primary py-2 px-3">
-            <i class="ti ti-crown me-1"></i> MODO SUPERADMINISTRADOR
-        </span>
-    </div>
-</div>
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Monitor Maestro", Subtitle = "Visión global de infraestructura, seguridad y entidades registradas en el ecosistema.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <!-- Fila 1: KPIs Globales -->
-<div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-1 mb-3">
+<div class="row row-cols-1 row-cols-md-2 row-cols-xxl-4 g-3 mb-3">
     <div class="col">
-        <div class="card card-sm h-100">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-auto">
-                        <span class="bg-primary text-white avatar"><i class="ti ti-building-community fs-24"></i></span>
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <div class="text-muted small text-uppercase fw-bold letter-spacing-1 mb-1">Empresas Activas</div>
+                        <div class="fs-24 fw-bold text-primary">@Model.TotalEntidades</div>
                     </div>
-                    <div class="col">
-                        <div class="font-weight-medium fw-bold fs-20">@Model.TotalEntidades</div>
-                        <div class="text-muted small">Empresas Activas</div>
-                    </div>
+                    <span class="avatar-md rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center">
+                        <i class="ti ti-building-community fs-22"></i>
+                    </span>
+                </div>
+                <hr class="my-3 opacity-50" />
+                <div class="d-flex justify-content-between text-muted small">
+                    <span>Ecosistema registrado</span>
+                    <span class="@(Model.EntidadesPendientes > 0 ? "text-warning fw-bold" : "text-success")"><i class="ti @(Model.EntidadesPendientes > 0 ? "ti-alert-triangle" : "ti-circle-check") me-1"></i>@Model.EntidadesPendientes pendientes</span>
                 </div>
             </div>
         </div>
     </div>
     <div class="col">
-        <div class="card card-sm border-warning-subtle h-100">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-auto">
-                        <span class="bg-warning text-white avatar"><i class="ti ti-clock-pause fs-24"></i></span>
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <div class="text-muted small text-uppercase fw-bold letter-spacing-1 mb-1">Pendientes Aprobación</div>
+                        <div class="fs-24 fw-bold text-warning">@Model.EntidadesPendientes</div>
                     </div>
-                    <div class="col">
-                        <div class="font-weight-medium fw-bold fs-20">@Model.EntidadesPendientes</div>
-                        <div class="text-muted small">Pendientes Aprobación</div>
-                    </div>
+                    <span class="avatar-md rounded-circle bg-warning bg-opacity-10 text-warning d-inline-flex align-items-center justify-content-center">
+                        <i class="ti ti-clock-pause fs-22"></i>
+                    </span>
                 </div>
-                @if (Model.EntidadesPendientes > 0)
-                {
-                    <div class="mt-2 text-center">
-                        <a asp-controller="Entidad" asp-action="Pending" class="btn btn-sm btn-link py-0">Gestionar <i class="ti ti-arrow-right"></i></a>
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
-    <div class="col">
-        <div class="card card-sm h-100">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-auto">
-                        <span class="bg-success text-white avatar"><i class="ti ti-cash fs-24"></i></span>
-                    </div>
-                    <div class="col">
-                        <div class="font-weight-medium fw-bold fs-20">@Money(Model.VentasGlobalesMes)</div>
-                        <div class="text-muted small">Ventas Globales (Mes)</div>
-                    </div>
-                </div>
-                <div class="text-muted small mt-2">@Model.FacturasGlobalesMes facturas emitidas</div>
-            </div>
-        </div>
-    </div>
-    <div class="col">
-        <div class="card card-sm h-100">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-auto">
-                        <span class="bg-info text-white avatar"><i class="ti ti-device-laptop fs-24"></i></span>
-                    </div>
-                    <div class="col">
-                        <div class="font-weight-medium fw-bold fs-20">@Model.SesionesPosActivas</div>
-                        <div class="text-muted small">Sesiones POS Activas</div>
-                    </div>
-                </div>
-                <div class="text-muted small mt-2">@Model.DispositivosPos terminales registradas</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Fila 2: Salud POS y Encabezados -->
-<div class="row row-cols-1 row-cols-md-3 g-1 mb-3">
-    <div class="col">
-        <div class="card card-sm h-100">
-            <div class="card-body d-flex align-items-center">
-                <i class="ti ti-alert-triangle fs-28 me-3 @(Model.PosConflictos > 0 ? "text-danger" : "text-success")"></i>
-                <div>
-                    <div class="fs-20 fw-bold @(Model.PosConflictos > 0 ? "text-danger" : "text-success")">@Model.PosConflictos</div>
-                    <div class="text-muted small">Conflictos de Sincronización</div>
+                <div class="mt-3">
+                    @if (Model.EntidadesPendientes > 0)
+                    {
+                        <a asp-controller="Entidad" asp-action="Pending" class="btn btn-sm btn-outline-warning py-1">
+                            Gestionar <i class="ti ti-arrow-right ms-1"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="badge badge-soft-success py-1"><i class="ti ti-circle-check me-1"></i>Sin solicitudes</span>
+                    }
                 </div>
             </div>
         </div>
     </div>
     <div class="col">
-        <div class="card card-sm h-100">
-            <div class="card-body d-flex align-items-center">
-                <i class="ti ti-refresh fs-28 me-3 @(Model.PosPendientes > 0 ? "text-warning" : "text-success")"></i>
-                <div>
-                    <div class="fs-20 fw-bold @(Model.PosPendientes > 0 ? "text-warning" : "text-success")">@Model.PosPendientes</div>
-                    <div class="text-muted small">Ventas POS Pendientes</div>
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <div class="text-muted small text-uppercase fw-bold letter-spacing-1 mb-1">Ventas Globales (Mes)</div>
+                        <div class="fs-24 fw-bold text-success">@Money(Model.VentasGlobalesMes)</div>
+                    </div>
+                    <span class="avatar-md rounded-circle bg-success bg-opacity-10 text-success d-inline-flex align-items-center justify-content-center">
+                        <i class="ti ti-cash fs-22"></i>
+                    </span>
+                </div>
+                <hr class="my-3 opacity-50" />
+                <div class="d-flex justify-content-between text-muted small">
+                    <span>Facturas emitidas</span>
+                    <strong class="text-body">@Model.FacturasGlobalesMes</strong>
                 </div>
             </div>
         </div>
     </div>
     <div class="col">
-        <div class="card card-sm h-100">
-            <div class="card-body d-flex align-items-center">
-                <i class="ti ti-users fs-28 me-3 text-info"></i>
-                <div>
-                    <div class="fs-20 fw-bold text-info">@Model.UsuariosTotales</div>
-                    <div class="text-muted small">Usuarios del Sistema</div>
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <div class="text-muted small text-uppercase fw-bold letter-spacing-1 mb-1">Sesiones POS Activas</div>
+                        <div class="fs-24 fw-bold text-info">@Model.SesionesPosActivas</div>
+                    </div>
+                    <span class="avatar-md rounded-circle bg-info bg-opacity-10 text-info d-inline-flex align-items-center justify-content-center">
+                        <i class="ti ti-device-laptop fs-22"></i>
+                    </span>
+                </div>
+                <hr class="my-3 opacity-50" />
+                <div class="d-flex justify-content-between text-muted small">
+                    <span>Terminales registradas</span>
+                    <strong class="text-body">@Model.DispositivosPos</strong>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row g-1 mb-3">
+<!-- Fila 2: Salud POS -->
+<div class="row row-cols-1 row-cols-md-3 g-3 mb-3">
+    <div class="col">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-3 d-flex align-items-center gap-3">
+                <span class="avatar-md rounded-circle @(Model.PosConflictos > 0 ? "bg-danger bg-opacity-10 text-danger" : "bg-success bg-opacity-10 text-success") d-inline-flex align-items-center justify-content-center">
+                    <i class="ti ti-alert-triangle fs-22"></i>
+                </span>
+                <div>
+                    <div class="fs-22 fw-bold @(Model.PosConflictos > 0 ? "text-danger" : "text-success")">@Model.PosConflictos</div>
+                    <div class="text-muted small text-uppercase fw-bold letter-spacing-1" style="font-size: 0.7rem;">Conflictos de Sync</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-3 d-flex align-items-center gap-3">
+                <span class="avatar-md rounded-circle @(Model.PosPendientes > 0 ? "bg-warning bg-opacity-10 text-warning" : "bg-success bg-opacity-10 text-success") d-inline-flex align-items-center justify-content-center">
+                    <i class="ti ti-refresh fs-22"></i>
+                </span>
+                <div>
+                    <div class="fs-22 fw-bold @(Model.PosPendientes > 0 ? "text-warning" : "text-success")">@Model.PosPendientes</div>
+                    <div class="text-muted small text-uppercase fw-bold letter-spacing-1" style="font-size: 0.7rem;">Ventas Pendientes</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-3 d-flex align-items-center gap-3">
+                <span class="avatar-md rounded-circle bg-info bg-opacity-10 text-info d-inline-flex align-items-center justify-content-center">
+                    <i class="ti ti-users fs-22"></i>
+                </span>
+                <div>
+                    <div class="fs-22 fw-bold text-info">@Model.UsuariosTotales</div>
+                    <div class="text-muted small text-uppercase fw-bold letter-spacing-1" style="font-size: 0.7rem;">Usuarios del Sistema</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
     <!-- Columna Izquierda: Ranking de Entidades + Sesiones POS -->
     <div class="col-lg-7">
-        <div class="card mb-3">
-            <div class="card-header border-light">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <h5 class="m-0 fw-bold text-success"><i class="ti ti-trophy me-2"></i>Entidades con Mayor Volumen (Mes)</h5>
             </div>
             <div class="card-body">
                 @if (Model.TopEntidades.Any())
                 {
                     var maxVentas = Model.TopEntidades.Max(e => e.Ventas);
+                    var medalColors = new[] { "bg-primary", "bg-info", "bg-success", "bg-secondary" };
                     <div class="table-responsive">
                         <table class="table table-vcenter card-table table-hover mb-0">
-                            <thead>
+                            <thead class="thead-sm text-uppercase fs-xxs text-muted">
                                 <tr>
                                     <th>#</th>
                                     <th>Entidad</th>
@@ -151,11 +170,19 @@
                                 @foreach (var e in Model.TopEntidades)
                                 {
                                     var pct = maxVentas > 0 ? (double)(e.Ventas / maxVentas * 100) : 0;
+                                    var medal = medalColors[(pos - 1) % medalColors.Length];
                                     <tr>
-                                        <td class="fw-bold text-muted">@pos</td>
+                                        <td><span class="avatar-sm rounded-circle @medal text-white d-inline-flex align-items-center justify-content-center fw-bold small">@pos</span></td>
                                         <td class="fw-bold">@e.Nombre</td>
-                                        <td>@e.Facturas</td>
+                                        <td class="text-center"><span class="badge badge-soft-info">@e.Facturas</span></td>
                                         <td class="text-end fw-bold">@Money(e.Ventas)</td>
+                                    </tr>
+                                    <tr class="border-0">
+                                        <td colspan="4" class="pt-0 pb-2 pe-3">
+                                            <div class="progress" style="height: 4px;">
+                                                <div class="progress-bar bg-success" style="width: @pct.ToString("N0")%"></div>
+                                            </div>
+                                        </td>
                                     </tr>
                                     pos++;
                                 }
@@ -173,17 +200,19 @@
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-header border-light justify-content-between">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <h5 class="m-0 fw-bold text-primary"><i class="ti ti-device-laptop me-2"></i>Sesiones POS Abiertas</h5>
-                <a asp-controller="PosVentaPendiente" asp-action="Index" class="btn btn-sm btn-outline">Ver Pendientes</a>
+                <a asp-controller="PosVentaPendiente" asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                    <i class="ti ti-list me-1"></i> Ver Pendientes
+                </a>
             </div>
             <div class="card-body">
                 @if (Model.SesionesPos.Any())
                 {
                     <div class="table-responsive">
                         <table class="table table-vcenter card-table table-hover mb-0">
-                            <thead>
+                            <thead class="thead-sm text-uppercase fs-xxs text-muted">
                                 <tr>
                                     <th>Entidad</th>
                                     <th>Terminal</th>
@@ -197,7 +226,7 @@
                                 {
                                     <tr>
                                         <td class="small text-muted">@s.Entidad</td>
-                                        <td class="fw-bold">@s.Dispositivo</td>
+                                        <td class="fw-bold"><i class="ti ti-device-desktop me-2 text-muted"></i>@s.Dispositivo</td>
                                         <td>@s.Cajero</td>
                                         <td class="text-center small">@s.FechaApertura.ToString("dd/MM HH:mm")</td>
                                         <td class="text-end fw-bold text-success">@Money(s.TotalVentas)</td>
@@ -220,15 +249,15 @@
 
     <!-- Columna Derecha: Seguridad + Infraestructura -->
     <div class="col-lg-5">
-        <div class="card mb-3">
-            <div class="card-header justify-content-between">
-                <h5 class="m-0 fw-bold text-danger"><i class="ti ti-shield-alert me-2"></i>Alertas de Seguridad</h5>
-                <a asp-controller="Admin" asp-action="AuditLogs" class="btn btn-sm btn-outline">Bitácora</a>
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <h5 class="m-0 fw-bold text-danger"><i class="ti ti-shield-exclamation me-2"></i>Alertas de Seguridad</h5>
+                <a asp-controller="Admin" asp-action="AuditLogs" class="btn btn-sm btn-outline-secondary">Bitácora</a>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-vcenter card-table table-hover mb-0">
-                        <thead>
+                        <thead class="thead-sm text-uppercase fs-xxs text-muted">
                             <tr>
                                 <th>Evento</th>
                                 <th>Usuario</th>
@@ -247,7 +276,10 @@
                             @if (!Model.AlertasSeguridad.Any())
                             {
                                 <tr>
-                                    <td colspan="3" class="text-center py-4 text-muted small">No se han detectado incidentes críticos recientemente.</td>
+                                    <td colspan="3" class="text-center py-4 text-muted small">
+                                        <i class="ti ti-shield-check fs-32 d-block mb-2 text-success opacity-50"></i>
+                                        Sin incidentes críticos recientes.
+                                    </td>
                                 </tr>
                             }
                         </tbody>
@@ -256,31 +288,32 @@
             </div>
         </div>
 
-        <div class="card mb-3">
-            <div class="card-header">
-                <h5 class="m-0 fw-bold"><i class="ti ti-database-export me-2 text-primary"></i>Respaldo de Datos</h5>
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent border-0 pt-4 px-4">
+                <h5 class="m-0 fw-bold text-primary"><i class="ti ti-database-export me-2"></i>Respaldo de Datos</h5>
             </div>
             <div class="card-body">
                 @if (Model.UltimoBackup != null)
                 {
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="avatar bg-success-subtle text-success me-3">
-                            <i class="ti ti-check fs-24"></i>
-                        </div>
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <span class="avatar-md rounded-circle bg-success bg-opacity-10 text-success d-inline-flex align-items-center justify-content-center">
+                            <i class="ti ti-check fs-22"></i>
+                        </span>
                         <div>
                             <div class="fw-bold">Sistema Protegido</div>
-                            <div class="text-muted small">Último backup: @Model.UltimoBackup.FinalizadoEn?.ToString("dd MMM, HH:mm")</div>
+                            <div class="text-muted small">áltimo backup: @Model.UltimoBackup.FinalizadoEn?.ToString("dd MMM, HH:mm")</div>
                         </div>
                     </div>
-                    <div class="bg-light p-3 rounded mb-3">
-                        <p class="small mb-1"><strong>Archivo:</strong> @System.IO.Path.GetFileName(Model.UltimoBackup.RutaArchivo)</p>
-                        <p class="small mb-0"><strong>Tamaño:</strong> @((Model.UltimoBackup.TamanoBytes / 1024.0 / 1024.0)?.ToString("N2")) MB</p>
+                    <div class="bg-light-subtle p-3 rounded mb-3 small">
+                        <p class="mb-1"><strong>Archivo:</strong> @System.IO.Path.GetFileName(Model.UltimoBackup.RutaArchivo)</p>
+                        <p class="mb-0"><strong>Tamaño:</strong> @((Model.UltimoBackup.TamanoBytes / 1024.0 / 1024.0)?.ToString("N2")) MB</p>
                     </div>
                 }
                 else
                 {
-                    <div class="alert alert-danger mb-3">
-                        <i class="ti ti-alert-circle me-1"></i> No hay registros de backups exitosos.
+                    <div class="alert alert-danger d-flex align-items-center mb-3" role="alert">
+                        <i class="ti ti-alert-circle fs-20 me-2"></i>
+                        <div>No hay registros de backups exitosos.</div>
                     </div>
                 }
                 <div class="d-grid">
@@ -291,14 +324,18 @@
             </div>
         </div>
 
-        <div class="card border-warning border-opacity-25 shadow-sm">
-            <div class="card-header bg-warning-subtle">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex align-items-center gap-2">
                 <h5 class="m-0 fw-bold text-warning"><i class="ti ti-clock-exclamation me-2"></i>Vencimientos Próximos</h5>
+                @if (Model.AlertasVencimiento.Any())
+                {
+                    <span class="badge badge-soft-danger ms-auto">@Model.AlertasVencimiento.Count</span>
+                }
             </div>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-vcenter card-table small mb-0">
-                        <thead>
+                        <thead class="thead-sm text-uppercase fs-xxs text-muted">
                             <tr>
                                 <th>Producto</th>
                                 <th>Vence</th>
@@ -317,7 +354,10 @@
                             @if (!Model.AlertasVencimiento.Any())
                             {
                                 <tr>
-                                    <td colspan="3" class="text-center py-4 text-muted small">Sin alertas de caducidad.</td>
+                                    <td colspan="3" class="text-center py-4 text-muted small">
+                                        <i class="ti ti-calendar-check fs-32 d-block mb-2 text-success opacity-50"></i>
+                                        Sin alertas de caducidad.
+                                    </td>
                                 </tr>
                             }
                         </tbody>
@@ -328,9 +368,9 @@
     </div>
 </div>
 
-<div class="row g-1">
+<div class="row g-3">
     <div class="col-12">
-        <div class="card bg-dark text-white border-0">
+        <div class="card bg-dark text-white border-0 shadow-sm">
             <div class="card-body p-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
                 <div class="d-flex align-items-center">
                     <i class="ti ti-rocket fs-48 text-primary me-3"></i>
@@ -344,4 +384,3 @@
         </div>
     </div>
 </div>
-

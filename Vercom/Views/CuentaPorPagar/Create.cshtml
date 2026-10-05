@@ -1,19 +1,13 @@
-﻿@model Vercom.ViewModels.CxPFormViewModel
+@model Vercom.ViewModels.CxPFormViewModel
 @{
     ViewBag.Title = "Registrar Cuenta por Pagar";
     var fmt = new System.Globalization.CultureInfo("es-CU");
 }
 
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Registrar Cuenta por Pagar",
-    Subtitle = "Carga manual de pasivos con proveedores o compromisos financieros pendientes.",
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Vercom", Url = "javascript: void(0);" },
-        new() { Text = "Contabilidad", Url = "javascript: void(0);" },
-        new() { Text = "Cuentas por Pagar", Url = Url.Action("Index") },
-        new() { Text = "Registrar", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Registrar Cuenta por Pagar", Subtitle = "Carga manual de pasivos con proveedores o compromisos financieros pendientes.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row justify-content-center mt-2">
     <div class="col-lg-9">

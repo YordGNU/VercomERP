@@ -4,17 +4,10 @@
     ViewBag.Title = "Bandeja de Feedback y Soporte";
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Centro de Atención al Usuario</h4>
-        <p class="text-muted small mb-0">Sugerencias, reportes de error y comunicaciones de todas las entidades.</p>
-    </div>
-    <div class="text-end">
-        <span class="badge badge-soft-primary py-2 px-3">
-            <i class="ti ti-headset me-1"></i> CONTROL MAESTRO
-        </span>
-    </div>
-</div>
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Centro de Atención al Usuario", Subtitle = "Sugerencias, reportes de error y comunicaciones de todas las entidades.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="card shadow-sm border-0">

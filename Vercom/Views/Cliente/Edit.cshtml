@@ -1,17 +1,12 @@
-﻿@model Vercom.ViewModels.ClientFormViewModel
+@model Vercom.ViewModels.ClientFormViewModel
 @{
     ViewData["Title"] = "Editar Cliente";
     var esActivo = Model.Client.Activo;
 }
-<partial name="_PageTitleHead" model='new Vercom.ViewModels.PageTitleHeadModel {
-    Title = "Editar Cliente",
-    Subtitle = "Actualice los datos del cliente: " + Model.Client.NombreRazonSocial,
-    BreadcrumbItems = new List<Vercom.ViewModels.BreadcrumbItem> {
-        new() { Text = "Inicio", Url = Url.Action("Index", "Dashboard") },
-        new() { Text = "Clientes", Url = Url.Action("Index") },
-        new() { Text = "Editar", IsActive = true }
-    }
-}' />
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Ventas", Title = "Editar Cliente", Subtitle = "Actualice los datos del cliente: ", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row justify-content-center">
