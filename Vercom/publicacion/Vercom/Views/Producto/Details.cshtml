@@ -4,30 +4,10 @@
     var totalStock = Model.Existencia.Sum(e => e.Cantidad);
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Artículo: @Model.Nombre</h4>
-        <p class="text-muted small mb-0">Especificaciones técnicas, valoración de inventario y disponibilidad global.</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Inventario</a></li>
-            <li class="breadcrumb-item"><a asp-action="Index">Catálogo</a></li>
-            <li class="breadcrumb-item active">Ficha</li>
-        </ol>
-        <div class="btn-list">
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary">
-                <i class="ti ti-edit me-1"></i> MODIFICAR FICHA
-            </a>
-            @if(Model.Tipo == "ELABORADO" || Model.Tipo == "TERMINADO") {
-                <a asp-controller="Production" asp-action="CreateOrder" asp-route-productId="@Model.Id" class="btn btn-sm btn-success shadow-sm">
-                    <i class="ti ti-binary me-1"></i> ORDENAR PRODUCCIÓN
-                </a>
-            }
-        </div>
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Catálogo</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Artículo: " + Model.Nombre, Subtitle = "Especificaciones técnicas, valoración de inventario y disponibilidad global.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row">

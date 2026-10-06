@@ -1,27 +1,13 @@
-﻿@model Vercom.Models.VEjecucionPresupuesto
-
+@model Vercom.Models.VEjecucionPresupuesto
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Editar Ejecución de Presupuesto";
 }
 
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Editar Ejecución de Presupuesto", Subtitle = "Modificación de ejecución presupuestaria.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
 
 
-<h4>VEjecucionPresupuesto</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-       <div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Editar VEjecucionPresupuesto</h4>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">VEjecucionPresupuesto</a></li>
-            <li class="breadcrumb-item active">Editar</li>
-        </ol>
-    </div>
-</div>
 
 <div class="row">
     <div class="row">

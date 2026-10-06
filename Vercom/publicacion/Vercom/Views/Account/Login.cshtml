@@ -3,65 +3,180 @@
     Layout = "_LayoutAuth";
 }
 
-<div class="card p-4">
-    <div class="text-center mb-4">
-        <img src="~/css/images/logo.svg" alt="Vercom" style="height: 50px;" class="mb-3">
-        <h2 class="fw-bold">Vercom Elite</h2>
-        <p class="text-muted">Inicia sesión en tu cuenta operativa</p>
-    </div>
-
-    <form asp-action="Login" method="post">
-        <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
-
-        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
-
-        <div class="mb-3">
-            <label class="form-label small fw-bold">Usuario</label>
-            <div class="input-group">
-                <span class="input-group-text bg-light"><i class="ti ti-user fs-18"></i></span>
-                <input type="text" name="username" class="form-control" placeholder="nombre.usuario" required autofocus />
+<div class="auth-page">
+    <section class="auth-hero" aria-label="Presentación del sistema">
+        <div class="auth-hero-content">
+            <div class="auth-brand">
+                <img src="~/css/images/logo.svg" alt="Logo Vercom" class="auth-logo" />
+                <h1 class="auth-title">Tierra Prometida</h1>
+                <p class="auth-tagline">Sistema ERP Integral</p>
             </div>
+
+            <ul class="auth-features">
+                <li class="auth-feature">
+                    <span class="auth-feature-icon"><i class="ti ti-shield-lock" aria-hidden="true"></i></span>
+                    <div>
+                        <h3>Seguridad Garantizada</h3>
+                        <p>Cifrado de datos y auditoría inmutable conforme a Resolución 60/2011</p>
+                    </div>
+                </li>
+                <li class="auth-feature">
+                    <span class="auth-feature-icon"><i class="ti ti-scale" aria-hidden="true"></i></span>
+                    <div>
+                        <h3>Conformidad Regulatoria</h3>
+                        <p>Alineado con NCC/NCIF, ONAT y marcos legales cubanos</p>
+                    </div>
+                </li>
+                <li class="auth-feature">
+                    <span class="auth-feature-icon"><i class="ti ti-server" aria-hidden="true"></i></span>
+                    <div>
+                        <h3>On-Premise Confiable</h3>
+                        <p>Disponible offline con sincronización automática</p>
+                    </div>
+                </li>
+            </ul>
         </div>
 
-        <div class="mb-3">
-            <div class="d-flex justify-content-between">
-                <label class="form-label small fw-bold">Contraseña</label>
-                <a href="javascript:void(0);" class="text-muted small">¿Olvidó su clave?</a>
-            </div>
-            <div class="input-group">
-                <span class="input-group-text bg-light"><i class="ti ti-lock fs-18"></i></span>
-                <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" required />
-                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                    <i class="ti ti-eye fs-18"></i>
+        <div class="auth-hero-footer">
+            <p>Versión empresarial &copy; 2024 - 2026</p>
+        </div>
+    </section>
+
+    <section class="auth-panel" aria-label="Formulario de acceso">
+        <div class="auth-form-wrap">
+            <form asp-action="Login" method="post" class="auth-form" novalidate>
+                <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+
+                <div class="auth-form-header">
+                    <h2>Acceso al Sistema</h2>
+                    <p>Ingresa tus credenciales para continuar</p>
+                </div>
+
+                <div asp-validation-summary="ModelOnly" class="auth-alert" role="alert" aria-live="assertive">
+                    <i class="ti ti-alert-triangle auth-alert-icon" aria-hidden="true"></i>
+                    <div>
+                        <strong>Error de autenticación</strong>
+                        <p>Verifica tu usuario y contraseña. Si se repite, contacta al administrador.</p>
+                    </div>
+                </div>
+
+                <div class="auth-field">
+                    <label for="username" class="auth-label">Usuario</label>
+                    <div class="auth-input">
+                        <i class="ti ti-user auth-input-icon" aria-hidden="true"></i>
+                        <input 
+                            type="text" 
+                            id="username" 
+                            name="username" 
+                            placeholder="nombre.usuario"
+                            autocomplete="username"
+                            required 
+                            autofocus
+                            aria-label="Nombre de usuario"
+                            aria-describedby="username-hint" />
+                    </div>
+                    <small id="username-hint" class="auth-hint">Usa el formato: nombre.apellido</small>
+                </div>
+
+                <div class="auth-field">
+                    <div class="auth-label-row">
+                        <label for="password" class="auth-label">Contraseña</label>
+                    </div>
+                    <div class="auth-input">
+                        <i class="ti ti-lock auth-input-icon" aria-hidden="true"></i>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            placeholder="••••••••"
+                            autocomplete="current-password"
+                            required
+                            aria-label="Contraseña"
+                            aria-describedby="password-requirements" />
+                        <button 
+                            class="auth-eye" 
+                            type="button" 
+                            id="togglePassword"
+                            aria-label="Mostrar contraseña"
+                            aria-pressed="false">
+                            <i class="ti ti-eye icon-eye" aria-hidden="true"></i>
+                            <i class="ti ti-eye-off icon-eye-off" aria-hidden="true" style="display: none;"></i>
+                        </button>
+                    </div>
+                    <small id="password-requirements" class="auth-hint">Mínimo 12 caracteres con mayúscula, minúscula, número y símbolo</small>
+                </div>
+
+                <label class="auth-remember">
+                    <input 
+                        type="checkbox" 
+                        id="rememberMe" 
+                        name="rememberMe" 
+                        value="true" />
+                    Recordarme en este equipo
+                </label>
+
+                <button type="submit" class="auth-submit">
+                    <span class="btn-text">Acceder al Sistema</span>
+                    <span class="btn-loading" style="display: none;">
+                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Autenticando...
+                    </span>
                 </button>
-            </div>
+
+                <div class="auth-foot">
+                    <p>&copy; 2024 - 2026 VERCOM | yordanisvc@gmail.com</p>
+                </div>
+            </form>
         </div>
-
-        <div class="mb-3 form-check">
-            <input type="checkbox" name="rememberMe" class="form-check-input" id="rememberMe" value="true">
-            <label class="form-check-label small" for="rememberMe">Recordarme en este equipo</label>
-        </div>
-
-        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">ENTRAR AL SISTEMA</button>
-    </form>
-
-    <div class="mt-4 text-center">
-        <p class="small text-muted">&copy; 2026 Tierra Prometida S.U.R.L.</p>
-    </div>
+    </section>
 </div>
+
+@section Styles {
+    <link href="~/css/login.style.css" rel="stylesheet" type="text/css">
+}
 
 @section Scripts {
     <script>
-        document.getElementById('togglePassword').addEventListener('click', function() {
-            const pwd = document.getElementById('password');
-            const icon = this.querySelector('i');
-            if (pwd.type === 'password') {
-                pwd.type = 'text';
-                icon.classList.replace('ti-eye', 'ti-eye-off');
-            } else {
-                pwd.type = 'password';
-                icon.classList.replace('ti-eye-off', 'ti-eye');
-            }
-        });
+        const togglePasswordBtn = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+
+        if (togglePasswordBtn && passwordInput) {
+            const eyeIcon = togglePasswordBtn.querySelector('.icon-eye');
+            const eyeOffIcon = togglePasswordBtn.querySelector('.icon-eye-off');
+
+            togglePasswordBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                const isPassword = passwordInput.type === 'password';
+                passwordInput.type = isPassword ? 'text' : 'password';
+                eyeIcon.style.display = isPassword ? 'none' : 'block';
+                eyeOffIcon.style.display = isPassword ? 'block' : 'none';
+                this.setAttribute('aria-label', isPassword ? 'Ocultar contraseña' : 'Mostrar contraseña');
+                this.setAttribute('aria-pressed', isPassword ? 'true' : 'false');
+            });
+        }
+
+        const loginForm = document.querySelector('.auth-form');
+        if (loginForm) {
+            loginForm.addEventListener('submit', function (e) {
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value;
+
+                if (!username || !password) {
+                    e.preventDefault();
+                    alert('Por favor, ingresa usuario y contraseña');
+                    return;
+                }
+
+                const submitBtn = loginForm.querySelector('button[type="submit"]');
+                const btnText = submitBtn.querySelector('.btn-text');
+                const btnLoading = submitBtn.querySelector('.btn-loading');
+
+                if (btnText && btnLoading) {
+                    submitBtn.disabled = true;
+                    btnText.style.display = 'none';
+                    btnLoading.style.display = 'block';
+                }
+            });
+        }
     </script>
 }

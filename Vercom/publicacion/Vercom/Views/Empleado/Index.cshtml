@@ -1,83 +1,26 @@
 @using Microsoft.AspNetCore.Authorization
 @inject IAuthorizationService AuthorizationService
 @model IEnumerable<Vercom.Models.Empleado>
-@{
-    ViewBag.Title = "Plantilla de Empleados";
+@{ ViewBag.Title = "Plantilla de Empleados"; }
+
+@{ var puedeCrear = (await AuthorizationService.AuthorizeAsync(User, "RRHH.EMPLEADO.CREAR")).Succeeded; var headerActions = puedeCrear ? "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-user-plus me-1'></i> NUEVO INGRESO</a>" : null; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = "Expedientes del Personal", Subtitle = "Gestión integral de la fuerza laboral y control de plantilla.", Icon = "ti-users", Tone = "primary", ActionsHtml = headerActions != null ? new Microsoft.AspNetCore.Html.HtmlString(headerActions) : null }; }
+<partial name='_PageHeader' model='pageHeader' />
+@if (ViewBag.Stats != null)
+{
+    var stats = ViewBag.Stats as Vercom.Services.RRHHStatsViewModel;
+    <div class="row g-2 mb-3">
+        @{ var kpiActivos = new Vercom.ViewModels.KpiCardModel { Label = "Trabajadores Activos", Value = stats.TotalActivos.ToString(), Icon = "ti-users", Tone = "primary" }; }
+        <div class="col-md-3 col-6"><partial name="_KpiCard" model="kpiActivos" /></div>
+        @{ var kpiNomina = new Vercom.ViewModels.KpiCardModel { Label = "Costo Mensual Est.", Value = stats.NominaProyectada.ToString("C0"), Icon = "ti-report-money", Tone = "info" }; }
+        <div class="col-md-3 col-6"><partial name="_KpiCard" model="kpiNomina" /></div>
+        @{ var kpiContratos = new Vercom.ViewModels.KpiCardModel { Label = "Contratos por Vencer", Value = stats.ContratosVencer30Dias.ToString(), Icon = "ti-calendar-clock", Tone = "warning" }; }
+        <div class="col-md-3 col-6"><partial name="_KpiCard" model="kpiContratos" /></div>
+        @{ var kpiBajas = new Vercom.ViewModels.KpiCardModel { Label = "Bajas Acumuladas", Value = stats.TotalBajas.ToString(), Icon = "ti-user-x", Tone = "danger" }; }
+        <div class="col-md-3 col-6"><partial name="_KpiCard" model="kpiBajas" /></div>
+    </div>
 }
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Expedientes del Personal</h4>
-        <p class="text-muted small mb-0">Gestión integral de la fuerza laboral y control de plantilla.</p>
-    </div>
-    <div class="text-end">
-        @if ((await AuthorizationService.AuthorizeAsync(User, "RRHH.EMPLEADO.CREAR")).Succeeded)
-        {
-            <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
-                <i class="ti ti-user-plus"></i> NUEVO INGRESO
-            </a>
-        }
-    </div>
-</div>
+
 <div class="row">
-    @if (ViewBag.Stats != null)    {
-        var stats = ViewBag.Stats as Vercom.Services.RRHHStatsViewModel;
-        <div class="col-12 mb-4">
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <div class="card card-sm shadow-sm border-0 bg-primary text-white">
-                        <div class="card-body p-3">
-                            <div class="d-flex align-items-center">
-                                <div class="avatar bg-white bg-opacity-20 text-white rounded me-3"><i class="ti ti-users fs-24"></i></div>
-                                <div>
-                                    <div class="font-weight-medium">@stats.TotalActivos</div>
-                                    <div class="text-white-50 tiny fw-bold text-uppercase">Trabajadores Activos</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card card-sm shadow-sm border-0">
-                        <div class="card-body p-3">
-                            <div class="d-flex align-items-center">
-                                <div class="avatar bg-info-subtle text-info rounded me-3"><i class="ti ti-report-money fs-24"></i></div>
-                                <div>
-                                    <div class="font-weight-medium">@stats.NominaProyectada.ToString("C0")</div>
-                                    <div class="text-muted tiny fw-bold text-uppercase">Costo Mensual Est.</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card card-sm shadow-sm border-0 @(stats.ContratosVencer30Dias > 0 ? "border-start border-warning border-4" : "")">
-                        <div class="card-body p-3">
-                            <div class="d-flex align-items-center">
-                                <div class="avatar bg-warning-subtle text-warning rounded me-3"><i class="ti ti-calendar-clock fs-24"></i></div>
-                                <div>
-                                    <div class="font-weight-medium">@stats.ContratosVencer30Dias</div>
-                                    <div class="text-muted tiny fw-bold text-uppercase">Contratos por Vencer</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card card-sm shadow-sm border-0">
-                        <div class="card-body p-3">
-                            <div class="d-flex align-items-center">
-                                <div class="avatar bg-danger-subtle text-danger rounded me-3"><i class="ti ti-user-x fs-24"></i></div>
-                                <div>
-                                    <div class="font-weight-medium">@stats.TotalBajas</div>
-                                    <div class="text-muted tiny fw-bold text-uppercase">Bajas Acumuladas</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
     <!-- Sección de Filtros -->
     <div class="col-12 mb-4">
         <div class="card shadow-sm border-0">

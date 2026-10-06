@@ -113,4 +113,78 @@ public class ContratoEconomicoController : Controller
         var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
         return Json(new { success = false, message = "Errores de validación.", errors = errorList });
     }
+
+    [Authorize(Policy = "COMERCIAL.CONTRATO_SUPLEMENTO.VER")]
+    public async Task<IActionResult> SuplementoCreate(Guid? id)
+    {
+        if (id == null) return NotFound();
+
+        var contract = await _commercialService.GetContractByIdAsync(id.Value);
+        if (contract == null) return NotFound();
+
+        var vm = await _commercialService.GetContractSuplementoFormContextAsync(id.Value);
+        if (vm.ContratoId == Guid.Empty) return NotFound();
+
+        vm.NumeroContrato = contract.NumeroContrato;
+        vm.TerceroTipo = contract.TerceroTipo;
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "COMERCIAL.CONTRATO_SUPLEMENTO.CREAR")]
+    public async Task<IActionResult> SuplementoCreate(Guid id, ContractSuplementoFormViewModel vm)
+    {
+        var suplemento = vm.Suplemento;
+        if (id != suplemento.ContratoId) return NotFound();
+
+        ModelState.Remove("Suplemento.Contrato");
+        ModelState.Remove("Suplemento.Entidad");
+        ModelState.Remove("Suplemento.EntidadId");
+        ModelState.Remove("Suplemento.Estado");
+        ModelState.Remove("Suplemento.Tipo");
+        ModelState.Remove("Suplemento.NumeroSuplemento");
+        ModelState.Remove("Suplemento.CreadoEn");
+        ModelState.Remove("Suplemento.CreadoPor");
+        ModelState.Remove("Suplemento.Id");
+
+        if (ModelState.IsValid)
+        {
+            var result = await _commercialService.CreateContractSuplementoAsync(suplemento, vm.Documento);
+            if (result.Succeeded)
+            {
+                return Json(new
+                {
+                    success = true,
+                    message = result.Message,
+                    redirectUrl = Url.Action(nameof(Details), new { id })
+                });
+            }
+            return Json(new { success = false, message = result.Message });
+        }
+
+        var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        return Json(new { success = false, message = "Errores de validación.", errors = errorList });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "COMERCIAL.CONTRATO_SUPLEMENTO.ANULAR")]
+    public async Task<IActionResult> SuplementoAnular(Guid id, Guid suplementoId, string? motivo)
+    {
+        var supplement = await _commercialService.GetContractSuplementosAsync(id);
+        if (supplement.All(s => s.Id != suplementoId)) return NotFound();
+
+        if (string.IsNullOrWhiteSpace(motivo))
+        {
+            return Json(new { success = false, message = "Indique el motivo de la anulación." });
+        }
+
+        var result = await _commercialService.AnularContractSuplementoAsync(suplementoId, motivo);
+        if (result.Succeeded)
+        {
+            return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Details), new { id }) });
+        }
+        return Json(new { success = false, message = result.Message });
+    }
 }

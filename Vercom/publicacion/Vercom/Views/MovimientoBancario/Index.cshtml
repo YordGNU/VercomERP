@@ -1,14 +1,8 @@
 @model IEnumerable<Vercom.Models.MovimientoBancario>
-@{
-    ViewBag.Title = "Movimientos Bancarios";
-}
+@{ ViewBag.Title = "Movimientos Bancarios"; }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Libro Auxiliar de Bancos</h4>
-        <p class="text-muted small mb-0">Detalle de transacciones bancarias y estado de conciliación.</p>
-    </div>
-</div>
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Libro Auxiliar de Bancos", Subtitle = "Detalle de transacciones bancarias y estado de conciliación.", Icon = "ti-receipt-2", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
 
 <div class="row">
     <div class="card">
@@ -31,7 +25,7 @@
                 <tbody>
                     @foreach (var item in Model)
                     {
-                        var isEntry = item.Tipo == "CREDITO" || item.Tipo == "INGRESO";
+                        var isEntry = item.Tipo == "CREDITO";
                         var amountClass = isEntry ? "text-success" : "text-danger";
 
                         <tr>

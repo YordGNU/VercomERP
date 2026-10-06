@@ -1,27 +1,13 @@
-﻿@model Vercom.Models.MantenimientoProgramado
-
+@model Vercom.ViewModels.MantenimientoFormViewModel
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Editar Mantenimiento Programado";
 }
 
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Editar Mantenimiento Programado", Subtitle = "Modificación de la programación de mantenimiento.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
 
 
-<h4>MantenimientoProgramado</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-       <div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Editar MantenimientoProgramado</h4>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">MantenimientoProgramado</a></li>
-            <li class="breadcrumb-item active">Editar</li>
-        </ol>
-    </div>
-</div>
 
 <div class="row">
     <div class="row">
@@ -33,46 +19,46 @@
                 <div class="card-body">
 <form class="row g-3" asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="Mantenimiento.Id" />
             <div class="mb-3">
-                <label asp-for="EquipoId" class="form-label"></label>
-                <select asp-for="EquipoId" class="form-control" asp-items="ViewBag.EquipoId"></select>
-                <span asp-validation-for="EquipoId" class="text-danger"></span>
+                <label asp-for="Mantenimiento.EquipoId" class="form-label"></label>
+                <select asp-for="Mantenimiento.EquipoId" class="form-control" asp-items="ViewBag.EquipoId"></select>
+                <span asp-validation-for="Mantenimiento.EquipoId" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="FechaProgramada" class="form-label"></label>
-                <input asp-for="FechaProgramada" class="form-control" />
-                <span asp-validation-for="FechaProgramada" class="text-danger"></span>
+                <label asp-for="Mantenimiento.FechaProgramada" class="form-label"></label>
+                <input asp-for="Mantenimiento.FechaProgramada" class="form-control" />
+                <span asp-validation-for="Mantenimiento.FechaProgramada" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="FechaEjecutada" class="form-label"></label>
-                <input asp-for="FechaEjecutada" class="form-control" />
-                <span asp-validation-for="FechaEjecutada" class="text-danger"></span>
+                <label asp-for="Mantenimiento.FechaEjecutada" class="form-label"></label>
+                <input asp-for="Mantenimiento.FechaEjecutada" class="form-control" />
+                <span asp-validation-for="Mantenimiento.FechaEjecutada" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="Tipo" class="form-label"></label>
-                <input asp-for="Tipo" class="form-control" />
-                <span asp-validation-for="Tipo" class="text-danger"></span>
+                <label asp-for="Mantenimiento.Tipo" class="form-label"></label>
+                <input asp-for="Mantenimiento.Tipo" class="form-control" />
+                <span asp-validation-for="Mantenimiento.Tipo" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="Descripcion" class="form-label"></label>
-                <input asp-for="Descripcion" class="form-control" />
-                <span asp-validation-for="Descripcion" class="text-danger"></span>
+                <label asp-for="Mantenimiento.Descripcion" class="form-label"></label>
+                <input asp-for="Mantenimiento.Descripcion" class="form-control" />
+                <span asp-validation-for="Mantenimiento.Descripcion" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="Costo" class="form-label"></label>
-                <input asp-for="Costo" class="form-control" />
-                <span asp-validation-for="Costo" class="text-danger"></span>
+                <label asp-for="Mantenimiento.Costo" class="form-label"></label>
+                <input asp-for="Mantenimiento.Costo" class="form-control" />
+                <span asp-validation-for="Mantenimiento.Costo" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="ResponsableId" class="form-label"></label>
-                <input asp-for="ResponsableId" class="form-control" />
-                <span asp-validation-for="ResponsableId" class="text-danger"></span>
+                <label asp-for="Mantenimiento.ResponsableId" class="form-label"></label>
+                <input asp-for="Mantenimiento.ResponsableId" class="form-control" />
+                <span asp-validation-for="Mantenimiento.ResponsableId" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="Estado" class="form-label"></label>
-                <input asp-for="Estado" class="form-control" />
-                <span asp-validation-for="Estado" class="text-danger"></span>
+                <label asp-for="Mantenimiento.Estado" class="form-label"></label>
+                <input asp-for="Mantenimiento.Estado" class="form-control" />
+                <span asp-validation-for="Mantenimiento.Estado" class="text-danger"></span>
             </div>
             <div class="mb-3">
                 <button type="submit" class="btn btn-primary">Guardar</button>

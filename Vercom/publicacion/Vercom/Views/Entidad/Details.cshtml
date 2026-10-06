@@ -1,24 +1,14 @@
 @model Vercom.Models.Entidad
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewBag.Title = "Perfil de la Entidad";
     var isMaster = User.Identity?.Name == "master";
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Información Legal</h4>
-        <p class="text-muted small mb-0">Entidad: @Model.RazonSocial</p>
-    </div>
-    <div class="text-end d-flex align-items-center gap-3">      
-     @if (isMaster)
-        {
-            <a asp-action="Index" class="btn btn-sm btn-outline-secondary me-2">Volver al Listado</a>
-        }
-        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
-            <i class="ti ti-edit me-1"></i> Editar Datos
-        </a>
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Volver al Listado</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Información Legal", Subtitle = "Entidad: @EntidadDisplay.Name", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 <div class="row mt-4">
     <div class="row">
         <!-- Resumen General -->
@@ -28,8 +18,8 @@
                     <div class="avatar-xl bg-primary-subtle text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
                         <i class="ti ti-building-community fs-40"></i>
                     </div>
-                    <h4 class="mb-1">@Model.NombreComercial</h4>
-                    <p class="text-muted">@Model.RazonSocial</p>
+                    <h4 class="mb-1">@EntidadDisplay.Name</h4>
+                    <p class="text-muted">@EntidadDisplay.Name</p>
                     <span class="badge @(Model.Activo ? "bg-success" : "bg-danger") mb-3">@(Model.Activo ? "OPERATIVA" : "SUSPENDIDA")</span>
 
                     <div class="border-top pt-3 text-start small">

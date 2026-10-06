@@ -1,13 +1,12 @@
-﻿@model Vercom.ViewModels.AssetFormViewModel
+@model Vercom.ViewModels.AssetFormViewModel
 @{
     ViewBag.Title = "Editar Activo";
 }
 
-<div class="page-title-head d-flex align-items-center">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">@Model.Title</h4>
-    </div>
-</div>
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "", Subtitle = "Modificación de datos del activo fijo.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row mt-4">
     <form asp-action="Edit" method="post" id="editAssetForm">

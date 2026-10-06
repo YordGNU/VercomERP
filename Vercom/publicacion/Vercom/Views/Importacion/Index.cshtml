@@ -1,0 +1,788 @@
+@{
+    ViewBag.Title = "Importar desde Versat";
+}
+
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Importar Inventario desde Versat", Subtitle = "Wizard de importación: conexión, revisión, resumen y selección de datos.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
+
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="m-0 fw-bold text-primary"><i class="ti ti-database-import me-2"></i>Wizard de Importación</h5>
+                <span class="badge badge-soft-info"><i class="ti ti-cloud-upload me-1"></i>Cliente SQL local</span>
+            </div>
+            <div class="card-body p-4">
+
+                <!-- Progreso del wizard -->
+                <div class="d-flex align-items-center mb-4 flex-wrap">
+                    <div class="step-indicator text-center flex-shrink-0">
+                        <div class="step-circle active" data-step="1"><span class="step-num">1</span><i class="ti ti-check step-check d-none"></i></div>
+                        <small>Conexión</small>
+                    </div>
+                    <div class="step-connector" data-idx="1"></div>
+                    <div class="step-indicator text-center flex-shrink-0">
+                        <div class="step-circle" data-step="2"><span class="step-num">2</span><i class="ti ti-check step-check d-none"></i></div>
+                        <small>Revisión</small>
+                    </div>
+                    <div class="step-connector" data-idx="2"></div>
+                    <div class="step-indicator text-center flex-shrink-0">
+                        <div class="step-circle" data-step="3"><span class="step-num">3</span><i class="ti ti-check step-check d-none"></i></div>
+                        <small>Resumen</small>
+                    </div>
+                    <div class="step-connector" data-idx="3"></div>
+                    <div class="step-indicator text-center flex-shrink-0">
+                        <div class="step-circle" data-step="4"><span class="step-num">4</span><i class="ti ti-check step-check d-none"></i></div>
+                        <small>Selección</small>
+                    </div>
+                    <div class="step-connector" data-idx="4"></div>
+                    <div class="step-indicator text-center flex-shrink-0">
+                        <div class="step-circle" data-step="5"><span class="step-num">5</span><i class="ti ti-check step-check d-none"></i></div>
+                        <small>Ejecución</small>
+                    </div>
+                </div>
+
+                <div id="wizardStep1" class="wizard-step">
+                    <h6 class="fw-bold mb-1"><i class="ti ti-plug-connected me-2 text-primary"></i>Parámetros de Conexión</h6>
+                    <p class="text-muted small mb-4">Ingrese las credenciales del servidor SQL que aloja la base Versat a migrar.</p>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold" for="srvServidor">Servidor</label>
+                            <div class="input-group input-group-merge">
+                                <span class="input-group-text"><i class="ti ti-server"></i></span>
+                                <input type="text" id="srvServidor" class="form-control" value="localhost" required />
+                                <div class="invalid-feedback">Indique el nombre del servidor.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold" for="srvBaseDatos">Base de Datos</label>
+                            <div class="input-group input-group-merge">
+                                <span class="input-group-text"><i class="ti ti-database"></i></span>
+                                <input type="text" id="srvBaseDatos" class="form-control" value="TIERRA_PROMETIDA" required />
+                                <div class="invalid-feedback">Indique el nombre de la base de datos.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold" for="srvUsuario">Usuario</label>
+                            <div class="input-group input-group-merge">
+                                <span class="input-group-text"><i class="ti ti-user"></i></span>
+                                <input type="text" id="srvUsuario" class="form-control" value="sa" autocomplete="username" required />
+                                <div class="invalid-feedback">Indique el usuario de conexión.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold" for="srvPassword">Contraseña</label>
+                            <div class="input-group input-group-merge">
+                                <span class="input-group-text"><i class="ti ti-lock"></i></span>
+                                <input type="password" id="srvPassword" class="form-control" value="sql2026*" autocomplete="current-password" required />
+                                <button type="button" class="btn btn-outline-secondary" id="btnPassToggle" tabindex="-1" title="Mostrar / ocultar contraseña">
+                                    <i class="ti ti-eye"></i>
+                                </button>
+                                <div class="invalid-feedback">Indique la contraseña.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-secondary d-flex align-items-center mt-4 mb-0 small">
+                        <i class="ti ti-info-circle fs-18 me-2"></i>
+                        <div>Los datos se cargarán sobre la <strong>entidad activa</strong>. La operación es idempotente: volver a ejecutar no duplica registros.</div>
+                    </div>
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="button" id="btnSiguiente1" class="btn btn-primary px-4">
+                            Siguiente <i class="ti ti-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="wizardStep2" class="wizard-step d-none">
+                    <h6 class="fw-bold mb-1"><i class="ti ti-flask me-2 text-info"></i>Revisión de Conexión</h6>
+                    <p class="text-muted small mb-4">Verificando el alcance y la disponibilidad del servidor origen.</p>
+                    <div id="testContainer">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="text-muted mt-2 mb-0">Probando conexión...</p>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" id="btnAtras2" class="btn btn-outline-secondary">
+                            <i class="ti ti-arrow-left me-2"></i> Atrás
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" id="btnReintentarTest" class="btn btn-outline-primary d-none">
+                                <i class="ti ti-refresh me-2"></i> Reintentar
+                            </button>
+                            <button type="button" id="btnSiguiente2" class="btn btn-primary px-4" disabled>
+                                Siguiente <i class="ti ti-arrow-right ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="wizardStep3" class="wizard-step d-none">
+                    <h6 class="fw-bold mb-1"><i class="ti ti-chart-pie me-2 text-success"></i>Resumen de Datos</h6>
+                    <p class="text-muted small mb-3">Registros disponibles en la base de origen, listos para migrar.</p>
+                    <div id="resumenHeader"></div>
+                    <div id="resumenContainer">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="text-muted mt-2 mb-0">Cargando resumen...</p>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" id="btnAtras3" class="btn btn-outline-secondary">
+                            <i class="ti ti-arrow-left me-2"></i> Atrás
+                        </button>
+                        <button type="button" id="btnSiguiente3" class="btn btn-primary px-4">
+                            Siguiente <i class="ti ti-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="wizardStep4" class="wizard-step d-none">
+                    <h6 class="fw-bold mb-1"><i class="ti ti-list-check me-2 text-primary"></i>Selección de Datos</h6>
+                    <p class="text-muted small mb-3">Elija los conjuntos de datos a importar. Las dependencias se activan automáticamente.</p>
+
+                    <h6 class="seleccion-titulo">Maestros Generales</h6>
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-3 p-3 rounded-3 border seleccion-row">
+                                <span class="avatar-md rounded-circle bg-success bg-opacity-10 text-success d-inline-flex align-items-center justify-content-center"><i class="ti ti-building-warehouse fs-20"></i></span>
+                                <div class="flex-grow-1 min-w-0">
+                                    <span class="fw-bold d-block">Almacenes</span>
+                                    <small class="text-muted d-block" id="countAlmacenes"></small>
+                                </div>
+                                <div class="form-check form-switch mb-0 ms-2">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="chkAlmacenes" checked />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-3 p-3 rounded-3 border seleccion-row">
+                                <span class="avatar-md rounded-circle bg-info bg-opacity-10 text-info d-inline-flex align-items-center justify-content-center"><i class="ti ti-ruler-2 fs-20"></i></span>
+                                <div class="flex-grow-1 min-w-0">
+                                    <span class="fw-bold d-block">Unidades de Medida</span>
+                                    <small class="text-muted d-block" id="countUnidades"></small>
+                                </div>
+                                <div class="form-check form-switch mb-0 ms-2">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="chkUnidades" checked />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-3 p-3 rounded-3 border seleccion-row">
+                                <span class="avatar-md rounded-circle bg-warning bg-opacity-10 text-warning d-inline-flex align-items-center justify-content-center"><i class="ti ti-folders fs-20"></i></span>
+                                <div class="flex-grow-1 min-w-0">
+                                    <span class="fw-bold d-block">Categorías</span>
+                                    <small class="text-muted d-block" id="countCategorias"></small>
+                                </div>
+                                <div class="form-check form-switch mb-0 ms-2">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="chkCategorias" checked />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-3 p-3 rounded-3 border seleccion-row">
+                                <span class="avatar-md rounded-circle bg-secondary bg-opacity-10 text-secondary d-inline-flex align-items-center justify-content-center"><i class="ti ti-chart-pie fs-20"></i></span>
+                                <div class="flex-grow-1 min-w-0">
+                                    <span class="fw-bold d-block">Centros de Costo</span>
+                                    <small class="text-muted d-block" id="countCentrosCosto"></small>
+                                </div>
+                                <div class="form-check form-switch mb-0 ms-2">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="chkCentrosCosto" checked />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-3 p-3 rounded-3 border seleccion-row">
+                                <span class="avatar-md rounded-circle bg-info bg-opacity-10 text-info d-inline-flex align-items-center justify-content-center"><i class="ti ti-tags fs-20"></i></span>
+                                <div class="flex-grow-1 min-w-0">
+                                    <span class="fw-bold d-block">Conceptos de Inventario</span>
+                                    <small class="text-muted d-block" id="countConceptos"></small>
+                                </div>
+                                <div class="form-check form-switch mb-0 ms-2">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="chkConceptos" checked />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-3 p-3 rounded-3 border seleccion-row">
+                                <span class="avatar-md rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center"><i class="ti ti-user-cog fs-20"></i></span>
+                                <div class="flex-grow-1 min-w-0">
+                                    <span class="fw-bold d-block">Cargos</span>
+                                    <small class="text-muted d-block" id="countCargos"></small>
+                                </div>
+                                <div class="form-check form-switch mb-0 ms-2">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="chkCargos" checked />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="seleccion-titulo">Inventario y Precios</h6>
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-3 p-3 rounded-3 border seleccion-row">
+                                <span class="avatar-md rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center"><i class="ti ti-box fs-20"></i></span>
+                                <div class="flex-grow-1 min-w-0">
+                                    <span class="fw-bold d-block">Productos</span>
+                                    <small class="text-muted d-block" id="countProductos"></small>
+                                </div>
+                                <div class="form-check form-switch mb-0 ms-2">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="chkProductos" checked />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-3 p-3 rounded-3 border seleccion-row">
+                                <span class="avatar-md rounded-circle bg-danger bg-opacity-10 text-danger d-inline-flex align-items-center justify-content-center"><i class="ti ti-packages fs-20"></i></span>
+                                <div class="flex-grow-1 min-w-0">
+                                    <span class="fw-bold d-block">Existencias</span>
+                                    <small class="text-muted d-block" id="countExistencias"></small>
+                                </div>
+                                <div class="form-check form-switch mb-0 ms-2">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="chkExistencias" checked />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-3 p-3 rounded-3 border seleccion-row">
+                                <span class="avatar-md rounded-circle bg-success bg-opacity-10 text-success d-inline-flex align-items-center justify-content-center"><i class="ti ti-currency-dollar fs-20"></i></span>
+                                <div class="flex-grow-1 min-w-0">
+                                    <span class="fw-bold d-block">Precios PDV</span>
+                                    <small class="text-muted d-block" id="countPrecios"></small>
+                                </div>
+                                <div class="form-check form-switch mb-0 ms-2">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="chkPrecios" checked />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="seleccion-titulo">Comercial</h6>
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-3 p-3 rounded-3 border seleccion-row">
+                                <span class="avatar-md rounded-circle bg-success bg-opacity-10 text-success d-inline-flex align-items-center justify-content-center"><i class="ti ti-users fs-20"></i></span>
+                                <div class="flex-grow-1 min-w-0">
+                                    <span class="fw-bold d-block">Clientes (UEB / Empresas)</span>
+                                    <small class="text-muted d-block" id="countClientes"></small>
+                                </div>
+                                <div class="form-check form-switch mb-0 ms-2">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="chkClientes" checked />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="seleccion-titulo">Recursos Humanos</h6>
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-3 p-3 rounded-3 border seleccion-row">
+                                <span class="avatar-md rounded-circle bg-warning bg-opacity-10 text-warning d-inline-flex align-items-center justify-content-center"><i class="ti ti-user fs-20"></i></span>
+                                <div class="flex-grow-1 min-w-0">
+                                    <span class="fw-bold d-block">Empleados</span>
+                                    <small class="text-muted d-block" id="countEmpleados"></small>
+                                </div>
+                                <div class="form-check form-switch mb-0 ms-2">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="chkEmpleados" checked />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="seleccion-titulo">Punto de Venta</h6>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-3 p-3 rounded-3 border seleccion-row">
+                                <span class="avatar-md rounded-circle bg-info bg-opacity-10 text-info d-inline-flex align-items-center justify-content-center"><i class="ti ti-device-laptop fs-20"></i></span>
+                                <div class="flex-grow-1 min-w-0">
+                                    <span class="fw-bold d-block">Registradoras (Dispositivos POS)</span>
+                                    <small class="text-muted d-block" id="countRegistradoras"></small>
+                                </div>
+                                <div class="form-check form-switch mb-0 ms-2">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="chkRegistradoras" checked />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" id="btnAtras4" class="btn btn-outline-secondary">
+                            <i class="ti ti-arrow-left me-2"></i> Atrás
+                        </button>
+                        <button type="button" id="btnSiguiente4" class="btn btn-primary px-4">
+                            Siguiente <i class="ti ti-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="wizardStep5" class="wizard-step d-none">
+                    <h6 class="fw-bold mb-1"><i class="ti ti-rocket me-2 text-warning"></i>Confirmación y Ejecución</h6>
+                    <p class="text-muted small mb-4">Revise el alcance antes de iniciar. La migración puede tomar unos minutos.</p>
+                    <div id="confirmacionContainer">
+                        <div class="alert alert-info d-flex align-items-start">
+                            <i class="ti ti-info-circle fs-20 me-2"></i>
+                            <div>
+                                <h6 class="alert-heading fw-bold">Resumen de importación</h6>
+                                <div id="confirmacionDetalle"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" id="btnAtras5" class="btn btn-outline-secondary">
+                            <i class="ti ti-arrow-left me-2"></i> Atrás
+                        </button>
+                        <button type="button" id="btnEjecutar" class="btn btn-success px-4">
+                            <i class="ti ti-check me-2"></i> Ejecutar Importación
+                        </button>
+                    </div>
+                </div>
+
+                <div id="wizardComplete" class="wizard-step d-none">
+                    <div class="text-center py-4">
+                        <div class="avatar-lg bg-success bg-opacity-10 text-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width:80px; height:80px;">
+                            <i class="ti ti-circle-check fs-48"></i>
+                        </div>
+                        <h4 class="fw-bold text-success mb-1">¡Importación Completada!</h4>
+                        <p class="text-muted small mb-4">Los datos se cargaron correctamente sobre la entidad activa.</p>
+                        <div id="resultadoFinal" class="text-start mx-auto" style="max-width: 560px;"></div>
+                        <div class="d-flex justify-content-center gap-2 mt-4">
+                            <button type="button" id="btnNuevoWizard" class="btn btn-outline-primary">
+                                <i class="ti ti-database-import me-2"></i> Nueva Importación
+                            </button>
+                            <a asp-controller="Dashboard" asp-action="Index" class="btn btn-primary">
+                                <i class="ti ti-layout-dashboard me-2"></i> Ir al Panel
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .step-circle {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.05rem;
+        margin: 0 auto 6px;
+        border: 2px solid var(--ins-border-color, #dfe3e7);
+        color: var(--ins-secondary-color, #6c757d);
+        background: transparent;
+        position: relative;
+        transition: all .25s ease;
+    }
+    .step-circle.active {
+        border-color: var(--ins-primary);
+        background: var(--ins-primary);
+        color: #fff;
+        box-shadow: 0 .25rem .6rem rgba(26, 179, 148, .35);
+    }
+    .step-circle.completed {
+        border-color: var(--ins-success);
+        background: var(--ins-success);
+        color: #fff;
+    }
+    .step-circle.completed .step-num { display: none; }
+    .step-circle.completed .step-check { display: flex !important; }
+    .step-connector {
+        flex: 1 1 auto;
+        min-width: 16px;
+        height: 3px;
+        border-radius: 2px;
+        background: var(--ins-border-color, #dfe3e7);
+        margin: 0 6px 22px;
+        transition: background .25s ease;
+    }
+    .step-connector.done { background: var(--ins-success); }
+    .step-indicator small {
+        color: var(--ins-secondary-color, #6c757d);
+        font-weight: 600;
+        font-size: .72rem;
+        letter-spacing: .3px;
+        white-space: nowrap;
+    }
+    .seleccion-titulo {
+        font-size: .75rem;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        color: var(--ins-primary);
+        font-weight: 700;
+        margin: 1.1rem 0 .5rem;
+        opacity: .9;
+    }
+    .seleccion-row { transition: border-color .2s ease, background-color .2s ease; }
+    .seleccion-row:hover { background-color: var(--ins-primary-bg-subtle, rgba(26,179,148,.06)); }
+    .wizard-step { animation: wizardFadeIn .25s ease; }
+    @@keyframes wizardFadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: none; }
+    }
+    .stat-card {
+        border: 0;
+        box-shadow: 0 .15rem .5rem rgba(0,0,0,.05);
+        height: 100%;
+    }
+    .stat-card .stat-value { font-size: 1.5rem; font-weight: 700; line-height: 1.1; }
+    .stat-card .stat-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .4px; color: var(--ins-secondary-color, #6c757d); font-weight: 600; }
+</style>
+
+@section Scripts {
+    <script>
+        var testExitoso = false;
+        var resumenDatos = {};
+
+        var RESUMEN_ITEMS = [
+            { k: 'almacenes', label: 'Almacenes', icon: 'ti-building-warehouse', color: 'success' },
+            { k: 'unidadesMedida', label: 'Unidades de medida', icon: 'ti-ruler-2', color: 'info' },
+            { k: 'categorias', label: 'Categorías', icon: 'ti-folders', color: 'warning' },
+            { k: 'centrosCosto', label: 'Centros de costo', icon: 'ti-chart-pie', color: 'secondary' },
+            { k: 'conceptos', label: 'Conceptos inv.', icon: 'ti-tags', color: 'info' },
+            { k: 'cargos', label: 'Cargos', icon: 'ti-user-cog', color: 'primary' },
+            { k: 'productos', label: 'Productos', icon: 'ti-box', color: 'primary' },
+            { k: 'existencias', label: 'Existencias', icon: 'ti-packages', color: 'danger' },
+            { k: 'precios', label: 'Precios PDV', icon: 'ti-currency-dollar', color: 'success' },
+            { k: 'clientes', label: 'Clientes (UEB)', icon: 'ti-users', color: 'success' },
+            { k: 'empleados', label: 'Empleados', icon: 'ti-user', color: 'warning' },
+            { k: 'dispositivosPos', label: 'Dispositivos POS', icon: 'ti-device-laptop', color: 'info' }
+        ];
+
+        $(document).ready(function() {
+            var currentStep = 1;
+
+            $('#btnSiguiente1').on('click', function() {
+                if (validarPaso1()) {
+                    mostrarPaso(2);
+                    ejecutarTest();
+                }
+            });
+
+            $('#btnAtras2').on('click', function() { mostrarPaso(1); });
+            $('#btnAtras3').on('click', function() { mostrarPaso(2); });
+            $('#btnAtras4').on('click', function() { mostrarPaso(3); });
+            $('#btnAtras5').on('click', function() { mostrarPaso(4); });
+
+            $('#btnSiguiente2').on('click', function() {
+                if (testExitoso) {
+                    mostrarPaso(3);
+                    cargarResumen();
+                }
+            });
+
+            $('#btnSiguiente3').on('click', function() {
+                mostrarPaso(4);
+                cargarSeleccion();
+            });
+
+            $('#btnSiguiente4').on('click', function() {
+                mostrarPaso(5);
+                cargarConfirmacion();
+            });
+
+            $('#btnEjecutar').on('click', function() {
+                ejecutarImportacion();
+            });
+
+            $('#btnReintentarTest').on('click', function() {
+                ejecutarTest();
+            });
+
+            $('#btnNuevoWizard').on('click', function() {
+                location.reload();
+            });
+
+            $('#btnPassToggle').on('click', function() {
+                var $input = $('#srvPassword');
+                var $icon = $(this).find('i');
+                var esPassword = $input.attr('type') === 'password';
+                $input.attr('type', esPassword ? 'text' : 'password');
+                $icon.toggleClass('ti-eye', !esPassword).toggleClass('ti-eye-off', esPassword);
+            });
+
+            registrarDependencias();
+        });
+
+        var DEPENDENCIAS_SECCIONES = {
+            productos: ['unidades', 'categorias'],
+            existencias: ['productos', 'almacenes'],
+            precios: ['productos'],
+            empleados: ['cargos']
+        };
+        var ID_POR_SECCION = {
+            almacenes: 'chkAlmacenes', unidades: 'chkUnidades', categorias: 'chkCategorias',
+            productos: 'chkProductos', existencias: 'chkExistencias', precios: 'chkPrecios',
+            clientes: 'chkClientes', centrosCosto: 'chkCentrosCosto', conceptos: 'chkConceptos',
+            cargos: 'chkCargos', empleados: 'chkEmpleados', registradoras: 'chkRegistradoras'
+        };
+
+        function registrarDependencias() {
+            Object.keys(DEPENDENCIAS_SECCIONES).forEach(function(seccion) {
+                $('#' + ID_POR_SECCION[seccion]).on('change', function() {
+                    if ($(this).is(':checked')) {
+                        DEPENDENCIAS_SECCIONES[seccion].forEach(function(dep) {
+                            var $dep = $('#' + ID_POR_SECCION[dep]);
+                            if (!$dep.is(':checked')) {
+                                $dep.prop('checked', true);
+                                $dep.closest('.seleccion-row').addClass('border-success bg-success bg-opacity-10');
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
+        function obtenerSecciones() {
+            var secciones = [];
+            Object.keys(ID_POR_SECCION).forEach(function(seccion) {
+                if ($('#' + ID_POR_SECCION[seccion]).is(':checked')) secciones.push(seccion);
+            });
+            return secciones;
+        }
+
+        function obtenerParametros() {
+            return {
+                servidor: $('#srvServidor').val(),
+                baseDatos: $('#srvBaseDatos').val(),
+                usuario: $('#srvUsuario').val(),
+                password: $('#srvPassword').val(),
+                secciones: obtenerSecciones()
+            };
+        }
+
+        function postJson(url, data) {
+            return $.ajax({
+                url: url,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data)
+            });
+        }
+
+        function validarPaso1() {
+            var valido = true;
+            ['srvServidor', 'srvBaseDatos', 'srvUsuario', 'srvPassword'].forEach(function(id) {
+                var $el = $('#' + id);
+                var vacio = !$el.val();
+                $el.toggleClass('is-invalid', vacio);
+                if (vacio) valido = false;
+            });
+            if (!valido) {
+                window.SwalAlert('warning', 'Complete todos los campos de conexión antes de continuar.', 'Datos incompletos');
+            }
+            return valido;
+        }
+
+        function mostrarPaso(step) {
+            $('.wizard-step').addClass('d-none');
+            $('#wizardStep' + step).removeClass('d-none');
+            $('.step-circle').removeClass('active completed');
+            $('.step-connector').removeClass('done');
+            for (var i = 1; i <= step; i++) {
+                var $circle = $('.step-circle[data-step="' + i + '"]');
+                if (i === step) {
+                    $circle.addClass('active');
+                } else {
+                    $circle.addClass('completed');
+                }
+            }
+            for (var c = 1; c < step; c++) {
+                $('.step-connector[data-idx="' + c + '"]').addClass('done');
+            }
+        }
+
+        function ejecutarTest() {
+            $('#testContainer').html(
+                '<div class="text-center py-4">' +
+                '<div class="spinner-border text-primary" role="status"></div>' +
+                '<p class="text-muted mt-2 mb-0">Probando conexión...</p>' +
+                '<small class="text-muted">' + $('#srvServidor').val() + ' \\ ' + $('#srvBaseDatos').val() + '</small>' +
+                '</div>');
+            $('#btnSiguiente2').prop('disabled', true);
+            $('#btnReintentarTest').addClass('d-none');
+            var inicio = Date.now();
+
+            postJson('/api/importacion/test-conexion', obtenerParametros())
+                .done(function(data) {
+                    var seg = ((Date.now() - inicio) / 1000).toFixed(1);
+                    if (data.exitoso) {
+                        $('#testContainer').html(
+                            '<div class="alert alert-success d-flex align-items-start mb-0" role="alert">' +
+                            '<i class="ti ti-circle-check fs-24 me-3"></i>' +
+                            '<div>' +
+                            '<h6 class="alert-heading fw-bold mb-1">Conexión exitosa</h6>' +
+                            '<p class="mb-1 small">' + data.mensaje + '</p>' +
+                            '<small class="opacity-75">Servidor: <strong>' + $('#srvServidor').val() + '</strong> · Base: <strong>' + $('#srvBaseDatos').val() + '</strong> · ' + seg + ' s</small>' +
+                            '</div></div>');
+                        testExitoso = true;
+                        $('#btnSiguiente2').prop('disabled', false);
+                    } else {
+                        $('#testContainer').html(
+                            '<div class="alert alert-danger d-flex align-items-start mb-0" role="alert">' +
+                            '<i class="ti ti-alert-triangle fs-24 me-3"></i>' +
+                            '<div><h6 class="alert-heading fw-bold mb-1">Error de conexión</h6>' +
+                            '<p class="mb-0 small">' + data.mensaje + '</p></div></div>');
+                        testExitoso = false;
+                        $('#btnReintentarTest').removeClass('d-none');
+                    }
+                })
+                .fail(function(xhr) {
+                    var msg = (xhr.responseJSON && (xhr.responseJSON.message || xhr.responseJSON.mensaje)) || 'Error de conexión al servidor.';
+                    $('#testContainer').html(
+                        '<div class="alert alert-danger d-flex align-items-start mb-0" role="alert">' +
+                        '<i class="ti ti-alert-triangle fs-24 me-3"></i>' +
+                        '<div><h6 class="alert-heading fw-bold mb-1">No fue posible conectar</h6>' +
+                        '<p class="mb-0 small">' + msg + '</p></div></div>');
+                    testExitoso = false;
+                    $('#btnReintentarTest').removeClass('d-none');
+                });
+        }
+
+        function totalResumen() {
+            var total = 0;
+            RESUMEN_ITEMS.forEach(function(item) { total += (resumenDatos[item.k] || 0); });
+            return total;
+        }
+
+        function cargarResumen() {
+            $('#resumenContainer').html(
+                '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div>' +
+                '<p class="text-muted mt-2 mb-0">Cargando resumen...</p></div>');
+            $('#resumenHeader').html('');
+
+            postJson('/api/importacion/resumen', obtenerParametros())
+                .done(function(data) {
+                    resumenDatos = data;
+                    $('#resumenHeader').html(
+                        '<div class="alert alert-success d-flex align-items-center mb-3 py-2 small">' +
+                        '<i class="ti ti-circle-check fs-20 me-2"></i> Base de datos verificada · <strong class="ms-1">' + totalResumen() + ' registros disponibles</strong></div>');
+                    var html = '<div class="row g-3">';
+                    RESUMEN_ITEMS.forEach(function(item) {
+                        var color = item.color;
+                        html += '<div class="col-sm-6 col-md-4 col-xl-3">' +
+                            '<div class="card stat-card">' +
+                            '<div class="card-body d-flex align-items-center gap-2 py-3">' +
+                            '<span class="avatar-md rounded-circle bg-' + color + ' bg-opacity-10 text-' + color + ' d-inline-flex align-items-center justify-content-center">' +
+                            '<i class="ti ' + item.icon + ' fs-20"></i></span>' +
+                            '<div class="min-w-0">' +
+                            '<div class="stat-value text-' + color + '">' + (data[item.k] || 0) + '</div>' +
+                            '<div class="stat-label text-truncate">' + item.label + '</div></div></div></div></div>';
+                    });
+                    html += '</div>';
+                    $('#resumenContainer').html(html);
+                })
+                .fail(function(xhr) {
+                    var msg = (xhr.responseJSON && (xhr.responseJSON.message || xhr.responseJSON.mensaje)) || 'Error al cargar el resumen.';
+                    $('#resumenContainer').html(
+                        '<div class="alert alert-danger d-flex align-items-start mb-0" role="alert">' +
+                        '<i class="ti ti-alert-triangle fs-24 me-3"></i>' +
+                        '<div><h6 class="alert-heading fw-bold mb-1">Error al cargar el resumen</h6>' +
+                        '<p class="mb-0 small">' + msg + '</p></div></div>');
+                });
+        }
+
+        function cargarSeleccion() {
+            var mapa = {
+                countAlmacenes: 'almacenes', countUnidades: 'unidadesMedida', countCategorias: 'categorias',
+                countCentrosCosto: 'centrosCosto', countConceptos: 'conceptos', countCargos: 'cargos',
+                countProductos: 'productos', countExistencias: 'existencias', countPrecios: 'precios',
+                countClientes: 'clientes', countEmpleados: 'empleados', countRegistradoras: 'dispositivosPos'
+            };
+            Object.keys(mapa).forEach(function(id) {
+                var val = resumenDatos[mapa[id]];
+                $('#' + id).text('(' + (val || 0) + ' registros)');
+            });
+        }
+
+        function cargarConfirmacion() {
+            var items = [
+                { id: 'chkAlmacenes', label: 'Almacenes', k: 'almacenes', icon: 'ti-building-warehouse' },
+                { id: 'chkUnidades', label: 'Unidades de medida', k: 'unidadesMedida', icon: 'ti-ruler-2' },
+                { id: 'chkCategorias', label: 'Categorías', k: 'categorias', icon: 'ti-folders' },
+                { id: 'chkCentrosCosto', label: 'Centros de costo', k: 'centrosCosto', icon: 'ti-chart-pie' },
+                { id: 'chkConceptos', label: 'Conceptos de inventario', k: 'conceptos', icon: 'ti-tags' },
+                { id: 'chkCargos', label: 'Cargos', k: 'cargos', icon: 'ti-user-cog' },
+                { id: 'chkProductos', label: 'Productos', k: 'productos', icon: 'ti-box' },
+                { id: 'chkExistencias', label: 'Existencias', k: 'existencias', icon: 'ti-packages' },
+                { id: 'chkPrecios', label: 'Precios PDV', k: 'precios', icon: 'ti-currency-dollar' },
+                { id: 'chkClientes', label: 'Clientes (UEB)', k: 'clientes', icon: 'ti-users' },
+                { id: 'chkEmpleados', label: 'Empleados', k: 'empleados', icon: 'ti-user' },
+                { id: 'chkRegistradoras', label: 'Registradoras (POS)', k: 'dispositivosPos', icon: 'ti-device-laptop' }
+            ];
+            var total = 0;
+            var html = '<div class="row g-2 small">';
+            items.forEach(function(item) {
+                if ($('#' + item.id).is(':checked')) {
+                    var val = resumenDatos[item.k] || 0;
+                    total += val;
+                    html += '<div class="col-md-6 d-flex align-items-center gap-2">' +
+                        '<i class="ti ' + item.icon + ' text-primary"></i>' +
+                        '<span class="flex-grow-1">' + item.label + '</span>' +
+                        '<strong>' + val + '</strong></div>';
+                }
+            });
+            html += '</div>';
+            html += '<hr class="my-2" />';
+            html += '<div class="d-flex justify-content-between align-items-center mb-0">' +
+                '<span class="fw-bold">Total de registros a importar</span>' +
+                '<span class="badge badge-soft-primary fs-14">' + total + '</span></div>';
+            $('#confirmacionDetalle').html(html);
+        }
+
+        function ejecutarImportacion() {
+            $('#btnEjecutar').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status"></span>Importando...');
+
+            postJson('/api/importacion/ejecutar', obtenerParametros())
+                .done(function(data) {
+                    var lista = [
+                        { c: $('#chkAlmacenes').is(':checked'), l: 'Almacenes importados', v: data.almacenes },
+                        { c: $('#chkUnidades').is(':checked'), l: 'Unidades de medida importadas', v: data.unidadesMedida },
+                        { c: $('#chkCategorias').is(':checked'), l: 'Categorías importadas', v: data.categorias },
+                        { c: $('#chkCentrosCosto').is(':checked'), l: 'Centros de costo importados', v: data.centrosCosto },
+                        { c: $('#chkConceptos').is(':checked'), l: 'Conceptos importados', v: data.conceptos },
+                        { c: $('#chkCargos').is(':checked'), l: 'Cargos importados', v: data.cargos },
+                        { c: $('#chkProductos').is(':checked'), l: 'Productos importados', v: data.productos },
+                        { c: $('#chkProductos').is(':checked'), l: 'Códigos de barra asignados', v: data.codigosBarras },
+                        { c: $('#chkProductos').is(':checked'), l: 'Productos vinculados a familia', v: data.productoFamilias },
+                        { c: $('#chkExistencias').is(':checked'), l: 'Existencias importadas', v: data.existencias },
+                        { c: $('#chkPrecios').is(':checked'), l: 'Precios importados', v: data.precios },
+                        { c: $('#chkClientes').is(':checked'), l: 'Clientes importados', v: data.clientes },
+                        { c: $('#chkEmpleados').is(':checked'), l: 'Empleados importados', v: data.empleados },
+                        { c: $('#chkRegistradoras').is(':checked'), l: 'Dispositivos POS importados', v: data.dispositivosPos }
+                    ];
+                    var html = '<div class="card border-0 shadow-sm">' +
+                        '<div class="card-body p-4">' +
+                        '<div class="row g-2 small">';
+                    lista.forEach(function(item) {
+                        if (item.c) {
+                            html += '<div class="col-md-6 d-flex align-items-center gap-2">' +
+                                '<i class="ti ti-circle-check text-success"></i>' +
+                                '<span class="flex-grow-1">' + item.l + '</span>' +
+                                '<strong>' + (item.v ?? 0) + '</strong></div>';
+                        }
+                    });
+                    html += '</div></div></div>';
+                    $('#resultadoFinal').html(html);
+                    $('.wizard-step').addClass('d-none');
+                    $('#wizardComplete').removeClass('d-none');
+                    window.SwalAlert('success', 'Todos los datos seleccionados se importaron correctamente.', '¡Importación completada!');
+                })
+                .fail(function(xhr) {
+                    var msg = (xhr.responseJSON && (xhr.responseJSON.message || xhr.responseJSON.mensaje)) || 'Error durante la importación. Verifique los datos de conexión e intente nuevamente.';
+                    $('#btnEjecutar').prop('disabled', false).html('<i class="ti ti-refresh me-2"></i> Reintentar');
+                    $('#confirmacionContainer').html(
+                        '<div class="alert alert-danger d-flex align-items-start" role="alert">' +
+                        '<i class="ti ti-alert-triangle fs-24 me-3"></i>' +
+                        '<div><h6 class="alert-heading fw-bold mb-1">La importación falló</h6>' +
+                        '<p class="mb-0 small">' + msg + '</p></div></div>');
+                    window.SwalAlert('danger', msg, 'Error durante la importación');
+                });
+        }
+    </script>
+}

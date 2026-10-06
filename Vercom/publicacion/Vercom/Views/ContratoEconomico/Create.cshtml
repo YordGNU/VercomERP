@@ -1,21 +1,12 @@
-﻿@model Vercom.ViewModels.EconomicContractViewModel
+@model Vercom.ViewModels.EconomicContractViewModel
 @{
     ViewBag.Title = Model.Title;
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Formalizar Contrato Económico</h4>
-        <p class="text-muted small mb-0">Registro de convenios B2B para operaciones de compra o venta (RF-50).</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Comercial</a></li>
-            <li class="breadcrumb-item active">Contratos</li>
-        </ol>
-    </div>
-</div>
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Formalizar Contrato Económico", Subtitle = "Registro de convenios B2B para operaciones de compra o venta (RF-50).", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 <div class="row">
     <div class="row justify-content-center">
         <div class="col-lg-10">

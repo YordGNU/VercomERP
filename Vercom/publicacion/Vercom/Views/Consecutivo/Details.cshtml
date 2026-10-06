@@ -1,21 +1,13 @@
 @model Vercom.Models.Consecutivo
 
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewBag.Title = "Detalle del Consecutivo";
 }
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Detalle del Consecutivo</h4>
-        <p class="text-muted small mb-0">Control de numeración por tipo de documento y serie (RNF-51).</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-0">
-            <li class="breadcrumb-item"><a asp-controller="Dashboard" asp-action="Index">Vercom</a></li>
-            <li class="breadcrumb-item"><a asp-action="Index">Consecutivo</a></li>
-            <li class="breadcrumb-item active">Detalle</li>
-        </ol>
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Consecutivo</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Detalle del Consecutivo", Subtitle = "Control de numeración por tipo de documento y serie (RNF-51).", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 <div class="row">
     <div class="col-lg-7">
         <div class="card">
@@ -31,7 +23,7 @@
                     <dt class="col-sm-4">Sucursal</dt>
                     <dd class="col-sm-8">@(Model.Sucursal?.Nombre ?? "Central (todas)")</dd>
                     <dt class="col-sm-4">Entidad</dt>
-                    <dd class="col-sm-8">@Model.Entidad?.NombreComercial</dd>
+                    <dd class="col-sm-8">@EntidadDisplay.Name</dd>
                     <dt class="col-sm-4">Último número</dt>
                     <dd class="col-sm-8"><span class="badge bg-success fs-6 px-3 py-2 text-numeric">@Model.UltimoNumero</span></dd>
                     <dt class="col-sm-4">Longitud de relleno</dt>

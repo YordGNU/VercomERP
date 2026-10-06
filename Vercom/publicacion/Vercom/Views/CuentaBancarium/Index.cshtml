@@ -1,19 +1,10 @@
 @model IEnumerable<Vercom.Models.CuentaBancarium>
-@{
-    ViewBag.Title = "Cuentas Bancarias";
-}
+@{ ViewBag.Title = "Cuentas Bancarias"; }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Saldos y Disponibilidad Bancaria</h4>
-        <p class="text-muted small mb-0">Control de cuentas en instituciones financieras para cobros y pagos corporativos.</p>
-    </div>
-    <div class="text-end">
-        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
-            <i class="ti ti-plus"></i> AÑADIR CUENTA BANCARIA
-        </a>
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> AÑADIR CUENTA BANCARIA</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Saldos y Disponibilidad Bancaria", Subtitle = "Control de cuentas en instituciones financieras para cobros y pagos corporativos.", Icon = "ti-building-bank", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row">

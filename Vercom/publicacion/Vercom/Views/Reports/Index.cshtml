@@ -3,12 +3,10 @@
     ViewBag.Title = Model.Title;
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Reportes Oficiales y Fiscales</h4>
-        <p class="text-muted small mb-0">Consolidación de estados financieros y cumplimiento normativo ante la ONAT.</p>
-    </div>
-</div>
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Reportes Oficiales y Fiscales", Subtitle = "Consolidación de estados financieros y cumplimiento normativo ante la ONAT.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row">

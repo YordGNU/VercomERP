@@ -3,17 +3,10 @@
     ViewBag.Title = "Centro de Notificaciones";
 }
 
-<div class="page-title-head d-flex align-items-center p-3">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Centro de Notificaciones</h4>
-        <p class="text-muted small mb-0">Bandeja central del ERP: ventas POS, terminales, sesiones de caja, inventario, RRHH y seguridad.</p>
-    </div>
-    <div>
-        <button type="button" class="btn btn-primary btn-sm shadow" id="btn-marcar-todas">
-            <i class="ti ti-check-all me-1"></i> Marcar todas leídas
-        </button>
-    </div>
-</div>
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Centro de Notificaciones", Subtitle = "Bandeja central del ERP: ventas POS, terminales, sesiones de caja, inventario, RRHH y seguridad.", Icon = "ti-checks me-1", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row g-3 mb-3">
     <div class="col-auto">
@@ -36,77 +29,75 @@
 
 <div class="card border-0 shadow-sm">
     <div class="card-body">
-        <div class="table-responsive">
-            <table id="notificacionTable" class="table table-striped table-hover dt-responsive">
-                <thead class="thead-light text-uppercase fs-xxs">
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Título</th>
-                        <th>Mensaje</th>
-                        <th>Tipo</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model)
+        <table id="notificacionTable" class="table table-striped table-hover dt-responsive">
+            <thead class="thead-light text-uppercase fs-xxs">
+                <tr>
+                    <th>Fecha</th>
+                    <th>Título</th>
+                    <th>Mensaje</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    var colorIcono = item.Tipo switch
                     {
-                        var colorIcono = item.Tipo switch
-                        {
-                            "success" => "text-success",
-                            "danger" => "text-danger",
-                            "warning" => "text-warning",
-                            _ => "text-info"
-                        };
-                        var badge = item.Tipo switch
-                        {
-                            "success" => "bg-success-subtle text-success",
-                            "danger" => "bg-danger-subtle text-danger",
-                            "warning" => "bg-warning-subtle text-warning",
-                            _ => "bg-info-subtle text-info"
-                        };
-                        <tr class="@(item.Leida ? "text-muted" : "fw-semibold")">
-                            <td class="small">@item.CreadoEn.ToString("dd/MM/yyyy HH:mm")</td>
-                            <td>@item.Titulo</td>
-                            <td style="max-width: 420px;"><p class="mb-0 text-truncate" title="@item.Mensaje">@item.Mensaje</p></td>
-                            <td><span class="badge @badge"><i class="ti @(item.Tipo == "success" ? "ti-circle-check" : item.Tipo == "danger" ? "ti-alert-triangle" : item.Tipo == "warning" ? "ti-alert" : "ti-info-circle") me-1"></i>@item.Tipo</span></td>
-                            <td>
-                                @if (item.Leida)
+                        "success" => "text-success",
+                        "danger" => "text-danger",
+                        "warning" => "text-warning",
+                        _ => "text-info"
+                    };
+                    var badge = item.Tipo switch
+                    {
+                        "success" => "bg-success-subtle text-success",
+                        "danger" => "bg-danger-subtle text-danger",
+                        "warning" => "bg-warning-subtle text-warning",
+                        _ => "bg-info-subtle text-info"
+                    };
+                    <tr class="@(item.Leida ? "text-muted" : "fw-semibold")">
+                        <td class="small">@item.CreadoEn.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@item.Titulo</td>
+                        <td style="max-width: 420px;"><p class="mb-0 text-truncate" title="@item.Mensaje">@item.Mensaje</p></td>
+                        <td><span class="badge @badge"><i class="ti @(item.Tipo == "success" ? "ti-circle-check" : item.Tipo == "danger" ? "ti-alert-triangle" : item.Tipo == "warning" ? "ti-alert-triangle" : "ti-info-circle") me-1"></i>@item.Tipo</span></td>
+                        <td>
+                            @if (item.Leida)
+                            {
+                                <span class="badge bg-light text-success"><i class="ti ti-check me-1"></i>Leída</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning-subtle text-warning"><i class="ti ti-bell me-1"></i>Nueva</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-list justify-content-end">
+                                @if (!item.Leida)
                                 {
-                                    <span class="badge bg-light text-success"><i class="ti ti-check me-1"></i>Leída</span>
+                                    <form asp-action="MarcarLeida" method="post" class="d-inline notif-marcar" data-leida="true">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-sm btn-icon btn-light rounded-circle" title="Marcar leída">
+                                            <i class="ti ti-circle-check text-success"></i>
+                                        </button>
+                                    </form>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-warning-subtle text-warning"><i class="ti ti-bell me-1"></i>Nueva</span>
+                                    <form asp-action="MarcarNoLeida" method="post" class="d-inline notif-marcar" data-leida="false">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-sm btn-icon btn-light rounded-circle" title="Marcar no leída">
+                                            <i class="ti ti-bell text-secondary"></i>
+                                        </button>
+                                    </form>
                                 }
-                            </td>
-                            <td class="text-end">
-                                <div class="btn-list justify-content-end">
-                                    @if (!item.Leida)
-                                    {
-                                        <form asp-action="MarcarLeida" method="post" class="d-inline notif-marcar" data-leida="true">
-                                            <input type="hidden" name="id" value="@item.Id" />
-                                            <button type="submit" class="btn btn-sm btn-icon btn-light rounded-circle" title="Marcar leída">
-                                                <i class="ti ti-circle-check text-success"></i>
-                                            </button>
-                                        </form>
-                                    }
-                                    else
-                                    {
-                                        <form asp-action="MarcarNoLeida" method="post" class="d-inline notif-marcar" data-leida="false">
-                                            <input type="hidden" name="id" value="@item.Id" />
-                                            <button type="submit" class="btn btn-sm btn-icon btn-light rounded-circle" title="Marcar no leída">
-                                                <i class="ti ti-bell text-secondary"></i>
-                                            </button>
-                                        </form>
-                                    }
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
 </div>
 
@@ -114,8 +105,11 @@
     <script>
         $(document).ready(function () {
             $('#notificacionTable').DataTable({
-                language: { url: '/js/i18n/es-ES.json' },
-                order: [[0, 'desc']]
+                pageLength: 100,
+                language: { url: '@Url.Content("~/lib/i18n/es-ES.json")' },
+                order: [[1, 'asc']],
+                dom: '<"row align-items-center"<"col-md-6"l><"col-md-6"f>>rt<"row align-items-center"<"col-md-5"i><"col-md-7"p>>',
+                responsive: true,
             });
 
             // Selector de tipo => recarga con el filtro

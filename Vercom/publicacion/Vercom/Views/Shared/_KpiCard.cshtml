@@ -1,0 +1,27 @@
+@model Vercom.ViewModels.KpiCardModel
+@{
+    var tone = string.IsNullOrWhiteSpace(Model.Tone) ? "primary" : Model.Tone;
+    var tag = string.IsNullOrWhiteSpace(Model.Href) ? "div" : "a";
+}
+<@tag class="ux-kpi ux-tone-@tone" @(string.IsNullOrWhiteSpace(Model.Href) ? "" : $"href=\"{Model.Href}\"")>
+    @if (!string.IsNullOrWhiteSpace(Model.Icon))
+    {
+        <span class="ux-kpi-icon"><i class="ti @Model.Icon"></i></span>
+    }
+    <div class="min-w-0">
+        <span class="ux-kpi-value @(Model.Small ? "ux-kpi-value-sm" : "")">
+            @Model.Value@if (!string.IsNullOrWhiteSpace(Model.ValueSuffix))
+            {
+                <span class="ux-kpi-hint d-inline">@Model.ValueSuffix</span>
+            }
+        </span>
+        @if (!string.IsNullOrWhiteSpace(Model.Label))
+        {
+            <span class="ux-kpi-label text-truncate">@Model.Label</span>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.Hint))
+        {
+            <span class="ux-kpi-hint text-truncate">@Model.Hint</span>
+        }
+    </div>
+</@tag>

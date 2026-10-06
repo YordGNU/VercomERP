@@ -10,17 +10,10 @@
     };
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Operación Offline: @Model.IdempotencyKey</h4>
-        <p class="text-muted small mb-0">Inspección técnica del payload recibido desde la terminal @Model.DispositivoPos.Nombre.</p>
-    </div>
-    <div class="text-end">
-        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
-            <i class="ti ti-arrow-left me-1"></i> VOLVER
-        </a>
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> VOLVER</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Operación Offline: " + Model.IdempotencyKey, Subtitle = "Inspección técnica del payload recibido desde la terminal @Model.DispositivoPos.Nombre.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="col-lg-4">

@@ -1,20 +1,12 @@
-﻿@model Vercom.ViewModels.AssetFormViewModel
+@model Vercom.ViewModels.AssetFormViewModel
 @{
     ViewBag.Title = Model.Title;
 }
 
-<div class="page-title-head d-flex align-items-center">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">@Model.Title</h4>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Contabilidad</a></li>
-            <li class="breadcrumb-item active">Alta de Activo</li>
-        </ol>
-    </div>
-</div>
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "", Subtitle = "Alta de nuevo activo fijo con configuración de depreciación.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 <div class="row mt-4">
     <form asp-action="Create" method="post" id="createAssetForm">
         @Html.AntiForgeryToken()

@@ -1,23 +1,13 @@
-﻿@using Vercom.Security
+@using Vercom.Security
 @inject IEntidadProvider EntidadProvider
 @model Vercom.ViewModels.AsientoIndexViewModel
-@{
-    ViewBag.Title = Model.Title;
-    var isMaster = EntidadProvider.IsMaster;
-}
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-     <div class="flex-grow-1">
-         <h4 class="fs-sm text-uppercase fw-bold m-0">Libro Diario de Comprobantes</h4>
-         <p class="text-muted small mb-0">Registro cronológico de todas las operaciones económicas de la entidad.</p>
-     </div>
-     <div class="text-end">
-         <ol class="breadcrumb m-0 py-0">
-             <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>     
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Contabilidad</a></li>
-             <li class="breadcrumb-item active">Asiento contable</li>
-         </ol>
-     </div>
-</div>   
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
+@{ ViewBag.Title = Model.Title; var isMaster = EntidadProvider.IsMaster; }
+
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Libro Diario de Comprobantes", Subtitle = "Registro cronológico de todas las operaciones económicas de la entidad.", Icon = "ti-book", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 <div class="card">
     <div class="card-body">
         <form method="get" class="row g-1 align-items-center">
@@ -70,7 +60,7 @@
                                 <td class="text-numeric fw-bold text-primary">@item.NumeroComprobante.ToString("D8")</td>
                                 @if (isMaster) {
                                     <td>
-                                        <div class="fw-bold small text-uppercase">@item.Entidad?.NombreComercial</div>
+                                        <div class="fw-bold small text-uppercase">@EntidadDisplay.Name</div>
                                     </td>
                                 }
                                  <td>@item.Fecha.ToString("dd/MM/yyyy")</td>

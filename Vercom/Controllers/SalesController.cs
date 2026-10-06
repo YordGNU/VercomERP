@@ -58,6 +58,15 @@ public class SalesController : Controller
     }
 
     [HttpGet]
+    [Authorize(Policy = "COMERCIAL.FACTURA_VENTA.CREAR")]
+    public async Task<IActionResult> GetPrecios(Guid? clienteId, CancellationToken cancellationToken = default)
+    {
+        var fecha = DateOnly.FromDateTime(DateTime.Now);
+        var precios = await _salesService.GetSalePricesAsync(clienteId, fecha, cancellationToken);
+        return Json(precios);
+    }
+
+    [HttpGet]
     public async Task<IActionResult> CheckCreditLimit(Guid clienteId, decimal amount)
     {
         var result = await _commercialService.ValidateCreditLimitAsync(clienteId, amount);

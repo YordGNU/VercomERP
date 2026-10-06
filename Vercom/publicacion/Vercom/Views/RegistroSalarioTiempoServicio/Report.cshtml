@@ -4,14 +4,10 @@
     var empName = ViewBag.EmployeeName;
 }
 
-<div class="page-title-head d-flex align-items-center">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Registro de Salarios y Tiempo de Servicio</h4>
-    </div>
-    <div class="text-end">
-        <button class="btn btn-sm btn-outline-dark" onclick="window.print()"><i class="ti ti-printer me-1"></i> Imprimir Modelo Oficial</button>
-    </div>
-</div>
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = "Registro de Salarios y Tiempo de Servicio", Subtitle = "", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row mt-4">
     <div class="card shadow-none border">
@@ -23,7 +19,7 @@
             <div class="row mb-4">
                 <div class="col-md-6">
                     <p class="mb-1"><strong>Trabajador:</strong> @empName</p>
-                    <p class="mb-0"><strong>Entidad:</strong> @User.FindFirst("EntidadNombre")?.Value</p>
+                    <p class="mb-0"><strong>Entidad:</strong> @EntidadDisplay.Name</p>
                 </div>
             </div>
             <table class="table table-bordered table-sm align-middle text-center">
@@ -40,7 +36,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @{
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
+@{
                         decimal cumul = 0;
                     }
                     @foreach (var row in Model)

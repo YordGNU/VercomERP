@@ -1,21 +1,8 @@
 @model IEnumerable<Vercom.Models.RecepcionCompra>
+@{ ViewData["Title"] = "Recepciones de Compra"; }
 
-@{
-    ViewData["Title"] = "Index";
-}
-
-<div class="page-title-head d-flex align-items-center">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Gesti�n de RecepcionCompra</h4>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">RecepcionCompra</a></li>
-            <li class="breadcrumb-item active">Listado</li>
-        </ol>
-    </div>
-</div>
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Compras", Title = "Recepciones de Compra", Subtitle = "Control de recepción de mercancías y servicios.", Icon = "ti-package-import", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
 
 <div class="row">
     <div class="row">
@@ -25,8 +12,6 @@
                     <h4 class="card-title">Listado de RecepcionCompra</h4>
                 </div>
                 <div class="card-body">
-
-
 
 <p>
     <a asp-action="Create">Create New</a>
@@ -90,7 +75,6 @@
         </div>
     </div>
 </div>
-
 
 @section Scripts {
     <script>

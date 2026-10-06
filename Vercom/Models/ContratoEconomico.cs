@@ -22,6 +22,8 @@ public partial class ContratoEconomico
 
     public DateOnly? FechaFin { get; set; }
 
+    public DateOnly? FechaFinOriginal { get; set; }
+
     public decimal? MontoTotal { get; set; }
 
     public string? DocumentoUrl { get; set; }
@@ -31,6 +33,8 @@ public partial class ContratoEconomico
     public virtual Cliente? Cliente { get; set; }
 
     public virtual Entidad Entidad { get; set; } = null!;
+
+    public virtual ICollection<ContratoEconomicoSuplemento> Suplementos { get; set; } = new List<ContratoEconomicoSuplemento>();
 
     public virtual ICollection<FacturaVentum> FacturaVenta { get; set; } = new List<FacturaVentum>();
 

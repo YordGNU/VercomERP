@@ -11,7 +11,7 @@
 <div class="row">
     <form asp-action="Create" method="post" id="invoiceForm">
         @Html.AntiForgeryToken()
-        <div asp-validation-summary="All" class="alert alert-danger py-2 small border-0 mb-4 shadow-sm"></div>
+        @Html.ValidationSummary(true, "", new { @class = "alert alert-danger py-2 small border-0 mb-4 shadow-sm", @role = "alert", @tabindex = "-1", @id = "errorSummary" })
 
         <div class="row">
             <!-- Columna Principal: Datos y Partidas -->
@@ -78,7 +78,12 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Dinámico por JS -->
+                                    <tr id="emptyRow">
+                                        <td colspan="5" class="text-center py-4 text-muted">
+                                            <i class="ti ti-shopping-cart me-1"></i>
+                                            No hay artículos. Haz clic en <strong>Añadir Línea</strong> para comenzar.
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -98,10 +103,10 @@
                             <span class="fw-bold" id="labelSubtotal">0.00</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2 align-items-center">
-                            <span class="text-muted small">Descuento Global:</span>
+                            <label for="Invoice_DescuentoTotal" class="form-label small fw-bold text-danger mb-0"><i class="ti ti-discount me-1"></i>Descuento Global:</label>
                             <div class="input-group input-group-sm w-50">
                                 <span class="input-group-text bg-transparent border-end-0 text-danger">-</span>
-                                <input asp-for="Invoice.DescuentoTotal" name="Invoice.DescuentoTotal" class="form-control text-end border-start-0 text-danger fw-bold" value="0.00" oninput="calculateTotals()" />
+                                <input asp-for="Invoice.DescuentoTotal" name="Invoice.DescuentoTotal" id="Invoice_DescuentoTotal" class="form-control text-end border-start-0 text-danger fw-bold" value="0.00" oninput="calculateTotals()" />
                             </div>
                         </div>
                         <div class="d-flex justify-content-between mb-3">
@@ -124,6 +129,9 @@
                             <div id="alertCredito" style="display:none;" class="alert alert-warning border-0 py-2 small mt-3 mb-0">
                                 <i class="ti ti-alert-circle me-1"></i> Se generará saldo en <strong>Cuentas por Cobrar</strong>.
                             </div>
+                            <div id="alertSinPrecio" style="display:none;" class="alert alert-danger border-0 py-2 small mt-3 mb-0">
+                                <i class="ti ti-alert-triangle me-1"></i> Hay artículos <strong>sin precio</strong>. Indique el precio antes de emitir.
+                            </div>
                         </div>
 
                         <div class="d-grid gap-2 mt-4">
@@ -135,9 +143,13 @@
                     </div>
                 </div>
 
-                <div class="alert alert-info border-0 shadow-sm small py-3">
-                    <i class="ti ti-info-circle me-1"></i> La emisión de esta factura rebajará automáticamente el stock del almacén seleccionado.
-                </div>
+<div id="preciosLoading" style="display:none;" class="d-flex align-items-center gap-2 small text-muted">
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span>Actualizando precios segun la lista del cliente...</span>
+                        </div>
+                        <div class="alert alert-info border-0 shadow-sm small py-3">
+                            <i class="ti ti-info-circle me-1"></i> La emisión de esta factura rebajará automáticamente el stock del almacén seleccionado.
+                        </div>
             </div>
         </div>
     </form>
@@ -149,6 +161,8 @@
         #detailsTable { table-layout: fixed; }
         #detailsTable td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         #detailsTable .select2-dynamic { max-width: 100%; }
+        #detailsTable .btn-icon { min-width: 32px; min-height: 32px; }
+        #emptyRow td { white-space: normal; }
     </style>
 }
 
@@ -160,20 +174,23 @@
 
         function addRow() {
             const tbody = document.querySelector("#detailsTable tbody");
+            const emptyRow = document.getElementById("emptyRow");
+            if (emptyRow) emptyRow.style.display = "none";
             const row = document.createElement("tr");
             row.innerHTML = `
                 <td>
                     <select name="Invoice.FacturaVentaDetalles[${rowCount}].ProductoId" class="form-control form-select w-100 select2-dynamic" onchange="updatePrice(this, ${rowCount})" required>
                         <option value="">-- Buscar Artículo --</option>
-                        ${parsedProductos.map(p => `<option value="${p.id}" data-price="${p.precioVentaActual}" data-tax="${p.aplicaImpuestoVentas}">${p.codigo} - ${p.nombre}</option>`).join('')}
+                        ${parsedProductos.map(p => `<option value="${p.id}" data-price="${p.precio}" data-tax="${p.aplicaImpuestoVentas}" data-origen="${p.precioOrigen}">${p.codigo} - ${p.nombre}</option>`).join('')}
                     </select>
                     <div class="tope-warning small text-danger mt-1" style="display:none;"><i class="ti ti-alert-triangle"></i> Excede tope legal</div>
+                    <div class="precio-warning small text-danger mt-1" style="display:none;"><i class="ti ti-alert-circle"></i> Sin precio en lista ni precio base: indique el precio</div>
                 </td>
                 <td><input name="Invoice.FacturaVentaDetalles[${rowCount}].Cantidad" type="number" step="0.01" class="form-control text-center fw-bold input-qty" value="1.00" oninput="calculateTotals()" required /></td>
-                <td><input name="Invoice.FacturaVentaDetalles[${rowCount}].PrecioUnitario" type="number" step="0.01" class="form-control text-end input-price" value="0.00" oninput="calculateTotals()" required /></td>
-               <td class="pe-4 fw-bold text-dark label-line-total">0.00</td>
+                <td><input name="Invoice.FacturaVentaDetalles[${rowCount}].PrecioUnitario" type="number" step="0.01" class="form-control text-end input-price" value="0.00" oninput="markPrecioManual(this); calculateTotals();" required /></td>
+                <td class="pe-4 fw-bold text-dark label-line-total">0.00</td>
                 <td>
-                    <button type="button" class="btn btn-sm btn-icon btn-ghost-danger border-0" onclick="this.closest('tr').remove(); calculateTotals();">
+                    <button type="button" class="btn btn-sm btn-icon btn-ghost-danger border-0" aria-label="Eliminar línea" onclick="removeRow(this)">
                         <i class="ti ti-trash"></i>
                     </button>
                 </td>
@@ -189,12 +206,95 @@
             rowCount++;
         }
 
+        function removeRow(btn) {
+            btn.closest('tr').remove();
+            const tbody = document.querySelector("#detailsTable tbody");
+            if (tbody.querySelectorAll("tr:not(#emptyRow)").length === 0) {
+                const emptyRow = document.getElementById("emptyRow");
+                if (emptyRow) emptyRow.style.display = "";
+            }
+            calculateTotals();
+        }
+
+        function markPrecioManual(input) {
+            input.closest('tr').dataset.precioManual = 'true';
+            updatePrecioWarning(input.closest('tr'));
+        }
+
+        function updatePrecioWarning(row) {
+            const precio = parseFloat(row.querySelector('.input-price').value || 0);
+            const sinPrecio = row.dataset.origen === 'SIN_PRECIO';
+            $(row).find('.precio-warning').toggle(sinPrecio && precio <= 0);
+            $(row).find('.input-price').toggleClass('is-invalid', sinPrecio && precio <= 0);
+        }
+
+        function hayPreciosInvalidos() {
+            return Array.from(document.querySelectorAll("#detailsTable tbody tr"))
+                .filter(r => r.id !== 'emptyRow')
+                .some(r => {
+                    const select = r.querySelector('.select2-dynamic');
+                    if (!select || !select.value) return false;
+                    const precio = parseFloat(r.querySelector('.input-price').value || 0);
+                    return precio <= 0;
+                });
+        }
+
+        async function refrescarPreciosPorCliente() {
+            const clienteId = $('#Invoice_ClienteId').val();
+            if (!clienteId) return;
+
+            document.getElementById('preciosLoading').style.display = 'block';
+            try {
+                const res = await fetch(`/Sales/GetPrecios?clienteId=${clienteId}`);
+                if (!res.ok) return;
+                const precios = await res.json();
+                const porProducto = new Map(precios.map(p => [p.productoId, p]));
+
+                parsedProductos.forEach(p => {
+                    const nuevo = porProducto.get(p.id);
+                    if (nuevo) {
+                        p.precio = nuevo.precio;
+                        p.precioOrigen = nuevo.origen;
+                    }
+                });
+
+                document.querySelectorAll("#detailsTable tbody tr").forEach(row => {
+                    if (row.id === 'emptyRow') return;
+                    if (row.dataset.precioManual === 'true') return;
+                    const select = row.querySelector('.select2-dynamic');
+                    if (!select || !select.value) return;
+
+                    const info = porProducto.get(select.value);
+                    if (!info) return;
+
+                    row.querySelector('.input-price').value = info.precio;
+                    row.dataset.origen = info.origen;
+                    updatePrecioWarning(row);
+                    if ($(select).data('select2')) {
+                        const opt = select.options[select.selectedIndex];
+                        if (opt) {
+                            opt.setAttribute('data-price', info.precio);
+                            opt.setAttribute('data-origen', info.origen);
+                        }
+                    }
+                });
+
+                calculateTotals();
+            } catch (e) {
+            } finally {
+                document.getElementById('preciosLoading').style.display = 'none';
+            }
+        }
+
         function updatePrice(select, index) {
             const option = select.options[select.selectedIndex];
             const price = option.getAttribute('data-price') || 0;
             const row = select.closest('tr');
             row.querySelector('.input-price').value = price;
             row.dataset.taxable = option.getAttribute('data-tax') === 'true';
+            row.dataset.origen = option.getAttribute('data-origen') || 'SIN_PRECIO';
+            row.dataset.precioManual = 'false';
+            updatePrecioWarning(row);
 
             // Validar Tope de Precio (AJAX opcional o local si se tuviera la data)
             const productoId = $(select).val();
@@ -220,12 +320,14 @@
             let subtotal = 0;
             let taxableBase = 0;
             document.querySelectorAll("#detailsTable tbody tr").forEach(row => {
+                if (row.id === 'emptyRow') return;
                 const qty = parseFloat(row.querySelector('.input-qty').value || 0);
                 const price = parseFloat(row.querySelector('.input-price').value || 0);
                 const lineTotal = qty * price;
                 row.querySelector('.label-line-total').innerText = lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2 });
                 subtotal += lineTotal;
                 if (row.dataset.taxable === 'true') taxableBase += lineTotal;
+                updatePrecioWarning(row);
             });
 
             const discount = parseFloat(document.getElementsByName('Invoice.DescuentoTotal')[0].value || 0);
@@ -248,7 +350,9 @@
                 checkCreditLimit(total - pagoMonto);
             }
 
-            document.getElementById('btnSubmit').disabled = total <= 0;
+            const sinPrecio = hayPreciosInvalidos();
+            document.getElementById('alertSinPrecio').style.display = sinPrecio ? 'block' : 'none';
+            document.getElementById('btnSubmit').disabled = total <= 0 || sinPrecio;
         }
 
         function checkCreditLimit(amount) {
@@ -272,8 +376,19 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             addRow();
-            $('#Invoice_ClienteId').on('change', calculateTotals);
+            $('#Invoice_ClienteId').on('change', function() {
+                calculateTotals();
+                refrescarPreciosPorCliente();
+            });
             window.SubmitAjaxForm('invoiceForm');
+            document.getElementById('invoiceForm').addEventListener('submit', function() {
+                setTimeout(() => {
+                    const errorSummary = document.getElementById('errorSummary');
+                    if (errorSummary && errorSummary.offsetParent !== null) {
+                        errorSummary.focus();
+                    }
+                }, 150);
+            });
         });
     </script>
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }

@@ -22,11 +22,50 @@ public class ListaPrecioController : Controller
         return View(lists);
     }
 
+    [Authorize(Policy = "INVENTARIO.LISTA_PRECIO.VER")]
+    public async Task<IActionResult> Details(Guid? id)
+    {
+        if (id == null) return NotFound();
+        var list = await _inventoryService.GetPriceListByIdAsync(id.Value);
+        if (list == null) return NotFound();
+        return View(list);
+    }
+
     [Authorize(Policy = "INVENTARIO.LISTA_PRECIO.CREAR")]
     public async Task<IActionResult> Create()
     {
         var vm = await _inventoryService.GetPriceListFormContextAsync();
         return View(vm);
+    }
+
+    private void LimpiarModelStateServidor()
+    {
+        var raiz = "ListaPrecio.";
+        var detallePrefijo = raiz + "ListaPrecioDetalles[";
+
+        ModelState.Remove(raiz + "Entidad");
+        ModelState.Remove(raiz + "EntidadId");
+        ModelState.Remove(raiz + "Id");
+        ModelState.Remove(raiz + "Clientes");
+        ModelState.Remove(raiz + "ListaPrecioDetalles");
+        ModelState.Remove(raiz + "Canal");
+
+        var navsClienteServidor = new[]
+        {
+            ".ListaPrecioId",
+            ".ListaPrecio",
+            ".Producto",
+            ".Id"
+        };
+
+        foreach (var key in ModelState.Keys.ToList())
+        {
+            if (!key.StartsWith(detallePrefijo, StringComparison.OrdinalIgnoreCase)) continue;
+            if (navsClienteServidor.Any(s => key.EndsWith(s, StringComparison.OrdinalIgnoreCase)))
+            {
+                ModelState.Remove(key);
+            }
+        }
     }
 
     [HttpPost]
@@ -35,7 +74,8 @@ public class ListaPrecioController : Controller
     public async Task<IActionResult> Create(ListaPrecioFormViewModel vm)
     {
         var priceList = vm.ListaPrecio;
-        ModelState.Remove("ListaPrecio.Entidad");
+
+        LimpiarModelStateServidor();
 
         if (ModelState.IsValid)
         {
@@ -51,7 +91,7 @@ public class ListaPrecioController : Controller
         return Json(new { success = false, message = "Errores de validación.", errors = errorList });
     }
 
-    [Authorize(Policy = "INVENTARIO.LISTA_PRECIO.CREAR")]
+    [Authorize(Policy = "INVENTARIO.LISTA_PRECIO.EDITAR")]
     public async Task<IActionResult> Edit(Guid? id)
     {
         if (id == null) return NotFound();
@@ -64,13 +104,13 @@ public class ListaPrecioController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Policy = "INVENTARIO.LISTA_PRECIO.CREAR")]
+    [Authorize(Policy = "INVENTARIO.LISTA_PRECIO.EDITAR")]
     public async Task<IActionResult> Edit(Guid id, ListaPrecioFormViewModel vm)
     {
         var priceList = vm.ListaPrecio;
         if (id != priceList.Id) return NotFound();
 
-        ModelState.Remove("ListaPrecio.Entidad");
+        LimpiarModelStateServidor();
 
         if (ModelState.IsValid)
         {

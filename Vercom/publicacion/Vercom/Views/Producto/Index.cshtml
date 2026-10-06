@@ -9,76 +9,30 @@
     var inactivos = totalItems - activos;
     var puedeEliminar = (await AuthorizationService.AuthorizeAsync(User, "INVENTARIO.PRODUCTO.ELIMINAR")).Succeeded;
     var puedeCrear = (await AuthorizationService.AuthorizeAsync(User, "INVENTARIO.PRODUCTO.CREAR")).Succeeded;
+
+    var headerActions = (puedeCrear
+        ? "<a href='" + Url.Action("create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> Nuevo Producto</a>"
+        : null);
 }
 
-<!-- ============================================================ -->
-<!-- HEADER -->
-<!-- ============================================================ -->
-<div class="page-title-head d-flex align-items-center flex-wrap gap-2 p-3 mb-3 rounded-3">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold d-flex align-items-center gap-2">
-            <i class="ti ti-box text-primary"></i>
-            Maestro de Productos e Insumos
-        </h4>
-        <p class="text-muted small mb-0">Catálogo centralizado para inventario, producción y ventas.</p>
-    </div>
-    <div class="text-end">      
-        @if (puedeCrear)
-        {
-            <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
-                <i class="ti ti-plus me-1"></i> Nuevo Producto
-            </a>
-        }
-    </div>
-</div>
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Catálogo de Inventario", Title = "Maestro de Productos e Insumos", Subtitle = "Catálogo centralizado para inventario, producción y ventas.", Icon = "ti-box", Tone = "primary", BadgeText = totalItems.ToString("N0"), BadgeTone = "primary", ActionsHtml = headerActions != null ? new Microsoft.AspNetCore.Html.HtmlString(headerActions) : null }; }
+<partial name='_PageHeader' model='pageHeader' />
 
 <!-- ============================================================ -->
 <!-- ESTADÍSTICAS RÁPIDAS -->
 <!-- ============================================================ -->
-<div class="row g-2 mb-3">
-    <div class="col-md-4 col-6">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body py-2 d-flex align-items-center gap-3">
-                <div class="bg-primary bg-opacity-10 p-2 rounded-2">
-                    <i class="ti ti-box fs-5 text-primary"></i>
-                </div>
-                <div>
-                    <span class="d-block fw-bold fs-5">@totalItems</span>
-                    <span class="text-muted small">Total productos</span>
-                </div>
-            </div>
-        </div>
+@{ var kpiTotal = new Vercom.ViewModels.KpiCardModel { Label = "Total productos", Value = totalItems.ToString("N0"), Icon = "ti-box", Tone = "primary" }; var kpiActivos = new Vercom.ViewModels.KpiCardModel { Label = "Activos", Value = activos.ToString("N0"), Icon = "ti-check", Tone = "success" }; var kpiInactivos = new Vercom.ViewModels.KpiCardModel { Label = "Inactivos", Value = inactivos.ToString("N0"), Icon = "ti-x", Tone = "danger" }; }
+<div class='row g-2 mb-3'>
+    <div class='col-md-4 col-6'>
+        <partial name='_KpiCard' model='kpiTotal' />
     </div>
-    <div class="col-md-4 col-6">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body py-2 d-flex align-items-center gap-3">
-                <div class="bg-success bg-opacity-10 p-2 rounded-2">
-                    <i class="ti ti-check fs-5 text-success"></i>
-                </div>
-                <div>
-                    <span class="d-block fw-bold fs-5 text-success">@activos</span>
-                    <span class="text-muted small">Activos</span>
-                </div>
-            </div>
-        </div>
+    <div class='col-md-4 col-6'>
+        <partial name='_KpiCard' model='kpiActivos' />
     </div>
-    <div class="col-md-4 col-6">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body py-2 d-flex align-items-center gap-3">
-                <div class="bg-danger bg-opacity-10 p-2 rounded-2">
-                    <i class="ti ti-x fs-5 text-danger"></i>
-                </div>
-                <div>
-                    <span class="d-block fw-bold fs-5 text-danger">@inactivos</span>
-                    <span class="text-muted small">Inactivos</span>
-                </div>
-            </div>
-        </div>
+    <div class='col-md-4 col-6'>
+        <partial name='_KpiCard' model='kpiInactivos' />
     </div>
-</div>
-
-<!-- ============================================================ -->
-<!-- TABLA PRINCIPAL -->
+</div><!-- TABLA PRINCIPAL -->
 <!-- ============================================================ -->
 <div class="row">
     <div class="col-12">
@@ -249,7 +203,7 @@
             var table = $('#productsTable').DataTable({
                 language: { url: '@Url.Content("~/lib/i18n/es-ES.json")' },
                 order: [[1, 'asc']],
-                pageLength: 25,
+                pageLength: 100,
                 lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
                 columnDefs: [
                     { targets: [0], orderable: false, searchable: false, className: 'text-center' },
@@ -320,7 +274,7 @@
                 if (count === 0) {
                     $('#selectedCount').html('<i class="ti ti-checkbox me-1"></i> Ningún producto seleccionado');
                 } else {
-                    $('#selectedCount').html('<i class="ti ti-checkbox-checked me-1"></i> ' + count + ' producto(s) seleccionado(s)');
+                    $('#selectedCount').html('<i class="ti ti-checkbox me-1"></i> ' + count + ' producto(s) seleccionado(s)');
                 }
             }
 

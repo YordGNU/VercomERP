@@ -1,23 +1,13 @@
 @model Vercom.Models.FacturaVentum
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewBag.Title = "Factura de Venta #" + Model.NumeroFactura;
 }
 
-<div class="page-title-head d-flex align-items-center">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Comprobante de Venta Fiscal</h4>
-    </div>
-    <div class="text-end d-flex gap-2">
-        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Volver al Listado</a>
-        <button onclick="window.print()" class="btn btn-sm btn-light"><i class="ti ti-printer me-1"></i> Imprimir</button>
-        @if (Model.Estado != "ANULADA") {
-            <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#cancelModal"><i class="ti ti-ban me-1"></i> Anular Factura</button>
-        }
-        @if (Model.AsientoId.HasValue) {
-            <a asp-controller="AsientoContable" asp-action="Details" asp-route-id="@Model.AsientoId" class="btn btn-sm btn-info"><i class="ti ti-calculator me-1"></i> Ver Asiento</a>
-        }
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Volver al Listado</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Comprobante de Venta Fiscal", Subtitle = "", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row mt-4">
     <div class="card border-0 shadow-sm invoice-print">
@@ -25,7 +15,7 @@
             <!-- Cabecera -->
             <div class="row mb-5">
                 <div class="col-6">
-                    <h2 class="fw-bold text-primary mb-1">@Model.Entidad.RazonSocial</h2>
+                    <h2 class="fw-bold text-primary mb-1">@EntidadDisplay.Name</h2>
                     <p class="text-muted mb-0">NIT: @Model.Entidad.Nit | REEUP: @Model.Entidad.CodigoReeup</p>
                     <p class="text-muted">@Model.Entidad.DireccionLegal</p>
                 </div>
@@ -120,7 +110,7 @@
 
             <div class="row mt-5 pt-4 text-center small text-muted">
                 <div class="col-12">
-                    <p>Este documento es un comprobante fiscal válido emitido por el sistema ERP de Tierra Prometida S.U.R.L.</p>
+                    <p>Este documento es un comprobante fiscal válido emitido por el sistema ERP de yordanisvc@gmail.com</p>
                 </div>
             </div>
         </div>

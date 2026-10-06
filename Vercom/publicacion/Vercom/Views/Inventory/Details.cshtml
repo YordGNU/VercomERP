@@ -1,25 +1,15 @@
 @model Vercom.Models.MovimientoInventario
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewBag.Title = "Detalle de Operación";
     var isEntrada = Model.TipoMovimiento.Naturaleza == "ENTRADA";
     var docName = isEntrada ? "Informe de Recepción" : (Model.TipoMovimiento.Naturaleza == "SALIDA" ? "Vale de Entrega / Salida" : "Transferencia de Mercancía");
 }
 
-<div class="page-title-head d-flex align-items-center">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Documento Primario de Almacén</h4>
-    </div>
-    <div class="text-end d-flex gap-2">
-        <a asp-action="Movements" class="btn btn-sm btn-outline-secondary">Volver al Registro</a>
-        <button onclick="window.print()" class="btn btn-sm btn-light"><i class="ti ti-printer me-1"></i> Imprimir</button>
-        @if (Model.AsientoId.HasValue)
-        {
-            <a asp-controller="AsientoContable" asp-action="Details" asp-route-id="@Model.AsientoId" class="btn btn-sm btn-info">
-                <i class="ti ti-calculator me-1"></i> Ver Asiento
-            </a>
-        }
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("Movements") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Volver al Registro</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Documento Primario de Almacén", Subtitle = "", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row mt-4">
     <div class="card border-0 shadow-sm">
@@ -27,7 +17,7 @@
             <!-- Cabecera del Documento -->
             <div class="row mb-5">
                 <div class="col-6">
-                    <h2 class="fw-bold text-primary mb-1">@Model.Entidad.RazonSocial</h2>
+                    <h2 class="fw-bold text-primary mb-1">@EntidadDisplay.Name</h2>
                     <p class="text-muted mb-0">NIT: @Model.Entidad.Nit</p>
                     <p class="text-muted">@Model.Entidad.DireccionLegal</p>
                 </div>

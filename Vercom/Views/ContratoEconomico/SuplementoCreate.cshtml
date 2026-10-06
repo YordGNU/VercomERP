@@ -1,0 +1,106 @@
+@model Vercom.ViewModels.ContractSuplementoFormViewModel
+@{
+    ViewBag.Title = Model.Title;
+}
+
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Suplemento de Contrato", Subtitle = "Prórroga de la vigencia del contrato " + Model.NumeroContrato + " mediante documento propio.", Icon = "ti-file-plus", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+<div class="row">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light-subtle py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="m-0 fw-bold text-primary"><i class="ti ti-file-plus me-2"></i>Registrar Prórroga (RF-50)</h5>
+                    <a asp-action="Details" asp-route-id="@Model.ContratoId" class="btn btn-outline-secondary btn-sm">
+                        <i class="ti ti-arrow-left me-1"></i> VOLVER
+                    </a>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="SuplementoCreate" asp-route-id="@Model.ContratoId" class="row g-4" id="createSuplementoForm">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
+
+                        <input asp-for="Suplemento.ContratoId" type="hidden" />
+                        <input asp-for="Suplemento.Tipo" type="hidden" value="PRORROGA" />
+                        <input asp-for="Suplemento.Estado" type="hidden" value="VIGENTE" />
+
+                        <div class="col-md-4">
+                            <label class="form-label">Contrato</label>
+                            <input type="text" class="form-control" value="@Model.NumeroContrato" disabled />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Tipo de Contraparte</label>
+                            <input type="text" class="form-control" value="@Model.TerceroTipo" disabled />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Número de Suplemento</label>
+                            <input type="text" class="form-control fw-bold text-primary" value="N.º @Model.NumeroSuplementoSugerido" disabled />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Fecha de Firma del Suplemento</label>
+                            <input asp-for="Suplemento.FechaFirma" class="form-control w-100" type="date" required />
+                            <span asp-validation-for="Suplemento.FechaFirma" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Concepto</label>
+                            <input asp-for="Suplemento.Concepto" class="form-control w-100" placeholder="Ej: Prórroga por dos (2) años adicionales" required />
+                            <span asp-validation-for="Suplemento.Concepto" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Vigencia Desde</label>
+                            <input asp-for="Suplemento.FechaInicio" class="form-control w-100" type="date" required />
+                            <small class="text-muted italic">Inicio del período que agrega el suplemento.</small>
+                            <span asp-validation-for="Suplemento.FechaInicio" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Vigencia Hasta</label>
+                            <input asp-for="Suplemento.FechaFin" class="form-control w-100" type="date" required />
+                            <small class="text-muted italic">Nueva fecha de fin del contrato.</small>
+                            <span asp-validation-for="Suplemento.FechaFin" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="alert alert-info d-flex align-items-start mb-0" role="alert">
+                                <i class="ti ti-info-circle fs-24 me-3 mt-1"></i>
+                                <div class="small">
+                                    <div>Vigencia pactada original: <strong>@((Model.FechaFinPactada)?.ToString("dd/MM/yyyy") ?? "Indeterminada")</strong></div>
+                                    <div>Vigencia efectiva actual: <strong>@((Model.FechaFinEfectiva)?.ToString("dd/MM/yyyy") ?? "Indeterminada")</strong></div>
+                                    <div class="mt-1">La nueva fecha de fin debe ser posterior a la vigencia efectiva actual. El vencimiento original no se sobrescribe.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold">Adjuntar Suplemento Digitalizado (Word/PDF)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="ti ti-link"></i></span>
+                                <input type="file" asp-for="Documento" class="form-control" accept=".doc,.docx,.pdf" />
+                            </div>
+                            <small class="text-muted italic">Máx. 10 MB (PDF o Word).</small>
+                        </div>
+
+                        <div class="col-12 d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <a asp-action="Details" asp-route-id="@Model.ContratoId" class="btn btn-sm btn-outline px-4">CANCELAR</a>
+                            <button type="submit" class="btn btn-sm btn-primary px-5 py-2 shadow">
+                                <i class="ti ti-device-floppy me-1"></i> REGISTRAR SUPLEMENTO
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            window.SubmitAjaxForm('createSuplementoForm');
+        });
+    </script>
+}

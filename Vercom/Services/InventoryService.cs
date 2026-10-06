@@ -476,28 +476,84 @@ public class InventoryService : IInventoryService
 
     public async Task<IEnumerable<ListaPrecio>> GetPriceListsAsync()
     {
-        return await _context.ListaPrecios.OrderBy(l => l.Nombre).ToListAsync();
+        return await _context.ListaPrecios
+            .Where(l => l.EntidadId == _entidadProvider.CurrentEntidadId)
+            .OrderBy(l => l.Nombre)
+            .ToListAsync();
     }
 
     public async Task<ListaPrecio?> GetPriceListByIdAsync(Guid id)
     {
-        return await _context.ListaPrecios.FindAsync(id);
+        return await _context.ListaPrecios
+            .Include(l => l.ListaPrecioDetalles).ThenInclude(d => d.Producto)
+            .FirstOrDefaultAsync(l => l.Id == id && l.EntidadId == _entidadProvider.CurrentEntidadId);
     }
 
     public async Task<ListaPrecioFormViewModel> GetPriceListFormContextAsync(ListaPrecio? existing = null)
     {
+        var productos = await _context.Productos
+            .Where(p => p.Activo && p.EntidadId == _entidadProvider.CurrentEntidadId)
+            .OrderBy(p => p.Nombre)
+            .Select(p => new { p.Id, p.Nombre, p.Codigo, p.PrecioVentaActual })
+            .ToListAsync();
+
         return new ListaPrecioFormViewModel
         {
-            ListaPrecio = existing ?? new ListaPrecio { Activa = true }
+            ListaPrecio = existing ?? new ListaPrecio { Activa = true },
+            ProductosDisponibles = productos
         };
+    }
+
+    private async Task<(bool Succeeded, string Message)> ValidarListaPrecioAsync(ListaPrecio priceList, Guid? excluirId)
+    {
+        var entidadId = _entidadProvider.CurrentEntidadId;
+
+        if (string.IsNullOrWhiteSpace(priceList.Nombre))
+        {
+            return (false, "El nombre es obligatorio.");
+        }
+
+        if (priceList.VigenteDesde == default)
+        {
+            return (false, "La fecha de vigencia inicial es obligatoria.");
+        }
+
+        if (priceList.VigenteHasta.HasValue && priceList.VigenteHasta.Value < priceList.VigenteDesde)
+        {
+            return (false, "La vigencia final no puede ser anterior a la inicial.");
+        }
+
+        var nombreDuplicado = await _context.ListaPrecios
+            .AsNoTracking()
+            .AnyAsync(l => l.EntidadId == entidadId
+                && l.Id != (excluirId ?? Guid.Empty)
+                && l.Nombre.ToLower() == priceList.Nombre.Trim().ToLower());
+        if (nombreDuplicado)
+        {
+            return (false, "Ya existe una lista de precios con ese nombre.");
+        }
+
+        return (true, string.Empty);
     }
 
     public async Task<(bool Succeeded, string Message)> CreatePriceListAsync(ListaPrecio priceList)
     {
         try
         {
+            var validacion = await ValidarListaPrecioAsync(priceList, null);
+            if (!validacion.Succeeded) return validacion;
+
+            priceList.Nombre = priceList.Nombre.Trim();
             priceList.Id = Guid.NewGuid();
             priceList.EntidadId = _entidadProvider.CurrentEntidadId;
+            priceList.Canal ??= "ERP";
+
+            foreach (var detalle in priceList.ListaPrecioDetalles ?? new List<ListaPrecioDetalle>())
+            {
+                detalle.Id = Guid.NewGuid();
+                detalle.ListaPrecioId = priceList.Id;
+            }
+
             _context.ListaPrecios.Add(priceList);
             await _context.SaveChangesAsync();
             return (true, "Lista de precios creada.");
@@ -509,11 +565,32 @@ public class InventoryService : IInventoryService
     {
         try
         {
-            var existing = await _context.ListaPrecios.FindAsync(priceList.Id);
+            var validacion = await ValidarListaPrecioAsync(priceList, priceList.Id);
+            if (!validacion.Succeeded) return validacion;
+
+            var existing = await _context.ListaPrecios
+                .FirstOrDefaultAsync(l => l.Id == priceList.Id && l.EntidadId == _entidadProvider.CurrentEntidadId);
             if (existing == null) return (false, "No existe.");
+
+            priceList.Nombre = priceList.Nombre.Trim();
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
             _context.Entry(existing).CurrentValues.SetValues(priceList);
             existing.EntidadId = _entidadProvider.CurrentEntidadId;
+            existing.Canal ??= "ERP";
+
+            _context.ListaPrecioDetalles.RemoveRange(
+                _context.ListaPrecioDetalles.Where(d => d.ListaPrecioId == existing.Id));
+
+            foreach (var detalle in priceList.ListaPrecioDetalles ?? new List<ListaPrecioDetalle>())
+            {
+                detalle.Id = Guid.NewGuid();
+                detalle.ListaPrecioId = existing.Id;
+                _context.ListaPrecioDetalles.Add(detalle);
+            }
+
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
             return (true, "Lista de precios actualizada.");
         }
         catch (Exception ex) { return (false, ex.Message); }

@@ -250,5 +250,16 @@ public sealed class ActualizarRolPosRequest
 
 public sealed class AsignarPermisosPosRequest
 {
-    public IReadOnlyList<int> PermisoIds { get; init; } = Array.Empty<int>();
+public IReadOnlyList<int> PermisoIds { get; init; } = Array.Empty<int>();
+}
+
+public sealed class PosCatalogoProductoDto
+{
+    public Guid serverId { get; init; }
+    public string cod { get; init; } = string.Empty;
+    public string nombre { get; init; } = string.Empty;
+    public decimal precio { get; init; }
+    public string origenPrecio { get; init; } = "SIN_PRECIO";
+    public string unidad { get; init; } = string.Empty;
+    public decimal existencias { get; init; }
 }

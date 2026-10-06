@@ -1,21 +1,11 @@
-﻿@model Vercom.Models.PlantillaAprobadum
+@model Vercom.Models.PlantillaAprobadum
 @{
     ViewBag.Title = "Planificar Plazas";
 }
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Planificación de Plantilla</h4>
-        <p class="text-muted small mb-0">Definición de cupos aprobados por cargo y unidad organizativa.</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">RRHH</a></li>
-            <li class="breadcrumb-item"><a asp-action="Index">Plantilla</a></li>
-            <li class="breadcrumb-item active">Nueva</li>
-        </ol>
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Plantilla</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Planificación de Plantilla", Subtitle = "Definición de cupos aprobados por cargo y unidad organizativa.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 <div class="row">
     <div class="row justify-content-center">
         <div class="col-lg-6">

@@ -3,22 +3,10 @@
     ViewBag.Title = "Control de Mermas";
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Gestión de Desperdicios y Mermas</h4>
-        <p class="text-muted small mb-0">Control de mermas industriales y mermas extraordinarias por rotura o vencimiento.</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Producción</a></li>
-            <li class="breadcrumb-item active">Mermas</li>
-        </ol>
-        <a asp-action="Create" class="btn btn-sm btn-danger shadow-sm">
-            <i class="ti ti-minus me-1"></i> REPORTAR INCIDENCIA
-        </a>
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> REPORTAR INCIDENCIA</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Gestión de Desperdicios y Mermas", Subtitle = "Control de mermas industriales y mermas extraordinarias por rotura o vencimiento.", Icon = "ti-minus me-1", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="card shadow-sm border-0">

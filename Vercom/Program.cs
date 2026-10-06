@@ -35,6 +35,7 @@ builder.Services.AddScoped<IContractService, ContractService>();
 builder.Services.AddScoped<ICommercialService, CommercialService>();
 builder.Services.AddScoped<IPurchaseService, PurchaseService>();
 builder.Services.AddScoped<ISalesService, SalesService>();
+builder.Services.AddScoped<IPricingService, PricingService>();
 builder.Services.AddScoped<IIntelligenceService, IntelligenceService>();
 builder.Services.AddScoped<IPosService, PosService>();
 builder.Services.AddScoped<IReportingService, ReportingService>();

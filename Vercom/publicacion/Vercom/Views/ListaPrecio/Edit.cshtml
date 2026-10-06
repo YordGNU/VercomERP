@@ -1,21 +1,12 @@
-﻿@model Vercom.Models.ListaPrecio
+@model Vercom.ViewModels.ListaPrecioFormViewModel
 @{
     ViewBag.Title = "Editar Lista de Precios";
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Gestión de Catálogo: Listas</h4>
-        <p class="text-muted small mb-0">Actualización de términos comerciales y vigencias.</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Comercial</a></li>
-            <li class="breadcrumb-item active">Editar Lista</li>
-        </ol>
-    </div>
-</div>
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Ventas", Title = "Gestión de Catálogo: Listas", Subtitle = "Actualización de términos comerciales y vigencias.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row mt-4">
     <div class="row justify-content-center">
@@ -30,29 +21,29 @@
                 <div class="card-body p-4">
                     <form asp-action="Edit" method="post" class="row g-4" id="editPriceListForm">
                         @Html.AntiForgeryToken()
-                        <input type="hidden" asp-for="Id" />
-                        <input type="hidden" asp-for="EntidadId" />
+                        <input type="hidden" asp-for="ListaPrecio.Id" />
+                        <input type="hidden" asp-for="ListaPrecio.EntidadId" />
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
 
                         <div class="col-md-12">
-                            <label asp-for="Nombre" class="form-label fw-bold">Nombre de la Lista</label>
-                            <input asp-for="Nombre" name="Nombre" class="form-control fw-bold" required maxlength="100" />
-                            <span asp-validation-for="Nombre" class="text-danger small"></span>
+                            <label asp-for="ListaPrecio.Nombre" class="form-label fw-bold">Nombre de la Lista</label>
+                            <input asp-for="ListaPrecio.Nombre" name="Nombre" class="form-control fw-bold" required maxlength="100" />
+                            <span asp-validation-for="ListaPrecio.Nombre" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-6">
-                            <label asp-for="VigenteDesde" class="form-label fw-bold">Vigente Desde</label>
-                            <input asp-for="VigenteDesde" name="VigenteDesde" type="date" class="form-control" required />
+                            <label asp-for="ListaPrecio.VigenteDesde" class="form-label fw-bold">Vigente Desde</label>
+                            <input asp-for="ListaPrecio.VigenteDesde" name="VigenteDesde" type="date" class="form-control" required />
                         </div>
 
                         <div class="col-md-6">
-                            <label asp-for="VigenteHasta" class="form-label fw-bold">Vigente Hasta</label>
-                            <input asp-for="VigenteHasta" name="VigenteHasta" type="date" class="form-control" />
+                            <label asp-for="ListaPrecio.VigenteHasta" class="form-label fw-bold">Vigente Hasta</label>
+                            <input asp-for="ListaPrecio.VigenteHasta" name="VigenteHasta" type="date" class="form-control" />
                         </div>
 
                         <div class="col-12 mt-2">
                             <div class="form-check form-switch p-3 bg-light-subtle border rounded-3">
-                                <input class="form-check-input ms-0 me-2" type="checkbox" asp-for="Activa" name="Activa">
+                                <input class="form-check-input ms-0 me-2" type="checkbox" asp-for="ListaPrecio.Activa" name="Activa">
                                 <label class="form-check-label fw-bold">Lista de Precios Habilitada</label>
                             </div>
                         </div>

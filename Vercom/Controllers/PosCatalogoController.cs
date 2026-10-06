@@ -27,6 +27,14 @@ public sealed class PosCatalogoController : ControllerBase
         return Ok(await _service.GetProductosAsync(almacenId, search, updatedSince, cancellationToken));
     }
 
+    [HttpGet("precios")]
+    public async Task<ActionResult> GetPrecios([FromQuery] Guid? clienteId, CancellationToken cancellationToken = default)
+    {
+        var entidadIdRaw = User.FindFirstValue("EntidadId");
+        if (!Guid.TryParse(entidadIdRaw, out var entidadId) || entidadId == Guid.Empty) return Unauthorized();
+        return Ok(await _service.GetPreciosAsync(entidadId, clienteId, cancellationToken));
+    }
+
     [HttpGet("clientes")]
     public async Task<ActionResult> GetClientes([FromQuery] Guid entidadId, CancellationToken cancellationToken = default)
     {

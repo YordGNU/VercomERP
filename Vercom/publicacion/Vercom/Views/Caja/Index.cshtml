@@ -1,18 +1,8 @@
 @model IEnumerable<Vercom.Models.Caja>
-@{
-    ViewBag.Title = "Gestión de Arcas";
-}
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Disponibilidad de Efectivo en Arcas</h4>
-        <p class="text-muted small mb-0">Control de saldos en efectivo por unidad y puntos de venta.</p>
-    </div>
-    <div class="text-end">
-        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
-            <i class="ti ti-plus"></i> NUEVA CAJA
-        </a>
-    </div>
-</div>
+@{ ViewBag.Title = "Gestión de Arcas"; }
+
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVA CAJA</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Disponibilidad de Efectivo en Arcas", Subtitle = "Control de saldos en efectivo por unidad y puntos de venta.", Icon = "ti-cash", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
 <div class="row">
         @foreach (var item in Model)
         {

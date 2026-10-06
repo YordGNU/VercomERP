@@ -5,20 +5,10 @@
     string Money(decimal v) => v.ToString("N2");
 }
 
-<div class="page-title-head d-flex align-items-center flex-wrap gap-3 py-3">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Panel de Control</h4>
-        <p class="text-muted small mb-0">Indicadores clave de rendimiento y monitoreo operativo en tiempo real.</p>
-    </div>
-    <div class="text-end d-flex align-items-center gap-3">
-        <span class="badge badge-soft-info py-2 px-3">
-            <i class="ti ti-calendar me-1"></i> Periodo: @Model.PeriodoActual
-        </span>
-        <a href="@Url.Action("Index", "Dashboard")" class="btn btn-outline-secondary btn-sm">
-            <i class="ti ti-refresh me-1"></i> Actualizar
-        </a>
-    </div>
-</div>
+@{ var headerActions = "<span class=\"badge badge-soft-info py-2 px-3\"><i class=\"ti ti-calendar me-1\"></i> Periodo: " + Model.PeriodoActual + "</span><a href=\"" + Url.Action("Index", "Dashboard") + "\" class=\"btn btn-sm btn-outline-secondary\"><i class=\"ti ti-refresh me-1\"></i> Actualizar</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Panel", Title = "Panel de Control", Subtitle = "Indicadores clave de rendimiento y monitoreo operativo en tiempo real.", Icon = "ti-gauge", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 @if (!string.IsNullOrEmpty(Model.Mensaje))
 {
@@ -191,7 +181,7 @@
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body py-3">
                 <div class="d-flex align-items-center gap-2 mb-2">
-                    <i class="ti ti-ticket-2 fs-18 text-purple"></i>
+                    <i class="ti ti-ticket fs-18 text-purple"></i>
                     <span class="text-muted small text-uppercase fw-bold letter-spacing-1">Ticket Prom.</span>
                 </div>
                 <div class="fs-22 fw-bold">@Money(Model.TicketPromedio)</div>
@@ -216,7 +206,7 @@
     <div class="col-lg-8">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <h5 class="m-0 fw-bold"><i class="ti ti-chart-line me-2 text-primary"></i>Ventas de los Últimos 14 Días</h5>
+                <h5 class="m-0 fw-bold"><i class="ti ti-chart-line me-2 text-primary"></i>Ventas de los áltimos 14 Días</h5>
                 <span class="badge badge-soft-primary"><i class="ti ti-coin me-1"></i>@Money(Model.VentasMes) mes</span>
             </div>
             <div class="card-body pt-2">
@@ -300,14 +290,14 @@
                 <div class="row row-cols-2 row-cols-md-5 g-3 mb-3">
                     <div class="col text-center">
                         <span class="avatar-md rounded-circle bg-success bg-opacity-10 text-success d-inline-flex align-items-center justify-content-center mb-2">
-                            <i class="ti ti-device-computer fs-20"></i>
+                            <i class="ti ti-device-desktop fs-20"></i>
                         </span>
                         <div class="fs-22 fw-bold text-success">@Model.PosTerminalesActivas</div>
                         <div class="text-muted small text-uppercase fw-bold letter-spacing-1" style="font-size: 0.7rem;">Terminales Activas</div>
                     </div>
                     <div class="col text-center">
                         <span class="avatar-md rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-2">
-                            <i class="ti ti-session fs-20"></i>
+                            <i class="ti ti-clock fs-20"></i>
                         </span>
                         <div class="fs-22 fw-bold text-primary">@Model.PosSesionesAbiertas</div>
                         <div class="text-muted small text-uppercase fw-bold letter-spacing-1" style="font-size: 0.7rem;">Sesiones Abiertas</div>
@@ -353,7 +343,7 @@
                                 @foreach (var s in Model.PosSesiones)
                                 {
                                     <tr>
-                                        <td class="fw-bold"><i class="ti ti-device-computer me-2 text-muted"></i>@s.Dispositivo</td>
+                                        <td class="fw-bold"><i class="ti ti-device-desktop me-2 text-muted"></i>@s.Dispositivo</td>
                                         <td>@s.Cajero</td>
                                         <td class="text-center small">@s.FechaApertura.ToString("dd/MM HH:mm")</td>
                                         <td class="text-end">@Money(s.MontoApertura)</td>

@@ -7,8 +7,19 @@ namespace Vercom.Services;
 public sealed class PosCatalogoService
 {
     private readonly AppDbContext _db;
+    private readonly IPricingService _pricingService;
 
-    public PosCatalogoService(AppDbContext db) => _db = db;
+    public PosCatalogoService(AppDbContext db, IPricingService pricingService)
+    {
+        _db = db;
+        _pricingService = pricingService;
+    }
+
+    public async Task<IReadOnlyList<PrecioVentaDto>> GetPreciosAsync(Guid entidadId, Guid? clienteId, CancellationToken cancellationToken = default)
+    {
+        var fecha = DateOnly.FromDateTime(DateTime.Now);
+        return await _pricingService.GetSalePricesAsync(entidadId, clienteId, fecha, cancellationToken);
+    }
 
     public async Task<IReadOnlyList<PosProductoDto>> GetProductosAsync(Guid almacenId, string? search, DateTimeOffset? updatedSince, CancellationToken cancellationToken)
     {

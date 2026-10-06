@@ -27,4 +27,5 @@ public class ListaPrecioFormViewModel
 {
     public ListaPrecio ListaPrecio { get; set; } = new();
     public string Title { get; set; } = "Gestión de Lista de Precios";
+    public IEnumerable<dynamic> ProductosDisponibles { get; set; } = new List<dynamic>();
 }

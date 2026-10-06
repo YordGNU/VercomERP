@@ -1,4 +1,4 @@
-﻿@model Vercom.Models.PlanProduccion
+@model Vercom.ViewModels.PlanProduccionFormViewModel
 
 @{
     ViewData["Title"] = "Edit";
@@ -10,18 +10,10 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-       <div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Editar PlanProduccion</h4>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">PlanProduccion</a></li>
-            <li class="breadcrumb-item active">Editar</li>
-        </ol>
-    </div>
-</div>
+       @{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Editar PlanProduccion", Subtitle = "", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row">
@@ -33,36 +25,36 @@
                 <div class="card-body">
 <form class="row g-3" asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="Plan.Id" />
             <div class="mb-3">
-                <label asp-for="EntidadId" class="form-label"></label>
-                <input asp-for="EntidadId" class="form-control" />
-                <span asp-validation-for="EntidadId" class="text-danger"></span>
+                <label asp-for="Plan.EntidadId" class="form-label"></label>
+                <input asp-for="Plan.EntidadId" class="form-control" />
+                <span asp-validation-for="Plan.EntidadId" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="Anio" class="form-label"></label>
-                <input asp-for="Anio" class="form-control" />
-                <span asp-validation-for="Anio" class="text-danger"></span>
+                <label asp-for="Plan.Anio" class="form-label"></label>
+                <input asp-for="Plan.Anio" class="form-control" />
+                <span asp-validation-for="Plan.Anio" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="Mes" class="form-label"></label>
-                <input asp-for="Mes" class="form-control" />
-                <span asp-validation-for="Mes" class="text-danger"></span>
+                <label asp-for="Plan.Mes" class="form-label"></label>
+                <input asp-for="Plan.Mes" class="form-control" />
+                <span asp-validation-for="Plan.Mes" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="PresupuestoId" class="form-label"></label>
-                <input asp-for="PresupuestoId" class="form-control" />
-                <span asp-validation-for="PresupuestoId" class="text-danger"></span>
+                <label asp-for="Plan.PresupuestoId" class="form-label"></label>
+                <input asp-for="Plan.PresupuestoId" class="form-control" />
+                <span asp-validation-for="Plan.PresupuestoId" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="Estado" class="form-label"></label>
-                <input asp-for="Estado" class="form-control" />
-                <span asp-validation-for="Estado" class="text-danger"></span>
+                <label asp-for="Plan.Estado" class="form-label"></label>
+                <input asp-for="Plan.Estado" class="form-control" />
+                <span asp-validation-for="Plan.Estado" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="CreadoEn" class="form-label"></label>
-                <input asp-for="CreadoEn" class="form-control" />
-                <span asp-validation-for="CreadoEn" class="text-danger"></span>
+                <label asp-for="Plan.CreadoEn" class="form-label"></label>
+                <input asp-for="Plan.CreadoEn" class="form-control" />
+                <span asp-validation-for="Plan.CreadoEn" class="text-danger"></span>
             </div>
             <div class="mb-3">
                 <button type="submit" class="btn btn-primary">Guardar</button>

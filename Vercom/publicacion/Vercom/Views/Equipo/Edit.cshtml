@@ -1,21 +1,13 @@
-﻿@model Vercom.Models.Equipo
+@model Vercom.ViewModels.EquipoFormViewModel
 
 @{
     ViewData["Title"] = "Editar Equipo";
 }
 
-<div class="page-title-head d-flex align-items-center">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Editar Equipo</h4>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Producción</a></li>
-            <li class="breadcrumb-item active">Equipos</li>
-        </ol>
-    </div>
-</div>
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Editar Equipo", Subtitle = "", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row">
@@ -30,60 +22,60 @@
                 <div class="card-body">
                     <form asp-action="Edit" class="row g-3">
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="Equipo.Id" />
 
                         <div class="col-md-6">
-                            <label asp-for="EntidadId" class="form-label"></label>
-                            <select asp-for="EntidadId" class="form-select" asp-items="ViewBag.EntidadId"></select>
-                            <span asp-validation-for="EntidadId" class="text-danger"></span>
+                            <label asp-for="Equipo.EntidadId" class="form-label"></label>
+                            <select asp-for="Equipo.EntidadId" class="form-select" asp-items="ViewBag.EntidadId"></select>
+                            <span asp-validation-for="Equipo.EntidadId" class="text-danger"></span>
                         </div>
 
                         <div class="col-md-6">
-                            <label asp-for="SucursalId" class="form-label"></label>
-             <select asp-for="SucursalId" class="form-select" asp-items="ViewBag.SucursalId"></select>
-                            <span asp-validation-for="SucursalId" class="text-danger"></span>
+                            <label asp-for="Equipo.SucursalId" class="form-label"></label>
+             <select asp-for="Equipo.SucursalId" class="form-select" asp-items="ViewBag.SucursalId"></select>
+                            <span asp-validation-for="Equipo.SucursalId" class="text-danger"></span>
                         </div>
 
                         <div class="col-md-6">
-                            <label asp-for="ActivoFijoId" class="form-label"></label>
-                            <select asp-for="ActivoFijoId" class="form-select" asp-items="ViewBag.ActivoFijoId"></select>
-                            <span asp-validation-for="ActivoFijoId" class="text-danger"></span>
+                            <label asp-for="Equipo.ActivoFijoId" class="form-label"></label>
+                            <select asp-for="Equipo.ActivoFijoId" class="form-select" asp-items="ViewBag.ActivoFijoId"></select>
+                            <span asp-validation-for="Equipo.ActivoFijoId" class="text-danger"></span>
                         </div>
 
                         <div class="col-md-6">
-                            <label asp-for="Codigo" class="form-label"></label>
-                            <input asp-for="Codigo" class="form-control" placeholder="Código del equipo" />
-                            <span asp-validation-for="Codigo" class="text-danger"></span>
+                            <label asp-for="Equipo.Codigo" class="form-label"></label>
+                            <input asp-for="Equipo.Codigo" class="form-control" placeholder="Código del equipo" />
+                            <span asp-validation-for="Equipo.Codigo" class="text-danger"></span>
                         </div>
 
                         <div class="col-md-6">
-                            <label asp-for="Nombre" class="form-label"></label>
-                            <input asp-for="Nombre" class="form-control" placeholder="Nombre del equipo" />
-                            <span asp-validation-for="Nombre" class="text-danger"></span>
+                            <label asp-for="Equipo.Nombre" class="form-label"></label>
+                            <input asp-for="Equipo.Nombre" class="form-control" placeholder="Nombre del equipo" />
+                            <span asp-validation-for="Equipo.Nombre" class="text-danger"></span>
                         </div>
 
                         <div class="col-md-6">
-                            <label asp-for="FechaUltimaRevision" class="form-label"></label>
-                            <input asp-for="FechaUltimaRevision" class="form-control" type="date" />
-                            <span asp-validation-for="FechaUltimaRevision" class="text-danger"></span>
+                            <label asp-for="Equipo.FechaUltimaRevision" class="form-label"></label>
+                            <input asp-for="Equipo.FechaUltimaRevision" class="form-control" type="date" />
+                            <span asp-validation-for="Equipo.FechaUltimaRevision" class="text-danger"></span>
                         </div>
 
                         <div class="col-md-6">
-                            <label asp-for="FrecuenciaMantenimientoDias" class="form-label"></label>
-                            <input asp-for="FrecuenciaMantenimientoDias" class="form-control" placeholder="Días de frecuencia" />
-                            <span asp-validation-for="FrecuenciaMantenimientoDias" class="text-danger"></span>
+                            <label asp-for="Equipo.FrecuenciaMantenimientoDias" class="form-label"></label>
+                            <input asp-for="Equipo.FrecuenciaMantenimientoDias" class="form-control" placeholder="Días de frecuencia" />
+                            <span asp-validation-for="Equipo.FrecuenciaMantenimientoDias" class="text-danger"></span>
                         </div>
 
                         <div class="col-md-6">
-                            <label asp-for="Estado" class="form-label"></label>
-                            <select asp-for="Estado" class="form-select">
+                            <label asp-for="Equipo.Estado" class="form-label"></label>
+                            <select asp-for="Equipo.Estado" class="form-select">
                                 <option value="">Seleccione estado</option>
                                 <option value="Operativo">Operativo</option>
                                 <option value="Mantenimiento">Mantenimiento</option>
                                 <option value="Averiado">Averiado</option>
                                 <option value="Baja">Baja</option>
                             </select>
-                            <span asp-validation-for="Estado" class="text-danger"></span>
+                            <span asp-validation-for="Equipo.Estado" class="text-danger"></span>
                         </div>
 
                         <div class="col-12 d-flex justify-content-end gap-2">

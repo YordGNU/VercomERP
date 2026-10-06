@@ -10,6 +10,7 @@ public interface ISalesService
 {
     // Lectura
     Task<IEnumerable<FacturaVentum>> GetInvoicesAsync(string? search = null, string? status = null, string? channel = null);
+    Task<IReadOnlyList<PrecioVentaDto>> GetSalePricesAsync(Guid? clienteId, DateOnly fecha, CancellationToken cancellationToken = default);
     Task<FacturaVentum?> GetInvoiceByIdAsync(Guid id);
     Task<SalesCreateViewModel> GetSalesCreateContextAsync(FacturaVentum? existingInvoice = null);
 
@@ -29,10 +30,12 @@ public class SalesService : ISalesService
     private readonly IAccountingService _accountingService;
     private readonly IParametroSistemaService _paramService;
     private readonly Security.IEntidadProvider _entidadProvider;
+    private readonly IPricingService _pricingService;
 
     public SalesService(AppDbContext context, IInventoryService inventoryService, IContractService contractService,
         ICommercialService commercialService, ITaxService taxService, IConsecutivoService consecutivoService,
-        IAccountingService accountingService, IParametroSistemaService paramService, Security.IEntidadProvider entidadProvider)
+        IAccountingService accountingService, IParametroSistemaService paramService, Security.IEntidadProvider entidadProvider,
+        IPricingService pricingService)
     {
         _context = context;
         _inventoryService = inventoryService;
@@ -43,6 +46,7 @@ public class SalesService : ISalesService
         _accountingService = accountingService;
         _paramService = paramService;
         _entidadProvider = entidadProvider;
+        _pricingService = pricingService;
     }
 
     public async Task<IEnumerable<FacturaVentum>> GetInvoicesAsync(string? search = null, string? status = null, string? channel = null)
@@ -81,6 +85,18 @@ public class SalesService : ISalesService
     public async Task<SalesCreateViewModel> GetSalesCreateContextAsync(FacturaVentum? existingInvoice = null)
     {
         var entidadId = _entidadProvider.CurrentEntidadId;
+        var hoy = DateOnly.FromDateTime(DateTime.Now);
+
+        var clientes = await _context.Clientes.Where(c => c.Activo).ToListAsync();
+        var almacenes = await _context.Almacens.Where(a => a.Activo && a.EsPuntoVenta).ToListAsync();
+        var contratos = await _context.ContratoEconomicos.Where(c => c.Estado == "VIGENTE" && c.TerceroTipo == "CLIENTE").ToListAsync();
+
+        var productos = await _context.Productos
+            .Where(p => p.Activo && p.Tipo == "TERMINADO")
+            .Select(p => new { p.Id, p.Nombre, p.Codigo, p.AplicaImpuestoVentas })
+            .ToListAsync();
+
+        var precioMap = await _pricingService.GetPriceMapAsync(entidadId, null, hoy);
 
         var vm = new SalesCreateViewModel
         {
@@ -91,16 +107,31 @@ public class SalesService : ISalesService
                 TipoVenta = "MINORISTA",
                 CanalVenta = "ERP"
             },
-            Clientes = new SelectList(await _context.Clientes.Where(c => c.Activo).ToListAsync(), "Id", "NombreRazonSocial"),
-            Almacenes = new SelectList(await _context.Almacens.Where(a => a.Activo && a.EsPuntoVenta).ToListAsync(), "Id", "Nombre"),
-            Contratos = new SelectList(await _context.ContratoEconomicos.Where(c => c.Estado == "VIGENTE" && c.TerceroTipo == "CLIENTE").ToListAsync(), "Id", "NumeroContrato"),
-            ProductosDisponibles = await _context.Productos
-                .Where(p => p.Activo && p.Tipo == "TERMINADO")
-                .Select(p => new { p.Id, p.Nombre, p.PrecioVentaActual, p.Codigo, p.AplicaImpuestoVentas })
-                .ToListAsync()
+            Clientes = new SelectList(clientes, "Id", "NombreRazonSocial"),
+            Almacenes = new SelectList(almacenes, "Id", "Nombre"),
+            Contratos = new SelectList(contratos, "Id", "NumeroContrato"),
+            ProductosDisponibles = productos.Select(p =>
+            {
+                var resuelto = precioMap.TryGetValue(p.Id, out var r) ? r : new ResolvedPrice(0m, PriceSource.SinPrecio, null, null);
+                return new
+                {
+                    p.Id,
+                    p.Nombre,
+                    p.Codigo,
+                    p.AplicaImpuestoVentas,
+                    Precio = resuelto.Precio,
+                    PrecioOrigen = resuelto.SourceName,
+                    ListaNombre = resuelto.ListaNombre
+                };
+            }).ToList()
         };
 
         return vm;
+    }
+
+    public async Task<IReadOnlyList<PrecioVentaDto>> GetSalePricesAsync(Guid? clienteId, DateOnly fecha, CancellationToken cancellationToken = default)
+    {
+        return await _pricingService.GetSalePricesAsync(_entidadProvider.CurrentEntidadId, clienteId, fecha, cancellationToken);
     }
 
     public async Task<(bool Succeeded, string Message, FacturaVentum? Invoice)> CreateInvoiceAsync(FacturaVentum invoice)

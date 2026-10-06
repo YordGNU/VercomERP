@@ -1,28 +1,14 @@
 @model IEnumerable<Vercom.Models.CentroCosto>
-@{
-    ViewBag.Title = "Centros de Costo";
-}
+@{ ViewBag.Title = "Centros de Costo"; }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Gestión de Centros de Costo</h4>
-        <p class="text-muted small mb-0">Nomenclador para la imputación analítica de gastos y recursos por unidad.</p>
-    </div> 
-     <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Contabilidad</a></li>
-            <li class="breadcrumb-item active">Centros de costo</li>
-        </ol>       
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVO CENTRO COSTO</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Centros de Costo", Subtitle = "Distribución y seguimiento de costos por centro de responsabilidad.", Icon = "ti-chart-pie", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 <div class="row">
     <div class="card">
          <div class="card-header border-light justify-content-between">
-            <h5 class="m-0 fw-bold"><i class="ti ti-chart-dots me-2 text-primary"></i>Configuración de Unidades de Costo</h5>
-            <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
-                <i class="ti ti-plus"></i> NUEVO CENTRO DE COSTO
-            </a>
+            <h5 class="m-0 fw-bold"><i class="ti ti-chart-dots me-2 text-primary"></i>Configuración de Unidades de Costo</h5>       
         </div>
         <div class="card-body">
             <table id="costCenterTable" class="table table-striped table-hover dt-responsive">
@@ -75,6 +61,7 @@
     <script>
         $(document).ready(function () {
             $('#costCenterTable').DataTable({
+                pageLength: 100,
                 language: { url: '@Url.Content("~/lib/i18n/es-ES.json")' },
                     order: [[1, 'asc']],
                     dom: '<"row align-items-center"<"col-md-6"l><"col-md-6"f>>rt<"row align-items-center"<"col-md-5"i><"col-md-7"p>>',

@@ -70,6 +70,20 @@ public class EconomicContractViewModel
     public bool QuitarDocumento { get; set; }
 }
 
+public class ContractSuplementoFormViewModel
+{
+    public ContratoEconomicoSuplemento Suplemento { get; set; } = new();
+    public Guid ContratoId { get; set; }
+    public string NumeroContrato { get; set; } = string.Empty;
+    public string TerceroTipo { get; set; } = string.Empty;
+    public string EstadoContrato { get; set; } = string.Empty;
+    public DateOnly? FechaFinPactada { get; set; }
+    public DateOnly? FechaFinEfectiva { get; set; }
+    public int NumeroSuplementoSugerido { get; set; } = 1;
+    public IFormFile? Documento { get; set; }
+    public string Title { get; set; } = "Suplemento de Contrato";
+}
+
 public class PriceLimitFormViewModel
 {
     public TopePrecioMfp Limit { get; set; } = new();

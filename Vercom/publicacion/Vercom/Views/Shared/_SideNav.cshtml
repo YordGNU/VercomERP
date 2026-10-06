@@ -35,6 +35,17 @@
             </li>
 
             <!-- ════════════════════════════════════════════════════════════════
+            ═══ 1b. CENTRO DE NOTIFICACIONES ═══
+            ════════════════════════════════════════════════════════════════ -->
+            <li class="side-nav-item">
+                <a asp-controller="Notificacion" asp-action="Index" class="side-nav-link">
+                    <span class="menu-icon"><i class="ti ti-bell"></i></span>
+                    <span class="menu-text"> Notificaciones </span>
+                    <span class="badge badge-square text-bg-warning ms-auto d-none" id="sidenav-notification-count">0</span>
+                </a>
+            </li>
+
+            <!-- ════════════════════════════════════════════════════════════════
             ═══ 2. CONTABILIDAD Y FINANZAS (Módulo 1) ═══
             ════════════════════════════════════════════════════════════════ -->
             @if (await PuedeAsync("CONTABILIDAD.CUENTA.VER"))
@@ -370,6 +381,10 @@
                             @if (await PuedeAsync("ADMIN.BACKUP.VER"))
                             {
                                 <li class="side-nav-item"><a asp-controller="Backup" asp-action="Index" class="side-nav-link">Resguardos (Backup)</a></li>
+                            }
+                            @if (await PuedeAsync("INVENTARIO.PRODUCTO.VER"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="Importacion" asp-action="Index" class="side-nav-link">Importar desde Versat</a></li>
                             }
                         </ul>
                     </div>

@@ -4,20 +4,10 @@
     var stockItems = Model.Existencia.Count;
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Almacén: @Model.Nombre</h4>
-        <p class="text-muted small mb-0">Ubicación, tipo de depósito y resumen de existencias locales.</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Inventario</a></li>
-            <li class="breadcrumb-item"><a asp-action="Index">Almacenes</a></li>
-            <li class="breadcrumb-item active">Detalle</li>
-        </ol>
-        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary shadow-sm">
-            <i class="ti ti-edit me-1"></i> MODIFICAR ALMACÉN
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Almacén: ", Subtitle = "Ubicación, tipo de depósito y resumen de existencias locales.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
         </a>
     </div>
 </div>

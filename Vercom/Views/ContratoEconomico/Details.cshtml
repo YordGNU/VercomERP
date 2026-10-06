@@ -48,17 +48,120 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <label class="text-muted small text-uppercase fw-bold d-block">Vencimiento</label>
-                            @{
-                                var isExpired = Model.FechaFin.HasValue && Model.FechaFin < DateOnly.FromDateTime(DateTime.Now);
-                            }
-                            <div class="d-flex align-items-center mt-1 @(isExpired ? "text-danger fw-bold" : "")">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Vencimiento Pactado</label>
+                            <div class="d-flex align-items-center mt-1">
                                 <i class="ti ti-calendar-x me-2 fs-18"></i>
-                                <span>@(Model.FechaFin?.ToString("dd MMM yyyy") ?? "INDETERMINADO")</span>
+                                <span>@((Model.FechaFinOriginal ?? Model.FechaFin)?.ToString("dd MMM yyyy") ?? "INDETERMINADO")</span>
                             </div>
                         </div>
                     </div>
+                    @if (Model.Suplementos.Any(s => s.Estado == "VIGENTE"))
+                    {
+                        <div class="row g-4 mt-0">
+                            <div class="col-md-12">
+                                <div class="alert alert-success d-flex align-items-center mb-0" role="alert">
+                                    <i class="ti ti-calendar-check fs-24 me-3"></i>
+                                    <div>
+                                        <strong>Vigencia ampliada por suplemento.</strong>
+                                        <div class="small">
+                                            El vencimiento original se conserva como referencia y la vigencia efectiva es la del último suplemento vigente.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
                 </div>
+            </div>
+
+            <!-- Suplementos -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light-subtle py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-file-plus me-2"></i>Suplementos</h5>
+                    <a asp-action="SuplementoCreate" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
+                        <i class="ti ti-plus me-1"></i> REGISTRAR PRÓRROGA
+                    </a>
+                </div>
+                @if (Model.Suplementos.Count == 0)
+                {
+                    <div class="card-body p-4 text-center text-muted">
+                        <i class="ti ti-file-off fs-32 mb-2 d-block"></i>
+                        Este contrato no tiene suplementos registrados.
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">N.º</th>
+                                    <th>Tipo</th>
+                                    <th>Firma</th>
+                                    <th>Vigencia desde</th>
+                                    <th>Vigencia hasta</th>
+                                    <th>Estado</th>
+                                    <th>Documento</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var sup in Model.Suplementos.OrderByDescending(s => s.NumeroSuplemento))
+                                {
+                                    <tr>
+                                        <td class="ps-4 fw-bold">@sup.NumeroSuplemento</td>
+                                        <td>@sup.Tipo</td>
+                                        <td>@sup.FechaFirma.ToString("dd/MM/yyyy")</td>
+                                        <td>@sup.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                        <td class="fw-bold">@sup.FechaFin.ToString("dd/MM/yyyy")</td>
+                                        <td>
+                                            <span class="badge @(sup.Estado == "VIGENTE" ? "bg-success" : "bg-secondary")">@sup.Estado</span>
+                                            @if (!string.IsNullOrEmpty(sup.MotivoAnulacion))
+                                            {
+                                                <div class="small text-muted fst-italic mt-1">@sup.MotivoAnulacion</div>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(sup.DocumentoUrl))
+                                            {
+                                                <a href="@sup.DocumentoUrl" target="_blank" class="btn btn-sm btn-light">
+                                                    <i class="ti ti-download"></i>
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">Sin documento</span>
+                                            }
+                                        </td>
+                                        <td class="text-end pe-4">
+                                            @if (sup.Estado == "VIGENTE")
+                                            {
+                                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="collapse" data-bs-target="#anular-@sup.Id" aria-expanded="false">
+                                                    <i class="ti ti-file-x me-1"></i> ANULAR
+                                                </button>
+                                            }
+                                        </td>
+                                    </tr>
+                                    @if (sup.Estado == "VIGENTE")
+                                    {
+                                        <tr class="collapse" id="anular-@sup.Id">
+                                            <td colspan="8" class="bg-light-subtle">
+                                                <form asp-action="SuplementoAnular" asp-route-id="@Model.Id" id="anularForm-@sup.Id" class="d-flex gap-2 align-items-center py-2">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="suplementoId" value="@sup.Id" />
+                                                    <input type="text" name="motivo" class="form-control form-control-sm" placeholder="Motivo de la anulacion (obligatorio)" maxlength="400" required />
+                                                    <button type="submit" class="btn btn-sm btn-danger text-nowrap">
+                                                        <i class="ti ti-check me-1"></i> CONFIRMAR ANULACION
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
             </div>
 
             <!-- Trazabilidad Operativa -->
@@ -141,3 +244,13 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('form[id^="anularForm-"]').each(function() {
+                window.SubmitAjaxForm(this.id);
+            });
+        });
+    </script>
+}

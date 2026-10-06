@@ -72,7 +72,7 @@ public class PosApiController : ControllerBase
     }
 
     [HttpGet("pos/productos")]
-    public async Task<IActionResult> GetProductos([FromQuery] string? updatedSince = null)
+    public async Task<IActionResult> GetProductos([FromQuery] string? updatedSince = null, [FromQuery] Guid? clienteId = null)
     {
         DateTimeOffset? since = null;
         if (!string.IsNullOrEmpty(updatedSince) && DateTimeOffset.TryParse(updatedSince, out var date))
@@ -80,7 +80,7 @@ public class PosApiController : ControllerBase
             since = date;
         }
 
-        var res = await _posService.GetCatalogForPosAsync(since);
+        var res = await _posService.GetCatalogForPosAsync(since, clienteId);
         return Ok(res);
     }
 

@@ -1,21 +1,15 @@
 @using Vercom.Security
 @inject IEntidadProvider EntidadProvider
 @model Vercom.ViewModels.PlantillaStatusViewModel
+@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewBag.Title = "Plantilla de Cargos";
     var isMaster = EntidadProvider.IsMaster;
 }
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Plantilla de Cargos y Ocupaciones</h4>
-        <p class="text-muted small mb-0">Control de plazas aprobadas vs. cubiertas por unidad organizativa</p>
-    </div>
-    <div class="text-end">
-        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
-            <i class="ti ti-plus me-1"></i> GESTIONAR PLAZAS
-        </a>
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> GESTIONAR PLAZAS</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Plantilla de Cargos y Ocupaciones", Subtitle = "Control de plazas aprobadas vs. cubiertas por unidad organizativa", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 <!-- Barra de Filtros -->
 <div class="card shadow-sm border-0 mb-4">
     <div class="card-body p-3">
@@ -79,7 +73,7 @@
                         </td>
                         @if (isMaster)
                         {
-                            <td><small class="fw-bold text-uppercase">@row.EntidadNombre</small></td>
+                            <td><small class="fw-bold text-uppercase">@EntidadDisplay.Name</small></td>
                         }
                         <td>
                             <span class="badge badge-outline text-muted">@row.Sucursal</span>

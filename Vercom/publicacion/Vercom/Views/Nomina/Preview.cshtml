@@ -4,23 +4,10 @@
     var meses = new[] { "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold"><i class="ti ti-chart-dots me-2"></i>Simulador de Nómina: @meses[Model.Mes] @Model.Anio</h4>
-        <p class="text-muted small mb-0">Vista previa volátil basada en asistencia y contratos actuales. No genera registros contables.</p>
-    </div>
-    <div class="text-end d-flex gap-2">
-        <a asp-action="Index" class="btn btn-sm btn-outline-secondary"><i class="ti ti-arrow-left"></i> VOLVER</a>
-        <form asp-action="Calculate" method="post">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="anio" value="@Model.Anio" />
-            <input type="hidden" name="mes" value="@Model.Mes" />
-            <button type="submit" class="btn btn-sm btn-primary shadow">
-                <i class="ti ti-device-floppy"></i> GENERAR NÓMINA OFICIAL
-            </button>
-        </form>
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-arrow-left me-1'></i> VOLVER</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Simulador de Nómina: " + meses + "[Model.Mes] " + Model.Anio, Subtitle = "Vista previa volátil basada en asistencia y contratos actuales. No genera registros contables.", Icon = "ti-arrow-left", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <!-- Resumen de Simulación -->

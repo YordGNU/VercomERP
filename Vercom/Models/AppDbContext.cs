@@ -65,6 +65,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<ContratoEconomico> ContratoEconomicos { get; set; }
 
+    public virtual DbSet<ContratoEconomicoSuplemento> ContratoEconomicoSuplementos { get; set; }
+
     public virtual DbSet<ContratoLaboral> ContratoLaborals { get; set; }
 
     public virtual DbSet<CuentaBancarium> CuentaBancaria { get; set; }
@@ -1114,6 +1116,7 @@ entity.Property(e => e.DocumentoOrigenId).HasColumnName("documento_origen_id");
                 .HasDefaultValue("VIGENTE")
                 .HasColumnName("estado");
             entity.Property(e => e.FechaFin).HasColumnName("fecha_fin");
+            entity.Property(e => e.FechaFinOriginal).HasColumnName("fecha_fin_original");
             entity.Property(e => e.FechaFirma).HasColumnName("fecha_firma");
             entity.Property(e => e.FechaInicio).HasColumnName("fecha_inicio");
             entity.Property(e => e.MontoTotal)
@@ -1140,6 +1143,51 @@ entity.Property(e => e.DocumentoOrigenId).HasColumnName("documento_origen_id");
             entity.HasOne(d => d.Proveedor).WithMany(p => p.ContratoEconomicos)
                 .HasForeignKey(d => d.ProveedorId)
                 .HasConstraintName("FK__contrato___prove__62AFA012");
+
+            entity.HasMany(d => d.Suplementos)
+                .WithOne(p => p.Contrato)
+                .HasForeignKey(d => d.ContratoId)
+                .HasConstraintName("FK_suplemento_contrato")
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ContratoEconomicoSuplemento>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_contrato_economico_suplemento");
+
+            entity.ToTable("contrato_economico_suplemento", "comercial");
+
+            entity.HasIndex(e => new { e.ContratoId, e.NumeroSuplemento }, "UQ_suplemento_numero").IsUnique();
+            entity.HasIndex(e => new { e.ContratoId, e.Estado, e.FechaFin }, "IX_suplemento_contrato_vigente");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("id");
+            entity.Property(e => e.Concepto).HasColumnName("concepto");
+            entity.Property(e => e.ContratoId).HasColumnName("contrato_id");
+            entity.Property(e => e.CreadoEn)
+                .HasDefaultValueSql("(sysdatetimeoffset())")
+                .HasColumnName("creado_en");
+            entity.Property(e => e.CreadoPor).HasColumnName("creado_por");
+            entity.Property(e => e.DocumentoUrl).HasColumnName("documento_url");
+            entity.Property(e => e.EntidadId).HasColumnName("entidad_id");
+            entity.Property(e => e.Estado)
+                .HasMaxLength(15)
+                .HasDefaultValue("VIGENTE")
+                .HasColumnName("estado");
+            entity.Property(e => e.FechaFirma).HasColumnName("fecha_firma");
+            entity.Property(e => e.FechaInicio).HasColumnName("fecha_inicio");
+            entity.Property(e => e.FechaFin).HasColumnName("fecha_fin");
+            entity.Property(e => e.MotivoAnulacion).HasColumnName("motivo_anulacion");
+            entity.Property(e => e.NumeroSuplemento).HasColumnName("numero_suplemento");
+            entity.Property(e => e.Tipo)
+                .HasMaxLength(15)
+                .HasDefaultValue("PRORROGA")
+                .HasColumnName("tipo");
+
+            entity.HasOne(d => d.Entidad).WithMany()
+                .HasForeignKey(d => d.EntidadId)
+                .HasConstraintName("FK_suplemento_entidad");
         });
 
         modelBuilder.Entity<ContratoLaboral>(entity =>

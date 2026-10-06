@@ -3,19 +3,10 @@
     ViewBag.Title = "Control de Vacaciones";
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Gestión de Descanso y Vacaciones (9.09%)</h4>
-        <p class="text-muted small mb-0">Seguimiento de saldos acumulados y días disfrutados por el personal.</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a asp-controller="Dashboard" asp-action="Index">Inicio</a></li>
-            <li class="breadcrumb-item"><a asp-action="Index">RRHH</a></li>
-            <li class="breadcrumb-item active">Saldos Vacaciones</li>
-        </ol>
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> RRHH</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = "Gestión de Descanso y Vacaciones (9.09%)", Subtitle = "Seguimiento de saldos acumulados y días disfrutados por el personal.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 <div class="row row-cards">
     @foreach (var item in Model)
     {

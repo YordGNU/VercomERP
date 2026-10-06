@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Vercom.DTOs;
 using Vercom.Models;
 using Vercom.ViewModels;
 
@@ -31,7 +32,7 @@ public interface IPosService
     Task<IEnumerable<PosRangoNumeracion>> GetRangesAsync();
 
     // Sincronización de Datos (Master Data para POS)
-    Task<dynamic> GetCatalogForPosAsync(DateTimeOffset? updatedSince);
+    Task<IReadOnlyList<PosCatalogoProductoDto>> GetCatalogForPosAsync(DateTimeOffset? updatedSince, Guid? clienteId = null);
 }
 
 public class PosService : IPosService
@@ -42,8 +43,9 @@ public class PosService : IPosService
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly INotificationService _notifications;
     private readonly ArqueoCajaContableService _arqueo;
+    private readonly IPricingService _pricingService;
 
-    public PosService(AppDbContext context, Security.IEntidadProvider entidadProvider, IConsecutivoService consecutivoService, IServiceScopeFactory serviceScopeFactory, INotificationService notifications, ArqueoCajaContableService arqueo)
+    public PosService(AppDbContext context, Security.IEntidadProvider entidadProvider, IConsecutivoService consecutivoService, IServiceScopeFactory serviceScopeFactory, INotificationService notifications, ArqueoCajaContableService arqueo, IPricingService pricingService)
     {
         _context = context;
         _entidadProvider = entidadProvider;
@@ -51,6 +53,7 @@ public class PosService : IPosService
         _serviceScopeFactory = serviceScopeFactory;
         _notifications = notifications;
         _arqueo = arqueo;
+        _pricingService = pricingService;
     }
 
     public async Task<IEnumerable<DispositivoPo>> GetDevicesAsync()
@@ -335,26 +338,51 @@ public class PosService : IPosService
         return (serie, start, end);
     }
 
-    public async Task<dynamic> GetCatalogForPosAsync(DateTimeOffset? updatedSince)
+    public async Task<IReadOnlyList<PosCatalogoProductoDto>> GetCatalogForPosAsync(DateTimeOffset? updatedSince, Guid? clienteId = null)
     {
-        var query = _context.Productos.Include(p => p.UnidadMedida).AsQueryable();
+        var entidadId = EntidadId();
+        if (!entidadId.HasValue)
+        {
+            entidadId = await _context.Productos.AsNoTracking()
+                .Select(p => (Guid?)p.EntidadId)
+                .FirstOrDefaultAsync() ?? Guid.Empty;
+        }
+
+        var query = _context.Productos.AsNoTracking();
 
         if (updatedSince.HasValue)
         {
             query = query.Where(p => p.ActualizadoEn > updatedSince.Value);
         }
 
-        var res = await query.Select(p => new
+        var items = await query.Select(p => new
         {
             serverId = p.Id,
             cod = p.Codigo,
             nombre = p.Nombre,
-            precio = p.PrecioVentaActual,
+            precioVentaBase = p.PrecioVentaActual ?? 0m,
             unidad = p.UnidadMedida.Codigo,
             existencias = _context.Existencia.Where(e => e.ProductoId == p.Id).Sum(e => e.Cantidad)
         }).ToListAsync();
 
-        return res;
+        var fecha = DateOnly.FromDateTime(DateTime.Now);
+        var precios = await _pricingService.GetPriceMapAsync(entidadId.Value, clienteId, fecha);
+        var porProducto = precios.ToDictionary(kv => kv.Key, kv => kv.Value);
+
+        return items.Select(p =>
+        {
+            porProducto.TryGetValue(p.serverId, out var resuelto);
+            return new PosCatalogoProductoDto
+            {
+                serverId = p.serverId,
+                cod = p.cod,
+                nombre = p.nombre,
+                precio = resuelto != null ? resuelto.Precio : p.precioVentaBase,
+                origenPrecio = resuelto?.SourceName ?? (p.precioVentaBase > 0m ? "PLANO" : "SIN_PRECIO"),
+                unidad = p.unidad,
+                existencias = p.existencias
+            };
+        }).ToList();
     }
 
     public async Task<IEnumerable<PosRangoNumeracion>> GetRangesAsync()

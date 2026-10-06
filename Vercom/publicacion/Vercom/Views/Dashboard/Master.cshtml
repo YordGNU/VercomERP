@@ -4,17 +4,10 @@
     string Money(decimal v) => v.ToString("N2");
 }
 
-<div class="page-title-head d-flex align-items-center flex-wrap gap-3 py-3">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Monitor Maestro</h4>
-        <p class="text-muted small mb-0">Visión global de infraestructura, seguridad y entidades registradas en el ecosistema.</p>
-    </div>
-    <div class="text-end">
-        <span class="badge badge-soft-primary py-2 px-3">
-            <i class="ti ti-crown me-1"></i> MODO SUPERADMINISTRADOR
-        </span>
-    </div>
-</div>
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Monitor Maestro", Subtitle = "Visión global de infraestructura, seguridad y entidades registradas en el ecosistema.", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <!-- Fila 1: KPIs Globales -->
 <div class="row row-cols-1 row-cols-md-2 row-cols-xxl-4 g-3 mb-3">
@@ -233,7 +226,7 @@
                                 {
                                     <tr>
                                         <td class="small text-muted">@s.Entidad</td>
-                                        <td class="fw-bold"><i class="ti ti-device-computer me-2 text-muted"></i>@s.Dispositivo</td>
+                                        <td class="fw-bold"><i class="ti ti-device-desktop me-2 text-muted"></i>@s.Dispositivo</td>
                                         <td>@s.Cajero</td>
                                         <td class="text-center small">@s.FechaApertura.ToString("dd/MM HH:mm")</td>
                                         <td class="text-end fw-bold text-success">@Money(s.TotalVentas)</td>
@@ -258,7 +251,7 @@
     <div class="col-lg-5">
         <div class="card border-0 shadow-sm mb-3">
             <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <h5 class="m-0 fw-bold text-danger"><i class="ti ti-shield-alert me-2"></i>Alertas de Seguridad</h5>
+                <h5 class="m-0 fw-bold text-danger"><i class="ti ti-shield-exclamation me-2"></i>Alertas de Seguridad</h5>
                 <a asp-controller="Admin" asp-action="AuditLogs" class="btn btn-sm btn-outline-secondary">Bitácora</a>
             </div>
             <div class="card-body">
@@ -308,7 +301,7 @@
                         </span>
                         <div>
                             <div class="fw-bold">Sistema Protegido</div>
-                            <div class="text-muted small">Último backup: @Model.UltimoBackup.FinalizadoEn?.ToString("dd MMM, HH:mm")</div>
+                            <div class="text-muted small">áltimo backup: @Model.UltimoBackup.FinalizadoEn?.ToString("dd MMM, HH:mm")</div>
                         </div>
                     </div>
                     <div class="bg-light-subtle p-3 rounded mb-3 small">

@@ -3,24 +3,10 @@
     ViewBag.Title = "Detalle del Rol";
 }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1 me-3">
-        <h4 class="page-main-title m-0 fw-bold">Perfil: @Model.Nombre</h4>
-        <p class="text-muted small mb-0">
-            Código del Sistema: <span class="badge bg-light text-dark font-monospace">@Model.Codigo</span>
-        </p>
-    </div>
-    <div class="text-end">       
-        <div class="d-flex gap-2 justify-content-end">
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary">
-                <i class="ti ti-edit me-1"></i> CAMBIAR NOMBRE
-            </a>
-            <a asp-action="ManagePermissions" asp-route-id="@Model.Id" class="btn btn-sm btn-warning shadow-sm">
-                <i class="ti ti-lock-access me-1"></i> CONFIGURAR PERMISOS
-            </a>
-        </div>
-    </div>
-</div>
+@{ var headerActions = "<a href='" + Url.Action("Edit") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> CAMBIAR NOMBRE</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Perfil: " + Model.Nombre, Subtitle = "Código del Sistema: @Model.Codigo", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row g-4">
     <div class="col-lg-3">

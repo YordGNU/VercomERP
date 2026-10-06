@@ -1,24 +1,10 @@
 @model IEnumerable<Vercom.Models.ConteoFisico>
-@{
-    ViewBag.Title = "Conteos Físicos";
-}
+@{ ViewBag.Title = "Conteos Físicos"; }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Gestión de Inventario Físico</h4>
-        <p class="text-muted small mb-0">Control de existencias mediante conteos periódicos y ajustes automáticos.</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Inventario</a></li>
-            <li class="breadcrumb-item active">Conteos</li>
-        </ol>
-        <button type="button" class="btn btn-sm btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#startCountModal">
-            <i class="ti ti-scan"></i> INICIAR NUEVO CONTEO
-        </button>
-    </div>
-</div>
+@{ var headerActions = "<button type='button' class='btn btn-sm btn-primary' data-bs-toggle='modal' data-bs-target='#startCountModal'><i class='ti ti-scan me-1'></i> INICIAR PROCESO</button>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Conteos Físicos", Subtitle = "Toma física de existencias para conciliación con kardex.", Icon = "ti-scale", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="card">

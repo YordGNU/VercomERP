@@ -1,4 +1,4 @@
-﻿@model Vercom.Models.Merma
+@model Vercom.ViewModels.MermaFormViewModel
 
 @{
     ViewData["Title"] = "Edit";
@@ -10,18 +10,10 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-       <div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0">Editar Merma</h4>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Merma</a></li>
-            <li class="breadcrumb-item active">Editar</li>
-        </ol>
-    </div>
-</div>
+       @{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Editar Merma", Subtitle = "", Icon = "ti-file", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="row">
@@ -33,46 +25,46 @@
                 <div class="card-body">
 <form class="row g-3" asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="Merma.Id" />
             <div class="mb-3">
-                <label asp-for="OrdenProduccionId" class="form-label"></label>
-                <select asp-for="OrdenProduccionId" class="form-control" asp-items="ViewBag.OrdenProduccionId"></select>
-                <span asp-validation-for="OrdenProduccionId" class="text-danger"></span>
+                <label asp-for="Merma.OrdenProduccionId" class="form-label"></label>
+                <select asp-for="Merma.OrdenProduccionId" class="form-control" asp-items="ViewBag.OrdenProduccionId"></select>
+                <span asp-validation-for="Merma.OrdenProduccionId" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="ProductoId" class="form-label"></label>
-                <input asp-for="ProductoId" class="form-control" />
-                <span asp-validation-for="ProductoId" class="text-danger"></span>
+                <label asp-for="Merma.ProductoId" class="form-label"></label>
+                <input asp-for="Merma.ProductoId" class="form-control" />
+                <span asp-validation-for="Merma.ProductoId" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="Cantidad" class="form-label"></label>
-                <input asp-for="Cantidad" class="form-control" />
-                <span asp-validation-for="Cantidad" class="text-danger"></span>
+                <label asp-for="Merma.Cantidad" class="form-label"></label>
+                <input asp-for="Merma.Cantidad" class="form-control" />
+                <span asp-validation-for="Merma.Cantidad" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="Causa" class="form-label"></label>
-                <input asp-for="Causa" class="form-control" />
-                <span asp-validation-for="Causa" class="text-danger"></span>
+                <label asp-for="Merma.Causa" class="form-label"></label>
+                <input asp-for="Merma.Causa" class="form-control" />
+                <span asp-validation-for="Merma.Causa" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="ValorContable" class="form-label"></label>
-                <input asp-for="ValorContable" class="form-control" />
-                <span asp-validation-for="ValorContable" class="text-danger"></span>
+                <label asp-for="Merma.ValorContable" class="form-label"></label>
+                <input asp-for="Merma.ValorContable" class="form-control" />
+                <span asp-validation-for="Merma.ValorContable" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="AsientoId" class="form-label"></label>
-                <input asp-for="AsientoId" class="form-control" />
-                <span asp-validation-for="AsientoId" class="text-danger"></span>
+                <label asp-for="Merma.AsientoId" class="form-label"></label>
+                <input asp-for="Merma.AsientoId" class="form-control" />
+                <span asp-validation-for="Merma.AsientoId" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="Fecha" class="form-label"></label>
-                <input asp-for="Fecha" class="form-control" />
-                <span asp-validation-for="Fecha" class="text-danger"></span>
+                <label asp-for="Merma.Fecha" class="form-label"></label>
+                <input asp-for="Merma.Fecha" class="form-control" />
+                <span asp-validation-for="Merma.Fecha" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="Observaciones" class="form-label"></label>
-                <input asp-for="Observaciones" class="form-control" />
-                <span asp-validation-for="Observaciones" class="text-danger"></span>
+                <label asp-for="Merma.Observaciones" class="form-label"></label>
+                <input asp-for="Merma.Observaciones" class="form-control" />
+                <span asp-validation-for="Merma.Observaciones" class="text-danger"></span>
             </div>
             <div class="mb-3">
                 <button type="submit" class="btn btn-primary">Guardar</button>

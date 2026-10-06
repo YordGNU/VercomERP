@@ -1,21 +1,10 @@
 @model IEnumerable<Vercom.Models.PosRangoNumeracion>
-@{
-    ViewBag.Title = "Rangos de Numeración POS";
-}
+@{ ViewBag.Title = "Folios Offline POS"; }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Gestión de Folios Offline</h4>
-        <p class="text-muted small mb-0">Control de bloques de numeración reservados para facturación sin conexión.</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Ventas</a></li>
-            <li class="breadcrumb-item active">Rangos</li>
-        </ol>
-    </div>
-</div>
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Ventas", Title = "Folios Offline POS", Subtitle = "Control de bloques de numeración reservados para facturación sin conexión.", Icon = "ti-file-zip", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+
 
 <div class="row">
     <div class="col-lg-12">

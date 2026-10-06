@@ -1,24 +1,8 @@
 @model IEnumerable<Vercom.Models.DeclaracionJuradum>
-@{
-    ViewBag.Title = "Obligaciones Fiscales ONAT";
-}
+@{ ViewBag.Title = "Declaraciones Juradas"; }
 
-<div class="page-title-head d-flex align-items-center p-3 mb-4">
-    <div class="flex-grow-1">
-        <h4 class="page-main-title m-0 fw-bold">Cumplimiento Fiscal: Declaraciones Juradas</h4>
-        <p class="text-muted small mb-0">Control de obligaciones ante la ONAT y el Ministerio de Finanzas y Precios (DJ-08/02).</p>
-    </div>
-    <div class="text-end">
-        <ol class="breadcrumb m-0 py-0 mb-2 justify-content-end">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Finanzas</a></li>
-            <li class="breadcrumb-item active">Fiscalidad</li>
-        </ol>
-        <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
-            <i class="ti ti-file-analytics me-1"></i> GENERAR NUEVA DJ
-        </a>
-    </div>
-</div>
+@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Declaraciones Juradas", Subtitle = "Registro y seguimiento de declaraciones juradas.", Icon = "ti-file-text", Tone = "primary" }; }
+<partial name='_PageHeader' model='pageHeader' />
 
 <div class="row">
     <div class="card shadow-sm border-0">
@@ -26,8 +10,7 @@
             <h5 class="m-0 fw-bold"><i class="ti ti-book me-2 text-primary"></i>Libro de Registro de Obligaciones</h5>
         </div>
         <div class="card-body">
-            <div class="table-responsive">
-                <table id="djTable" class="table table-striped table-hover dt-responsive">
+       <table id="djTable" class="table table-striped table-hover dt-responsive">
                 <thead class="thead-sm text-uppercase fs-xxs">
                         <tr>
                             <th class="ps-4">F. Presentación</th>
@@ -77,10 +60,8 @@
                         }
                     </tbody>
                 </table>
-            </div>
         </div>
     </div>
-
     <div class="alert alert-info border-0 shadow-sm rounded-3 mt-4">
         <div class="d-flex align-items-center">
             <i class="ti ti-info-square-filled fs-32 me-3 opacity-50"></i>
@@ -91,18 +72,16 @@
         </div>
     </div>
 </div>
-
 @section Scripts {
     <script>
         $(document).ready(function () {
             $('#djTable').DataTable({
-                language: { url: '/js/i18n/es-ES.json' },
-                order: [[2, 'desc']]
+                pageLength: 100,
+                language: { url: '@Url.Content("~/lib/i18n/es-ES.json")' },
+                order: [[1, 'asc']],
+                dom: '<"row align-items-center"<"col-md-6"l><"col-md-6"f>>rt<"row align-items-center"<"col-md-5"i><"col-md-7"p>>',
+                responsive: true,
             });
         });
     </script>
 }
-
-<style>
-    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
-</style>
