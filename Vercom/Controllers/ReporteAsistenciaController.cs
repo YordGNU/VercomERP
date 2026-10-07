@@ -6,7 +6,7 @@ using Vercom.Services;
 
 namespace Vercom.Controllers;
 
-[Authorize(Policy = "RRHH.ASISTENCIA.VER")]
+[Authorize(Policy = "RRHH.REPORTE.VER")]
 public class ReporteAsistenciaController : Controller
 {
     private readonly IAdminService _adminService;
@@ -23,6 +23,7 @@ public class ReporteAsistenciaController : Controller
     {
         var targetYear = year ?? DateTime.Now.Year;
         var targetMonth = month ?? DateTime.Now.Month;
+        if (targetYear is < 1 or > 9999 || targetMonth is < 1 or > 12) return BadRequest("El período solicitado no es válido.");
 
         var vm = await _hrReportService.GetAttendanceMonthlyReportAsync(targetYear, targetMonth, sucursalId);
 
@@ -36,6 +37,7 @@ public class ReporteAsistenciaController : Controller
     {
         var targetYear = year ?? DateTime.Now.Year;
         var targetMonth = month ?? DateTime.Now.Month;
+        if (targetYear is < 1 or > 9999 || targetMonth is < 1 or > 12) return BadRequest("El período solicitado no es válido.");
 
         var vm = await _hrReportService.GetAttendanceMonthlyReportAsync(targetYear, targetMonth, sucursalId);
 
@@ -63,6 +65,9 @@ public class ReporteAsistenciaController : Controller
     {
         if (string.IsNullOrEmpty(value)) return "";
         var clean = value.Replace("\"", "\"\"");
+        var firstVisible = clean.AsSpan().TrimStart();
+        if (!firstVisible.IsEmpty && firstVisible[0] is '=' or '+' or '-' or '@')
+            clean = "'" + clean;
         return clean.Contains(';') || clean.Contains('"') ? $"\"{clean}\"" : clean;
     }
 }

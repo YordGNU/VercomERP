@@ -373,7 +373,7 @@ public class CommercialService : ICommercialService
             var ids = candidatos.Select(c => c.Id).ToList();
             var finsEfectivos = await _context.ContratoEconomicoSuplementos
                 .AsNoTracking()
-                .Where(s => ids.Contains(s.ContratoId) && s.Estado == "VIGENTE")
+                .Where(s => ids.Contains(s.ContratoId) && s.Estado == "VIGENTE" && s.FechaFin != null)
                 .GroupBy(s => s.ContratoId)
                 .Select(g => new { ContratoId = g.Key, FechaFin = g.Max(s => s.FechaFin) })
                 .ToListAsync();
@@ -426,6 +426,13 @@ public class CommercialService : ICommercialService
             contract.Id = Guid.NewGuid();
             contract.EntidadId = _entidadProvider.CurrentEntidadId;
             contract.FechaFinOriginal = contract.FechaFin;
+            contract.MontoTotalOriginal = contract.MontoTotal;
+
+            var numeroContrato = contract.NumeroContrato?.Trim();
+            if (await ExisteNumeroContratoParaElTerceroAsync(contract.EntidadId, numeroContrato, contract.ClienteId, contract.ProveedorId))
+                return (false, MensajeNumeroContratoRepetido(numeroContrato, contract.ClienteId, contract.ProveedorId));
+
+            contract.NumeroContrato = numeroContrato ?? contract.NumeroContrato;
 
             // ============================================================
             // 1. GUARDAR DOCUMENTO ADJUNTO (usando el servicio)
@@ -475,6 +482,12 @@ public class CommercialService : ICommercialService
                 .FirstOrDefaultAsync(c => c.Id == contract.Id && c.EntidadId == _entidadProvider.CurrentEntidadId);
             if (existing == null) return (false, "El contrato no existe.");
 
+            var numeroContrato = contract.NumeroContrato?.Trim();
+            if (await ExisteNumeroContratoParaElTerceroAsync(_entidadProvider.CurrentEntidadId, numeroContrato, contract.ClienteId, contract.ProveedorId, contract.Id))
+                return (false, MensajeNumeroContratoRepetido(numeroContrato, contract.ClienteId, contract.ProveedorId));
+
+            contract.NumeroContrato = numeroContrato ?? contract.NumeroContrato;
+
             var tieneSuplementos = await _context.ContratoEconomicoSuplementos
                 .AsNoTracking()
                 .AnyAsync(s => s.ContratoId == contract.Id && s.Estado == "VIGENTE");
@@ -509,9 +522,11 @@ public class CommercialService : ICommercialService
             var prevEstado = existing.Estado;
             var documentoAnterior = existing.DocumentoUrl; // para borrar del disco solo tras commit exitoso
             var fechaFinOriginalPrevia = existing.FechaFinOriginal;
+            var montoTotalOriginalPrevia = existing.MontoTotalOriginal;
             _context.Entry(existing).CurrentValues.SetValues(contract);
             existing.EntidadId = _entidadProvider.CurrentEntidadId; // Preservar multi-inquilino
             existing.FechaFinOriginal = fechaFinOriginalPrevia; // Respaldo inmutable de la vigencia pactada
+            existing.MontoTotalOriginal = montoTotalOriginalPrevia; // Respaldo inmutable del monto pactado
 
             // El Estado es responsabilidad del servidor: el formulario nunca lo modifica.
             existing.Estado = RecalcularEstadoContrato(prevEstado, contract.FechaFin);
@@ -553,6 +568,33 @@ public class CommercialService : ICommercialService
             return "VENCIDO";
 
         return string.IsNullOrEmpty(prevEstado) || prevEstado == "VENCIDO" ? "VIGENTE" : prevEstado;
+    }
+
+    private async Task<bool> ExisteNumeroContratoParaElTerceroAsync(Guid entidadId, string? numeroContrato, Guid? clienteId, Guid? proveedorId, Guid? excluirId = null)
+    {
+        var numero = numeroContrato?.Trim();
+        if (string.IsNullOrEmpty(numero)) return false;
+
+        var query = _context.ContratoEconomicos
+            .Where(c => c.EntidadId == entidadId && c.NumeroContrato == numero);
+
+        query = clienteId.HasValue
+            ? query.Where(c => c.ClienteId == clienteId)
+            : query.Where(c => c.ClienteId == null);
+
+        query = proveedorId.HasValue
+            ? query.Where(c => c.ProveedorId == proveedorId)
+            : query.Where(c => c.ProveedorId == null);
+
+        if (excluirId.HasValue) query = query.Where(c => c.Id != excluirId.Value);
+
+        return await query.AnyAsync();
+    }
+
+    private static string MensajeNumeroContratoRepetido(string? numeroContrato, Guid? clienteId, Guid? proveedorId)
+    {
+        var tercero = proveedorId.HasValue ? "proveedor" : "cliente";
+        return $"Ya existe un contrato con el número {numeroContrato} para ese {tercero} en esta entidad.";
     }
 
     public async Task<IEnumerable<TopePrecioMfp>> GetPriceLimitsAsync(string? search = null)
@@ -631,21 +673,27 @@ public class CommercialService : ICommercialService
         var contrato = await _context.ContratoEconomicos
             .AsNoTracking()
             .Where(c => c.Id == contratoId && c.EntidadId == _entidadProvider.CurrentEntidadId)
-            .Select(c => new { c.Id, c.NumeroContrato, c.TerceroTipo, c.Estado, c.FechaInicio, c.FechaFin, c.FechaFinOriginal })
+            .Select(c => new { c.Id, c.NumeroContrato, c.TerceroTipo, c.Estado, c.FechaInicio, c.FechaFin, c.FechaFinOriginal, c.MontoTotal, c.MontoTotalOriginal })
             .FirstOrDefaultAsync();
 
         if (contrato == null) return new ContractSuplementoFormViewModel();
 
         var ultimoVigente = await _context.ContratoEconomicoSuplementos
             .AsNoTracking()
-            .Where(s => s.ContratoId == contratoId && s.Estado == "VIGENTE")
-            .OrderByDescending(s => s.FechaFin)
-            .ThenByDescending(s => s.NumeroSuplemento)
+            .Where(s => s.ContratoId == contratoId && s.Estado == "VIGENTE" && s.FechaFin != null)
+            .OrderByDescending(s => s.NumeroSuplemento)
             .Select(s => new { s.NumeroSuplemento, s.FechaFin })
             .FirstOrDefaultAsync();
 
-        var finBase = contrato.FechaFinOriginal ?? contrato.FechaFin;
+        var suplementoMonto = await _context.ContratoEconomicoSuplementos
+            .AsNoTracking()
+            .Where(s => s.ContratoId == contratoId && s.Estado == "VIGENTE" && s.MontoTotalNuevo != null)
+            .OrderByDescending(s => s.NumeroSuplemento)
+            .Select(s => new { s.NumeroSuplemento, s.MontoTotalNuevo })
+            .FirstOrDefaultAsync();
+
         var finEfectivo = ultimoVigente?.FechaFin ?? contrato.FechaFin;
+        var montoEfectivo = suplementoMonto?.MontoTotalNuevo ?? contrato.MontoTotal;
 
         var maximoNumero = await _context.ContratoEconomicoSuplementos
             .AsNoTracking()
@@ -660,16 +708,16 @@ public class CommercialService : ICommercialService
             NumeroContrato = contrato.NumeroContrato,
             TerceroTipo = contrato.TerceroTipo,
             EstadoContrato = contrato.Estado,
-            FechaFinPactada = finBase,
+            FechaFinPactada = contrato.FechaFinOriginal ?? contrato.FechaFin,
             FechaFinEfectiva = finEfectivo,
+            MontoTotalPactada = contrato.MontoTotalOriginal ?? contrato.MontoTotal,
+            MontoTotalEfectiva = montoEfectivo,
             NumeroSuplementoSugerido = numeroSugerido,
             Suplemento = new ContratoEconomicoSuplemento
             {
                 ContratoId = contrato.Id,
                 NumeroSuplemento = numeroSugerido,
-                Tipo = "PRORROGA",
                 FechaFirma = DateOnly.FromDateTime(DateTime.Now),
-                FechaInicio = (finEfectivo ?? DateOnly.FromDateTime(DateTime.Now)).AddDays(1),
                 Estado = "VIGENTE"
             }
         };
@@ -687,37 +735,48 @@ public class CommercialService : ICommercialService
             if (contrato == null) return (false, "El contrato no existe o no pertenece a la entidad.");
 
             if (contrato.Estado == "RESCINDIDO")
-                return (false, "No se puede prorrogar un contrato rescindido.");
+                return (false, "No se puede modificar un contrato rescindido.");
 
             var hoy = DateOnly.FromDateTime(DateTime.Now);
 
             var ultimoVigente = await _context.ContratoEconomicoSuplementos
                 .AsNoTracking()
-                .Where(s => s.ContratoId == contrato.Id && s.Estado == "VIGENTE")
-                .OrderByDescending(s => s.FechaFin)
-                .ThenByDescending(s => s.NumeroSuplemento)
+                .Where(s => s.ContratoId == contrato.Id && s.Estado == "VIGENTE" && s.FechaFin != null)
+                .OrderByDescending(s => s.NumeroSuplemento)
                 .Select(s => new { s.NumeroSuplemento, s.FechaFin })
                 .FirstOrDefaultAsync();
 
-            var finBase = contrato.FechaFinOriginal ?? contrato.FechaFin;
             var finEfectivoActual = ultimoVigente?.FechaFin ?? contrato.FechaFin;
 
-            if (finEfectivoActual.HasValue && suplemento.FechaFin <= finEfectivoActual.Value)
+            var fijaVigencia = suplemento.FechaInicio.HasValue || suplemento.FechaFin.HasValue;
+            var fijaMonto = suplemento.MontoTotalNuevo.HasValue;
+
+            if (!fijaVigencia && !fijaMonto)
+                return (false, "El suplemento no modifica ningún término del contrato.");
+
+            if (fijaVigencia)
             {
-                return (false, $"La nueva fecha de fin ({suplemento.FechaFin:dd/MM/yyyy}) debe ser posterior a la vigencia actual ({finEfectivoActual.Value:dd/MM/yyyy}).");
+                if (suplemento.FechaInicio == null || suplemento.FechaFin == null)
+                    return (false, "Para modificar la vigencia indique fecha de inicio y fecha de fin.");
+
+                if (suplemento.FechaFin.Value <= suplemento.FechaInicio.Value)
+                    return (false, "La fecha de fin del suplemento debe ser posterior a su fecha de inicio.");
+
+                if (finEfectivoActual.HasValue && suplemento.FechaFin.Value <= finEfectivoActual.Value)
+                    return (false, $"La nueva fecha de fin ({suplemento.FechaFin.Value:dd/MM/yyyy}) debe ser posterior a la vigencia actual ({finEfectivoActual.Value:dd/MM/yyyy}).");
             }
 
-            if (suplemento.FechaFin <= suplemento.FechaInicio)
-                return (false, "La fecha de fin del suplemento debe ser posterior a su fecha de inicio.");
+            if (suplemento.MontoTotalNuevo.HasValue && suplemento.MontoTotalNuevo.Value < 0)
+                return (false, "El monto pactado no puede ser negativo.");
 
             if (suplemento.FechaFirma < contrato.FechaFirma)
                 return (false, "El suplemento no puede firmarse antes de la fecha de firma del contrato.");
 
             if (suplemento.FechaFirma < hoy.AddDays(-365))
-                return (false, "No se admite un suplemento con más de un año de antigüedad. Regularice la vigencia del contrato.");
+                return (false, "No se admite un suplemento con más de un año de antigüedad. Regularice el contrato.");
 
             if (string.IsNullOrWhiteSpace(suplemento.Concepto))
-                return (false, "Describa el concepto de la prórroga.");
+                return (false, "Describa el concepto del suplemento.");
 
             var contraparteActiva = contrato.TerceroTipo switch
             {
@@ -737,7 +796,6 @@ public class CommercialService : ICommercialService
             suplemento.Id = Guid.NewGuid();
             suplemento.EntidadId = entidadId;
             suplemento.NumeroSuplemento = siguienteNumero;
-            suplemento.Tipo = "PRORROGA";
             suplemento.Estado = "VIGENTE";
             suplemento.CreadoEn = DateTimeOffset.Now;
 
@@ -757,17 +815,30 @@ public class CommercialService : ICommercialService
             using var transaction = await _context.Database.BeginTransactionAsync();
             _context.ContratoEconomicoSuplementos.Add(suplemento);
 
-            contrato.FechaFin = suplemento.FechaFin;
-            if (contrato.Estado == "VENCIDO") contrato.Estado = "VIGENTE";
+            var cambios = new List<string>();
+
+            if (suplemento.FechaFin.HasValue)
+            {
+                contrato.FechaFin = suplemento.FechaFin;
+                if (contrato.Estado == "VENCIDO" && suplemento.FechaFin.Value >= hoy)
+                    contrato.Estado = "VIGENTE";
+                cambios.Add($"vigencia hasta el {suplemento.FechaFin.Value:dd/MM/yyyy}");
+            }
+
+            if (suplemento.MontoTotalNuevo.HasValue)
+            {
+                contrato.MontoTotal = suplemento.MontoTotalNuevo;
+                cambios.Add($"monto {suplemento.MontoTotalNuevo.Value:C2}");
+            }
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
             _logger.LogInformation(
-                "Suplemento {Num} registrado para contrato {Contrato}. Nueva vigencia hasta {FechaFin}.",
-                siguienteNumero, contrato.NumeroContrato, suplemento.FechaFin);
+                "Suplemento {Num} registrado para contrato {Contrato}. {Cambios}.",
+                siguienteNumero, contrato.NumeroContrato, string.Join("; ", cambios));
 
-            return (true, $"Suplemento N.º {siguienteNumero} registrado. El contrato queda vigente hasta el {suplemento.FechaFin:dd/MM/yyyy}.");
+            return (true, $"Suplemento N.º {siguienteNumero} registrado: {string.Join(" y ", cambios)}.");
         }
         catch (Exception ex)
         {
@@ -799,22 +870,31 @@ public class CommercialService : ICommercialService
             suplemento.Estado = "ANULADO";
             suplemento.MotivoAnulacion = motivo.Trim();
 
-            var siguienteVigente = await _context.ContratoEconomicoSuplementos
+            var vigentes = _context.ContratoEconomicoSuplementos
                 .AsNoTracking()
-                .Where(s => s.ContratoId == contrato.Id && s.Estado == "VIGENTE" && s.Id != suplemento.Id)
-                .OrderByDescending(s => s.FechaFin)
-                .ThenByDescending(s => s.NumeroSuplemento)
+                .Where(s => s.ContratoId == contrato.Id && s.Estado == "VIGENTE" && s.Id != suplemento.Id);
+
+            var siguienteVigencia = await vigentes
+                .Where(s => s.FechaFin != null)
+                .OrderByDescending(s => s.NumeroSuplemento)
                 .Select(s => (DateOnly?)s.FechaFin)
                 .FirstOrDefaultAsync();
 
-            contrato.FechaFin = siguienteVigente ?? contrato.FechaFinOriginal ?? contrato.FechaFin;
+            var siguienteMonto = await vigentes
+                .Where(s => s.MontoTotalNuevo != null)
+                .OrderByDescending(s => s.NumeroSuplemento)
+                .Select(s => (decimal?)s.MontoTotalNuevo)
+                .FirstOrDefaultAsync();
+
+            contrato.FechaFin = siguienteVigencia ?? contrato.FechaFinOriginal ?? contrato.FechaFin;
+            contrato.MontoTotal = siguienteMonto ?? contrato.MontoTotalOriginal ?? contrato.MontoTotal;
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
             _logger.LogInformation(
-                "Suplemento {Num} del contrato {Contrato} anulado. Vigencia restaurada al {FechaFin}.",
-                suplemento.NumeroSuplemento, contrato.NumeroContrato, contrato.FechaFin);
+                "Suplemento {Num} del contrato {Contrato} anulado. Vigencia {FechaFin}, monto {Monto}.",
+                suplemento.NumeroSuplemento, contrato.NumeroContrato, contrato.FechaFin, contrato.MontoTotal);
 
             return (true, $"Suplemento N.º {suplemento.NumeroSuplemento} anulado.");
         }

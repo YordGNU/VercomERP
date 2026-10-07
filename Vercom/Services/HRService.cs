@@ -153,7 +153,7 @@ public class HRService : IHRService
         var sucursales_select_list = new SelectList(sucursales.Select(c => new { Id = c.Id, DisplayText = $"{c.Codigo} - {c.Nombre}" }), "Id", "DisplayText");
 
         var turnos = await _context.TurnoTrabajos
-            .Where(t => t.Activo)
+            .Where(t => t.Activo && t.EntidadId == _entidadProvider.CurrentEntidadId)
             .OrderBy(t => t.HoraEntrada)
             .ToListAsync();
         var turnos_select_list = new SelectList(
@@ -221,6 +221,10 @@ public class HRService : IHRService
     {
         try
         {
+            if (empleado.TurnoTrabajoId.HasValue && !await _context.TurnoTrabajos.AnyAsync(t =>
+                    t.Id == empleado.TurnoTrabajoId.Value && t.EntidadId == _entidadProvider.CurrentEntidadId && t.Activo))
+                return (false, "El turno seleccionado no existe, está inactivo o pertenece a otra entidad.");
+
             empleado.Id = Guid.NewGuid();
             empleado.EntidadId = _entidadProvider.CurrentEntidadId;
             empleado.CreadoEn = DateTimeOffset.Now;
@@ -244,6 +248,10 @@ public class HRService : IHRService
         {
             var existing = await _context.Empleados.FindAsync(empleado.Id);
             if (existing == null) return (false, "No existe.");
+
+            if (empleado.TurnoTrabajoId.HasValue && !await _context.TurnoTrabajos.AnyAsync(t =>
+                    t.Id == empleado.TurnoTrabajoId.Value && t.EntidadId == _entidadProvider.CurrentEntidadId && t.Activo))
+                return (false, "El turno seleccionado no existe, está inactivo o pertenece a otra entidad.");
 
             _context.Entry(existing).CurrentValues.SetValues(empleado);
             existing.EntidadId = _entidadProvider.CurrentEntidadId;
@@ -456,6 +464,23 @@ public class HRService : IHRService
 
     public async Task<(bool Succeeded, string Message)> AddMedicalCertificateAsync(CertificadoMedico certificate)
     {
+        if (certificate.FechaFin < certificate.FechaInicio)
+            return (false, "La fecha final del certificado no puede ser anterior a la fecha inicial.");
+        if (certificate.PorcentajeSubsidio < 0 || certificate.PorcentajeSubsidio > 100)
+            return (false, "El porcentaje del subsidio debe estar entre 0 y 100.");
+        if (!await _context.Empleados.AnyAsync(e => e.Id == certificate.EmpleadoId))
+            return (false, "El trabajador no existe o pertenece a otra entidad.");
+
+        var overlaps = await _context.CertificadoMedicos.AnyAsync(c =>
+            c.EmpleadoId == certificate.EmpleadoId &&
+            c.FechaInicio <= certificate.FechaFin && c.FechaFin >= certificate.FechaInicio);
+        if (overlaps)
+            return (false, "El trabajador ya tiene un certificado médico que se solapa con ese período.");
+
+        var incapacidad = await _context.TipoAusencia.FirstOrDefaultAsync(t => t.Codigo == "05");
+        if (incapacidad == null)
+            return (false, "No está configurado el tipo de ausencia 05 (Incapacidad Temporal).");
+
         using var transaction = _context.Database.CurrentTransaction == null ? await _context.Database.BeginTransactionAsync() : null;
         try
         {
@@ -463,20 +488,32 @@ public class HRService : IHRService
             certificate.CreadoEn = DateTimeOffset.Now;
             _context.CertificadoMedicos.Add(certificate);
 
-            var incapacidad = await _context.TipoAusencia.FirstOrDefaultAsync(t => t.Codigo == "05");
-            var tipoAusenciaId = incapacidad?.Id;
-
             for (var date = certificate.FechaInicio; date <= certificate.FechaFin; date = date.AddDays(1))
             {
-                var attendance = new RegistroAsistencium
+                var attendance = await _context.RegistroAsistencia
+                    .FirstOrDefaultAsync(a => a.EmpleadoId == certificate.EmpleadoId && a.Fecha == date);
+                if (attendance == null)
                 {
-                    Id = Guid.NewGuid(),
-                    EmpleadoId = certificate.EmpleadoId,
-                    Fecha = date,
-                    TipoAusenciaId = tipoAusenciaId,
-                    Observaciones = $"AUT: Certificado #{certificate.NumeroCertificado}"
-                };
-                _context.RegistroAsistencia.Add(attendance);
+                    attendance = new RegistroAsistencium
+                    {
+                        Id = Guid.NewGuid(),
+                        EmpleadoId = certificate.EmpleadoId,
+                        Fecha = date
+                    };
+                    _context.RegistroAsistencia.Add(attendance);
+                }
+
+                attendance.TipoAusenciaId = incapacidad.Id;
+                attendance.HoraEntrada = null;
+                attendance.HoraSalida = null;
+                attendance.HorasExtra = 0;
+                attendance.RetardoMinutos = null;
+                attendance.SalidaTempranaMinutos = null;
+                var marker = $"AUT: Certificado #{certificate.NumeroCertificado}";
+                if (string.IsNullOrWhiteSpace(attendance.Observaciones))
+                    attendance.Observaciones = marker;
+                else if (!attendance.Observaciones.Contains(marker, StringComparison.Ordinal))
+                    attendance.Observaciones = $"{attendance.Observaciones}; {marker}";
             }
 
             await _context.SaveChangesAsync();
@@ -626,20 +663,31 @@ public class HRService : IHRService
         int? retardo = null;
         if (entrada.HasValue)
         {
-            var lateMinutes = (fecha.ToDateTime(entrada.Value) - scheduledIn).TotalMinutes;
+            var actualIn = ResolveShiftTime(fecha, entrada.Value, scheduledIn, crossesMidnight);
+            var lateMinutes = (actualIn - scheduledIn).TotalMinutes;
             retardo = lateMinutes > turno.ToleranciaMinutos ? (int)Math.Round(lateMinutes) : 0;
         }
 
         int? temprana = null;
         if (salida.HasValue)
         {
-            var actualOut = fecha.ToDateTime(salida.Value);
-            if (crossesMidnight && salida.Value <= turno.HoraEntrada) actualOut = actualOut.AddDays(1);
+            var actualOut = ResolveShiftTime(fecha, salida.Value, scheduledOut, crossesMidnight);
             var earlyMinutes = (scheduledOut - actualOut).TotalMinutes;
             temprana = earlyMinutes > 0 ? (int)Math.Round(earlyMinutes) : 0;
         }
 
         return (retardo, temprana);
+    }
+
+    private static DateTime ResolveShiftTime(DateOnly fecha, TimeOnly hora, DateTime scheduledTime, bool crossesMidnight)
+    {
+        var sameDay = fecha.ToDateTime(hora);
+        if (!crossesMidnight) return sameDay;
+
+        var nextDay = sameDay.AddDays(1);
+        return Math.Abs((nextDay - scheduledTime).Ticks) < Math.Abs((sameDay - scheduledTime).Ticks)
+            ? nextDay
+            : sameDay;
     }
 
     public async Task<(bool Succeeded, string Message)> SaveAttendanceConsoleAsync(List<RegistroAsistencium> logs, Guid userId)
@@ -648,19 +696,69 @@ public class HRService : IHRService
         {
             if (logs == null || logs.Count == 0) return (true, "Sin cambios que guardar.");
 
+            if (logs.GroupBy(l => new { l.EmpleadoId, l.Fecha }).Any(g => g.Count() > 1))
+                return (false, "La solicitud contiene filas duplicadas para el mismo trabajador y fecha.");
+
+            if (logs.Any(l => l.HorasExtra < 0 || l.HorasExtra > 99.99m))
+                return (false, "Las horas extra deben estar entre 0 y 99.99.");
+
+            var employeeIds = logs.Select(l => l.EmpleadoId).Distinct().ToList();
+            var employees = await _context.Empleados
+                .Where(e => employeeIds.Contains(e.Id))
+                .ToDictionaryAsync(e => e.Id);
+            if (employees.Count != employeeIds.Count)
+                return (false, "Uno o más trabajadores no existen o pertenecen a otra entidad.");
+
+            var existingRecords = await _context.RegistroAsistencia
+                .Where(a => employeeIds.Contains(a.EmpleadoId) && logs.Select(l => l.Fecha).Contains(a.Fecha))
+                .ToDictionaryAsync(a => new { a.EmpleadoId, a.Fecha });
+
             var turnoIds = logs.Where(l => l.TurnoTrabajoId.HasValue).Select(l => l.TurnoTrabajoId!.Value).Distinct().ToList();
             var turnos = await _context.TurnoTrabajos
-                .Where(t => turnoIds.Contains(t.Id))
+                .Where(t => turnoIds.Contains(t.Id) && t.EntidadId == _entidadProvider.CurrentEntidadId)
                 .ToDictionaryAsync(t => t.Id);
+
+            if (turnos.Count != turnoIds.Count)
+                return (false, "Uno o más turnos no existen o pertenecen a otra entidad.");
+
+            var certificates = await _context.CertificadoMedicos
+                .Where(c => employeeIds.Contains(c.EmpleadoId) && logs.Min(l => l.Fecha) <= c.FechaFin && logs.Max(l => l.Fecha) >= c.FechaInicio)
+                .ToListAsync();
+            var incapacidad = await _context.TipoAusencia.FirstOrDefaultAsync(t => t.Codigo == "05");
+            if (certificates.Count > 0 && incapacidad == null)
+                return (false, "No está configurado el tipo de ausencia 05 (Incapacidad Temporal).");
 
             foreach (var log in logs)
             {
+                var employee = employees[log.EmpleadoId];
+                var key = new { log.EmpleadoId, log.Fecha };
+                existingRecords.TryGetValue(key, out var existing);
+
+                var expectedTurnoId = existing?.TurnoTrabajoId ?? employee.TurnoTrabajoId;
+                if (log.TurnoTrabajoId != expectedTurnoId)
+                    return (false, "El turno enviado no coincide con el turno asignado al trabajador para esa jornada.");
+
+                var certificate = certificates.FirstOrDefault(c => c.EmpleadoId == log.EmpleadoId && c.FechaInicio <= log.Fecha && c.FechaFin >= log.Fecha);
+                if (certificate != null)
+                {
+                    log.TipoAusenciaId = incapacidad!.Id;
+                    log.HoraEntrada = null;
+                    log.HoraSalida = null;
+                    log.HorasExtra = 0;
+                    var marker = $"AUT: Certificado #{certificate.NumeroCertificado}";
+                    if (string.IsNullOrWhiteSpace(log.Observaciones))
+                        log.Observaciones = marker;
+                    else if (!log.Observaciones.Contains(marker, StringComparison.Ordinal))
+                        log.Observaciones = $"{log.Observaciones}; {marker}";
+                }
+
                 var turno = log.TurnoTrabajoId.HasValue && turnos.TryGetValue(log.TurnoTrabajoId.Value, out var t) ? t : null;
-                var (retardo, temprana) = ComputeJornadaMetrics(turno, log.Fecha, log.HoraEntrada, log.HoraSalida);
+                var (retardo, temprana) = log.TipoAusenciaId.HasValue
+                    ? (null, null)
+                    : ComputeJornadaMetrics(turno, log.Fecha, log.HoraEntrada, log.HoraSalida);
                 log.RetardoMinutos = retardo;
                 log.SalidaTempranaMinutos = temprana;
 
-                var existing = await _context.RegistroAsistencia.FirstOrDefaultAsync(a => a.EmpleadoId == log.EmpleadoId && a.Fecha == log.Fecha);
                 if (existing != null)
                 {
                     existing.HoraEntrada = log.HoraEntrada; existing.HoraSalida = log.HoraSalida;
@@ -674,6 +772,9 @@ public class HRService : IHRService
                 {
                     log.Id = Guid.NewGuid();
                     log.RegistradoPor = userId;
+                    log.Empleado = null!;
+                    log.TurnoTrabajo = null;
+                    log.TipoAusencia = null;
                     _context.RegistroAsistencia.Add(log);
                 }
             }

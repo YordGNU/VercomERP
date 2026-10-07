@@ -69,6 +69,8 @@ public class FileStorageService : IFileStorageService
             subFolder = subFolder.ToLowerInvariant();
 
             var folderPath = Path.Combine(webRoot, basePath, subFolder);
+            // Normalizar para evitar doble wwwroot en rutas mal configuradas
+            folderPath = folderPath.Replace("\\wwwroot\\wwwroot\\", "\\wwwroot\\").Replace("/wwwroot/wwwroot/", "/wwwroot/");
 
             // ✅ Intento de creación con log detallado
             if (!Directory.Exists(folderPath))

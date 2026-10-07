@@ -1,0 +1,81 @@
+@model Vercom.Models.ListaPrecio
+
+@{
+    ViewBag.Title = "Detalles de Lista de Precios";
+}
+
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti ti-arrow-left me-1'></i> Volver</a><a href='" + Url.Action("Edit", new { id = Model.Id }) + "' class='btn btn-sm btn-primary'><i class='ti ti-edit me-1'></i> Editar</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Ventas", Title = Model.Nombre, Subtitle = "Detalle de tarifaria y productos asociados.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+<div class="row mt-4">
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-light-subtle py-3">
+                <h5 class="m-0 fw-bold"><i class="ti ti-info-circle me-2 text-primary"></i>Información General</h5>
+            </div>
+            <div class="card-body p-4">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5 text-muted small">Canal</dt>
+                    <dd class="col-sm-7 fw-bold">@Model.Canal</dd>
+                    <dt class="col-sm-5 text-muted small">Vigente Desde</dt>
+                    <dd class="col-sm-7">@Model.VigenteDesde.ToString("dd/MM/yyyy")</dd>
+                    <dt class="col-sm-5 text-muted small">Vigente Hasta</dt>
+                    <dd class="col-sm-7">@(Model.VigenteHasta?.ToString("dd/MM/yyyy") ?? "Indefinido")</dd>
+                    <dt class="col-sm-5 text-muted small">Estado</dt>
+                    <dd class="col-sm-7">
+                        @if (Model.Activa)
+                        {
+                            <span class="badge bg-success-subtle text-success"><i class="ti ti-check me-1"></i>Activa</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary-subtle text-secondary"><i class="ti ti-x me-1"></i>Inactiva</span>
+                        }
+                    </dd>
+                    <dt class="col-sm-5 text-muted small">Productos</dt>
+                    <dd class="col-sm-7 fw-bold">@Model.ListaPrecioDetalles.Count</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-light-subtle py-3">
+                <h5 class="m-0 fw-bold"><i class="ti ti-list me-2 text-primary"></i>Productos en esta Lista</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.ListaPrecioDetalles.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="thead-sm text-uppercase fs-xxs">
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Producto</th>
+                                    <th class="text-end">Precio</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var detalle in Model.ListaPrecioDetalles.OrderBy(d => d.Producto.Nombre))
+                                {
+                                    <tr>
+                                        <td class="text-muted">@detalle.Producto.Codigo</td>
+                                        <td class="fw-bold">@detalle.Producto.Nombre</td>
+                                        <td class="text-end fw-bold text-primary">@detalle.Precio.ToString("C")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="ti ti-package-off display-4 d-block mb-3"></i>
+                        <p class="mb-0">Esta lista de precios no tiene productos asignados.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

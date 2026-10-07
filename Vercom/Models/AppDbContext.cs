@@ -575,7 +575,7 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValueSql("(sysdatetimeoffset())")
                 .HasColumnName("creado_en");
             entity.Property(e => e.CreadoPor).HasColumnName("creado_por");
-entity.Property(e => e.DocumentoOrigenId).HasColumnName("documento_origen_id");
+            entity.Property(e => e.DocumentoOrigenId).HasColumnName("documento_origen_id");
             entity.Property(e => e.DocumentoOrigenTipo)
                 .HasMaxLength(50)
                 .HasColumnName("documento_origen_tipo");
@@ -1103,7 +1103,7 @@ entity.Property(e => e.DocumentoOrigenId).HasColumnName("documento_origen_id");
 
             entity.ToTable("contrato_economico", "comercial");
 
-            entity.HasIndex(e => new { e.EntidadId, e.NumeroContrato }, "UQ__contrato__8A0FE5373F4C0DD6").IsUnique();
+            entity.HasIndex(e => new { e.EntidadId, e.NumeroContrato, e.ClienteId, e.ProveedorId }, "UQ_contrato_numero_tercero").IsUnique();
 
             entity.Property(e => e.Id)
                 .HasDefaultValueSql("(newid())")
@@ -1122,6 +1122,9 @@ entity.Property(e => e.DocumentoOrigenId).HasColumnName("documento_origen_id");
             entity.Property(e => e.MontoTotal)
                 .HasColumnType("numeric(16, 2)")
                 .HasColumnName("monto_total");
+            entity.Property(e => e.MontoTotalOriginal)
+                .HasColumnType("numeric(16, 2)")
+                .HasColumnName("monto_total_original");
             entity.Property(e => e.NumeroContrato)
                 .HasMaxLength(40)
                 .HasColumnName("numero_contrato");
@@ -1179,11 +1182,10 @@ entity.Property(e => e.DocumentoOrigenId).HasColumnName("documento_origen_id");
             entity.Property(e => e.FechaInicio).HasColumnName("fecha_inicio");
             entity.Property(e => e.FechaFin).HasColumnName("fecha_fin");
             entity.Property(e => e.MotivoAnulacion).HasColumnName("motivo_anulacion");
+            entity.Property(e => e.MontoTotalNuevo)
+                .HasColumnType("numeric(16, 2)")
+                .HasColumnName("monto_total_nuevo");
             entity.Property(e => e.NumeroSuplemento).HasColumnName("numero_suplemento");
-            entity.Property(e => e.Tipo)
-                .HasMaxLength(15)
-                .HasDefaultValue("PRORROGA")
-                .HasColumnName("tipo");
 
             entity.HasOne(d => d.Entidad).WithMany()
                 .HasForeignKey(d => d.EntidadId)
@@ -4407,7 +4409,7 @@ entity.Property(e => e.DocumentoOrigenId).HasColumnName("documento_origen_id");
                     }
                 }
             }
-          
+
             // 2. Aplicar Excepción para el Usuario Master (Ve todo) y Sellar Filtro
             if (filterBody != null)
             {

@@ -5,9 +5,6 @@
 
 @{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Ficha de Instrumento Jurídico", Subtitle = "Control de vigencia y trazabilidad de convenios comerciales (RF-50).", Icon = "ti-file", Tone = "primary" }; }
 <partial name='_PageHeader' model='pageHeader' />
-
-
-
 <div class="row">
     <div class="row">
         <!-- Columna Izquierda: Información General -->
@@ -79,7 +76,7 @@
                 <div class="card-header bg-light-subtle py-3 d-flex justify-content-between align-items-center">
                     <h5 class="m-0 fw-bold"><i class="ti ti-file-plus me-2"></i>Suplementos</h5>
                     <a asp-action="SuplementoCreate" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
-                        <i class="ti ti-plus me-1"></i> REGISTRAR PRÓRROGA
+                        <i class="ti ti-plus me-1"></i> REGISTRAR SUPLEMENTO
                     </a>
                 </div>
                 @if (Model.Suplementos.Count == 0)
@@ -96,10 +93,10 @@
                             <thead class="table-light">
                                 <tr>
                                     <th class="ps-4">N.º</th>
-                                    <th>Tipo</th>
                                     <th>Firma</th>
                                     <th>Vigencia desde</th>
                                     <th>Vigencia hasta</th>
+                                    <th>Monto pactado</th>
                                     <th>Estado</th>
                                     <th>Documento</th>
                                     <th></th>
@@ -110,10 +107,10 @@
                                 {
                                     <tr>
                                         <td class="ps-4 fw-bold">@sup.NumeroSuplemento</td>
-                                        <td>@sup.Tipo</td>
                                         <td>@sup.FechaFirma.ToString("dd/MM/yyyy")</td>
-                                        <td>@sup.FechaInicio.ToString("dd/MM/yyyy")</td>
-                                        <td class="fw-bold">@sup.FechaFin.ToString("dd/MM/yyyy")</td>
+                                        <td>@(sup.FechaInicio?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                        <td class="fw-bold">@(sup.FechaFin?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                        <td>@(sup.MontoTotalNuevo.HasValue ? sup.MontoTotalNuevo.Value.ToString("C2") : "—")</td>
                                         <td>
                                             <span class="badge @(sup.Estado == "VIGENTE" ? "bg-success" : "bg-secondary")">@sup.Estado</span>
                                             @if (!string.IsNullOrEmpty(sup.MotivoAnulacion))
@@ -222,10 +219,27 @@
 
             <div class="card shadow-sm border-0 mb-4 bg-primary bg-opacity-10">
                 <div class="card-body p-4 text-center">
-                    <label class="text-muted small text-uppercase fw-bold d-block mb-2">Monto Total Pactado</label>
+                    <label class="text-muted small text-uppercase fw-bold d-block mb-2">Monto Total Vigente</label>
                     <h1 class="fw-bold text-primary mb-0">
                         @(Model.MontoTotal?.ToString("C2") ?? "SIN LÍMITE")
                     </h1>
+                    @if (Model.MontoTotalOriginal != Model.MontoTotal)
+                    {
+                        <div class="small mt-2">
+                            <span class="text-muted">Pactado original:</span>
+                            <strong>@(Model.MontoTotalOriginal?.ToString("C2") ?? "SIN LÍMITE")</strong>
+                            @{
+                                var supMonto = Model.Suplementos
+                                    .Where(s => s.Estado == "VIGENTE" && s.MontoTotalNuevo.HasValue)
+                                    .OrderByDescending(s => s.NumeroSuplemento)
+                                    .FirstOrDefault();
+                            }
+                            @if (supMonto != null)
+                            {
+                                <div class="text-muted fst-italic mt-1">Modificado por suplemento N.º @supMonto.NumeroSuplemento</div>
+                            }
+                        </div>
+                    }
                 </div>
             </div>
 

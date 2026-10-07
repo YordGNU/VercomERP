@@ -1,3 +1,5 @@
 <Solution>
+  <Project Path="../../../AppData/Local/Temp/opencode/erp_commercial_live_test/erp_commercial_live_test.csproj" />
+  <Project Path="../../../AppData/Local/Temp/opencode/erp_hr_live_test/erp_hr_live_test.csproj" />
   <Project Path="Vercom/Vercom.csproj" />
 </Solution>

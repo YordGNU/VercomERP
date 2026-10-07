@@ -79,6 +79,9 @@ public class HRReportService : IHRReportService
 
     public async Task<AttendanceMonthlyReportViewModel> GetAttendanceMonthlyReportAsync(int anio, int mes, Guid? sucursalId = null)
     {
+        if (anio is < 1 or > 9999) throw new ArgumentOutOfRangeException(nameof(anio));
+        if (mes is < 1 or > 12) throw new ArgumentOutOfRangeException(nameof(mes));
+
         var query = _context.Empleados
             .Include(e => e.Cargo)
             .Include(e => e.Sucursal)
@@ -120,17 +123,18 @@ public class HRReportService : IHRReportService
             var regs = registros.Where(r => r.EmpleadoId == e.Id).ToList();
 
             var dailySalary = salarioPorEmpleado.GetValueOrDefault(e.Id) / 24m;
-            var subsidio = 0m;
+            var certificateRateByDate = new Dictionary<DateOnly, (DateOnly Start, decimal Rate)>();
             foreach (var cert in certificados.Where(c => c.EmpleadoId == e.Id))
             {
                 var start = cert.FechaInicio < firstDay ? firstDay : cert.FechaInicio;
                 var end = cert.FechaFin > lastDay ? lastDay : cert.FechaFin;
-                var dias = end.DayNumber - start.DayNumber + 1;
-                if (dias > 0)
+                for (var day = start; day <= end; day = day.AddDays(1))
                 {
-                    subsidio += Math.Round(dailySalary * dias * (cert.PorcentajeSubsidio / 100m), 2);
+                    if (!certificateRateByDate.TryGetValue(day, out var current) || cert.FechaInicio > current.Start)
+                        certificateRateByDate[day] = (cert.FechaInicio, cert.PorcentajeSubsidio);
                 }
             }
+            var subsidio = certificateRateByDate.Values.Sum(v => Math.Round(dailySalary * (v.Rate / 100m), 2));
 
             return new AttendanceMonthlyRow
             {

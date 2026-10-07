@@ -10,13 +10,11 @@ public partial class ContratoEconomicoSuplemento
 
     public int NumeroSuplemento { get; set; }
 
-    public string Tipo { get; set; } = "PRORROGA";
-
     public DateOnly FechaFirma { get; set; }
 
-    public DateOnly FechaInicio { get; set; }
+    public DateOnly? FechaInicio { get; set; }
 
-    public DateOnly FechaFin { get; set; }
+    public DateOnly? FechaFin { get; set; }
 
     public string? Concepto { get; set; }
 
@@ -25,6 +23,8 @@ public partial class ContratoEconomicoSuplemento
     public string Estado { get; set; } = "VIGENTE";
 
     public string? MotivoAnulacion { get; set; }
+
+    public decimal? MontoTotalNuevo { get; set; }
 
     public Guid? CreadoPor { get; set; }
 

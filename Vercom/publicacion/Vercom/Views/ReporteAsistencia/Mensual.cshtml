@@ -5,7 +5,7 @@
     var nombreMes = culture.DateTimeFormat.GetMonthName(Model.Mes);
 }
 
-@{ var headerActions = "<a href='" + Url.Action("ExportMensual") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> EXPORTAR CSV</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Reporte Consolidado de Asistencia - " + nombreMes + " " + Model.Anio, Subtitle = "Resumen mensual para control interno, auditoría y cierre de nómina (Res. 60/2011).", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var exportUrl = Url.Action("ExportMensual", new { year = Model.Anio, month = Model.Mes, sucursalId = Model.SucursalId }); var headerActions = "<a href='" + exportUrl + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> EXPORTAR CSV</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Reporte Consolidado de Asistencia - " + nombreMes + " " + Model.Anio, Subtitle = "Resumen mensual para control interno. El subsidio es estimado y no sustituye la liquidación de nómina.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 
@@ -59,7 +59,7 @@
                         <th class="bg-warning-subtle">Otras Ausencias</th>
                         <th class="bg-danger-subtle">Retardos</th>
                         <th class="bg-danger-subtle">Salidas Tempranas</th>
-                        <th class="bg-secondary-subtle">Subsidio ($)</th>
+                        <th class="bg-secondary-subtle">Subsidio estimado</th>
                     </tr>
                 </thead>
                 <tbody>

@@ -29,7 +29,7 @@ public class TurnoTrabajoController : Controller
     }
 
     [HttpGet]
-    [Authorize(Policy = "RRHH.EMPLEADO.CREAR")]
+    [Authorize(Policy = "RRHH.ASISTENCIA.REGISTRAR")]
     public IActionResult Create()
     {
         return View(new TurnoTrabajo { ToleranciaMinutos = 15, HoraEntrada = new TimeOnly(8, 0), HoraSalida = new TimeOnly(17, 0) });
@@ -37,7 +37,7 @@ public class TurnoTrabajoController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Policy = "RRHH.EMPLEADO.CREAR")]
+    [Authorize(Policy = "RRHH.ASISTENCIA.REGISTRAR")]
     public async Task<IActionResult> Create(TurnoTrabajo turno)
     {
         if (ModelState.IsValid)

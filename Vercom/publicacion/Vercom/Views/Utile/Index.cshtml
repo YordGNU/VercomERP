@@ -5,8 +5,6 @@
 
 @{ var headerActions = "<a href='" + Url.Action("Assign") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVA ASIGNACIÓN</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Responsabilidad Material", Subtitle = "Control de herramientas, equipos y medios de protección asignados al personal.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
-
-
 <div class="card shadow-sm border-0">
     <div class="card-header bg-light-subtle">
         <h5 class="m-0 fw-bold"><i class="ti ti-tool me-2 text-primary"></i>Inventario de Medios en Custodia</h5>
@@ -70,11 +68,10 @@
     <script>
         $(document).ready(function () {
             $('#utilesTable').DataTable({
-                pageLength: 100,
+               pageLength: 100,
                 language: { url: '@Url.Content("~/lib/i18n/es-ES.json")' },
                 order: [[1, 'asc']],
                 dom: '<"row align-items-center"<"col-md-6"l><"col-md-6"f>>rt<"row align-items-center"<"col-md-5"i><"col-md-7"p>>',
-                responsive: true,
             });
         });
 

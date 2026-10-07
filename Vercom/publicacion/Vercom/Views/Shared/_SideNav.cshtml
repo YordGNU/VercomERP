@@ -209,6 +209,10 @@
                             <li class="side-nav-item"><a asp-controller="SaldoVacaciones" asp-action="Index" class="side-nav-link">Saldo de Vacaciones</a></li>
                             <li class="side-nav-title text-primary small mt-2">Configuración</li>
                             <li class="side-nav-item"><a asp-controller="Cargo" asp-action="Index" class="side-nav-link">Cargos y Ocupaciones</a></li>
+                            @if (await PuedeAsync("RRHH.ASISTENCIA.VER"))
+                            {
+                                <li class="side-nav-item"><a asp-controller="TurnoTrabajo" asp-action="Index" class="side-nav-link">Turnos de Trabajo</a></li>
+                            }
                             @if (await PuedeAsync("RRHH.PLANTILLA.VER"))
                             {
                                 <li class="side-nav-item"><a asp-controller="PlantillaAprobadum" asp-action="Index" class="side-nav-link">Plantilla y Plazas</a></li>

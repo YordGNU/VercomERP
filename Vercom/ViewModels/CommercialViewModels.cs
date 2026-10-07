@@ -79,6 +79,8 @@ public class ContractSuplementoFormViewModel
     public string EstadoContrato { get; set; } = string.Empty;
     public DateOnly? FechaFinPactada { get; set; }
     public DateOnly? FechaFinEfectiva { get; set; }
+    public decimal? MontoTotalPactada { get; set; }
+    public decimal? MontoTotalEfectiva { get; set; }
     public int NumeroSuplementoSugerido { get; set; } = 1;
     public IFormFile? Documento { get; set; }
     public string Title { get; set; } = "Suplemento de Contrato";

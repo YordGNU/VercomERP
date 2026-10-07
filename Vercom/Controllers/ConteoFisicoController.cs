@@ -33,6 +33,7 @@ public class ConteoFisicoController : Controller
     {
         var count = await _warehouseService.GetCountByIdAsync(id);
         if (count == null) return NotFound();
+        ViewBag.Productos = await _inventoryService.GetCatalogAsync();
         return View(count);
     }
 
@@ -48,5 +49,25 @@ public class ConteoFisicoController : Controller
         }
 
         return Json(new { success = false, message = result.Message });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "INVENTARIO.CONTEO.CREAR")]
+    public async Task<IActionResult> SubmitDetail(Guid conteoId, Guid productoId, decimal cantidadFisica, string? justificacion)
+    {
+        var result = await _warehouseService.SubmitCountDetailAsync(conteoId, productoId, cantidadFisica, justificacion);
+        TempData[result.Succeeded ? "Success" : "Error"] = result.Message;
+        return RedirectToAction(nameof(Details), new { id = conteoId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "INVENTARIO.CONTEO.CERRAR")]
+    public async Task<IActionResult> Close(Guid id)
+    {
+        var result = await _warehouseService.CloseAndAdjustCountAsync(id, _entidadProvider.CurrentUsuarioId);
+        TempData[result.Succeeded ? "Success" : "Error"] = result.Message;
+        return RedirectToAction(nameof(Details), new { id });
     }
 }

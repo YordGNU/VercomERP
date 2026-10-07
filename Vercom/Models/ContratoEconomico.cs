@@ -26,6 +26,8 @@ public partial class ContratoEconomico
 
     public decimal? MontoTotal { get; set; }
 
+    public decimal? MontoTotalOriginal { get; set; }
+
     public string? DocumentoUrl { get; set; }
 
     public string Estado { get; set; } = null!;

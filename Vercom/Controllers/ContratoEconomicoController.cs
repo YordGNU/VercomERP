@@ -142,11 +142,12 @@ public class ContratoEconomicoController : Controller
         ModelState.Remove("Suplemento.Entidad");
         ModelState.Remove("Suplemento.EntidadId");
         ModelState.Remove("Suplemento.Estado");
-        ModelState.Remove("Suplemento.Tipo");
         ModelState.Remove("Suplemento.NumeroSuplemento");
         ModelState.Remove("Suplemento.CreadoEn");
         ModelState.Remove("Suplemento.CreadoPor");
         ModelState.Remove("Suplemento.Id");
+        ModelState.Remove("Suplemento.DocumentoUrl");
+        ModelState.Remove("Suplemento.MotivoAnulacion");
 
         if (ModelState.IsValid)
         {

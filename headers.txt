@@ -1,0 +1,8 @@
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+Date: Wed, 07 Oct 2026 14:04:47 GMT
+Server: Kestrel
+Cache-Control: no-cache, no-store
+Pragma: no-cache
+Transfer-Encoding: chunked
+

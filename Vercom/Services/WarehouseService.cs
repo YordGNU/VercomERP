@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Vercom.Models;
+using Vercom.Security;
 
 namespace Vercom.Services;
 
@@ -19,11 +20,13 @@ public class WarehouseService : IWarehouseService
 {
     private readonly AppDbContext _context;
     private readonly IInventoryService _inventoryService;
+    private readonly IEntidadProvider _entidadProvider;
 
-    public WarehouseService(AppDbContext context, IInventoryService inventoryService)
+    public WarehouseService(AppDbContext context, IInventoryService inventoryService, IEntidadProvider entidadProvider)
     {
         _context = context;
         _inventoryService = inventoryService;
+        _entidadProvider = entidadProvider;
     }
 
     public async Task<IEnumerable<ConteoFisico>> GetCountsAsync()
@@ -42,6 +45,10 @@ public class WarehouseService : IWarehouseService
 
     public async Task<(bool Succeeded, string Message, ConteoFisico? Count)> StartPhysicalCountAsync(Guid almacenId, Guid userId)
     {
+        if (!await _context.Almacens.AnyAsync(a =>
+            a.Id == almacenId && a.EntidadId == _entidadProvider.CurrentEntidadId && a.Activo))
+            return (false, "El almacén no existe, está inactivo o pertenece a otra entidad.", null);
+
         var active = await _context.ConteoFisicos.AnyAsync(c => c.AlmacenId == almacenId && c.Estado == "EN_PROCESO");
         if (active) return (false, "Ya hay un conteo físico activo en este almacén.", null);
 
@@ -66,6 +73,11 @@ public class WarehouseService : IWarehouseService
     {
         var conteo = await _context.ConteoFisicos.FindAsync(conteoId);
         if (conteo == null || conteo.Estado != "EN_PROCESO") return (false, "El conteo no está activo.");
+        if (cantidadFisica < 0) return (false, "La cantidad física no puede ser negativa.");
+        if (!await _context.Almacens.AnyAsync(a => a.Id == conteo.AlmacenId && a.EntidadId == _entidadProvider.CurrentEntidadId))
+            return (false, "El conteo pertenece a otra entidad.");
+        if (!await _context.Productos.AnyAsync(p => p.Id == productoId && p.EntidadId == _entidadProvider.CurrentEntidadId && p.Activo))
+            return (false, "El producto no existe, está inactivo o pertenece a otra entidad.");
 
         var stockSistema = await _context.Existencia
             .Where(e => e.AlmacenId == conteo.AlmacenId && e.ProductoId == productoId)
@@ -85,6 +97,10 @@ public class WarehouseService : IWarehouseService
                 CantidadSistema = stockSistema
             };
             _context.ConteoFisicoDetalles.Add(detail);
+        }
+        else
+        {
+            detail.CantidadSistema = stockSistema;
         }
 
         detail.CantidadFisica = cantidadFisica;

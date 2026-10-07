@@ -366,13 +366,17 @@ public class AuthService : IAuthService
         catch (Exception ex) { return (false, ex.Message); }
     }
 
-    public async Task<(bool Succeeded, string Message, bool MustChangePassword)> LoginAsync(string username, string password, bool rememberMe)
+    public async Task<(bool Succeeded, string Message, bool MustChangePassword)> LoginAsync(
+     string username,
+     string password,
+     bool rememberMe)
     {
         var usuario = await _context.Usuarios
             .IgnoreQueryFilters()
             .Include(u => u.Entidad)
             .Include(u => u.UsuarioRolUsuarios)
                 .ThenInclude(ur => ur.Rol)
+                    .ThenInclude(r => r.Permisos)   // ✅ Cargar permisos en el mismo query
             .FirstOrDefaultAsync(u => u.NombreUsuario == username);
 
         if (usuario == null)
@@ -402,26 +406,33 @@ public class AuthService : IAuthService
         usuario.UltimoLogin = DateTime.Now;
         await _context.SaveChangesAsync();
 
+        // ============================================================
+        // CONSTRUIR CLAIMS (sin queries adicionales)
+        // ============================================================
         var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.Name, usuario.NombreUsuario),
-            new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
-            new Claim("FullName", usuario.NombreCompleto),
-            new Claim("EntidadId", usuario.EntidadId.ToString()),
-            new Claim("EntidadNombre", usuario.Entidad.RazonSocial),
-            new Claim("SucursalId", usuario.SucursalId?.ToString() ?? ""),
-            new Claim("MustChangePassword", usuario.DebeCambiarPass.ToString())
-        };
+    {
+        new Claim(ClaimTypes.Name, usuario.NombreUsuario),
+        new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
+        new Claim("FullName", usuario.NombreCompleto),
+        new Claim("EntidadId", usuario.EntidadId.ToString()),
+        new Claim("EntidadNombre", usuario.Entidad?.RazonSocial ?? ""),
+        new Claim("SucursalId", usuario.SucursalId?.ToString() ?? ""),
+        new Claim("MustChangePassword", usuario.DebeCambiarPass.ToString())
+    };
+
+        // HashSet para evitar duplicados de permisos de forma eficiente (O(1))
+        var permisosUnicos = new HashSet<string>();
 
         foreach (var ur in usuario.UsuarioRolUsuarios)
         {
+            if (ur.Rol == null) continue;
+
             claims.Add(new Claim(ClaimTypes.Role, ur.Rol.Codigo));
 
-            // Cargar permisos del rol como claims para evitar consultas repetitivas a la DB
-            var roleWithPerms = await _context.Rols.Include(r => r.Permisos).FirstAsync(r => r.Id == ur.RolId);
-            foreach (var p in roleWithPerms.Permisos)
+            // Los permisos ya vienen cargados desde la query principal
+            foreach (var p in ur.Rol.Permisos)
             {
-                if (!claims.Any(c => c.Type == "Permission" && c.Value == p.Codigo))
+                if (permisosUnicos.Add(p.Codigo))
                 {
                     claims.Add(new Claim("Permission", p.Codigo));
                 }
@@ -469,8 +480,7 @@ public class AuthService : IAuthService
 
         await _context.SaveChangesAsync();
 
-        // Tras cambiar la clave, se debe re-autenticar o actualizar el claim en la sesión actual
-        // Para simplificar, pediremos login de nuevo o cerraremos sesión.
+
         await LogoutAsync();
 
         return (true, "Contraseña actualizada correctamente. Por favor, inicie sesión con su nueva clave.");

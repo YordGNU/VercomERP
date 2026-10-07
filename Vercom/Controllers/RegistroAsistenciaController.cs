@@ -45,6 +45,13 @@ public class RegistroAsistenciaController : Controller
     [Authorize(Policy = "RRHH.ASISTENCIA.REGISTRAR")]
     public async Task<IActionResult> SaveConsole(List<RegistroAsistencium> logs, DateTime date)
     {
+        var targetDate = DateOnly.FromDateTime(date);
+        if (logs.Any(log => log.Fecha != targetDate))
+        {
+            TempData["Error"] = "La fecha de una o más filas no coincide con la jornada seleccionada.";
+            return RedirectToAction(nameof(Console), new { date });
+        }
+
         var result = await _hrService.SaveAttendanceConsoleAsync(logs, _entidadProvider.CurrentUsuarioId);
         if (result.Succeeded)
         {

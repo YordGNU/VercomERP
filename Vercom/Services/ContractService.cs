@@ -16,9 +16,13 @@ public sealed record ContractVigencia(
     DateOnly FechaInicio,
     DateOnly? FechaFinOriginal,
     DateOnly? FechaFinEfectiva,
+    decimal? MontoTotalOriginal,
+    decimal? MontoTotalEfectivo,
+    Guid? SuplementoMontoId,
+    int? NumeroSuplementoMonto,
     int CantidadSuplementos,
     int? UltimoNumeroSuplemento,
-    DateOnly? UltimoSupplementoFechaFin);
+    DateOnly? UltimoSuplementoFechaFin);
 
 public class ContractService : IContractService
 {
@@ -34,30 +38,41 @@ public class ContractService : IContractService
         var contrato = await _context.ContratoEconomicos
             .AsNoTracking()
             .Where(c => c.Id == contratoId && c.EntidadId == entidadId)
-            .Select(c => new { c.Id, c.FechaInicio, c.FechaFin, c.FechaFinOriginal })
+            .Select(c => new { c.Id, c.FechaInicio, c.FechaFin, c.FechaFinOriginal, c.MontoTotal, c.MontoTotalOriginal })
             .FirstOrDefaultAsync(cancellationToken);
 
         if (contrato == null) return null;
 
         var ultimoVigente = await _context.ContratoEconomicoSuplementos
             .AsNoTracking()
-            .Where(s => s.ContratoId == contratoId && s.Estado == "VIGENTE")
+            .Where(s => s.ContratoId == contratoId && s.Estado == "VIGENTE" && s.FechaFin != null)
             .OrderByDescending(s => s.FechaFin)
             .ThenByDescending(s => s.NumeroSuplemento)
-            .Select(s => new { s.NumeroSuplemento, s.FechaFin })
+            .Select(s => new { s.Id, s.NumeroSuplemento, s.FechaFin })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var suplementoMonto = await _context.ContratoEconomicoSuplementos
+            .AsNoTracking()
+            .Where(s => s.ContratoId == contratoId && s.Estado == "VIGENTE" && s.MontoTotalNuevo != null)
+            .OrderByDescending(s => s.NumeroSuplemento)
+            .Select(s => new { s.Id, s.NumeroSuplemento, s.MontoTotalNuevo })
             .FirstOrDefaultAsync(cancellationToken);
 
         var cantidad = await _context.ContratoEconomicoSuplementos
             .AsNoTracking()
             .CountAsync(s => s.ContratoId == contratoId && s.Estado == "VIGENTE", cancellationToken);
 
-        var finBase = contrato.FechaFinOriginal ?? contrato.FechaFin;
         var finEfectivo = ultimoVigente?.FechaFin ?? contrato.FechaFin;
+        var montoEfectivo = suplementoMonto?.MontoTotalNuevo ?? contrato.MontoTotal;
 
         return new ContractVigencia(
             contrato.FechaInicio,
-            finBase,
+            contrato.FechaFinOriginal ?? contrato.FechaFin,
             finEfectivo,
+            contrato.MontoTotalOriginal ?? contrato.MontoTotal,
+            montoEfectivo,
+            suplementoMonto?.Id,
+            suplementoMonto?.NumeroSuplemento,
             cantidad,
             ultimoVigente?.NumeroSuplemento,
             ultimoVigente?.FechaFin);
