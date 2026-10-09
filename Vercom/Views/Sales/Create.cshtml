@@ -14,43 +14,58 @@
         @Html.ValidationSummary(true, "", new { @class = "alert alert-danger py-2 small border-0 mb-4 shadow-sm", @role = "alert", @tabindex = "-1", @id = "errorSummary" })
 
         <div class="row">
-            <!-- Columna Principal: Datos y Partidas -->
             <div class="col-lg-8">
                 <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header bg-light-subtle py-3">
-                        <h5 class="m-0 fw-bold"><i class="ti ti-user-circle me-2 text-primary"></i>Datos del Cliente y Despacho</h5>
+                    <div class="card-header bg-light-subtle py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="m-0 fw-bold text-primary"><i class="ti ti-user-circle me-2"></i>Cliente y acuerdo comercial</h5>
                     </div>
                     <div class="card-body p-4">
                         <div class="row g-3">
-                            <div class="col-md-6">
-                                <label asp-for="Invoice.ClienteId" class="form-label fw-bold"></label>
+                            <div class="col-md-7">
+                                <label asp-for="Invoice.ClienteId" class="form-label fw-bold">Cliente</label>
                                 <select asp-for="Invoice.ClienteId" class="form-control form-select w-100 select2" asp-items="Model.Clientes" required>
                                     <option value="">-- Buscar Cliente --</option>
                                 </select>
                                 <span asp-validation-for="Invoice.ClienteId" class="text-danger small"></span>
                             </div>
-                            <div class="col-md-6">
-                                <label asp-for="Invoice.ContratoId" class="form-label fw-bold"></label>
+                            <div class="col-md-5">
+                                <label asp-for="Invoice.ContratoId" class="form-label fw-bold">Contrato</label>
                                 <select asp-for="Invoice.ContratoId" class="form-control form-select w-100" asp-items="Model.Contratos">
                                     <option value="">-- Operación sin contrato --</option>
                                 </select>
                                 <span asp-validation-for="Invoice.ContratoId" class="text-danger small"></span>
                             </div>
-                            <div class="col-md-4">
-                                <label asp-for="Invoice.AlmacenId" class="form-label fw-bold"></label>
+                            <div class="col-12">
+                                <div class="sales-client-note d-flex align-items-start gap-2 rounded-2 px-3 py-2" id="clientPricingMessage" role="status" aria-live="polite">
+                                    <i class="ti ti-info-circle mt-1" aria-hidden="true"></i>
+                                    <span>Selecciona un cliente para aplicar su lista de precios vigente y validar su crédito.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-light-subtle py-3">
+                        <h5 class="m-0 fw-bold"><i class="ti ti-file-invoice me-2 text-primary"></i>Datos de factura y despacho</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-5">
+                                <label asp-for="Invoice.AlmacenId" class="form-label fw-bold">Almacén de salida</label>
                                 <select asp-for="Invoice.AlmacenId" class="form-control form-select w-100 select2" asp-items="Model.Almacenes" required></select>
                                 <span asp-validation-for="Invoice.AlmacenId" class="text-danger small"></span>
                             </div>
                             <div class="col-md-4">
-                                <label asp-for="Invoice.TipoVenta" class="form-label fw-bold"></label>
+                                <label asp-for="Invoice.TipoVenta" class="form-label fw-bold">Tipo de venta</label>
                                 <select asp-for="Invoice.TipoVenta" class="form-control form-select w-100" id="tipoVenta">
                                     <option value="MINORISTA">Minorista (Público)</option>
                                     <option value="MAYORISTA">Mayorista (Empresarial)</option>
                                 </select>
                                 <span asp-validation-for="Invoice.TipoVenta" class="text-danger small"></span>
                             </div>
-                            <div class="col-md-4">
-                                <label asp-for="Invoice.Serie" class="form-label fw-bold"></label>
+                            <div class="col-md-3">
+                                <label asp-for="Invoice.Serie" class="form-label fw-bold">Serie</label>
                                 <input asp-for="Invoice.Serie" name="Invoice.Serie" class="form-control w-100 fw-bold text-center text-primary" value="ERP" required />
                                 <span asp-validation-for="Invoice.Serie" class="text-danger small"></span>
                             </div>
@@ -91,7 +106,6 @@
                 </div>
             </div>
 
-            <!-- Columna Lateral: Resumen de Cobro -->
             <div class="col-lg-4">
                 <div class="card border-primary border-3 shadow-lg mb-4">
                     <div class="card-header bg-primary text-white border-0 py-3">
@@ -115,8 +129,8 @@
                         </div>
                         <hr class="border-secondary opacity-10">
                         <div class="text-center py-2">
-                            <h4 class="text-muted tiny fw-bold text-uppercase mb-1">TOTAL FACTURA</h4>
-                            <h1 class="display-5 fw-bold text-primary mb-0" id="labelTotal">0.00</h1>
+                            <h4 class="text-muted tiny fw-bold text-uppercase mb-1">Total factura</h4>
+                            <div class="sales-total fw-bold text-primary mb-0" id="labelTotal" aria-live="polite">0.00</div>
                         </div>
 
                         <div class="bg-light-subtle rounded-3 p-4 mt-4 border border-dashed">
@@ -136,20 +150,20 @@
 
                         <div class="d-grid gap-2 mt-4">
                             <button type="submit" class="btn btn-primary btn-lg py-3 shadow" id="btnSubmit" disabled>
-                                <i class="ti ti-printer me-1"></i> EMITIR FACTURA
+                                <i class="ti ti-printer me-1"></i> Emitir factura
                             </button>
-                            <a asp-action="Index" class="btn btn-outline-secondary">DESCARTAR</a>
+                            <a asp-action="Index" class="btn btn-outline-secondary">Descartar</a>
                         </div>
                     </div>
                 </div>
 
-<div id="preciosLoading" style="display:none;" class="d-flex align-items-center gap-2 small text-muted">
-                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                            <span>Actualizando precios segun la lista del cliente...</span>
-                        </div>
-                        <div class="alert alert-info border-0 shadow-sm small py-3">
-                            <i class="ti ti-info-circle me-1"></i> La emisión de esta factura rebajará automáticamente el stock del almacén seleccionado.
-                        </div>
+                <div id="preciosLoading" style="display:none;" class="d-flex align-items-center gap-2 small text-muted mb-3" role="status" aria-live="polite">
+                    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                    <span>Actualizando precios del cliente...</span>
+                </div>
+                <div class="alert alert-info border-0 shadow-sm small py-3 mb-0">
+                    <i class="ti ti-info-circle me-1" aria-hidden="true"></i> Al emitir, las existencias se actualizarán en el almacén seleccionado.
+                </div>
             </div>
         </div>
     </form>
@@ -158,6 +172,8 @@
 @section Styles {
     <style>
         .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
+        .sales-client-note { background: var(--bs-tertiary-bg); color: var(--bs-secondary-color); font-size: 0.875rem; }
+        .sales-total { font-size: 2.5rem; line-height: 1.1; overflow-wrap: anywhere; }
         #detailsTable { table-layout: fixed; }
         #detailsTable td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         #detailsTable .select2-dynamic { max-width: 100%; }
@@ -377,6 +393,11 @@
         document.addEventListener('DOMContentLoaded', () => {
             addRow();
             $('#Invoice_ClienteId').on('change', function() {
+                const clientId = this.value;
+                const message = document.getElementById('clientPricingMessage');
+                message.querySelector('span').textContent = clientId
+                    ? 'Se actualizarán los precios según la lista vigente del cliente; si no tiene una, se usará el precio base.'
+                    : 'Selecciona un cliente para aplicar su lista de precios vigente y validar su crédito.';
                 calculateTotals();
                 refrescarPreciosPorCliente();
             });

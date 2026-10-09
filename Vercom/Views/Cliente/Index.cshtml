@@ -90,98 +90,94 @@
     }
 </div>
 
-<div class="table-responsive client-table-wrap">
-    <table class="table align-middle client-table mb-0">
-        <caption class="visually-hidden">Cartera de clientes con perfil, contacto, límite de crédito y estado.</caption>
-        <thead>
-            <tr>
-                <th scope="col">Cliente</th>
-                <th scope="col" class="d-none d-md-table-cell">Perfil</th>
-                <th scope="col" class="d-none d-lg-table-cell">Contacto</th>
-                <th scope="col" class="d-none d-sm-table-cell text-end">Límite de crédito</th>
-                <th scope="col">Estado</th>
-                <th scope="col" class="text-end"><span class="visually-hidden">Acciones</span></th>
-            </tr>
-        </thead>
-        <tbody>
+<div class="row g-3">
     @foreach (var item in Model.Items)
     {
         var seg = (string.IsNullOrEmpty(item.Segmento) ? "SIN SEGMENTO" : item.Segmento).ToUpperInvariant();
         var tipo = (string.IsNullOrEmpty(item.TipoPersona) ? "SIN TIPO" : item.TipoPersona).ToUpperInvariant();
-        var segBadge = seg == "MAYORISTA" ? "client-segment-wholesale" : "client-segment-retail";
-        <tr>
-            <td>
-                <div class="client-identity">
-                    <span class="client-avatar" aria-hidden="true"><i class="ti ti-user"></i></span>
-                    <div class="client-identity-copy">
-                        <a asp-action="Details" asp-route-id="@item.Id" class="client-name">@item.NombreRazonSocial</a>
-                        <span class="client-identifier">@(string.IsNullOrWhiteSpace(item.NitOCi) ? "Sin NIT/CI" : $"NIT/CI: {item.NitOCi}")</span>
+        var tipoBadge = tipo == "JURIDICA" ? "bg-primary-subtle text-primary" : "bg-info-subtle text-info";
+        <div class="col-md-6 col-xl-4">
+            <article class="card h-100 border-0 shadow-sm overflow-hidden">
+                <div class="card-status-top @(item.Activo ? "bg-success" : "bg-secondary")"></div>
+                <div class="card-body p-3 d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+                        <div class="d-flex gap-2 align-items-center min-w-0">
+                            <span class="avatar bg-light text-primary flex-shrink-0" aria-hidden="true"><i class="ti ti-user fs-22"></i></span>
+                            <div class="min-w-0">
+                                <div class="d-flex flex-wrap gap-1 mb-1">
+                                    <span class="badge @(seg == "MAYORISTA" ? "bg-info-subtle text-info" : "bg-success-subtle text-success")">@seg</span>
+                                    <span class="badge @tipoBadge">@tipo</span>
+                                </div>
+                                <h2 class="card-title mb-0 fs-14 fw-bold text-break">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="link-body-emphasis text-decoration-none">@item.NombreRazonSocial</a>
+                                </h2>
+                                <span class="text-muted small">@(string.IsNullOrWhiteSpace(item.NitOCi) ? "Sin NIT/CI" : $"NIT/CI: {item.NitOCi}")</span>
+                            </div>
+                        </div>
+                        <div class="dropdown flex-shrink-0">
+                            <button class="btn btn-sm btn-icon btn-light border" data-bs-toggle="dropdown" type="button" title="Acciones" aria-label="Acciones para @item.NombreRazonSocial" aria-expanded="false">
+                                <i class="ti ti-dots-vertical" aria-hidden="true"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                <li><h3 class="dropdown-header small">Acciones</h3></li>
+                                <li><a class="dropdown-item" asp-action="Details" asp-route-id="@item.Id"><i class="ti ti-eye me-1 text-primary" aria-hidden="true"></i>Ver detalles</a></li>
+                                <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@item.Id"><i class="ti ti-edit me-1 text-info" aria-hidden="true"></i>Editar cliente</a></li>
+                                <li><a class="dropdown-item" asp-controller="Sales" asp-action="Create" asp-route-clienteId="@item.Id"><i class="ti ti-receipt me-1" aria-hidden="true"></i>Nueva venta</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="small text-muted mb-2">
                         @if (!string.IsNullOrWhiteSpace(item.Telefono))
                         {
-                            <span class="client-mobile-contact d-lg-none"><i class="ti ti-phone" aria-hidden="true"></i> @item.Telefono</span>
+                            <div class="d-flex align-items-center gap-2 mb-1"><i class="ti ti-phone text-success" aria-hidden="true"></i><span>@item.Telefono</span></div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(item.Email))
+                        {
+                            <div class="d-flex align-items-center gap-2"><i class="ti ti-mail text-primary" aria-hidden="true"></i><span class="text-break">@item.Email</span></div>
+                        }
+                        @if (string.IsNullOrWhiteSpace(item.Telefono) && string.IsNullOrWhiteSpace(item.Email))
+                        {
+                            <div><i class="ti ti-info-circle me-1" aria-hidden="true"></i>Sin datos de contacto</div>
                         }
                     </div>
+
+                    <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center gap-2">
+                        <div>
+                            <span class="badge @(item.Activo ? "badge-soft-success" : "badge-soft-danger")">
+                                <i class="ti ti-circle-filled me-1" aria-hidden="true"></i>@(item.Activo ? "ACTIVO" : "INACTIVO")
+                            </span>
+                            <div class="small text-muted mt-1">Límite de crédito</div>
+                            <strong class="small text-nowrap">$@item.LimiteCredito.ToString("N2")</strong>
+                        </div>
+                        <div class="btn-list flex-shrink-0">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary" aria-label="Ver cliente @item.NombreRazonSocial"><i class="ti ti-eye" aria-hidden="true"></i></a>
+                            <a asp-controller="Sales" asp-action="Create" asp-route-clienteId="@item.Id" class="btn btn-sm btn-primary"><i class="ti ti-receipt me-1" aria-hidden="true"></i>Nueva venta</a>
+                        </div>
+                    </div>
                 </div>
-            </td>
-            <td class="d-none d-md-table-cell">
-                <span class="client-segment @segBadge">@seg</span>
-                <span class="client-person-type">@tipo</span>
-            </td>
-            <td class="d-none d-lg-table-cell">
-                @if (!string.IsNullOrWhiteSpace(item.Telefono) || !string.IsNullOrWhiteSpace(item.Email))
-                {
-                    @if (!string.IsNullOrWhiteSpace(item.Telefono))
-                    {
-                        <div class="client-contact-line"><i class="ti ti-phone" aria-hidden="true"></i>@item.Telefono</div>
-                    }
-                    @if (!string.IsNullOrWhiteSpace(item.Email))
-                    {
-                        <div class="client-contact-line client-email"><i class="ti ti-mail" aria-hidden="true"></i>@item.Email</div>
-                    }
-                }
-                else
-                {
-                    <span class="client-muted">Sin datos de contacto</span>
-                }
-            </td>
-            <td class="d-none d-sm-table-cell text-end text-nowrap"><span class="client-credit">$@item.LimiteCredito.ToString("N2")</span></td>
-            <td>
-                <span class="client-status @(item.Activo ? "client-status-active" : "client-status-inactive")">
-                    <span class="client-status-dot" aria-hidden="true"></span>@(item.Activo ? "Activo" : "Inactivo")
-                </span>
-            </td>
-            <td>
-                <div class="client-actions" role="group" aria-label="Acciones para @item.NombreRazonSocial">
-                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-light border" title="Ver cliente" aria-label="Ver cliente: @item.NombreRazonSocial"><i class="ti ti-eye" aria-hidden="true"></i></a>
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-light border" title="Editar cliente" aria-label="Editar cliente: @item.NombreRazonSocial"><i class="ti ti-edit" aria-hidden="true"></i></a>
-                    <a asp-controller="Sales" asp-action="Create" asp-route-clienteId="@item.Id" class="btn btn-light border client-sale-action" title="Nueva venta" aria-label="Nueva venta para @item.NombreRazonSocial"><i class="ti ti-receipt" aria-hidden="true"></i></a>
-                </div>
-            </td>
-        </tr>
+            </article>
+        </div>
     }
 
     @if (!Model.Items.Any())
     {
-        <tr>
-            <td colspan="6">
-                <div class="client-empty-state">
-                    <span class="client-empty-icon" aria-hidden="true"><i class="ti ti-users"></i></span>
-                    <h2>@(Model.TotalItems == 0 ? "Sin clientes registrados" : "Sin resultados")</h2>
-                    <p>@(Model.TotalItems == 0 ? "Registre el primer cliente para comenzar la facturación." : "Ningún cliente coincide con los filtros aplicados.")</p>
-                    @if (Model.TotalItems == 0)
-                    {
-                        <a asp-action="Create" class="btn btn-primary"><i class="ti ti-user-plus me-1" aria-hidden="true"></i>Registrar cliente</a>
-                    }
-                </div>
-            </td>
-        </tr>
+        <div class="col-12 text-center py-5">
+            <span class="avatar-lg bg-light text-muted rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;" aria-hidden="true">
+                <i class="ti ti-users fs-40"></i>
+            </span>
+            <h2 class="h4">@(Model.TotalItems == 0 ? "Sin clientes registrados" : "Sin resultados")</h2>
+            <p class="text-muted">@(Model.TotalItems == 0 ? "Registra el primer cliente para comenzar la facturación." : "Ningún cliente coincide con los filtros aplicados.")</p>
+            @if (Model.TotalItems == 0)
+            {
+                <a asp-action="Create" class="btn btn-primary mt-2"><i class="ti ti-user-plus me-1" aria-hidden="true"></i>Registrar cliente</a>
+            }
+        </div>
     }
-        </tbody>
-    </table>
 </div>
 
 <style>
-    .client-filter-panel, .client-table-wrap { background: #fff; border: 1px solid #e5e9ef; border-radius: 6px; }
+    .client-filter-panel { background: #fff; border: 1px solid #e5e9ef; border-radius: 6px; }
     .client-filter-panel { padding: 16px; }
     .client-filter-grid { display: grid; grid-template-columns: minmax(250px, 2fr) minmax(145px, 1fr) minmax(135px, 1fr) auto; gap: 12px; align-items: end; }
     .client-filter-submit { min-height: 44px; min-width: 44px; }
@@ -191,37 +187,6 @@
     .client-results-summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; color: #667085; font-size: .875rem; margin: 0 2px 10px; }
     .client-results-summary strong { color: #182230; font-variant-numeric: tabular-nums; }
     .client-filter-state { color: #536273; }
-    .client-table { color: #344054; }
-    .client-table thead th { background: #f6f8fa; border-bottom: 1px solid #e5e9ef; color: #667085; font-size: .75rem; font-weight: 700; padding: 12px 14px; text-transform: uppercase; white-space: nowrap; }
-    .client-table tbody td { border-bottom: 1px solid #edf0f3; padding: 12px 14px; }
-    .client-table tbody tr:last-child td { border-bottom: 0; }
-    .client-table tbody tr:hover { background: #f9fbfc; }
-    .client-identity { align-items: center; display: flex; gap: 10px; min-width: 0; }
-    .client-avatar { align-items: center; background: #edf5f2; border-radius: 6px; color: #24745f; display: inline-flex; flex: 0 0 38px; height: 38px; justify-content: center; }
-    .client-identity-copy { display: flex; flex-direction: column; min-width: 0; }
-    .client-name { color: #182230; font-size: .9rem; font-weight: 650; line-height: 1.35; overflow-wrap: anywhere; text-decoration: none; }
-    .client-name:hover { color: #176b59; text-decoration: underline; }
-    .client-identifier, .client-person-type, .client-muted { color: #667085; font-size: .75rem; }
-    .client-segment { border-radius: 3px; display: inline-block; font-size: .75rem; font-weight: 700; padding: 4px 6px; white-space: nowrap; }
-    .client-segment-wholesale { background: #e8eef3; color: #344054; }
-    .client-segment-retail { background: #e9f4f1; color: #176b59; }
-    .client-person-type { display: block; margin-top: 4px; }
-    .client-contact-line { align-items: center; color: #475467; display: flex; font-size: .8rem; gap: 7px; line-height: 1.5; }
-    .client-contact-line i, .client-mobile-contact i { color: #667085; flex: 0 0 auto; }
-    .client-email { overflow-wrap: anywhere; }
-    .client-credit { color: #182230; font-size: .875rem; font-variant-numeric: tabular-nums; font-weight: 600; }
-    .client-status { align-items: center; border-radius: 999px; display: inline-flex; font-size: .75rem; font-weight: 600; gap: 6px; white-space: nowrap; }
-    .client-status-active { color: #176b59; }
-    .client-status-inactive { color: #667085; }
-    .client-status-dot { background: currentColor; border-radius: 50%; height: 7px; width: 7px; }
-    .client-actions { display: flex; gap: 5px; justify-content: flex-end; }
-    .client-actions .btn { align-items: center; display: inline-flex; height: 44px; justify-content: center; min-width: 44px; padding: 0; }
-    .client-sale-action { color: #176b59; }
-    .client-actions .btn:hover { background: #edf5f2; border-color: #c6dcd4; color: #145c4c; }
-    .client-empty-state { padding: 44px 16px; text-align: center; }
-    .client-empty-icon { align-items: center; background: #edf5f2; border-radius: 8px; color: #24745f; display: inline-flex; font-size: 1.5rem; height: 48px; justify-content: center; margin-bottom: 12px; width: 48px; }
-    .client-empty-state h2 { color: #182230; font-size: 1.1rem; font-weight: 650; margin: 0 0 6px; }
-    .client-empty-state p { color: #667085; margin: 0 0 16px; }
     @@media (max-width: 767.98px) {
         .client-filter-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
         .client-search-field, .client-filter-actions { grid-column: 1 / -1; }
@@ -229,11 +194,6 @@
     }
     @@media (max-width: 575.98px) {
         .client-filter-panel { padding: 12px; }
-        .client-table thead th, .client-table tbody td { padding-left: 8px; padding-right: 8px; }
-        .client-avatar { flex-basis: 32px; height: 32px; }
-        .client-name { font-size: .82rem; }
-        .client-actions { gap: 3px; }
-        .client-actions .btn { height: 44px; min-width: 44px; }
     }
 </style>
 
@@ -259,6 +219,3 @@
     </nav>
 }
 
-<div class="text-center text-muted small mt-2" aria-live="polite">
-    Mostrando @desde–@hasta de @Model.TotalItems clientes
-</div>

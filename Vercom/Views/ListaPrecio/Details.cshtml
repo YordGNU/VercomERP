@@ -34,6 +34,10 @@
                     </dd>
                     <dt class="col-sm-5 text-muted small">Productos</dt>
                     <dd class="col-sm-7 fw-bold">@Model.ListaPrecioDetalles.Count</dd>
+                    <dt class="col-sm-12 text-muted small mt-3">Regla de resolución</dt>
+                    <dd class="col-sm-12">
+                        <span class="badge bg-info-subtle text-info">LISTA ACTIVA → PRECIO BASE</span>
+                    </dd>
                 </dl>
             </div>
         </div>
@@ -52,15 +56,17 @@
                                 <tr>
                                     <th>Código</th>
                                     <th>Producto</th>
-                                    <th class="text-end">Precio</th>
+                                    <th class="text-end">P. Base</th>
+                                    <th class="text-end">Precio Lista</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var detalle in Model.ListaPrecioDetalles.OrderBy(d => d.Producto.Nombre))
+                                @foreach (var detalle in Model.ListaPrecioDetalles.OrderBy(d => d.Producto?.Nombre ?? string.Empty))
                                 {
                                     <tr>
-                                        <td class="text-muted">@detalle.Producto.Codigo</td>
-                                        <td class="fw-bold">@detalle.Producto.Nombre</td>
+                                        <td class="text-muted">@(detalle.Producto?.Codigo ?? "-")</td>
+                                        <td class="fw-bold">@(detalle.Producto?.Nombre ?? "Producto no disponible")</td>
+                                        <td class="text-end text-muted">@((detalle.Producto?.PrecioVentaActual ?? 0m).ToString("C"))</td>
                                         <td class="text-end fw-bold text-primary">@detalle.Precio.ToString("C")</td>
                                     </tr>
                                 }

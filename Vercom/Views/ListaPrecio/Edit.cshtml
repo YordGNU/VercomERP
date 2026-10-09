@@ -57,6 +57,7 @@
                                 <thead class="thead-sm text-uppercase fs-xxs">
                                     <tr>
                                         <th class="ps-4">Producto</th>
+                                        <th class="text-end" width="120">P. Base</th>
                                         <th class="text-end" width="150">Precio Lista ($)</th>
                                         <th width="40"></th>
                                     </tr>
@@ -69,12 +70,12 @@
                                             <td>
                                                 <select name="ListaPrecio.ListaPrecioDetalles[@i].ProductoId" class="form-control form-select w-100 select2-dynamic" onchange="updatePrice(this)" required>
                                                     <option value="">-- Buscar Producto --</option>
-                                                    @foreach (var p in Model.ProductosDisponibles)
-                                                    {
-                                                        <option value="@p.Id" data-price="@p.PrecioVentaActual" selected="@(p.Id == detalle.ProductoId ? "selected" : null)">@p.Codigo - @p.Nombre</option>
-                                                    }
+                                                    <option value="@detalle.ProductoId" data-price="@detalle.Producto?.PrecioVentaActual" selected>
+                                                        @(detalle.Producto is null ? $"Producto {detalle.ProductoId}" : $"{detalle.Producto.Codigo} - {detalle.Producto.Nombre}")
+                                                    </option>
                                                 </select>
                                             </td>
+                                            <td class="text-end"><span class="badge bg-light text-dark base-price-badge">@((detalle.Producto?.PrecioVentaActual ?? 0m).ToString("N2"))</span></td>
                                             <td><input name="ListaPrecio.ListaPrecioDetalles[@i].Precio" type="number" step="0.01" class="form-control text-end fw-bold input-price" value="@detalle.Precio" required /></td>
                                             <td>
                                                 <button type="button" class="btn btn-sm btn-icon btn-ghost-danger border-0" aria-label="Eliminar línea" onclick="removeRow(this)">
@@ -120,7 +121,28 @@
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script>
         let rowCount = @Model.ListaPrecio.ListaPrecioDetalles.Count;
-        const parsedProductos = @Html.Raw(Json.Serialize(Model.ProductosDisponibles));
+        const productSearchUrl = '@Url.Action("BuscarProductos", "ListaPrecio")';
+
+        function initializeProductSelect(select) {
+            $(select).select2({
+                width: '100%',
+                placeholder: '-- Buscar Producto --',
+                minimumInputLength: 2,
+                dropdownParent: $('#editPriceListForm'),
+                ajax: {
+                    url: productSearchUrl,
+                    dataType: 'json',
+                    delay: 250,
+                    data: params => ({ search: params.term }),
+                    processResults: data => data,
+                    cache: true
+                }
+            }).on('select2:select', function(event) {
+                const option = this.options[this.selectedIndex];
+                option.dataset.price = event.params.data.price ?? 0;
+                updatePrice(this);
+            });
+        }
 
         function addRow() {
             const tbody = document.querySelector("#detailsTable tbody");
@@ -131,9 +153,9 @@
                 <td>
                     <select name="ListaPrecio.ListaPrecioDetalles[${rowCount}].ProductoId" class="form-control form-select w-100 select2-dynamic" onchange="updatePrice(this)" required>
                         <option value="">-- Buscar Producto --</option>
-                        ${parsedProductos.map(p => `<option value="${p.id}" data-price="${p.precioVentaActual}">${p.codigo} - ${p.nombre}</option>`).join('')}
                     </select>
                 </td>
+                <td class="text-end"><span class="badge bg-light text-dark base-price-badge">0.00</span></td>
                 <td><input name="ListaPrecio.ListaPrecioDetalles[${rowCount}].Precio" type="number" step="0.01" class="form-control text-end fw-bold input-price" value="0.00" required /></td>
                 <td>
                     <button type="button" class="btn btn-sm btn-icon btn-ghost-danger border-0" aria-label="Eliminar línea" onclick="removeRow(this)">
@@ -143,20 +165,17 @@
             `;
             tbody.appendChild(row);
 
-            $(row).find('.select2-dynamic').select2({
-                width: '100%',
-                placeholder: '-- Buscar Producto --',
-                dropdownParent: $('#editPriceListForm')
-            });
+            initializeProductSelect(row.querySelector('.select2-dynamic'));
 
             rowCount++;
         }
 
         function updatePrice(select) {
             const option = select.options[select.selectedIndex];
-            const price = option.getAttribute('data-price') || 0;
+            const price = Number(option.getAttribute('data-price') || 0);
             const row = select.closest('tr');
-            row.querySelector('.input-price').value = price;
+            row.querySelector('.base-price-badge').textContent = price.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            row.querySelector('.input-price').value = price.toFixed(2);
         }
 
         function removeRow(btn) {
@@ -169,6 +188,9 @@
         }
 
         $(document).ready(function() {
+            $('#detailsTable .select2-dynamic').each(function() {
+                initializeProductSelect(this);
+            });
             window.SubmitAjaxForm('editPriceListForm');
             document.getElementById('editPriceListForm').addEventListener('submit', function() {
                 setTimeout(() => {

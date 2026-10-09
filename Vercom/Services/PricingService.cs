@@ -29,6 +29,32 @@ public sealed record PrecioVentaDto
     public string? ListaNombre { get; init; }
 }
 
+public sealed record PriceResolutionDecision(decimal Precio, PriceSource Source, Guid? ListaPrecioId, string? ListaNombre, string RuleName)
+{
+    public static PriceResolutionDecision Base(decimal basePrice)
+        => new(basePrice, PriceSource.Plano, null, null, "BASE");
+
+    public static PriceResolutionDecision List(decimal price, Guid listaId, string listaNombre)
+        => new(price, PriceSource.ListaPrecio, listaId, listaNombre, "LISTA_CLIENTE");
+
+    public static PriceResolutionDecision None()
+        => new(0m, PriceSource.SinPrecio, null, null, "SIN_PRECIO");
+}
+
+public static class PriceResolutionEngine
+{
+    public static PriceResolutionDecision Resolve(decimal basePrice, decimal? listPrice, bool hasActiveList, bool isInsideValidityWindow, string? listName = null, Guid? listId = null)
+    {
+        if (hasActiveList && isInsideValidityWindow && listPrice.HasValue && listPrice.Value > 0m)
+            return PriceResolutionDecision.List(listPrice.Value, listId ?? Guid.Empty, listName ?? "LISTA");
+
+        if (basePrice > 0m)
+            return PriceResolutionDecision.Base(basePrice);
+
+        return PriceResolutionDecision.None();
+    }
+}
+
 public interface IPricingService
 {
     Task<IReadOnlyDictionary<Guid, ResolvedPrice>> GetPriceMapAsync(Guid entidadId, Guid? clienteId, DateOnly fecha, CancellationToken cancellationToken = default);
@@ -75,24 +101,30 @@ public sealed class PricingService : IPricingService
             .ToListAsync(cancellationToken);
 
         var resultado = new Dictionary<Guid, ResolvedPrice>(planos.Count);
-        foreach (var p in planos)
-        {
-            var precio = p.PrecioVentaActual ?? 0m;
-            resultado[p.Id] = new ResolvedPrice(precio, precio > 0m ? PriceSource.Plano : PriceSource.SinPrecio, null, null);
-        }
-
         var lista = await GetListaVigenteAsync(entidadId, clienteId, fecha, cancellationToken);
+
+        var preciosLista = new Dictionary<Guid, decimal>();
         if (lista.HasValue)
         {
-            var precios = await _db.ListaPrecioDetalles.AsNoTracking()
+            preciosLista = await _db.ListaPrecioDetalles.AsNoTracking()
                 .Where(d => d.ListaPrecioId == lista.Value.Id && d.Precio > 0m)
                 .Select(d => new { d.ProductoId, d.Precio })
-                .ToListAsync(cancellationToken);
+                .ToDictionaryAsync(d => d.ProductoId, d => d.Precio, cancellationToken);
+        }
 
-            foreach (var d in precios)
-            {
-                resultado[d.ProductoId] = new ResolvedPrice(d.Precio, PriceSource.ListaPrecio, lista.Value.Id, lista.Value.Nombre);
-            }
+        foreach (var p in planos)
+        {
+            var basePrice = p.PrecioVentaActual ?? 0m;
+            var listPrice = preciosLista.TryGetValue(p.Id, out var lp) ? lp : (decimal?)null;
+            var decision = PriceResolutionEngine.Resolve(
+                basePrice,
+                listPrice,
+                lista.HasValue,
+                lista.HasValue,
+                lista?.Nombre,
+                lista?.Id);
+
+            resultado[p.Id] = new ResolvedPrice(decision.Precio, decision.Source, decision.ListaPrecioId, decision.ListaNombre);
         }
 
         return resultado;
@@ -116,24 +148,53 @@ public sealed class PricingService : IPricingService
     {
         var lista = await GetListaVigenteAsync(entidadId, clienteId, fecha, cancellationToken);
 
-        if (lista.HasValue)
-        {
-            var precioLista = await _db.ListaPrecioDetalles.AsNoTracking()
-                .Where(d => d.ListaPrecioId == lista.Value.Id && d.ProductoId == productoId)
-                .Select(d => (decimal?)d.Precio)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            if (precioLista.HasValue && precioLista.Value > 0m)
-            {
-                return new ResolvedPrice(precioLista.Value, PriceSource.ListaPrecio, lista.Value.Id, lista.Value.Nombre);
-            }
-        }
-
-        var plano = await _db.Productos.AsNoTracking()
+        var basePrice = await _db.Productos.AsNoTracking()
             .Where(p => p.Id == productoId && p.EntidadId == entidadId)
             .Select(p => p.PrecioVentaActual)
             .FirstOrDefaultAsync(cancellationToken) ?? 0m;
 
-        return new ResolvedPrice(plano, plano > 0m ? PriceSource.Plano : PriceSource.SinPrecio, null, null);
+        decimal? precioLista = null;
+        if (lista.HasValue)
+        {
+            precioLista = await _db.ListaPrecioDetalles.AsNoTracking()
+                .Where(d => d.ListaPrecioId == lista.Value.Id && d.ProductoId == productoId)
+                .Select(d => (decimal?)d.Precio)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        var decision = PriceResolutionEngine.Resolve(
+            basePrice,
+            precioLista,
+            lista.HasValue,
+            lista.HasValue,
+            lista?.Nombre,
+            lista?.Id);
+
+        return new ResolvedPrice(decision.Precio, decision.Source, decision.ListaPrecioId, decision.ListaNombre);
+    }
+}
+
+public interface IPriceResolutionService
+{
+    Task<ResolvedPrice> ResolveEffectivePriceAsync(Guid entidadId, Guid productoId, Guid? clienteId, DateOnly fecha, CancellationToken cancellationToken = default);
+    Task<IReadOnlyDictionary<Guid, ResolvedPrice>> ResolveEffectivePriceMapAsync(Guid entidadId, Guid? clienteId, DateOnly fecha, CancellationToken cancellationToken = default);
+}
+
+public sealed class PriceResolutionService : IPriceResolutionService
+{
+    private readonly AppDbContext _db;
+
+    public PriceResolutionService(AppDbContext db) => _db = db;
+
+    public async Task<ResolvedPrice> ResolveEffectivePriceAsync(Guid entidadId, Guid productoId, Guid? clienteId, DateOnly fecha, CancellationToken cancellationToken = default)
+    {
+        var pricing = new PricingService(_db);
+        return await pricing.ResolveAsync(entidadId, productoId, clienteId, fecha, cancellationToken);
+    }
+
+    public async Task<IReadOnlyDictionary<Guid, ResolvedPrice>> ResolveEffectivePriceMapAsync(Guid entidadId, Guid? clienteId, DateOnly fecha, CancellationToken cancellationToken = default)
+    {
+        var pricing = new PricingService(_db);
+        return await pricing.GetPriceMapAsync(entidadId, clienteId, fecha, cancellationToken);
     }
 }

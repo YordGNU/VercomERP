@@ -102,6 +102,22 @@ public class ListaPrecioController : Controller
         return View(vm);
     }
 
+    [HttpGet]
+    [Authorize(Policy = "INVENTARIO.LISTA_PRECIO.EDITAR")]
+    public async Task<IActionResult> BuscarProductos(string? search, CancellationToken cancellationToken)
+    {
+        var productos = await _inventoryService.SearchPriceListProductsAsync(search, cancellationToken);
+        return Json(new
+        {
+            results = productos.Select(p => new
+            {
+                id = p.Id,
+                text = $"{p.Codigo} - {p.Nombre}",
+                price = p.PrecioVentaActual
+            })
+        });
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Policy = "INVENTARIO.LISTA_PRECIO.EDITAR")]

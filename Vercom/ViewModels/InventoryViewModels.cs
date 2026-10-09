@@ -29,3 +29,5 @@ public class ListaPrecioFormViewModel
     public string Title { get; set; } = "Gestión de Lista de Precios";
     public IEnumerable<dynamic> ProductosDisponibles { get; set; } = new List<dynamic>();
 }
+
+public sealed record ProductoBusquedaItem(Guid Id, string Codigo, string Nombre, decimal? PrecioVentaActual);

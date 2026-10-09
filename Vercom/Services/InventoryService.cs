@@ -48,6 +48,7 @@ public interface IInventoryService
     Task<IEnumerable<ListaPrecio>> GetPriceListsAsync();
     Task<ListaPrecio?> GetPriceListByIdAsync(Guid id);
     Task<ListaPrecioFormViewModel> GetPriceListFormContextAsync(ListaPrecio? existing = null);
+    Task<IReadOnlyList<ProductoBusquedaItem>> SearchPriceListProductsAsync(string? search, CancellationToken cancellationToken = default);
     Task<(bool Succeeded, string Message)> CreatePriceListAsync(ListaPrecio priceList);
     Task<(bool Succeeded, string Message)> UpdatePriceListAsync(ListaPrecio priceList);
 
@@ -538,17 +539,41 @@ public class InventoryService : IInventoryService
 
     public async Task<ListaPrecioFormViewModel> GetPriceListFormContextAsync(ListaPrecio? existing = null)
     {
-        var productos = await _context.Productos
-            .Where(p => p.Activo && p.EntidadId == _entidadProvider.CurrentEntidadId)
-            .OrderBy(p => p.Nombre)
-            .Select(p => new { p.Id, p.Nombre, p.Codigo, p.PrecioVentaActual })
-            .ToListAsync();
+        IEnumerable<dynamic> productos = Array.Empty<dynamic>();
+        if (existing is null)
+        {
+            productos = await _context.Productos
+                .Where(p => p.Activo && p.EntidadId == _entidadProvider.CurrentEntidadId)
+                .OrderBy(p => p.Nombre)
+                .Select(p => new { p.Id, p.Nombre, p.Codigo, p.PrecioVentaActual })
+                .ToListAsync();
+        }
 
         return new ListaPrecioFormViewModel
         {
             ListaPrecio = existing ?? new ListaPrecio { Activa = true },
             ProductosDisponibles = productos
         };
+    }
+
+    public async Task<IReadOnlyList<ProductoBusquedaItem>> SearchPriceListProductsAsync(string? search, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Productos.AsNoTracking()
+            .Where(p => p.Activo && p.EntidadId == _entidadProvider.CurrentEntidadId);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            query = query.Where(p => p.Codigo.Contains(term)
+                || p.Nombre.Contains(term)
+                || (p.CodigoBarras != null && p.CodigoBarras.Contains(term)));
+        }
+
+        return await query
+            .OrderBy(p => p.Nombre)
+            .Take(20)
+            .Select(p => new ProductoBusquedaItem(p.Id, p.Codigo, p.Nombre, p.PrecioVentaActual))
+            .ToListAsync(cancellationToken);
     }
 
     private async Task<(bool Succeeded, string Message)> ValidarListaPrecioAsync(ListaPrecio priceList, Guid? excluirId)
@@ -568,6 +593,12 @@ public class InventoryService : IInventoryService
         if (priceList.VigenteHasta.HasValue && priceList.VigenteHasta.Value < priceList.VigenteDesde)
         {
             return (false, "La vigencia final no puede ser anterior a la inicial.");
+        }
+
+        var detalleValidation = PriceListBusinessRules.ValidatePriceListDetails(priceList.ListaPrecioDetalles);
+        if (!detalleValidation.Succeeded)
+        {
+            return (false, detalleValidation.Message);
         }
 
         var nombreDuplicado = await _context.ListaPrecios

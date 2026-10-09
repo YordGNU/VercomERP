@@ -134,11 +134,40 @@ public class SalesService : ISalesService
         return await _pricingService.GetSalePricesAsync(_entidadProvider.CurrentEntidadId, clienteId, fecha, cancellationToken);
     }
 
+    private async Task ResolveInvoiceDetailPricesAsync(FacturaVentum invoice)
+    {
+        if (invoice.FacturaVentaDetalles == null || !invoice.FacturaVentaDetalles.Any()) return;
+
+        var fecha = invoice.Fecha == default
+            ? DateOnly.FromDateTime(DateTime.Now)
+            : DateOnly.FromDateTime(invoice.Fecha.DateTime);
+
+        foreach (var detail in invoice.FacturaVentaDetalles)
+        {
+            if (detail.ProductoId == Guid.Empty) continue;
+
+            var resolved = await _pricingService.ResolveAsync(
+                invoice.EntidadId,
+                detail.ProductoId,
+                invoice.ClienteId,
+                fecha);
+
+            if (resolved.Precio <= 0m) continue;
+
+            if (detail.PrecioUnitario <= 0m || resolved.Source == PriceSource.ListaPrecio)
+            {
+                detail.PrecioUnitario = resolved.Precio;
+            }
+        }
+    }
+
     public async Task<(bool Succeeded, string Message, FacturaVentum? Invoice)> CreateInvoiceAsync(FacturaVentum invoice)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
+            await ResolveInvoiceDetailPricesAsync(invoice);
+
             // 1. Validar Contrato si es mayorista (RF-50)
             var contractCheck = await _contractService.ValidateContractForOperationAsync(invoice.ContratoId, invoice.EntidadId, invoice.TipoVenta);
             if (!contractCheck.Succeeded) return (false, contractCheck.Message, null);
