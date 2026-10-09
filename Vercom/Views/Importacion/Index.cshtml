@@ -373,21 +373,21 @@
         font-weight: 700;
         font-size: 1.05rem;
         margin: 0 auto 6px;
-        border: 2px solid var(--ins-border-color, #dfe3e7);
-        color: var(--ins-secondary-color, #6c757d);
+        border: 2px solid var(--theme-border-color, #dfe3e7);
+        color: var(--theme-secondary-color, #6c757d);
         background: transparent;
         position: relative;
         transition: all .25s ease;
     }
     .step-circle.active {
-        border-color: var(--ins-primary);
-        background: var(--ins-primary);
+        border-color: var(--theme-primary);
+        background: var(--theme-primary);
         color: #fff;
         box-shadow: 0 .25rem .6rem rgba(26, 179, 148, .35);
     }
     .step-circle.completed {
-        border-color: var(--ins-success);
-        background: var(--ins-success);
+        border-color: var(--theme-success);
+        background: var(--theme-success);
         color: #fff;
     }
     .step-circle.completed .step-num { display: none; }
@@ -397,13 +397,13 @@
         min-width: 16px;
         height: 3px;
         border-radius: 2px;
-        background: var(--ins-border-color, #dfe3e7);
+        background: var(--theme-border-color, #dfe3e7);
         margin: 0 6px 22px;
         transition: background .25s ease;
     }
-    .step-connector.done { background: var(--ins-success); }
+    .step-connector.done { background: var(--theme-success); }
     .step-indicator small {
-        color: var(--ins-secondary-color, #6c757d);
+        color: var(--theme-secondary-color, #6c757d);
         font-weight: 600;
         font-size: .72rem;
         letter-spacing: .3px;
@@ -413,13 +413,13 @@
         font-size: .75rem;
         text-transform: uppercase;
         letter-spacing: .5px;
-        color: var(--ins-primary);
+        color: var(--theme-primary);
         font-weight: 700;
         margin: 1.1rem 0 .5rem;
         opacity: .9;
     }
     .seleccion-row { transition: border-color .2s ease, background-color .2s ease; }
-    .seleccion-row:hover { background-color: var(--ins-primary-bg-subtle, rgba(26,179,148,.06)); }
+    .seleccion-row:hover { background-color: var(--theme-primary-bg-subtle, rgba(26,179,148,.06)); }
     .wizard-step { animation: wizardFadeIn .25s ease; }
     @@keyframes wizardFadeIn {
         from { opacity: 0; transform: translateY(8px); }
@@ -431,7 +431,7 @@
         height: 100%;
     }
     .stat-card .stat-value { font-size: 1.5rem; font-weight: 700; line-height: 1.1; }
-    .stat-card .stat-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .4px; color: var(--ins-secondary-color, #6c757d); font-weight: 600; }
+    .stat-card .stat-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .4px; color: var(--theme-secondary-color, #6c757d); font-weight: 600; }
 </style>
 
 @section Scripts {

@@ -1,6 +1,6 @@
 ﻿/* ============================================
    AUTH/LOGIN STYLE - VERCOM ERP
-   Basado en tokens de marca (--ins-primary teal #1ab394)
+   Basado en tokens de marca (--theme-primary teal #1ab394)
    Clases scoped .auth-* para no colisionar con Inspinia
    Dark mode vía [data-bs-theme] (config.js)
    ============================================ */
@@ -31,7 +31,7 @@ html, body {
 }
 
 body {
-    font-family: var(--ins-font-sans-serif, "Open Sans", sans-serif);
+    font-family: var(--theme-font-sans-serif, "Open Sans", sans-serif);
     background: var(--auth-bg);
     color: var(--auth-text);
 }

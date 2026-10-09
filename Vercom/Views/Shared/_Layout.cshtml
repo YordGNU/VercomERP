@@ -1,12 +1,12 @@
 ﻿<!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>VERCOM ELITE | @ViewBag.Title</title>
     <!-- App favicon -->
-    <link rel="shortcut icon" href="assets/images/favicon.ico">
+    <link rel="shortcut icon" href="~/favicon.ico">
     <!-- Datatables css -->
     <link href="~/css/plugins/datatables/responsive.bootstrap5.min.css" rel="stylesheet" type="text/css">
     <!-- SweetAlert2 -->
@@ -166,18 +166,22 @@
             const badge = notifBadge(item.tipo);
             const icono = notifTipoIcono(item.tipo);
             const destino = item.enlace || '/Notificacion';
-            const noLeida = item.leida ? '' : 'bg-primary bg-opacity-10';
+            const noLeida = item.leida ? '' : 'bg-primary-subtle';
             return `
-                <div class="dropdown-item d-flex py-3 border-bottom border-light notification-item ${noLeida}" data-id="${item.id}">
-                    <div class="avatar-xs bg-${badge}-subtle text-${badge} rounded-circle me-3 d-flex align-items-center justify-content-center" style="width:32px; height:32px; flex-shrink:0; font-size:17px; line-height:1;">
-                        <i class="ti ${icono}"></i>
-                    </div>
-                    <div class="flex-grow-1 min-w-0" style="cursor:pointer;" onclick="notifNavegar('${destino}')">
-                        <h6 class="mb-1 text-truncate ${item.leida ? 'fw-semibold text-body' : 'fw-bold'}">${item.titulo}</h6>
-                        <p class="mb-0 small text-muted text-truncate">${item.mensaje}</p>
-                        <small class="tiny text-muted mt-1">${item.tiempo}${item.leida ? '' : ' · <span class="text-warning fw-bold">nueva</span>'}</small>
-                    </div>
-                    ${item.id && !item.leida ? `<button type="button" class="btn btn-icon btn-sm btn-ghost-success notification-read" data-id="${item.id}" title="Marcar como leída" style="flex-shrink:0;"><i class="ti ti-circle-check"></i></button>` : ''}
+                <div class="dropdown-item notification-item py-2 text-wrap ${noLeida}" data-id="${item.id}">
+                    <span class="d-flex gap-2">
+                        <span class="avatar-md flex-shrink-0">
+                            <span class="avatar-title bg-${badge}-subtle text-${badge} rounded">
+                                <i class="ti ${icono} notification-item-icon fill-${badge}"></i>
+                            </span>
+                        </span>
+                        <span class="flex-grow-1 text-muted" style="cursor:pointer;" onclick="notifNavegar('${destino}')">
+                            <span class="fw-medium text-body d-block text-truncate">${item.titulo}</span>
+                            <span class="d-block small text-truncate">${item.mensaje}</span>
+                            <span class="fs-xs">${item.tiempo}${item.leida ? '' : ' · <span class="text-warning fw-bold">nueva</span>'}</span>
+                        </span>
+                        ${item.id && !item.leida ? `<button type="button" class="flex-shrink-0 text-muted btn btn-link p-0 notification-read" data-id="${item.id}" title="Marcar como leída"><i class="ti ti-circle-check fs-xxl"></i></button>` : ''}
+                    </span>
                 </div>`;
         }
 

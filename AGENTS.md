@@ -12,6 +12,26 @@ Instrucciones y contexto aprendidos en sesiones anteriores. Es la fuente de memo
 - Después de tocar código: `dotnet build Vercom.csproj -c Release` y esperar 0 errores.
 - No abrir arquitecturas nuevas; reutilizar servicios/patrones existentes (AccountingService, ConsecutivoService, ParametroSistemaService, IEntidadProvider).
 - Ambiente: Windows PowerShell 5.1, win32.
+- UI: la web de Inspinia v5.2 (demo webapplayers) es la **referencia canónica de UI/UX**. Antes de diseñar/ajustar pantallas (sobre todo dashboards), revisar el demo y reutilizar sus patrones/clases del tema. Ver "## UI / Dashboards" abajo. Ninguna idea de UI se implementa sin ok del usuario.
+
+## UI / Dashboards — Inspinia v5.2 como referencia canónica (registrado 2026-10)
+- Demo base: `https://webapplayers.com/inspinia/bootstrap/` (assets en `.../assets/`). HTML del dashboard eCommerce descargado en sesión 2026-10 (4018 líneas). Los assets/tema v5.2 ya están aplicados (skins, vars `--theme-*`, `config.js`/app.js `LayoutCustomizer`, `_Theme.cshtml`).
+- Regla: **siempre comparar con el demo Inspinia** antes de tocar UI. Reutilizar sus clases/patrones del tema (`card`, `card-h-100`, `card-title`, `avatar-{xs,sm,md,lg}`, `badge-soft-*`/`bg-*-subtle`, helpers `fs-*`, `link-*`, `data-simplebar`, `chart-box`) y **no inventar estilos/CSS ad-hoc** fuera del tema.
+- El dashboard de Vercom usa **Chart.js** (`~/js/plugins/chartjs/chart.js`), no ApexCharts como el demo. Mantener Chart.js salvo decisión explícita de migrar (implica añadir el vendor ApexCharts).
+
+### Ideas de mejora del Dashboard (backlog, NO implementadas)
+1. KPI cards estilo Inspinia (demo "Orders Statics"/stat-cards, ~L2839-2901): `avatar-lg` por KPI + **mini-sparkline** Chart.js (line/bar diminuto) + badge de tendencia. Hoy las tarjetas no tienen sparkline.
+2. Banner de bienvenida / "resumen del día" (demo "Welcome back"/"Unlock Savings"): saludo + 2-3 cifras del día + accesos rápidos, en lugar del header plano.
+3. Selector de rango en el header (Hoy/7d/30d/Mes/Trimestre) que recargue por query string; hoy solo hay "Actualizar" + cache 60s.
+4. Widget "Product Inventory" estilo demo (~L2929+): producto + unidades + precio + estado (Active/Low/Out) mapeado a `AlertasStock`.
+5. "Recent Orders" = últimas facturas/ventas del día (cliente, canal, forma de pago, total) con `table card-table`.
+6. CxC **aging** (0-30/31-60/61-90/+90) en barra apilada + Top clientes por saldo con progress bars (complementa "Productos más vendidos").
+7. Flujo de caja semanal (entradas vs salidas) en barras agrupadas + gauge/donut de meta de ventas del mes.
+8. Timeline de actividad reciente desde `nucleo.auditoria`, estilo timeline Inspinia.
+9. Listas largas (top productos, alertas) con `data-simplebar` + alto máximo, como el demo.
+10. Skeleton loaders + tooltips en español; auto-refresh opcional del bloque POS (ya cacheado).
+11. Consistencia: sustituir estilos inline por helpers del tema y `card card-h-100`; unificar `card-header` con `card-title`.
+12. Técnica: al re-renderizar destruir charts previos (`Chart.getChart(el)?.destroy()`) para evitar fugas; considerar invalidar la cache del dashboard al registrar ventas/pagos.
 
 ## Conexiones / rutas
 - BD real de validación: `Server=LOCALHOST;Database=VercomERP;User Id=sa;Password=sql2026*;TrustServerCertificate=True;MultipleActiveResultSets=true`.

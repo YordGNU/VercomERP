@@ -332,42 +332,42 @@
 /*# sourceMappingURL=bootstrap-chosen.css.map */
 /* Contenedor principal */
 [data-bs-theme="dark"] .chosen-container {
-    background-color: var(--ins-secondary-bg);
-    color: var(--ins-card-color);
-    border: var(--ins-border-width) solid var(--ins-border-color);
-    border-radius: var(--ins-border-radius);
+    background-color: var(--theme-secondary-bg);
+    color: var(--theme-card-color);
+    border: var(--theme-border-width) solid var(--theme-border-color);
+    border-radius: var(--theme-border-radius);
 }
 
-/* Input de búsqueda */
+/* Input de bï¿½squeda */
     [data-bs-theme="dark"] .chosen-container .chosen-search input {
-        background: var(--ins-topbar-bg);
-        border: var(--ins-border-width) solid var(--ins-border-color);
-        border-color: var(--ins-topbar-bg);
-        border-radius: var(--ins-border-radius);
+        background: var(--theme-topbar-bg);
+        border: var(--theme-border-width) solid var(--theme-border-color);
+        border-color: var(--theme-topbar-bg);
+        border-radius: var(--theme-border-radius);
     }
 
 /* Elemento seleccionado */
     [data-bs-theme="dark"] .chosen-container .chosen-single {
-        background-color: var(--ins-secondary-bg);
-        color: var(--ins-card-color);
+        background-color: var(--theme-secondary-bg);
+        color: var(--theme-card-color);
         border: 1px solid var(--bs-border-color);
     }
 
 /* Dropdown */
     [data-bs-theme="dark"] .chosen-container .chosen-drop {
-        background-color: var(--ins-secondary-bg);
-        border: var(--ins-border-width) solid var(--ins-border-color);
-        border-radius: var(--ins-border-radius);
+        background-color: var(--theme-secondary-bg);
+        border: var(--theme-border-width) solid var(--theme-border-color);
+        border-radius: var(--theme-border-radius);
     }
 
 /* Opciones */
     [data-bs-theme="dark"] .chosen-container .chosen-results li {
-        color: var(--ins-card-color);
-        background-color: var(--ins-secondary-bg);
+        color: var(--theme-card-color);
+        background-color: var(--theme-secondary-bg);
     
     }
 
         [data-bs-theme="dark"] .chosen-container .chosen-results li.highlighted {
-            background-color: var(--ins-secondary-bg);
-            color: rgba(var(--ins-link-color-rgb), var(--ins-link-opacity, 1));
+            background-color: var(--theme-secondary-bg);
+            color: rgba(var(--theme-link-color-rgb), var(--theme-link-opacity, 1));
         }
