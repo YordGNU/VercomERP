@@ -19,19 +19,19 @@ Instrucciones y contexto aprendidos en sesiones anteriores. Es la fuente de memo
 - Regla: **siempre comparar con el demo Inspinia** antes de tocar UI. Reutilizar sus clases/patrones del tema (`card`, `card-h-100`, `card-title`, `avatar-{xs,sm,md,lg}`, `badge-soft-*`/`bg-*-subtle`, helpers `fs-*`, `link-*`, `data-simplebar`, `chart-box`) y **no inventar estilos/CSS ad-hoc** fuera del tema.
 - El dashboard de Vercom usa **Chart.js** (`~/js/plugins/chartjs/chart.js`), no ApexCharts como el demo. Mantener Chart.js salvo decisión explícita de migrar (implica añadir el vendor ApexCharts).
 
-### Ideas de mejora del Dashboard (backlog, NO implementadas)
-1. KPI cards estilo Inspinia (demo "Orders Statics"/stat-cards, ~L2839-2901): `avatar-lg` por KPI + **mini-sparkline** Chart.js (line/bar diminuto) + badge de tendencia. Hoy las tarjetas no tienen sparkline.
-2. Banner de bienvenida / "resumen del día" (demo "Welcome back"/"Unlock Savings"): saludo + 2-3 cifras del día + accesos rápidos, en lugar del header plano.
-3. Selector de rango en el header (Hoy/7d/30d/Mes/Trimestre) que recargue por query string; hoy solo hay "Actualizar" + cache 60s.
-4. Widget "Product Inventory" estilo demo (~L2929+): producto + unidades + precio + estado (Active/Low/Out) mapeado a `AlertasStock`.
-5. "Recent Orders" = últimas facturas/ventas del día (cliente, canal, forma de pago, total) con `table card-table`.
-6. CxC **aging** (0-30/31-60/61-90/+90) en barra apilada + Top clientes por saldo con progress bars (complementa "Productos más vendidos").
-7. Flujo de caja semanal (entradas vs salidas) en barras agrupadas + gauge/donut de meta de ventas del mes.
-8. Timeline de actividad reciente desde `nucleo.auditoria`, estilo timeline Inspinia.
-9. Listas largas (top productos, alertas) con `data-simplebar` + alto máximo, como el demo.
-10. Skeleton loaders + tooltips en español; auto-refresh opcional del bloque POS (ya cacheado).
-11. Consistencia: sustituir estilos inline por helpers del tema y `card card-h-100`; unificar `card-header` con `card-title`.
-12. Técnica: al re-renderizar destruir charts previos (`Chart.getChart(el)?.destroy()`) para evitar fugas; considerar invalidar la cache del dashboard al registrar ventas/pagos.
+### Ideas de mejora del Dashboard (backlog)
+1. **Sparkline KPI IMPLEMENTADO (2026-10)**: mini-sparkline Chart.js en la tarjeta "Ventas del Mes" (`ventasSparkChart`, usa `VentasSerie`); el resto de KPI aún no tiene serie histórica disponible. Falta `avatar-lg`/estilo stat-card completo.
+2. **Banner "Resumen del día" IMPLEMENTADO (2026-10)** en `Views/Dashboard/Index.cshtml`: saludo (FullName claim) + entidad + periodo + 4 chips (Ventas Hoy, Facturas Hoy, Sesiones POS, Pendientes Sync). Falta auto-refresh y accesos rápidos.
+3. Selector de rango en el header (Hoy/7d/30d/Mes/Trimestre) que recargue por query string; hoy solo hay "Actualizar" + cache 60s. **IMPLEMENTADO (2026-10)**
+4. **Product Inventory IMPLEMENTADO (2026-10)**: rediseñada "Alertas Críticas de Inventario" en `Views/Dashboard/Index.cshtml` a lista estilo demo (avatar+icono por estado, nombre, código, precio `PrecioVentaActual`, unidades/mínimo, badge Agotado/Bajo, botón compra). Datos: `Model.AlertasStock` (`List<Existencium>`, ya traído por `GetLowStockAlertsAsync`).
+5. ~~"Recent Orders" = últimas facturas/ventas~~ **IMPLEMENTADO (2026-10)**: widget "Últimas Ventas" en `Views/Dashboard/Index.cshtml` (últimas 6 facturas EMITIDA; datos en `DashboardViewModel.VentasRecientes` / `IntelligenceService`).
+6. CxC **aging** (corriente/1-30/31-60/61-90/+90) **IMPLEMENTADO (2026-10)** en donut (`agingCxcChart`, `DashboardViewModel.AgingCxc`). Top clientes del mes **IMPLEMENTADO (2026-10)** con progress bars (`DashboardViewModel.TopClientes`). Falta variante "Top clientes por saldo CxC".
+7. **Flujo de caja IMPLEMENTADO (2026-10)**: barras agrupadas Cobros vs Pagos últimas 8 semanas (`flujoCajaChart`) + badges Cobrado/Pagado/Neto del mes en `Views/Dashboard/Index.cshtml`; datos desde `contabilidad.pago_aplicado` (`DashboardViewModel.FlujoCaja`/`CobradoMes`/`PagadoMes`, `IntelligenceService`). Nota: tablas de cobros/pagos vacías en BD dev, widget muestra ceros. **Falta**: gauge/donut de meta de ventas del mes.
+8. Timeline de actividad reciente desde `nucleo.auditoria`, estilo timeline Inspinia. **IMPLEMENTADO (2026-10)**
+9. **`data-simplebar` IMPLEMENTADO (2026-10)** en la lista de Alertas de inventario y en Top Productos (`Views/Dashboard/Index.cshtml`, `max-height: 360px`). Falta en otras listas largas (vencimientos, Últimas Ventas).
+10. Skeleton loaders + tooltips en español; auto-refresh opcional del bloque POS (ya cacheado). **IMPLEMENTADO (2026-10)**
+11. Consistencia: sustituir estilos inline por helpers del tema y `card card-h-100`; unificar `card-header` con `card-title`. **IMPLEMENTADO (2026-10)**
+12. Técnica: al re-renderizar destruir charts previos (`Chart.getChart(el)?.destroy()`) para evitar fugas; considerar invalidar la cache del dashboard al registrar ventas/pagos. **IMPLEMENTADO (2026-10)**
 
 ## Conexiones / rutas
 - BD real de validación: `Server=LOCALHOST;Database=VercomERP;User Id=sa;Password=sql2026*;TrustServerCertificate=True;MultipleActiveResultSets=true`.

@@ -5,9 +5,6 @@
 
 @{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Ventas</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Emisión de Factura de Venta", Subtitle = "Registro de ingresos y generación automática de comprobante fiscal y cuenta por cobrar.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
-
-
-
 <div class="row">
     <form asp-action="Create" method="post" id="invoiceForm">
         @Html.AntiForgeryToken()
@@ -93,7 +90,7 @@
 
             <!-- Columna Lateral: Resumen de Cobro -->
             <div class="col-lg-4">
-                <div class="card border-primary border-3 shadow-lg mb-4">
+                <div class="card shadow-lg mb-4">
                     <div class="card-header bg-primary text-white border-0 py-3">
                         <h5 class="m-0 fw-bold"><i class="ti ti-calculator me-2"></i>Totalización</h5>
                     </div>
