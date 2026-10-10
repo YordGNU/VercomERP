@@ -24,6 +24,37 @@ public class TopProductoItem
     public decimal Importe { get; set; }
 }
 
+public class VentaRecienteItem
+{
+    public string Numero { get; set; } = string.Empty;
+    public string Cliente { get; set; } = string.Empty;
+    public string Canal { get; set; } = string.Empty;
+    public decimal Total { get; set; }
+    public DateTimeOffset Fecha { get; set; }
+}
+
+public class TopClienteItem
+{
+    public string Nombre { get; set; } = string.Empty;
+    public decimal Importe { get; set; }
+    public int Facturas { get; set; }
+}
+
+public class FlujoCajaItem
+{
+    public string Label { get; set; } = string.Empty;
+    public decimal Entradas { get; set; }
+    public decimal Salidas { get; set; }
+}
+
+public class ActividadItem
+{
+    public string Usuario { get; set; } = string.Empty;
+    public string Accion { get; set; } = string.Empty;
+    public string Tabla { get; set; } = string.Empty;
+    public DateTimeOffset Fecha { get; set; }
+}
+
 /// <summary>Sesión de caja POS abierta.</summary>
 public class PosSesionItem
 {
@@ -78,12 +109,30 @@ public class DashboardViewModel
     public List<MetricValue> VentasPorCanal { get; set; } = new();
     public List<MetricValue> VentasPorFormaPago { get; set; } = new();
     public List<TopProductoItem> TopProductos { get; set; } = new();
+    public List<VentaRecienteItem> VentasRecientes { get; set; } = new();
+    public List<TopClienteItem> TopClientes { get; set; } = new();
+
+    // ===== Flujo de caja (cobros vs pagos) =====
+    public List<FlujoCajaItem> FlujoCaja { get; set; } = new();
+    public decimal CobradoMes { get; set; }
+    public decimal PagadoMes { get; set; }
+
+    // ===== Meta de ventas del mes =====
+    public decimal VentasMesCalendario { get; set; }
+    public decimal MetaVentasMes { get; set; }
+    public decimal AvanceMetaPct { get; set; }
+
+    // ===== Actividad reciente (auditoría) =====
+    public List<ActividadItem> ActividadReciente { get; set; } = new();
 
     // ===== Aging de cartera =====
     public decimal CxcVencido { get; set; }
     public decimal CxcPorVencer { get; set; }
     public decimal CxpVencido { get; set; }
     public decimal CxpPorVencer { get; set; }
+
+    // Aging de CxC en 5 tramos: [corriente, 1-30, 31-60, 61-90, +90] días vencidos.
+    public decimal[] AgingCxc { get; set; } = new decimal[5];
 
     // ===== POS operativo =====
     public int PosSesionesAbiertas { get; set; }
@@ -100,6 +149,8 @@ public class DashboardViewModel
 
     // ===== Contexto =====
     public string PeriodoActual { get; set; } = string.Empty;
+    public string Rango { get; set; } = "mes";
+    public string RangoNombre { get; set; } = "Este mes";
     public bool EsMaster { get; set; }
     public string Mensaje { get; set; } = string.Empty;
 }

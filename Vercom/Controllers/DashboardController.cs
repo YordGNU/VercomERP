@@ -24,7 +24,7 @@ public class DashboardController : Controller
         _cache = cache;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string rango = "mes")
     {
         if (_entidadProvider.IsMaster)
         {
@@ -36,12 +36,33 @@ public class DashboardController : Controller
             return View("Master", masterVm);
         }
 
+        var rangoNorm = (rango ?? "mes").Trim().ToLowerInvariant();
+        if (rangoNorm != "hoy" && rangoNorm != "7d" && rangoNorm != "30d"
+            && rangoNorm != "mes" && rangoNorm != "trimestre")
+        {
+            rangoNorm = "mes";
+        }
+
         var entidadId = _entidadProvider.CurrentEntidadId;
-        var vm = await _cache.GetOrCreateAsync($"dashboard:entidad:{entidadId}", entry =>
+        var cacheKey = $"dashboard:entidad:{entidadId}:{rangoNorm}";
+        var vm = await _cache.GetOrCreateAsync(cacheKey, entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = CacheTtl;
-            return _intelligenceService.GetDashboardContextAsync(entidadId);
+            return _intelligenceService.GetDashboardContextAsync(entidadId, rangoNorm);
         });
         return View(vm);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> PosPartial()
+    {
+        if (_entidadProvider.IsMaster)
+        {
+            return PartialView("_PosCard", new Vercom.ViewModels.DashboardViewModel());
+        }
+
+        var entidadId = _entidadProvider.CurrentEntidadId;
+        var vm = await _intelligenceService.GetPosContextAsync(entidadId);
+        return PartialView("_PosCard", vm);
     }
 }

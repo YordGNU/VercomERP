@@ -8,7 +8,8 @@ namespace Vercom.Services;
 public interface IIntelligenceService
 {
     // KPIs y Dashboard (RF-60)
-    Task<DashboardViewModel> GetDashboardContextAsync(Guid entidadId);
+    Task<DashboardViewModel> GetDashboardContextAsync(Guid entidadId, string rango = "mes");
+    Task<DashboardViewModel> GetPosContextAsync(Guid entidadId);
     Task<decimal?> CalculateLiquidityAsync(Guid entidadId, Guid periodId);
     Task<decimal?> CalculateProfitabilityAsync(Guid entidadId, Guid periodId);
     Task<decimal?> CalculateInventoryTurnoverAsync(Guid entidadId, Guid periodId);
@@ -43,7 +44,7 @@ public class IntelligenceService : IIntelligenceService
         _entidadProvider = entidadProvider;
     }
 
-    public async Task<DashboardViewModel> GetDashboardContextAsync(Guid entidadId)
+    public async Task<DashboardViewModel> GetDashboardContextAsync(Guid entidadId, string rango = "mes")
     {
         // ============================================================
         // 1. CASO MASTER: Sin entidad asociada
@@ -86,13 +87,55 @@ public class IntelligenceService : IIntelligenceService
         var now = DateTimeOffset.Now;
         var inicioDia = new DateTimeOffset(now.Date, now.Offset);
         var inicioMes = new DateTimeOffset(new DateTime(now.Year, now.Month, 1), now.Offset);
-        var inicioMesAnterior = inicioMes.AddMonths(-1);
         var hoy = DateOnly.FromDateTime(now.DateTime);
+
+        // Rango seleccionable (Hoy / 7d / 30d / Mes / Trimestre)
+        var rangoNormalizado = (rango ?? "mes").Trim().ToLowerInvariant();
+        if (rangoNormalizado != "hoy" && rangoNormalizado != "7d" && rangoNormalizado != "30d"
+            && rangoNormalizado != "mes" && rangoNormalizado != "trimestre")
+        {
+            rangoNormalizado = "mes";
+        }
+
+        DateTimeOffset inicioPeriodo;
+        DateTimeOffset inicioPeriodoAnterior;
+        string rangoNombre;
+        switch (rangoNormalizado)
+        {
+            case "hoy":
+                inicioPeriodo = inicioDia;
+                inicioPeriodoAnterior = inicioDia.AddDays(-1);
+                rangoNombre = "Hoy · " + now.ToString("dd/MM/yyyy");
+                break;
+            case "7d":
+                inicioPeriodo = inicioDia.AddDays(-6);
+                inicioPeriodoAnterior = inicioPeriodo.AddDays(-7);
+                rangoNombre = "Últimos 7 días";
+                break;
+            case "30d":
+                inicioPeriodo = inicioDia.AddDays(-29);
+                inicioPeriodoAnterior = inicioPeriodo.AddDays(-30);
+                rangoNombre = "Últimos 30 días";
+                break;
+            case "trimestre":
+                var mesTrimestre = ((now.Month - 1) / 3) * 3 + 1;
+                inicioPeriodo = new DateTimeOffset(new DateTime(now.Year, mesTrimestre, 1), now.Offset);
+                inicioPeriodoAnterior = inicioPeriodo.AddMonths(-3);
+                rangoNombre = $"Trimestre Q{((now.Month - 1) / 3) + 1} {now.Year}";
+                break;
+            default:
+                inicioPeriodo = inicioMes;
+                inicioPeriodoAnterior = inicioMes.AddMonths(-1);
+                rangoNombre = now.ToString("MMMM yyyy");
+                break;
+        }
 
         var vm = new DashboardViewModel
         {
             EsMaster = false,
-            PeriodoActual = DateTime.Now.ToString("MMMM yyyy"),
+            Rango = rangoNormalizado,
+            RangoNombre = rangoNombre,
+            PeriodoActual = rangoNombre,
             Liquidez = await CalculateLiquidityAsync(entidadId, periodId),
             Rentabilidad = await CalculateProfitabilityAsync(entidadId, periodId),
             RotacionStock = await CalculateInventoryTurnoverAsync(entidadId, periodId),
@@ -115,7 +158,7 @@ public class IntelligenceService : IIntelligenceService
         vm.FacturasHoy = facturasHoy.Count;
 
         var mesActual = await _context.FacturaVenta
-            .Where(f => f.EntidadId == entidadId && f.Estado == "EMITIDA" && f.Fecha >= inicioMes)
+            .Where(f => f.EntidadId == entidadId && f.Estado == "EMITIDA" && f.Fecha >= inicioPeriodo)
             .Select(f => new { f.Total })
             .ToListAsync();
         vm.VentasMes = mesActual.Sum(f => f.Total);
@@ -123,7 +166,7 @@ public class IntelligenceService : IIntelligenceService
         vm.TicketPromedio = vm.FacturasMes > 0 ? Math.Round(vm.VentasMes / vm.FacturasMes, 2) : 0;
 
         vm.VentasMesAnterior = await _context.FacturaVenta
-            .Where(f => f.EntidadId == entidadId && f.Estado == "EMITIDA" && f.Fecha >= inicioMesAnterior && f.Fecha < inicioMes)
+            .Where(f => f.EntidadId == entidadId && f.Estado == "EMITIDA" && f.Fecha >= inicioPeriodoAnterior && f.Fecha < inicioPeriodo)
             .SumAsync(f => (decimal?)f.Total) ?? 0;
         vm.VariacionVentasPct = vm.VentasMesAnterior > 0
             ? Math.Round((vm.VentasMes - vm.VentasMesAnterior) / vm.VentasMesAnterior * 100, 1)
@@ -149,21 +192,21 @@ public class IntelligenceService : IIntelligenceService
 
         // Distribución del mes por canal de venta
         vm.VentasPorCanal = await _context.FacturaVenta
-            .Where(f => f.EntidadId == entidadId && f.Estado == "EMITIDA" && f.Fecha >= inicioMes)
+            .Where(f => f.EntidadId == entidadId && f.Estado == "EMITIDA" && f.Fecha >= inicioPeriodo)
             .GroupBy(f => f.CanalVenta)
             .Select(g => new MetricValue { Name = g.Key ?? "ERP", Value = g.Sum(x => x.Total) })
             .ToListAsync();
 
         // Distribución del mes por forma de pago
         vm.VentasPorFormaPago = await _context.FormaPagoVenta
-            .Where(p => p.Factura.EntidadId == entidadId && p.Factura.Estado == "EMITIDA" && p.Factura.Fecha >= inicioMes)
+            .Where(p => p.Factura.EntidadId == entidadId && p.Factura.Estado == "EMITIDA" && p.Factura.Fecha >= inicioPeriodo)
             .GroupBy(p => p.FormaPago)
             .Select(g => new MetricValue { Name = g.Key ?? "OTROS", Value = g.Sum(x => x.Monto) })
             .ToListAsync();
 
         // Top productos del mes
         var topRaw = await _context.FacturaVentaDetalles
-            .Where(d => d.Factura.EntidadId == entidadId && d.Factura.Estado == "EMITIDA" && d.Factura.Fecha >= inicioMes)
+            .Where(d => d.Factura.EntidadId == entidadId && d.Factura.Estado == "EMITIDA" && d.Factura.Fecha >= inicioPeriodo)
             .GroupBy(d => d.ProductoId)
             .Select(g => new { ProductoId = g.Key, Cantidad = g.Sum(x => x.Cantidad), Importe = g.Sum(x => x.SubtotalLinea) })
             .OrderByDescending(x => x.Importe)
@@ -183,6 +226,43 @@ public class IntelligenceService : IIntelligenceService
             })
             .ToList();
 
+        // Últimas facturas emitidas
+        vm.VentasRecientes = await _context.FacturaVenta
+            .Where(f => f.EntidadId == entidadId && f.Estado == "EMITIDA")
+            .OrderByDescending(f => f.Fecha)
+            .Take(6)
+            .Select(f => new VentaRecienteItem
+            {
+                Numero = f.NumeroFactura,
+                Cliente = f.Cliente.NombreRazonSocial,
+                Canal = f.CanalVenta ?? "ERP",
+                Total = f.Total,
+                Fecha = f.Fecha
+            })
+            .ToListAsync();
+
+        // Top clientes del mes
+        var topClientesRaw = await _context.FacturaVenta
+            .Where(f => f.EntidadId == entidadId && f.Estado == "EMITIDA" && f.Fecha >= inicioPeriodo)
+            .GroupBy(f => f.ClienteId)
+            .Select(g => new { ClienteId = g.Key, Importe = g.Sum(x => x.Total), Facturas = g.Count() })
+            .OrderByDescending(x => x.Importe)
+            .Take(5)
+            .ToListAsync();
+        var clienteIds = topClientesRaw.Select(c => c.ClienteId).ToList();
+        var clienteNombres = await _context.Clientes
+            .Where(c => clienteIds.Contains(c.Id))
+            .Select(c => new { c.Id, c.NombreRazonSocial })
+            .ToDictionaryAsync(c => c.Id, c => c.NombreRazonSocial);
+        vm.TopClientes = topClientesRaw
+            .Select(c => new TopClienteItem
+            {
+                Nombre = clienteNombres.TryGetValue(c.ClienteId, out var cn) ? cn : "Cliente",
+                Importe = c.Importe,
+                Facturas = c.Facturas
+            })
+            .ToList();
+
         // --- Cartera (CxC / CxP) con aging ---
         var cxc = await _context.CuentaPorCobrars
             .Where(c => c.EntidadId == entidadId && (c.Estado == "PENDIENTE" || c.Estado == "PARCIAL"))
@@ -191,6 +271,18 @@ public class IntelligenceService : IIntelligenceService
         vm.PorCobrar = cxc.Sum(c => c.SaldoPendiente);
         vm.CxcVencido = cxc.Where(c => c.FechaVencimiento < hoy).Sum(c => c.SaldoPendiente);
         vm.CxcPorVencer = vm.PorCobrar - vm.CxcVencido;
+
+        var aging = new decimal[5];
+        foreach (var c in cxc)
+        {
+            var dias = c.FechaVencimiento.DayNumber - hoy.DayNumber;
+            if (dias >= 0) aging[0] += c.SaldoPendiente;
+            else if (dias >= -30) aging[1] += c.SaldoPendiente;
+            else if (dias >= -60) aging[2] += c.SaldoPendiente;
+            else if (dias >= -90) aging[3] += c.SaldoPendiente;
+            else aging[4] += c.SaldoPendiente;
+        }
+        vm.AgingCxc = aging;
 
         var cxp = await _context.CuentaPorPagars
             .Where(c => c.EntidadId == entidadId && (c.Estado == "PENDIENTE" || c.Estado == "PARCIAL"))
@@ -208,6 +300,35 @@ public class IntelligenceService : IIntelligenceService
             .Where(c => c.EntidadId == entidadId && c.Activa)
             .SumAsync(c => (decimal?)c.SaldoActual) ?? 0;
 
+        // --- Flujo de caja: cobros vs pagos (últimas 8 semanas) ---
+        var inicioPeriodoDate = DateOnly.FromDateTime(inicioPeriodo.Date);
+        var desdeFlujoBase = inicioPeriodoDate < hoy.AddDays(-55) ? inicioPeriodoDate : hoy.AddDays(-55);
+        var desdeFlujo = desdeFlujoBase;
+        var pagosRaw = await _context.PagoAplicados
+            .Where(p => ((p.CuentaPorCobrar != null && p.CuentaPorCobrar.EntidadId == entidadId)
+                      || (p.CuentaPorPagar != null && p.CuentaPorPagar.EntidadId == entidadId))
+                      && p.Fecha >= desdeFlujo)
+            .Select(p => new { p.Tipo, p.Fecha, p.Monto })
+            .ToListAsync();
+
+        vm.CobradoMes = pagosRaw.Where(p => p.Tipo == "COBRO" && p.Fecha >= inicioPeriodoDate).Sum(p => p.Monto);
+        vm.PagadoMes = pagosRaw.Where(p => p.Tipo == "PAGO" && p.Fecha >= inicioPeriodoDate).Sum(p => p.Monto);
+
+        var inicioSemanaActual = hoy.AddDays(-(((int)hoy.DayOfWeek + 6) % 7));
+        var flujo = new List<FlujoCajaItem>();
+        for (int i = 7; i >= 0; i--)
+        {
+            var ini = inicioSemanaActual.AddDays(-7 * i);
+            var fin = ini.AddDays(7);
+            flujo.Add(new FlujoCajaItem
+            {
+                Label = ini.ToString("dd/MM"),
+                Entradas = pagosRaw.Where(p => p.Tipo == "COBRO" && p.Fecha >= ini && p.Fecha < fin).Sum(p => p.Monto),
+                Salidas = pagosRaw.Where(p => p.Tipo == "PAGO" && p.Fecha >= ini && p.Fecha < fin).Sum(p => p.Monto)
+            });
+        }
+        vm.FlujoCaja = flujo;
+
         // --- POS operativo ---
         await FillPosAsync(vm, entidadId, inicioDia, now);
 
@@ -220,6 +341,57 @@ public class IntelligenceService : IIntelligenceService
             .Where(c => c.EntidadId == entidadId && c.Estado == "VIGENTE" && c.FechaFin != null && c.FechaFin <= limitDate)
             .ToListAsync();
 
+        // --- Meta de ventas del mes (parámetro META_VENTAS_MENSUAL o fallback al mes anterior) ---
+        vm.VentasMesCalendario = await _context.FacturaVenta
+            .Where(f => f.EntidadId == entidadId && f.Estado == "EMITIDA" && f.Fecha >= inicioMes)
+            .SumAsync(f => (decimal?)f.Total) ?? 0;
+
+        var metaValor = await _context.ParametroSistemas
+            .Where(p => p.EntidadId == entidadId && p.Codigo == "META_VENTAS_MENSUAL"
+                     && (p.VigenteHasta == null || p.VigenteHasta >= hoy))
+            .OrderByDescending(p => p.VigenteDesde)
+            .Select(p => p.Valor)
+            .FirstOrDefaultAsync();
+
+        var meta = 0m;
+        if (!string.IsNullOrWhiteSpace(metaValor))
+        {
+            decimal.TryParse(metaValor, System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out meta);
+        }
+        if (meta <= 0) meta = vm.VentasMesAnterior;
+        vm.MetaVentasMes = meta;
+        vm.AvanceMetaPct = meta > 0
+            ? Math.Round(vm.VentasMesCalendario / meta * 100, 1)
+            : (vm.VentasMesCalendario > 0 ? 100m : 0m);
+
+        // --- Actividad reciente (auditoría de los usuarios de la entidad) ---
+        var usuarioIds = await _context.Usuarios
+            .Where(u => u.EntidadId == entidadId)
+            .Select(u => u.Id)
+            .ToListAsync();
+        vm.ActividadReciente = await _context.Auditoria
+            .Where(a => a.UsuarioId != null && usuarioIds.Contains(a.UsuarioId ?? Guid.Empty))
+            .OrderByDescending(a => a.OcurridoEn)
+            .Take(8)
+            .Select(a => new ActividadItem
+            {
+                Usuario = a.NombreUsuario,
+                Accion = a.Accion,
+                Tabla = a.EsquemaTabla,
+                Fecha = a.OcurridoEn
+            })
+            .ToListAsync();
+
+        return vm;
+    }
+
+    public async Task<DashboardViewModel> GetPosContextAsync(Guid entidadId)
+    {
+        var now = DateTimeOffset.Now;
+        var inicioDia = new DateTimeOffset(now.Date, now.Offset);
+        var vm = new DashboardViewModel { EsMaster = false };
+        await FillPosAsync(vm, entidadId, inicioDia, now);
         return vm;
     }
 

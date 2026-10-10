@@ -12,6 +12,26 @@ Instrucciones y contexto aprendidos en sesiones anteriores. Es la fuente de memo
 - Después de tocar código: `dotnet build Vercom.csproj -c Release` y esperar 0 errores.
 - No abrir arquitecturas nuevas; reutilizar servicios/patrones existentes (AccountingService, ConsecutivoService, ParametroSistemaService, IEntidadProvider).
 - Ambiente: Windows PowerShell 5.1, win32.
+- UI: la web de Inspinia v5.2 (demo webapplayers) es la **referencia canónica de UI/UX**. Antes de diseñar/ajustar pantallas (sobre todo dashboards), revisar el demo y reutilizar sus patrones/clases del tema. Ver "## UI / Dashboards" abajo. Ninguna idea de UI se implementa sin ok del usuario.
+
+## UI / Dashboards — Inspinia v5.2 como referencia canónica (registrado 2026-10)
+- Demo base: `https://webapplayers.com/inspinia/bootstrap/` (assets en `.../assets/`). HTML del dashboard eCommerce descargado en sesión 2026-10 (4018 líneas). Los assets/tema v5.2 ya están aplicados (skins, vars `--theme-*`, `config.js`/app.js `LayoutCustomizer`, `_Theme.cshtml`).
+- Regla: **siempre comparar con el demo Inspinia** antes de tocar UI. Reutilizar sus clases/patrones del tema (`card`, `card-h-100`, `card-title`, `avatar-{xs,sm,md,lg}`, `badge-soft-*`/`bg-*-subtle`, helpers `fs-*`, `link-*`, `data-simplebar`, `chart-box`) y **no inventar estilos/CSS ad-hoc** fuera del tema.
+- El dashboard de Vercom usa **Chart.js** (`~/js/plugins/chartjs/chart.js`), no ApexCharts como el demo. Mantener Chart.js salvo decisión explícita de migrar (implica añadir el vendor ApexCharts).
+
+### Ideas de mejora del Dashboard (backlog)
+1. **Sparkline KPI IMPLEMENTADO (2026-10)**: mini-sparkline Chart.js en la tarjeta "Ventas del Mes" (`ventasSparkChart`, usa `VentasSerie`); el resto de KPI aún no tiene serie histórica disponible. Falta `avatar-lg`/estilo stat-card completo.
+2. **Banner "Resumen del día" IMPLEMENTADO (2026-10)** en `Views/Dashboard/Index.cshtml`: saludo (FullName claim) + entidad + periodo + 4 chips (Ventas Hoy, Facturas Hoy, Sesiones POS, Pendientes Sync). Falta auto-refresh y accesos rápidos.
+3. Selector de rango en el header (Hoy/7d/30d/Mes/Trimestre) que recargue por query string; hoy solo hay "Actualizar" + cache 60s. **IMPLEMENTADO (2026-10)**
+4. **Product Inventory IMPLEMENTADO (2026-10)**: rediseñada "Alertas Críticas de Inventario" en `Views/Dashboard/Index.cshtml` a lista estilo demo (avatar+icono por estado, nombre, código, precio `PrecioVentaActual`, unidades/mínimo, badge Agotado/Bajo, botón compra). Datos: `Model.AlertasStock` (`List<Existencium>`, ya traído por `GetLowStockAlertsAsync`).
+5. ~~"Recent Orders" = últimas facturas/ventas~~ **IMPLEMENTADO (2026-10)**: widget "Últimas Ventas" en `Views/Dashboard/Index.cshtml` (últimas 6 facturas EMITIDA; datos en `DashboardViewModel.VentasRecientes` / `IntelligenceService`).
+6. CxC **aging** (corriente/1-30/31-60/61-90/+90) **IMPLEMENTADO (2026-10)** en donut (`agingCxcChart`, `DashboardViewModel.AgingCxc`). Top clientes del mes **IMPLEMENTADO (2026-10)** con progress bars (`DashboardViewModel.TopClientes`). Falta variante "Top clientes por saldo CxC".
+7. **Flujo de caja IMPLEMENTADO (2026-10)**: barras agrupadas Cobros vs Pagos últimas 8 semanas (`flujoCajaChart`) + badges Cobrado/Pagado/Neto del mes en `Views/Dashboard/Index.cshtml`; datos desde `contabilidad.pago_aplicado` (`DashboardViewModel.FlujoCaja`/`CobradoMes`/`PagadoMes`, `IntelligenceService`). Nota: tablas de cobros/pagos vacías en BD dev, widget muestra ceros. **Falta**: gauge/donut de meta de ventas del mes.
+8. Timeline de actividad reciente desde `nucleo.auditoria`, estilo timeline Inspinia. **IMPLEMENTADO (2026-10)**
+9. **`data-simplebar` IMPLEMENTADO (2026-10)** en la lista de Alertas de inventario y en Top Productos (`Views/Dashboard/Index.cshtml`, `max-height: 360px`). Falta en otras listas largas (vencimientos, Últimas Ventas).
+10. Skeleton loaders + tooltips en español; auto-refresh opcional del bloque POS (ya cacheado). **IMPLEMENTADO (2026-10)**
+11. Consistencia: sustituir estilos inline por helpers del tema y `card card-h-100`; unificar `card-header` con `card-title`. **IMPLEMENTADO (2026-10)**
+12. Técnica: al re-renderizar destruir charts previos (`Chart.getChart(el)?.destroy()`) para evitar fugas; considerar invalidar la cache del dashboard al registrar ventas/pagos. **IMPLEMENTADO (2026-10)**
 
 ## Conexiones / rutas
 - BD real de validación: `Server=LOCALHOST;Database=VercomERP;User Id=sa;Password=sql2026*;TrustServerCertificate=True;MultipleActiveResultSets=true`.

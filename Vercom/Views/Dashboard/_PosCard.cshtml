@@ -1,0 +1,79 @@
+@model Vercom.ViewModels.DashboardViewModel
+
+<div class="card-body" id="pos-card-body">
+    <div class="row row-cols-2 row-cols-md-5 g-3 mb-3">
+        <div class="col text-center">
+            <span class="avatar-md rounded-circle bg-success bg-opacity-10 text-success d-inline-flex align-items-center justify-content-center mb-2">
+                <i class="ti ti-device-desktop fs-20"></i>
+            </span>
+            <div class="fs-22 fw-bold text-success">@Model.PosTerminalesActivas</div>
+            <div class="text-muted small text-uppercase fw-bold letter-spacing-1" style="font-size: 0.7rem;">Terminales Activas</div>
+        </div>
+        <div class="col text-center">
+            <span class="avatar-md rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-2">
+                <i class="ti ti-clock fs-20"></i>
+            </span>
+            <div class="fs-22 fw-bold text-primary">@Model.PosSesionesAbiertas</div>
+            <div class="text-muted small text-uppercase fw-bold letter-spacing-1" style="font-size: 0.7rem;">Sesiones Abiertas</div>
+        </div>
+        <div class="col text-center">
+            <span class="avatar-md rounded-circle bg-info bg-opacity-10 text-info d-inline-flex align-items-center justify-content-center mb-2">
+                <i class="ti ti-cash fs-20"></i>
+            </span>
+            <div class="fs-22 fw-bold text-info">@Model.PosVentasHoy.ToString("N2")</div>
+            <div class="text-muted small text-uppercase fw-bold letter-spacing-1" style="font-size: 0.7rem;">Ventas POS Hoy</div>
+        </div>
+        <div class="col text-center">
+            <span class="avatar-md rounded-circle @(Model.PosPendientesSync > 0 ? "bg-warning bg-opacity-10 text-warning" : "bg-success bg-opacity-10 text-success") d-inline-flex align-items-center justify-content-center mb-2">
+                <i class="ti @(Model.PosPendientesSync > 0 ? "ti-cloud-lock" : "ti-cloud-check") fs-20"></i>
+            </span>
+            <div class="fs-22 fw-bold @(Model.PosPendientesSync > 0 ? "text-warning" : "text-success")">@Model.PosPendientesSync</div>
+            <div class="text-muted small text-uppercase fw-bold letter-spacing-1" style="font-size: 0.7rem;">Pendientes Sync</div>
+        </div>
+        <div class="col text-center">
+            <span class="avatar-md rounded-circle @(Model.PosConflictos > 0 ? "bg-danger bg-opacity-10 text-danger" : "bg-success bg-opacity-10 text-success") d-inline-flex align-items-center justify-content-center mb-2">
+                <i class="ti @(Model.PosConflictos > 0 ? "ti-alert-triangle" : "ti-circle-check") fs-20"></i>
+            </span>
+            <div class="fs-22 fw-bold @(Model.PosConflictos > 0 ? "text-danger" : "text-success")">@Model.PosConflictos</div>
+            <div class="text-muted small text-uppercase fw-bold letter-spacing-1" style="font-size: 0.7rem;">Conflictos</div>
+        </div>
+    </div>
+
+    @if (Model.PosSesiones.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table table-hover mb-0">
+                <thead class="thead-sm text-uppercase fs-xxs text-muted">
+                    <tr>
+                        <th>Terminal</th>
+                        <th>Cajero</th>
+                        <th class="text-center">Apertura</th>
+                        <th class="text-end">Monto Apertura</th>
+                        <th class="text-end">Ventas</th>
+                        <th class="text-center">Facturas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model.PosSesiones)
+                    {
+                        <tr>
+                            <td class="fw-bold"><i class="ti ti-device-desktop me-2 text-muted"></i>@s.Dispositivo</td>
+                            <td>@s.Cajero</td>
+                            <td class="text-center small">@s.FechaApertura.ToString("dd/MM HH:mm")</td>
+                            <td class="text-end">@s.MontoApertura.ToString("N2")</td>
+                            <td class="text-end fw-bold text-success">@s.TotalVentas.ToString("N2")</td>
+                            <td class="text-center"><span class="badge badge-soft-info">@s.CantidadFacturas</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-4 text-muted small">
+            <i class="ti ti-device-desktop-off fs-32 d-block mb-2 opacity-50"></i>
+            No hay sesiones POS abiertas en este momento.
+        </div>
+    }
+</div>

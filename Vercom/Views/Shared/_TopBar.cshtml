@@ -26,10 +26,6 @@
             <button class="sidenav-toggle-button btn btn-primary btn-icon">
                 <i class="ti ti-menu-4 fs-22"></i>
             </button>
-            <!-- Horizontal Menu Toggle Button -->
-            <button class="topnav-toggle-button px-2" data-bs-toggle="collapse" data-bs-target="#topnav-menu-content">
-                <i class="ti ti-menu-4 fs-22"></i>
-            </button>
             <!-- Search -->
             <div class="app-search d-none d-xl-flex">
                 <input type="search" class="form-control topbar-search" name="search" placeholder="Buscar producto o factura...">
@@ -45,7 +41,7 @@
                 </button>
             </div>
             <div id="fullscreen-toggler" class="topbar-item d-none d-md-flex">
-                <button class="topbar-link" type="button">
+                <button class="topbar-link" type="button" data-toggle="fullscreen">
                     <i class="ti ti-maximize topbar-link-icon"></i>
                     <i class="ti ti-minimize topbar-link-icon d-none"></i>
                 </button>
@@ -64,16 +60,20 @@
             <div id="notification-dropdown-alert" class="topbar-item">
                 <div class="dropdown" id="notification-dropdown">
                     <button class="topbar-link dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown" data-bs-auto-close="outside" type="button" aria-haspopup="false" aria-expanded="false">
-                        <i class="ti ti-bell fs-xxl"></i>
+                        <i class="ti ti-bell topbar-link-icon"></i>
                         <span class="badge badge-square text-bg-warning topbar-badge d-none" id="notification-count">0</span>
                     </button>
                     <div class="dropdown-menu p-0 dropdown-menu-end dropdown-menu-lg">
                         @Html.AntiForgeryToken()
-                        <div class="px-3 py-2 border-bottom d-flex align-items-center justify-content-between gap-2">
-                            <h6 class="m-0 fs-md fw-semibold">Notificaciones</h6>
-                            <button type="button" class="btn btn-icon btn-sm btn-ghost-primary" id="notification-mark-all" title="Marcar todas como leídas">
-                                <i class="ti ti-checks"></i>
-                            </button>
+                        <div class="px-3 py-2 border-bottom">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <h6 class="m-0 fs-md fw-semibold">Notificaciones</h6>
+                                </div>
+                                <div class="col text-end">
+                                    <button type="button" class="btn btn-link btn-sm link-primary fw-medium fs-sm p-0 m-0 align-baseline" id="notification-mark-all" title="Marcar todas como leídas">Marcar todas</button>
+                                </div>
+                            </div>
                         </div>
                         <div class="px-2 pt-2 border-bottom">
                             <div class="btn-group w-100" role="group" aria-label="Filtro de estado">
@@ -88,7 +88,7 @@
                                 <button type="button" class="btn btn-sm btn-icon btn-outline-danger notification-type-filter" data-tipo="danger" title="Crítico"><i class="ti ti-alert-octagon"></i></button>
                             </div>
                         </div>
-                        <div style="max-height: 340px; overflow-y: auto;">
+                        <div style="max-height: 300px" data-simplebar>
                             <div id="notification-stock">
                                 <!-- Dinámico -->
                             </div>

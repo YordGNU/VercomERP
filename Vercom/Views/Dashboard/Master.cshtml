@@ -2,12 +2,14 @@
 @{
     ViewBag.Title = "Monitor Maestro";
     string Money(decimal v) => v.ToString("N2");
+    string AccionIcon(string a) => a switch { "LOGIN_FALLIDO" => "ti-lock-off", "ACCESO_DENEGADO" => "ti-door-exit", _ => "ti-shield" };
+    string AccionCls(string a) => a switch { "LOGIN_FALLIDO" => "danger", "ACCESO_DENEGADO" => "warning", _ => "primary" };
 }
 
-@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Monitor Maestro", Subtitle = "Visión global de infraestructura, seguridad y entidades registradas en el ecosistema.", Icon = "ti-file", Tone = "primary" }; }
+@{
+    var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Monitor Maestro", Subtitle = "Visión global de infraestructura, seguridad y entidades registradas en el ecosistema.", Icon = "ti-file", Tone = "primary" };
+}
 <partial name='_PageHeader' model='pageHeader' />
-
-
 
 <!-- Fila 1: KPIs Globales -->
 <div class="row row-cols-1 row-cols-md-2 row-cols-xxl-4 g-3 mb-3">
@@ -203,37 +205,37 @@
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <h5 class="m-0 fw-bold text-primary"><i class="ti ti-device-laptop me-2"></i>Sesiones POS Abiertas</h5>
-                <a asp-controller="PosVentaPendiente" asp-action="Index" class="btn btn-sm btn-outline-secondary">
-                    <i class="ti ti-list me-1"></i> Ver Pendientes
-                </a>
+                <a asp-controller="PosVentaPendiente" asp-action="Index" class="btn btn-sm btn-outline-secondary"><i class="ti ti-list me-1"></i> Ver Pendientes</a>
             </div>
             <div class="card-body">
                 @if (Model.SesionesPos.Any())
                 {
-                    <div class="table-responsive">
-                        <table class="table table-vcenter card-table table-hover mb-0">
-                            <thead class="thead-sm text-uppercase fs-xxs text-muted">
-                                <tr>
-                                    <th>Entidad</th>
-                                    <th>Terminal</th>
-                                    <th>Cajero</th>
-                                    <th class="text-center">Apertura</th>
-                                    <th class="text-end">Ventas</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var s in Model.SesionesPos)
-                                {
+                    <div data-simplebar style="max-height: 360px;">
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table table-hover mb-0">
+                                <thead class="thead-sm text-uppercase fs-xxs text-muted">
                                     <tr>
-                                        <td class="small text-muted">@s.Entidad</td>
-                                        <td class="fw-bold"><i class="ti ti-device-desktop me-2 text-muted"></i>@s.Dispositivo</td>
-                                        <td>@s.Cajero</td>
-                                        <td class="text-center small">@s.FechaApertura.ToString("dd/MM HH:mm")</td>
-                                        <td class="text-end fw-bold text-success">@Money(s.TotalVentas)</td>
+                                        <th>Entidad</th>
+                                        <th>Terminal</th>
+                                        <th>Cajero</th>
+                                        <th class="text-center">Apertura</th>
+                                        <th class="text-end">Ventas</th>
                                     </tr>
-                                }
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @foreach (var s in Model.SesionesPos)
+                                    {
+                                        <tr>
+                                            <td class="small text-muted">@s.Entidad</td>
+                                            <td class="fw-bold"><i class="ti ti-device-desktop me-2 text-muted"></i>@s.Dispositivo</td>
+                                            <td>@s.Cajero</td>
+                                            <td class="text-center small">@s.FechaApertura.ToLocalTime().ToString("dd/MM HH:mm")</td>
+                                            <td class="text-end fw-bold text-success">@Money(s.TotalVentas)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 }
                 else
@@ -255,35 +257,37 @@
                 <a asp-controller="Admin" asp-action="AuditLogs" class="btn btn-sm btn-outline-secondary">Bitácora</a>
             </div>
             <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-vcenter card-table table-hover mb-0">
-                        <thead class="thead-sm text-uppercase fs-xxs text-muted">
-                            <tr>
-                                <th>Evento</th>
-                                <th>Usuario</th>
-                                <th>Fecha/Hora</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var alert in Model.AlertasSeguridad)
-                            {
+                <div data-simplebar style="max-height: 260px;">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table table-hover mb-0">
+                            <thead class="thead-sm text-uppercase fs-xxs text-muted">
                                 <tr>
-                                    <td><span class="badge badge-soft-danger">@alert.Accion</span></td>
-                                    <td class="fw-bold small">@alert.NombreUsuario</td>
-                                    <td class="small">@alert.OcurridoEn.ToString("dd/MM HH:mm")</td>
+                                    <th>Evento</th>
+                                    <th>Usuario</th>
+                                    <th>Fecha/Hora</th>
                                 </tr>
-                            }
-                            @if (!Model.AlertasSeguridad.Any())
-                            {
-                                <tr>
-                                    <td colspan="3" class="text-center py-4 text-muted small">
-                                        <i class="ti ti-shield-check fs-32 d-block mb-2 text-success opacity-50"></i>
-                                        Sin incidentes críticos recientes.
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach (var alert in Model.AlertasSeguridad)
+                                {
+                                    <tr>
+                                        <td><span class="badge badge-soft-@(AccionCls(alert.Accion))"><i class="ti @(AccionIcon(alert.Accion)) me-1"></i>@alert.Accion</span></td>
+                                        <td class="fw-bold small">@alert.NombreUsuario</td>
+                                        <td class="small">@alert.OcurridoEn.ToLocalTime().ToString("dd/MM HH:mm")</td>
+                                    </tr>
+                                }
+                                @if (!Model.AlertasSeguridad.Any())
+                                {
+                                    <tr>
+                                        <td colspan="3" class="text-center py-4 text-muted small">
+                                            <i class="ti ti-shield-check fs-32 d-block mb-2 text-success opacity-50"></i>
+                                            Sin incidentes críticos recientes.
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -333,35 +337,37 @@
                 }
             </div>
             <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-vcenter card-table small mb-0">
-                        <thead class="thead-sm text-uppercase fs-xxs text-muted">
-                            <tr>
-                                <th>Producto</th>
-                                <th>Vence</th>
-                                <th>Lote</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var alert in Model.AlertasVencimiento)
-                            {
+                <div data-simplebar style="max-height: 280px;">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table small mb-0">
+                            <thead class="thead-sm text-uppercase fs-xxs text-muted">
                                 <tr>
-                                    <td class="fw-bold">@alert.Producto?.Nombre</td>
-                                    <td class="text-danger fw-bold">@alert.FechaVencimiento?.ToString("dd/MM")</td>
-                                    <td class="font-monospace tiny">@alert.Lote</td>
+                                    <th>Producto</th>
+                                    <th>Vence</th>
+                                    <th>Lote</th>
                                 </tr>
-                            }
-                            @if (!Model.AlertasVencimiento.Any())
-                            {
-                                <tr>
-                                    <td colspan="3" class="text-center py-4 text-muted small">
-                                        <i class="ti ti-calendar-check fs-32 d-block mb-2 text-success opacity-50"></i>
-                                        Sin alertas de caducidad.
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach (var alert in Model.AlertasVencimiento)
+                                {
+                                    <tr>
+                                        <td class="fw-bold">@alert.Producto?.Nombre</td>
+                                        <td class="text-danger fw-bold">@alert.FechaVencimiento?.ToString("dd/MM/yyyy")</td>
+                                        <td class="font-monospace tiny">@alert.Lote</td>
+                                    </tr>
+                                }
+                                @if (!Model.AlertasVencimiento.Any())
+                                {
+                                    <tr>
+                                        <td colspan="3" class="text-center py-4 text-muted small">
+                                            <i class="ti ti-calendar-check fs-32 d-block mb-2 text-success opacity-50"></i>
+                                            Sin alertas de caducidad.
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
