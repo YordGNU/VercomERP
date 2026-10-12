@@ -266,23 +266,27 @@ El plan de cuentas sigue la **Resolución 494/2016 del MFP**, con soporte para:
 
 ```
 Vercom-ERP/
-├── src/
-│   ├── Vercom.Web/              # ASP.NET Core MVC
-│   │   ├── Controllers/
-│   │   ├── Views/
-│   │   ├── wwwroot/
-│   │   └── Program.cs
-│   ├── Vercom.Services/         # Lógica de negocio
-│   ├── Vercom.Data/             # EF Core DbContext + Entidades
-│   └── Vercom.Shared/           # DTOs, ViewModels, Utilidades
-├── android/
-│   └── VercomPos/               # App POS Android (Kotlin)
-├── database/
-│   ├── scripts/                 # Scripts SQL
-│   └── seed/                    # Datos iniciales
-├── docs/
-│   ├── architecture.md
-│   └── screenshots/
+├── Vercom/ # Proyecto ASP.NET Core MVC (.NET 10)
+│ ├── Controllers/ # Controladores (delgados)
+│ ├── Views/ # Vistas Razor
+│ ├── Services/ # Lógica de negocio + SeedData
+│ ├── Models/ # Entidades EF Core + AppDbContext
+│ ├── DTOs/ # Data Transfer Objects
+│ ├── Security/ # IEntidadProvider, policies
+│ ├── wwwroot/ # Archivos estáticos
+│ ├── Program.cs
+│ └── appsettings.json
+├── database/ # Scripts SQL
+│ ├── scripts/
+│ │ ├── 01-schema.sql # Esquema completo
+│ │ └── 02-cleanup-demo.sql # Limpieza de demo
+│ ├── seed/
+│ │ └── cuentas-mfp.sql # Plan de cuentas oficial
+│ └── README.md
+├── docs/ # Documentación
+│ └── screenshots/
+├── docker-compose.yml
+├── Dockerfile
 └── README.md
 ```
 
