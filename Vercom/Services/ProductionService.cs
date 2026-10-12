@@ -85,6 +85,8 @@ public class ProductionService : IProductionService
         return await _context.OrdenProduccions
             .Include(o => o.ProductoTerminado)
             .Include(o => o.FichaCosto)
+            .Include(o => o.AlmacenInsumos)
+            .Include(o => o.AlmacenProducto)
             .OrderByDescending(o => o.CreadoEn)
             .ToListAsync();
     }
@@ -365,7 +367,7 @@ public class ProductionService : IProductionService
 
     public async Task<IEnumerable<PlanProduccion>> GetProductionPlansAsync()
     {
-        return await _context.PlanProduccions.Include(p => p.Presupuesto).OrderByDescending(p => p.Anio).ThenByDescending(p => p.Mes).ToListAsync();
+        return await _context.PlanProduccions.Include(p => p.Presupuesto).Include(p => p.PlanProduccionDetalles).OrderByDescending(p => p.Anio).ThenByDescending(p => p.Mes).ToListAsync();
     }
 
     public async Task<PlanProduccion?> GetProductionPlanByIdAsync(Guid id)
@@ -474,6 +476,7 @@ public class ProductionService : IProductionService
             .FirstOrDefaultAsync(l => l.ProductoTerminadoId == order.ProductoTerminadoId && l.Activa);
 
         if (bom == null) return (false, "No existe una lista de materiales (BOM) activa para este producto.", null);
+        if (!bom.ListaMaterialesDetalles.Any()) return (false, "La BOM activa no tiene componentes configurados.", null);
 
         order.ListaMaterialesId = bom.Id;
 
@@ -684,16 +687,46 @@ decimal costMateriaPrimaReal = 0;
                     AnalizadoEn = DateTimeOffset.Now
                 });
 
-                // Desviación de Conversión (MO + GIF): la CHECK de BD solo admite componentes por tipo de recurso
-                _context.AnalisisDesviacions.Add(new AnalisisDesviacion
+                // Desviaci?n de conversi?n (MANO_OBRA y GASTOS_INDIRECTOS)
+                var moEstandar = (decimal)order.FichaCosto.CostoManoObra * actualQuantity;
+                var gifEstandar = (decimal)order.FichaCosto.GastosIndirectos * actualQuantity;
+                var convReal = costTotalReal - costMateriaPrimaReal;
+                var totalConvStd = moEstandar + gifEstandar;
+                if (moEstandar != 0 || convReal != 0)
                 {
-                    Id = Guid.NewGuid(),
-                    OrdenProduccionId = order.Id,
-                    Componente = "MANO_OBRA",
-                    CostoEstandar = (decimal)(order.FichaCosto.CostoManoObra + order.FichaCosto.GastosIndirectos) * actualQuantity,
-                    CostoReal = costTotalReal - costMateriaPrimaReal,
-                    AnalizadoEn = DateTimeOffset.Now
-                });
+                    var realMo = convReal;
+                    if (totalConvStd > 0) realMo = convReal * (moEstandar / totalConvStd);
+                    if (moEstandar != 0 || realMo != 0)
+                    {
+                        _context.AnalisisDesviacions.Add(new AnalisisDesviacion
+                        {
+                            Id = Guid.NewGuid(),
+                            OrdenProduccionId = order.Id,
+                            Componente = "MANO_OBRA",
+                            CostoEstandar = moEstandar,
+                            CostoReal = Math.Round(realMo, 4),
+                            AnalizadoEn = DateTimeOffset.Now
+                        });
+                    }
+                }
+                if (gifEstandar != 0 || convReal != 0)
+                {
+                    var realGif = convReal;
+                    if (totalConvStd > 0) realGif = convReal * (gifEstandar / totalConvStd);
+                    if (moEstandar == 0 && gifEstandar == 0 && totalConvStd == 0) realGif = convReal;
+                    if (gifEstandar != 0 || realGif != 0)
+                    {
+                        _context.AnalisisDesviacions.Add(new AnalisisDesviacion
+                        {
+                            Id = Guid.NewGuid(),
+                            OrdenProduccionId = order.Id,
+                            Componente = "GASTOS_INDIRECTOS",
+                            CostoEstandar = gifEstandar,
+                            CostoReal = Math.Round(realGif, 4),
+                            AnalizadoEn = DateTimeOffset.Now
+                        });
+                    }
+                }
             }
 
             // --- ACTUALIZACIÓN DE PLAN DE PRODUCCIÓN (Iteración 7) ---

@@ -23,7 +23,7 @@ public static class SeedData
             entidad = new Entidad
             {
                 Id = Guid.NewGuid(),
-                RazonSocial = "Sociedad Mercantil yordanisvc@gmail.com",
+                RazonSocial = "Demo yordanisvc@gmail.com",
                 Nit = "90000000000",
                 FormaJuridica = "S.U.R.L.",
                 DireccionLegal = "Calle Central #101, Matanzas",

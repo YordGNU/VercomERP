@@ -29,19 +29,22 @@
         </div>
     </div>
 
-    <div class="card mt-4">
-        <div class="card-body">
-            <table class="table table-hover align-middle">
-            <thead class="thead-sm text-uppercase fs-xxs">
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Orden / Producto</th>
-                        <th>Costo Estándar</th>
-                        <th>Costo Real</th>
-                        <th>Desviación ($)</th>
-                      <th>Estado</th>
-                    </tr>
-                </thead>
+        <div class="card shadow-sm border-0 mt-4">
+            <div class="card-header bg-light-subtle">
+                <h5 class="m-0 fw-bold"><i class="ti ti-chart-area-line me-2 text-primary"></i>Anǭlisis de Eficiencia</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-vcenter card-table table-hover align-middle">
+                <thead class="thead-sm text-uppercase fs-xxs bg-light-subtle">
+                        <tr>
+                            <th class="ps-4">Fecha</th>
+                            <th>Orden / Producto</th>
+                            <th>Costo Estǭndar</th>
+                            <th>Costo Real</th>
+                            <th>Desviaci��n ($)</th>
+                          <th class="pe-4">Estado</th>
+                        </tr>
+                    </thead>
                 <tbody>
                     @foreach (var item in Model)
                     {

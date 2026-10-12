@@ -1,10 +1,4 @@
-# Include any files or directories that you don't want to be copied to your
-# container here (e.g., local build artifacts, temporary files, etc.).
-#
-# For more help, visit the .dockerignore file reference guide at
-# https://docs.docker.com/go/build-context-dockerignore/
-
-**/.DS_Store
+# Ignorar archivos innecesarios para acelerar el build
 **/.classpath
 **/.dockerignore
 **/.env
@@ -18,15 +12,23 @@
 **/*.*proj.user
 **/*.dbmdl
 **/*.jfm
+**/azds.yaml
 **/bin
 **/charts
 **/docker-compose*
-**/compose.y*ml
 **/Dockerfile*
 **/node_modules
 **/npm-debug.log
 **/obj
 **/secrets.dev.yaml
 **/values.dev.yaml
+**/publicacion
+**/Docs/screenshots
 LICENSE
 README.md
+
+# Archivos sensibles que NUNCA deben ir a la imagen
+appsettings.Development.json
+appsettings.Production.json
+*.user
+*.pfx

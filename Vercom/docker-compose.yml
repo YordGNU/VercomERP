@@ -1,23 +1,70 @@
-version: "3.9"
-
 services:
-  sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: vercom-sql-local
-    environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "SqlServer2026!"
-      MSSQL_PID: "Developer"
+  # ============================================================
+  # APLICACIÓN ERP
+  # ============================================================
+  vercom-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: vercom-erp:latest
+    container_name: vercom-app
     ports:
-      - "1433:1433"
+      - "5001:8080"  # Puerto 5001 en tu máquina → 8080 en el contenedor
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      # Cadena de conexión apuntando al SQL Server del contenedor
+      - ConnectionStrings__DefaultConnection=Server=vercom-db,1433;Database=VercomERP;UID=sa;Password=Vercom2026!Strong;TrustServerCertificate=True;MultipleActiveResultSets=true;Language=us_english
+      # Clave JWT (mínimo 32 caracteres)
+      - Jwt__SecretKey=k8J2mN9pQ4vX7zR1wY6tB3cF5hL0aD8gE2sU9iO4nM7vC1xZ6qW3eR5tY8uI0p
+      - Jwt__Issuer=VercomERP
+      - Jwt__Audience=VercomERPClientes
     volumes:
-      - sqlserver_data:/var/opt/mssql
+      # Persistir archivos subidos (contratos, documentos)
+      - uploads-data:/app/wwwroot/uploads
+    depends_on:
+      vercom-db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - vercom-network
+
+  # ============================================================
+  # SQL SERVER
+  # ============================================================
+  vercom-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: vercom-db
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=Vercom2026!Strong
+      - MSSQL_PID=Developer  # Versión gratuita para desarrollo
+    ports:
+      - "1434:1433"  # Puerto 1434 en tu máquina → 1433 en el contenedor (evita conflicto con SQL local)
+    volumes:
+      - sql-data:/var/opt/mssql
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"SqlServer2026!\" -C -Q \"SELECT 1\" || /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P \"SqlServer2026!\" -Q \"SELECT 1\"" ]
-      interval: 15s
-      timeout: 10s
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Vercom2026!Strong' -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
       retries: 10
       start_period: 30s
+    restart: unless-stopped
+    networks:
+      - vercom-network
 
+# ============================================================
+# VOLÚMENES PERSISTENTES
+# ============================================================
 volumes:
-  sqlserver_data:
+  uploads-data:
+    driver: local
+  sql-data:
+    driver: local
+
+# ============================================================
+# RED INTERNA
+# ============================================================
+networks:
+  vercom-network:
+    driver: bridge

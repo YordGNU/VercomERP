@@ -39,7 +39,7 @@
                             @if(item.Estado == "EN_PROCESO") {
                                 <div class="progress progress-xs mt-3">
                                     @{ var progress = (item.CantidadPlanificada > 0) ? (item.CantidadProducida / item.CantidadPlanificada * 100) : 0; }
-                                    <div class="progress-bar bg-info" style="width: @progress%"></div>
+                                    <div class="progress-bar bg-info" style="width: @progress.ToString("N0")%"></div>
                                 </div>
                             }
                         </div>
