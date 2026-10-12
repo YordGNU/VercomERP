@@ -45,8 +45,10 @@ public interface IProductionService
 
     // Planes de Producción
     Task<IEnumerable<PlanProduccion>> GetProductionPlansAsync();
+    Task<PlanProduccion?> GetProductionPlanByIdAsync(Guid id);
     Task<PlanProduccionFormViewModel> GetPlanFormContextAsync(PlanProduccion? existing = null);
     Task<(bool Succeeded, string Message)> CreatePlanAsync(PlanProduccion plan);
+    Task<(bool Succeeded, string Message)> UpdatePlanAsync(PlanProduccion plan);
     Task<PlanProduccion> GenerateSuggestedPlanAsync(Guid entidadId, short year, short month);
 
     // Escritura Producción
@@ -366,6 +368,15 @@ public class ProductionService : IProductionService
         return await _context.PlanProduccions.Include(p => p.Presupuesto).OrderByDescending(p => p.Anio).ThenByDescending(p => p.Mes).ToListAsync();
     }
 
+    public async Task<PlanProduccion?> GetProductionPlanByIdAsync(Guid id)
+    {
+        return await _context.PlanProduccions
+            .Include(p => p.Presupuesto)
+            .Include(p => p.PlanProduccionDetalles)
+                .ThenInclude(d => d.Producto)
+            .FirstOrDefaultAsync(p => p.Id == id);
+    }
+
     public async Task<PlanProduccionFormViewModel> GetPlanFormContextAsync(PlanProduccion? existing = null)
     {
         return new PlanProduccionFormViewModel
@@ -385,6 +396,24 @@ public class ProductionService : IProductionService
             _context.PlanProduccions.Add(plan);
             await _context.SaveChangesAsync();
             return (true, "Plan de producción creado.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<(bool Succeeded, string Message)> UpdatePlanAsync(PlanProduccion plan)
+    {
+        try
+        {
+            var existing = await _context.PlanProduccions.FirstOrDefaultAsync(p => p.Id == plan.Id);
+            if (existing == null) return (false, "No se encontró el plan de producción.");
+
+            existing.Anio = plan.Anio;
+            existing.Mes = plan.Mes;
+            existing.PresupuestoId = plan.PresupuestoId;
+            existing.Estado = string.IsNullOrWhiteSpace(plan.Estado) ? existing.Estado : plan.Estado;
+
+            await _context.SaveChangesAsync();
+            return (true, "Plan de producción actualizado.");
         }
         catch (Exception ex) { return (false, ex.Message); }
     }
@@ -437,6 +466,8 @@ public class ProductionService : IProductionService
         order.NumeroOrden = $"OP-{numeroOp}";
         order.Estado = "PLANIFICADA";
         order.CreadoEn = DateTimeOffset.Now;
+
+        if (order.CantidadPlanificada <= 0) return (false, "La cantidad planificada debe ser mayor a cero.", null);
 
         var bom = await _context.ListaMateriales
             .Include(l => l.ListaMaterialesDetalles)
@@ -516,6 +547,7 @@ public class ProductionService : IProductionService
                 // Registrar el costo unitario real capturado tras el movimiento
                 item.CostoUnitario = invResult.Movement!.MovimientoInventarioDetalles.First().CostoUnitario ?? 0;
                 totalCostConsumed += (item.CantidadPlanificada * item.CostoUnitario.Value);
+                item.MovimientoInventarioId = invResult.Movement?.Id;
             }
 
             // El asiento de WIP lo genera automáticamente ProcessMovementAsync (CONSUMO_PRODUCCION -> CTA_WIP).
@@ -549,11 +581,13 @@ public class ProductionService : IProductionService
             if (order == null) return (false, "Orden no encontrada.");
             if (order.Estado != "EN_PROCESO") return (false, "La orden no está en proceso.");
 
-            decimal costMateriaPrimaReal = 0;
+                        if (actualQuantity <= 0) return (false, "La cantidad producida debe ser mayor a cero.");
+decimal costMateriaPrimaReal = 0;
 
             // 1. Ajustar desviaciones de consumo (RF-41: descontar/reintegrar stock real y asiento compensatorio WIP)
             foreach (var consumption in actualConsumptions)
             {
+                if (consumption.CantidadReal < 0) return (false, "El consumo real no puede ser negativo.");
                 var stored = order.OrdenProduccionConsumos.First(c => c.ProductoInsumoId == consumption.ProductoInsumoId);
 
                 stored.CantidadReal = consumption.CantidadReal;

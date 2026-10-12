@@ -36,6 +36,15 @@ public class ProductionController : Controller
 
     [HttpGet]
     [Authorize(Policy = "PRODUCCION.ORDEN.CREAR")]
+    public async Task<IActionResult> Create(Guid? productId)
+    {
+        var vm = await _productionService.GetProductionOrderCreateContextAsync();
+        if (productId.HasValue) vm.Order.ProductoTerminadoId = productId.Value;
+        return View("CreateOrder", vm);
+    }
+
+    [HttpGet]
+    [Authorize(Policy = "PRODUCCION.ORDEN.CREAR")]
     public async Task<IActionResult> CreateOrder(Guid? productId)
     {
         var vm = await _productionService.GetProductionOrderCreateContextAsync();
