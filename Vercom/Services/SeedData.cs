@@ -401,8 +401,12 @@ public static class SeedData
 
         foreach (var r in roles)
         {
-            if (!await context.Rols.AnyAsync(x => x.Codigo == r.Codigo))
+            if (!await context.Rols
+                    .IgnoreQueryFilters()
+                    .AnyAsync(x => x.Codigo == r.Codigo))
+            {
                 context.Rols.Add(r);
+            }
         }
         await context.SaveChangesAsync();
 
@@ -415,8 +419,13 @@ public static class SeedData
     private static async Task SeedRolPermisosAsync(AppDbContext context)
     {
         // Obtener todos los IDs
-        var roles = await context.Rols.ToDictionaryAsync(r => r.Codigo, r => r.Id);
-        var permisos = await context.Permisos.ToDictionaryAsync(p => p.Codigo, p => p.Id);
+        var roles = await context.Rols
+           .IgnoreQueryFilters()
+           .ToDictionaryAsync(r => r.Codigo, r => r.Id);
+
+        var permisos = await context.Permisos
+            .IgnoreQueryFilters()
+            .ToDictionaryAsync(p => p.Codigo, p => p.Id);
 
         // ------------------------------------------------------------------
         // MASTER y ADMINISTRADOR: TODOS los permisos
@@ -610,8 +619,17 @@ public static class SeedData
     // ==========================================================================
     private static async Task SeedUsuariosAsync(AppDbContext context, IAuthService authService, Guid entidadId, Guid sucursalId)
     {
-        var masterRoleId = await context.Rols.Where(r => r.Codigo == "MASTER").Select(r => r.Id).FirstAsync();
-        var adminRoleId = await context.Rols.Where(r => r.Codigo == "ADMINISTRADOR").Select(r => r.Id).FirstAsync();
+        var masterRoleId = await context.Rols
+      .IgnoreQueryFilters()
+      .Where(r => r.Codigo == "MASTER")
+      .Select(r => r.Id)
+      .FirstAsync();
+
+        var adminRoleId = await context.Rols
+            .IgnoreQueryFilters()
+            .Where(r => r.Codigo == "ADMINISTRADOR")
+            .Select(r => r.Id)
+            .FirstAsync();
 
         var masterUser = new Usuario
         {

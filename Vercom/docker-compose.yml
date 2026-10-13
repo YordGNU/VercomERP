@@ -1,26 +1,57 @@
+# ============================================================
+# VercomERP – Docker Compose
+# ============================================================
+name: vercom
+
 services:
-  # ============================================================
-  # APLICACIÓN ERP
-  # ============================================================
+  # ==========================================================
+  # SQL Server
+  # ==========================================================
+  vercom-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: vercom-db
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+      MSSQL_PID: Developer
+    ports:
+      - "127.0.0.1:1434:1433"       # 🔒 solo localhost
+    volumes:
+        - vercom-mssql-data:/var/opt/mssql    # ← usa el volumen CON guión
+    networks:
+      - vercom-network
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ==========================================================
+  # Aplicación ERP
+  # ==========================================================
   vercom-app:
     build:
       context: .
       dockerfile: Dockerfile
-    image: vercom-erp:latest
+    image: vercom-erp:2.0.0
     container_name: vercom-app
     ports:
-      - "5001:8080"  # Puerto 5001 en tu máquina → 8080 en el contenedor
+      - "127.0.0.1:5001:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
-      # Cadena de conexión apuntando al SQL Server del contenedor
-      - ConnectionStrings__DefaultConnection=Server=vercom-db,1433;Database=VercomERP;UID=sa;Password=Vercom2026!Strong;TrustServerCertificate=True;MultipleActiveResultSets=true;Language=us_english
-      # Clave JWT (mínimo 32 caracteres)
-      - Jwt__SecretKey=k8J2mN9pQ4vX7zR1wY6tB3cF5hL0aD8gE2sU9iO4nM7vC1xZ6qW3eR5tY8uI0p
+      - ConnectionStrings__DefaultConnection=Server=vercom-db,1433;Database=VercomERP;UID=sa;Password=Vercom#2026!StrongPass;TrustServerCertificate=True;MultipleActiveResultSets=true;Language=us_english
       - Jwt__Issuer=VercomERP
       - Jwt__Audience=VercomERPClientes
+     
+      - Jwt__SecretKey_FILE=/run/secrets/jwt_key
+    secrets:
+      - jwt_key
     volumes:
-      # Persistir archivos subidos (contratos, documentos)
       - uploads-data:/app/wwwroot/uploads
     depends_on:
       vercom-db:
@@ -29,42 +60,23 @@ services:
     networks:
       - vercom-network
 
-  # ============================================================
-  # SQL SERVER
-  # ============================================================
-  vercom-db:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: vercom-db
-    environment:
-      - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=Vercom2026!Strong
-      - MSSQL_PID=Developer  # Versión gratuita para desarrollo
-    ports:
-      - "1434:1433"  # Puerto 1434 en tu máquina → 1433 en el contenedor (evita conflicto con SQL local)
-    volumes:
-      - sql-data:/var/opt/mssql
-    healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Vercom2026!Strong' -C -Q 'SELECT 1' || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
-    restart: unless-stopped
-    networks:
-      - vercom-network
-
 # ============================================================
-# VOLÚMENES PERSISTENTES
+# Volúmenes
 # ============================================================
 volumes:
+  vercom-mssql-data:
+    external: true    # ← "Este volumen YA existe, no lo toques"
   uploads-data:
-    driver: local
-  sql-data:
-    driver: local
+    name: vercom_uploads-data
 
 # ============================================================
-# RED INTERNA
+# Redes
 # ============================================================
 networks:
   vercom-network:
+    name: vercom-network
     driver: bridge
+
+secrets:
+  jwt_key:
+    file: ./secrets/jwt_key.txt   

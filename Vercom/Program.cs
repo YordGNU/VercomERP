@@ -11,6 +11,9 @@ using Vercom.Security;
 using Vercom.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IEntidadProvider, HttpContextEntidadProvider>();
@@ -74,11 +77,17 @@ builder.Services.AddDbContext<AppDbContext>((sp, options) =>
            .AddInterceptors(sp.GetRequiredService<AuditInterceptor>());
 });
 
+builder.Configuration.AddKeyPerFile("/run/secrets", optional: true);
 var jwtSecret = builder.Configuration["Jwt:SecretKey"];
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 var jwtAudience = builder.Configuration["Jwt:Audience"];
-if (string.IsNullOrWhiteSpace(jwtSecret) || Encoding.UTF8.GetByteCount(jwtSecret) < 32)
-    throw new InvalidOperationException("Jwt:SecretKey debe tener al menos 32 bytes.");
+
+if (string.IsNullOrWhiteSpace(jwtSecret))
+{
+    const string secretPath = "/run/secrets/jwt_key";
+    if (File.Exists(secretPath))
+        jwtSecret = File.ReadAllText(secretPath).Trim();
+}
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
