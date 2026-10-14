@@ -1,11 +1,15 @@
 # ============================================================
-# VercomERP – Docker Compose
+# VercomERP – Docker Compose (BASE)
+# Configuración común a todos los entornos.
+# Los overrides añaden lo específico de cada uno:
+#   - docker-compose.override.yml → desarrollo (auto-cargado)
+#   - docker-compose.prod.yml     → producción
 # ============================================================
 name: vercom
 
 services:
   # ==========================================================
-  # SQL Server
+  # SQL Server 2022
   # ==========================================================
   vercom-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -14,11 +18,9 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
-      MSSQL_PID: Developer
-    ports:
-      - "127.0.0.1:1434:1433"       # 🔒 solo localhost
+      MSSQL_PID: ${MSSQL_PID:-Developer}
     volumes:
-        - vercom-mssql-data:/var/opt/mssql    # ← usa el volumen CON guión
+      - vercom-mssql-data:/var/opt/mssql
     networks:
       - vercom-network
     healthcheck:
@@ -31,24 +33,23 @@ services:
       start_period: 30s
 
   # ==========================================================
-  # Aplicación ERP
+  # Aplicación ERP (ASP.NET Core)
   # ==========================================================
   vercom-app:
     build:
       context: .
       dockerfile: Dockerfile
-    image: vercom-erp:2.0.0
+      target: runtime
+    image: vercom-erp:${APP_VERSION:-2.0.0}
     container_name: vercom-app
-    ports:
-      - "127.0.0.1:5001:8080"
+    restart: unless-stopped
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Server=vercom-db,1433;Database=VercomERP;UID=sa;Password=Vercom#2026!StrongPass;TrustServerCertificate=True;MultipleActiveResultSets=true;Language=us_english
-      - Jwt__Issuer=VercomERP
-      - Jwt__Audience=VercomERPClientes
-     
-      - Jwt__SecretKey_FILE=/run/secrets/jwt_key
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Server=vercom-db,1433;Database=VercomERP;UID=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;MultipleActiveResultSets=true;Language=us_english"
+      Jwt__Issuer: ${JWT_ISSUER:-VercomERP}
+      Jwt__Audience: ${JWT_AUDIENCE:-VercomERPClientes}
+      Jwt__SecretKey_FILE: /run/secrets/jwt_key
     secrets:
       - jwt_key
     volumes:
@@ -56,27 +57,29 @@ services:
     depends_on:
       vercom-db:
         condition: service_healthy
-    restart: unless-stopped
     networks:
       - vercom-network
 
 # ============================================================
-# Volúmenes
+# Volúmenes persistentes
 # ============================================================
 volumes:
   vercom-mssql-data:
-    external: true    # ← "Este volumen YA existe, no lo toques"
+    external: true                      # ← ya existe, no lo recrees
   uploads-data:
     name: vercom_uploads-data
 
 # ============================================================
-# Redes
+# Red interna
 # ============================================================
 networks:
   vercom-network:
     name: vercom-network
     driver: bridge
 
+# ============================================================
+# Secrets
+# ============================================================
 secrets:
   jwt_key:
-    file: ./secrets/jwt_key.txt   
+    file: ./secrets/jwt_key.txt

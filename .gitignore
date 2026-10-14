@@ -367,3 +367,7 @@ MigrationBackup/
 FodyWeavers.xsd
 
 secrets/
+# Nginx certificates
+nginx/certs/
+*.crt
+*.key

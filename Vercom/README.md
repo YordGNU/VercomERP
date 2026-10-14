@@ -2,11 +2,14 @@
 
 > Sistema integral de gestión empresarial para S.U.R.L. cubana, conforme a normativas NCC/NCIF, ONAT y Resolución 60/2011 de la CGR.
 
+
+
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![SQL Server](https://img.shields.io/badge/SQL%20Server-2022-CC2927?logo=microsoft-sql-server)](https://www.microsoft.com/sql-server)
 [![Kotlin](https://img.shields.io/badge/Kotlin-Android-7F52FF?logo=kotlin)](https://kotlinlang.org/)
 [![License](https://img.shields.io/badge/license-Private-red)]()
-
+[![Build & Push](https://github.com/YordGNU/VercomERP/actions/workflows/docker-build.yml/badge.svg)](https://github.com/YordGNU/VercomERP/actions/workflows/docker-build.yml)
+[![Container](https://img.shields.io/badge/ghcr.io-vercom--erp-blue)](https://github.com/YordGNU/VercomERP/pkgs/container/vercom-erp)
 ---
 
 ## 📋 Tabla de Contenidos
