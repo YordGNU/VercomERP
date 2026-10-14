@@ -66,6 +66,14 @@ services:
     security_opt:
       - no-new-privileges:true
 
+
 volumes:
   nginx-logs:
     name: vercom_nginx-logs
+  # Monitoring (referenciados por el override)
+  prometheus-data:
+    name: vercom_prometheus-data
+  loki-data:
+    name: vercom_loki-data
+  grafana-data:
+    name: vercom_grafana-data

@@ -1,10 +1,11 @@
-using System.Text;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Prometheus;
+using System.Text;
 using Vercom.Filters;
 using Vercom.Models;
 using Vercom.Security;
@@ -124,7 +125,6 @@ builder.Services.AddControllersWithViews(options =>
 });
 
 builder.Services.AddHealthChecks();
-
 var app = builder.Build();
 
 app.UseForwardedHeaders(new ForwardedHeadersOptions
@@ -151,12 +151,15 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
+app.UseHttpMetrics();        // ← métricas HTTP automáticas
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapHub<Vercom.Hubs.NotificationHub>("/notificationHub");
 
 app.MapHealthChecks("/health");
+app.MapMetrics("/metrics");  // ← endpoint /metrics
 
 app.MapStaticAssets();
 
