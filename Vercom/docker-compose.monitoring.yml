@@ -106,7 +106,13 @@ services:
 volumes:
   prometheus-data:
     name: vercom_prometheus-data
+    external: true    
   loki-data:
     name: vercom_loki-data
+    external: true    
   grafana-data:
     name: vercom_grafana-data
+    external: true    
+  nginx-logs:
+    name: vercom_nginx-logs
+    external: true    

@@ -63,6 +63,9 @@ public class ProductionController : Controller
         ModelState.Remove("Order.ProductoTerminado");
         ModelState.Remove("Order.EntidadId");
         ModelState.Remove("Order.NumeroOrden");
+        ModelState.Remove("Order.AlmacenInsumos");
+        ModelState.Remove("Order.AlmacenProducto");
+        ModelState.Remove("Order.ListaMateriales");
 
         if (ModelState.IsValid)
         {

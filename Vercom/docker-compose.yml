@@ -65,10 +65,10 @@ services:
 # ============================================================
 volumes:
   vercom-mssql-data:
-    external: true                      # ← ya existe, no lo recrees
+    external: true
   uploads-data:
     name: vercom_uploads-data
-
+    external: true    
 # ============================================================
 # Red interna
 # ============================================================

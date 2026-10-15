@@ -20,8 +20,8 @@ scrape_configs:
         labels:
           service: 'api'
 
-  # - job_name: 'node-exporter'
-  #   static_configs:
-  #     - targets: ['vercom-node-exporter:9100']
-  #       labels:
-  #         service: 'host'
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['vercom-node-exporter:9100']
+        labels:
+          service: 'host'

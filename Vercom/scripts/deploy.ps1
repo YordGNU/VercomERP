@@ -1,66 +1,88 @@
-﻿# ============================================================
-# VercomERP - Deploy automatizado
-# Uso:
-#   .\scripts\deploy.ps1                              # deploy local
-#   .\scripts\deploy.ps1 -Servidor 192.168.1.100      # deploy remoto
-# ============================================================
+<#
+.SYNOPSIS
+    VercomERP - Deploy desde Windows a la VM
+#>
+[CmdletBinding()]
 param(
-    [string]$Servidor = "localhost",
-    [string]$Usuario  = "root",
-    [string]$Version  = "latest",
-    [switch]$ConMonitoring
+    [string]$Servidor = "192.168.5.220",
+    [string]$Usuario  = "administrador",
+    [string]$Version = "2.0.0",
+    [switch]$SkipBuild,
+    [switch]$InitDb,
+    [switch]$ForceDb
 )
 
 $ErrorActionPreference = "Stop"
+$ProjectDir = (Resolve-Path "$PSScriptRoot\..").Path
+Set-Location $ProjectDir
+
+function Write-Step { param($n,$t) Write-Host "`n[$n/5] $t" -ForegroundColor Yellow }
+function Write-Ok   { param($m) Write-Host "   OK $m" -ForegroundColor Green }
+function Write-Err  { param($m) Write-Host "   XX $m" -ForegroundColor Red; exit 1 }
 
 Write-Host "=================================================" -ForegroundColor Cyan
-Write-Host " Desplegando VercomERP v$Version" -ForegroundColor Cyan
-Write-Host " Destino: $Servidor" -ForegroundColor Cyan
+Write-Host " VercomERP - Deploy Windows -> VM" -ForegroundColor Cyan
+Write-Host " Destino:  ${Usuario}@${Servidor}" -ForegroundColor Cyan
 Write-Host "=================================================" -ForegroundColor Cyan
 
-# 1. Construir imagen
-Write-Host "`n[1/5] Construyendo imagen..." -ForegroundColor Yellow
-docker build -t "vercom-erp:$Version" ./Vercom
+# 1. BUILD
+if (-not $SkipBuild) {
+    Write-Step "1" "Construyendo imagen..."
+    docker build -t "vercom-erp:$Version" .
+    if ($LASTEXITCODE -ne 0) { Write-Err "docker build fallo" }
+    Write-Ok "Imagen construida"
+} else {
+    Write-Step "1" "SkipBuild activo"
+    docker image inspect "vercom-erp:$Version" *> $null
+    if ($LASTEXITCODE -ne 0) { Write-Err "Imagen no existe" }
+    Write-Ok "Imagen existente"
+}
 
-# 2. Exportar
-Write-Host "`n[2/5] Exportando imagen..." -ForegroundColor Yellow
-$archivo = "vercom-erp-$Version.tar.gz"
-docker save "vercom-erp:$Version" | gzip > $archivo
+# 2. EXPORTAR
+Write-Step "2" "Exportando imagen..."
+$archivo = "vercom-erp-$Version.tar"
+if (Test-Path $archivo) { Remove-Item $archivo -Force }
+docker save "vercom-erp:$Version" -o $archivo
+if ($LASTEXITCODE -ne 0) { Write-Err "docker save fallo" }
 $sizeMB = [math]::Round((Get-Item $archivo).Length / 1MB, 2)
-Write-Host "   Archivo: $archivo ($sizeMB MB)" -ForegroundColor Gray
+Write-Ok "Archivo: $archivo ($sizeMB MB)"
 
-# 3. Copiar al servidor (si es remoto)
-if ($Servidor -ne "localhost") {
-    Write-Host "`n[3/5] Copiando a ${Usuario}@${Servidor}..." -ForegroundColor Yellow
-    scp $archivo "${Usuario}@${Servidor}:/tmp/"
-} else {
-    Write-Host "`n[3/5] Deploy local - omitiendo copia" -ForegroundColor Gray
+# 3. SCP (imagen + script bash)
+Write-Step "3" "Copiando imagen y script a la VM..."
+scp $archivo "${Usuario}@${Servidor}:/tmp/"
+if ($LASTEXITCODE -ne 0) { Write-Err "scp imagen fallo" }
+scp "$PSScriptRoot\deploy-remote.sh" "${Usuario}@${Servidor}:/tmp/deploy-remote.sh"
+if ($LASTEXITCODE -ne 0) { Write-Err "scp script fallo" }
+Write-Ok "Transferencia completa"
+
+# 4. DEPLOY REMOTO
+Write-Step "4" "Ejecutando deploy remoto..."
+
+# Construir string de argumentos
+$remoteArgs = ""
+if ($InitDb) {
+    $remoteArgs = "--init-db"
+    if ($ForceDb) { $remoteArgs = "--init-db --force-db" }
 }
 
-# 4. Activar
-Write-Host "`n[4/5] Activando..." -ForegroundColor Yellow
-$monitoringFlag = if ($ConMonitoring) { "-f docker-compose.monitoring.yml" } else { "" }
+$remoteCmd = "bash /tmp/deploy-remote.sh $archivo $remoteArgs"
+Write-Host "   Ejecutando: $remoteCmd" -ForegroundColor Gray
 
-if ($Servidor -ne "localhost") {
-    $comando = @"
-docker load < /tmp/$archivo
-cd /opt/vercom
-docker compose -f docker-compose.yml -f docker-compose.prod.yml $monitoringFlag up -d
-docker system prune -f
-"@
-    ssh "${Usuario}@${Servidor}" $comando
-} else {
-    docker load < $archivo
-    docker compose -f docker-compose.yml -f docker-compose.prod.yml $monitoringFlag up -d
-}
+ssh "${Usuario}@${Servidor}" $remoteCmd
+if ($LASTEXITCODE -ne 0) { Write-Err "Deploy remoto fallo" }
+Write-Ok "Stack desplegado"
 
-# 5. Limpiar
-Write-Host "`n[5/5] Limpiando..." -ForegroundColor Yellow
-Remove-Item $archivo
+# 5. CLEANUP
+Write-Step "5" "Limpiando local..."
+Remove-Item $archivo -ErrorAction SilentlyContinue
+Write-Ok "Archivo temporal eliminado"
 
-Write-Host "`n✅ Despliegue completado" -ForegroundColor Green
-Write-Host "   URL: https://vercom.local" -ForegroundColor Green
-if ($ConMonitoring) {
-    Write-Host "   Grafana: http://127.0.0.1:3000" -ForegroundColor Green
-    Write-Host "   Prometheus: http://127.0.0.1:9090" -ForegroundColor Green
-}
+Write-Host ""
+Write-Host "=================================================" -ForegroundColor Green
+Write-Host " Deploy completado" -ForegroundColor Green
+Write-Host "=================================================" -ForegroundColor Green
+Write-Host ""
+Write-Host " App:        https://vercom-erp.lan" -ForegroundColor Cyan
+Write-Host " Prometheus: http://${Servidor}:9090" -ForegroundColor Cyan
+Write-Host " Grafana:    http://${Servidor}:3000" -ForegroundColor Cyan
+Write-Host ""

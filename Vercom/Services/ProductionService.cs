@@ -517,13 +517,15 @@ public class ProductionService : IProductionService
             decimal totalCostConsumed = 0;
 
             // RF-41: Consumo automático al iniciar (PUSH)
+            int lineaConsumo = 0;
             foreach (var item in order.OrdenProduccionConsumos)
             {
+                lineaConsumo++;
                 var movSalida = new MovimientoInventario
                 {
                     EntidadId = order.EntidadId,
                     TipoMovimientoId = await _inventoryService.EnsureMovementTypeAsync("CONSUMO_PRODUCCION"),
-                    NumeroDocumento = order.NumeroOrden,
+                    NumeroDocumento = $"{order.NumeroOrden}-{lineaConsumo:00}",
                     AlmacenOrigenId = order.AlmacenInsumosId,
                     Fecha = DateTimeOffset.Now,
                     ReferenciaExternaTipo = "ORDEN_PRODUCCION",
@@ -588,6 +590,7 @@ public class ProductionService : IProductionService
 decimal costMateriaPrimaReal = 0;
 
             // 1. Ajustar desviaciones de consumo (RF-41: descontar/reintegrar stock real y asiento compensatorio WIP)
+            int lineaVariacion = 0;
             foreach (var consumption in actualConsumptions)
             {
                 if (consumption.CantidadReal < 0) return (false, "El consumo real no puede ser negativo.");
@@ -599,11 +602,12 @@ decimal costMateriaPrimaReal = 0;
                 var diff = stored.CantidadReal - stored.CantidadPlanificada;
                 if (Math.Abs(diff) < 0.0001m) continue;
 
+                lineaVariacion++;
                 var movVar = new MovimientoInventario
                 {
                     EntidadId = order.EntidadId,
                     Fecha = DateTimeOffset.Now,
-                    NumeroDocumento = diff > 0 ? $"{order.NumeroOrden}-EXT" : $"{order.NumeroOrden}-DEV",
+                    NumeroDocumento = diff > 0 ? $"{order.NumeroOrden}-EXT-{lineaVariacion:00}" : $"{order.NumeroOrden}-DEV-{lineaVariacion:00}",
                     ReferenciaExternaTipo = "ORDEN_PRODUCCION",
                     ReferenciaExternaId = order.Id,
                     Canal = "ERP",

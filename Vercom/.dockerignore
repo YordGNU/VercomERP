@@ -32,3 +32,5 @@ appsettings.Development.json
 appsettings.Production.json
 *.user
 *.pfx
+# SQL de mantenimiento (no en deploy)
+Database/maintenance/
