@@ -1,4 +1,4 @@
-USE [VercomERP];
+USE [VERCOMERP];
 GO
 
 -- Auditoría para Clientes

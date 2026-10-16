@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using Vercom.Helpers;
-using Vercom.Models;
-using Vercom.ViewModels;
+using VERCOM.Helpers;
+using VERCOM.Models;
+using VERCOM.ViewModels;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public interface IAdminService
 {

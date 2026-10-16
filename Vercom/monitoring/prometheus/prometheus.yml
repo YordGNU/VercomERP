@@ -3,7 +3,7 @@ global:
   evaluation_interval: 15s
   external_labels:
     environment: 'production'
-    project: 'vercom'
+    project: 'VERCOM'
 
 rule_files:
   - /etc/prometheus/alerts.yml
@@ -13,15 +13,15 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
-  - job_name: 'vercom-app'
+  - job_name: 'VERCOM-app'
     metrics_path: /metrics
     static_configs:
-      - targets: ['vercom-app:8080']
+      - targets: ['VERCOM-app:8080']
         labels:
           service: 'api'
 
   - job_name: 'node-exporter'
     static_configs:
-      - targets: ['vercom-node-exporter:9100']
+      - targets: ['VERCOM-node-exporter:9100']
         labels:
           service: 'host'

@@ -1,14 +1,14 @@
-﻿-- SEED DE DATOS INICIALES - Vercom ERP (Docker/Linux)
+﻿-- SEED DE DATOS INICIALES - VERCOM ERP (Docker/Linux)
 -- Ejecutar DESPUÉS de init-docker.sql
 -- Versión genérica actualizada
 
-USE [VercomERP]
+USE [VERCOMERP]
 GO
 
 -- 1. ENTIDAD GENÉRICA
 DECLARE @EntidadId UNIQUEIDENTIFIER = NEWID();
 INSERT INTO nucleo.entidad (id, razon_social, nombre_comercial, nit, codigo_reeup, forma_juridica, direccion_legal, municipio, provincia, telefono, email, moneda_base, activo, creado_en, actualizado_en)
-VALUES (@EntidadId,'Vercom ERP Demo S.U.R.L.','Vercom ERP Demo','12345678901','REEUP000000','S.U.R.L.','Dirección Genérica #123','Ciudad','Provincia','+00 00000000','demo@vercomerp.local','CUP',1,SYSDATETIMEOFFSET(),SYSDATETIMEOFFSET());
+VALUES (@EntidadId,'VERCOM ERP Demo S.U.R.L.','VERCOM ERP Demo','12345678901','REEUP000000','S.U.R.L.','Dirección Genérica #123','Ciudad','Provincia','+00 00000000','demo@VERCOMerp.local','CUP',1,SYSDATETIMEOFFSET(),SYSDATETIMEOFFSET());
 GO
 
 -- 2. SUCURSAL
@@ -107,10 +107,10 @@ DECLARE @MasterId INT=(SELECT id FROM nucleo.rol WHERE codigo='MASTER');
 DECLARE @AdminUserId UNIQUEIDENTIFIER=NEWID();
 DECLARE @MasterUserId UNIQUEIDENTIFIER=NEWID();
 INSERT INTO nucleo.usuario (id,entidad_id,sucursal_id,nombre_usuario,nombre_completo,email,hash_password,debe_cambiar_pass,intentos_fallidos,activo,creado_en,actualizado_en)
-VALUES (@AdminUserId,@EntidadId,@SucursalId,'admin','Administrador Local','admin@vercomerp.local','',1,0,1,SYSDATETIMEOFFSET(),SYSDATETIMEOFFSET());
+VALUES (@AdminUserId,@EntidadId,@SucursalId,'admin','Administrador Local','admin@VERCOMerp.local','',1,0,1,SYSDATETIMEOFFSET(),SYSDATETIMEOFFSET());
 INSERT INTO nucleo.usuario_rol (usuario_id,rol_id,sucursal_id,asignado_en) VALUES (@AdminUserId,@AdminId,@SucursalId,SYSDATETIMEOFFSET());
 INSERT INTO nucleo.usuario (id,entidad_id,sucursal_id,nombre_usuario,nombre_completo,email,hash_password,debe_cambiar_pass,intentos_fallidos,activo,creado_en,actualizado_en)
-VALUES (@MasterUserId,@EntidadId,@SucursalId,'master','Usuario Maestro','master@vercomerp.local','',0,0,1,SYSDATETIMEOFFSET(),SYSDATETIMEOFFSET());
+VALUES (@MasterUserId,@EntidadId,@SucursalId,'master','Usuario Maestro','master@VERCOMerp.local','',0,0,1,SYSDATETIMEOFFSET(),SYSDATETIMEOFFSET());
 INSERT INTO nucleo.usuario_rol (usuario_id,rol_id,sucursal_id,asignado_en) VALUES (@MasterUserId,@MasterId,@SucursalId,SYSDATETIMEOFFSET());
 GO
 

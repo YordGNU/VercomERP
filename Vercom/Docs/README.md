@@ -1,6 +1,6 @@
-# VercomERP – Documentación
+# VERCOMERP – Documentación
 
-ERP empresarial para **Tierra Prometida S.U.R.L.**  
+ERP empresarial para **S.U.R.L.**  
 Stack: **ASP.NET Core 10 + SQL Server 2022 + Docker + Nginx**
 
 ## 📚 Índice
@@ -21,11 +21,11 @@ Stack: **ASP.NET Core 10 + SQL Server 2022 + Docker + Nginx**
 
 ```bash
 # Deploy completo
-cd /opt/vercom
+cd /opt/VERCOM
 ./scripts/deploy.sh --init-db --skip-build
 
 # Ver estado
 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.monitoring.yml ps
 
 # Ver logs
-docker logs vercom-app -f
+docker logs VERCOM-app -f

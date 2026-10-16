@@ -1,4 +1,4 @@
-# VercomERP – Levantar stack en local (Windows)
+# VERCOMERP – Levantar stack en local (Windows)
 
 **Última actualización:** 2026-10-15  
 **Sistema:** Windows 10/11 + Docker Desktop  
@@ -41,14 +41,14 @@ docker version
 docker compose version
 
 # Ubicación correcta
-cd C:\Users\Usuario\source\repos\Vercom\Vercom
+cd C:\Users\Usuario\source\repos\VERCOM\VERCOM
 pwd
 ```
 
 **Esperado:**
 - Docker version 27.x o superior
 - Docker Compose version v2.x
-- Ubicación: `C:\Users\Usuario\source\repos\Vercom\Vercom`
+- Ubicación: `C:\Users\Usuario\source\repos\VERCOM\VERCOM`
 
 ---
 
@@ -57,7 +57,7 @@ pwd
 Los siguientes archivos son **obligatorios**:
 
 ```powershell
-cd C:\Users\Usuario\source\repos\Vercom\Vercom
+cd C:\Users\Usuario\source\repos\VERCOM\VERCOM
 
 Write-Host "===== ARCHIVOS CLAVE =====" -ForegroundColor Cyan
 
@@ -69,7 +69,7 @@ $archivos = @(
     "secrets\jwt_key.txt",
     "Database\scripts\01-schema.sql",
     "Dockerfile",
-    "Vercom.csproj"
+    "VERCOM.csproj"
 )
 
 foreach ($a in $archivos) {
@@ -90,12 +90,12 @@ Get-Content .env
 **Contenido esperado:**
 
 ```env
-MSSQL_SA_PASSWORD=Vercom#2026!StrongPass
+MSSQL_SA_PASSWORD=VERCOM#2026!StrongPass
 MSSQL_PID=Developer
 APP_VERSION=latest
 ASPNETCORE_ENVIRONMENT=Production
-JWT_ISSUER=VercomERP
-JWT_AUDIENCE=VercomERPClientes
+JWT_ISSUER=VERCOMERP
+JWT_AUDIENCE=VERCOMERPClientes
 GRAFANA_PASSWORD=admin
 ```
 
@@ -114,20 +114,20 @@ Get-Item secrets\jwt_key.txt | Select-Object Name, Length
 Si había un stack corriendo previamente:
 
 ```powershell
-cd C:\Users\Usuario\source\repos\Vercom\Vercom
+cd C:\Users\Usuario\source\repos\VERCOM\VERCOM
 
 # Bajar stack (conserva volúmenes)
 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.monitoring.yml down
 
-# Borrar contenedores huérfanos de vercom
-$containers = docker ps -aq --filter "name=vercom"
+# Borrar contenedores huérfanos de VERCOM
+$containers = docker ps -aq --filter "name=VERCOM"
 if ($containers) { docker rm -f $containers }
 
 # Verificar
-docker ps -a --filter "name=vercom"
+docker ps -a --filter "name=VERCOM"
 ```
 
-**Esperado:** sin contenedores vercom.
+**Esperado:** sin contenedores VERCOM.
 
 ---
 
@@ -136,25 +136,25 @@ docker ps -a --filter "name=vercom"
 ### Opción A — Stack completo con monitoring (recomendado)
 
 ```powershell
-cd C:\Users\Usuario\source\repos\Vercom\Vercom
+cd C:\Users\Usuario\source\repos\VERCOM\VERCOM
 
 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.monitoring.yml up -d
 ```
 
 **Levanta 8 servicios:**
-- vercom-app (ASP.NET Core)
-- vercom-db (SQL Server)
-- vercom-nginx (HTTPS proxy)
-- vercom-prometheus (métricas)
-- vercom-grafana (dashboards)
-- vercom-loki (logs)
-- vercom-promtail (colector)
-- vercom-node-exporter (métricas host)
+- VERCOM-app (ASP.NET Core)
+- VERCOM-db (SQL Server)
+- VERCOM-nginx (HTTPS proxy)
+- VERCOM-prometheus (métricas)
+- VERCOM-grafana (dashboards)
+- VERCOM-loki (logs)
+- VERCOM-promtail (colector)
+- VERCOM-node-exporter (métricas host)
 
 ### Opción B — Solo app + db (más ligero)
 
 ```powershell
-cd C:\Users\Usuario\source\repos\Vercom\Vercom
+cd C:\Users\Usuario\source\repos\VERCOM\VERCOM
 
 docker compose up -d
 ```
@@ -179,14 +179,14 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compos
 
 ```
 NAME                    STATUS
-vercom-app              Up (healthy)
-vercom-db               Up (healthy)
-vercom-nginx            Up (healthy)
-vercom-grafana          Up
-vercom-loki             Up
-vercom-node-exporter    Up
-vercom-prometheus       Up
-vercom-promtail         Up
+VERCOM-app              Up (healthy)
+VERCOM-db               Up (healthy)
+VERCOM-nginx            Up (healthy)
+VERCOM-grafana          Up
+VERCOM-loki             Up
+VERCOM-node-exporter    Up
+VERCOM-prometheus       Up
+VERCOM-promtail         Up
 ```
 
 ### Health de la app
@@ -200,8 +200,8 @@ curl.exe -k https://localhost/health
 ### Datos en BD
 
 ```powershell
-docker exec vercom-db /opt/mssql-tools18/bin/sqlcmd `
-    -S localhost -U sa -P "Vercom#2026!StrongPass" -C -h -1 -d VercomERP `
+docker exec VERCOM-db /opt/mssql-tools18/bin/sqlcmd `
+    -S localhost -U sa -P "VERCOM#2026!StrongPass" -C -h -1 -d VERCOMERP `
     -Q "SET NOCOUNT ON;
         SELECT 'Tablas:   ' + CAST(COUNT(*) AS VARCHAR(10)) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE'
         UNION ALL SELECT 'Roles:    ' + CAST(COUNT(*) AS VARCHAR(10)) FROM nucleo.rol
@@ -220,7 +220,7 @@ Usuarios: 2
 ### Logs de la app (SeedData)
 
 ```powershell
-docker logs vercom-app 2>&1 | Select-String "Seed|roles|usuarios|completado" | Select-Object -First 10
+docker logs VERCOM-app 2>&1 | Select-String "Seed|roles|usuarios|completado" | Select-Object -First 10
 ```
 
 **Esperado:**
@@ -240,7 +240,7 @@ docker logs vercom-app 2>&1 | Select-String "Seed|roles|usuarios|completado" | S
 
 | Servicio | URL | Credenciales |
 |---|---|---|
-| **App** | `https://localhost` | master / `MasterVercom2026*` |
+| **App** | `https://localhost` | master / `MasterVERCOM2026*` |
 | **Health** | `https://localhost/health` | — |
 | **Prometheus** | `http://localhost:9090` | — |
 | **Grafana** | `http://localhost:3000` | admin / admin |
@@ -259,7 +259,7 @@ docker logs vercom-app 2>&1 | Select-String "Seed|roles|usuarios|completado" | S
 
 ### DNS local (opcional)
 
-Para usar `vercom.local` en lugar de `localhost`:
+Para usar `VERCOM.local` en lugar de `localhost`:
 
 ```powershell
 # Como Admin
@@ -268,10 +268,10 @@ Start-Process notepad -Verb RunAs "C:\Windows\System32\drivers\etc\hosts"
 
 Añadir al final:
 ```
-127.0.0.1    vercom.local
+127.0.0.1    VERCOM.local
 ```
 
-Guardar y acceder a `https://vercom.local`.
+Guardar y acceder a `https://VERCOM.local`.
 
 ---
 
@@ -307,14 +307,14 @@ docker system df
 
 ```powershell
 # App
-docker logs vercom-app --tail 50
-docker logs vercom-app -f
+docker logs VERCOM-app --tail 50
+docker logs VERCOM-app -f
 
 # BD
-docker logs vercom-db --tail 30
+docker logs VERCOM-db --tail 30
 
 # Nginx
-docker logs vercom-nginx --tail 30
+docker logs VERCOM-nginx --tail 30
 
 # Todos
 docker compose logs -f
@@ -323,28 +323,28 @@ docker compose logs -f
 ### Reiniciar un servicio
 
 ```powershell
-docker compose restart vercom-app
-docker compose restart vercom-db
-docker compose restart vercom-nginx
+docker compose restart VERCOM-app
+docker compose restart VERCOM-db
+docker compose restart VERCOM-nginx
 ```
 
 ### Shell en contenedor
 
 ```powershell
 # App (Alpine)
-docker exec -it vercom-app sh
+docker exec -it VERCOM-app sh
 
 # BD (SQL Server CLI)
-docker exec -it vercom-db /opt/mssql-tools18/bin/sqlcmd `
-    -S localhost -U sa -P "Vercom#2026!StrongPass" -C
+docker exec -it VERCOM-db /opt/mssql-tools18/bin/sqlcmd `
+    -S localhost -U sa -P "VERCOM#2026!StrongPass" -C
 ```
 
 ### Consultas rápidas a BD
 
 ```powershell
 # Contar tablas
-docker exec vercom-db /opt/mssql-tools18/bin/sqlcmd `
-    -S localhost -U sa -P "Vercom#2026!StrongPass" -C -h -1 -d VercomERP `
+docker exec VERCOM-db /opt/mssql-tools18/bin/sqlcmd `
+    -S localhost -U sa -P "VERCOM#2026!StrongPass" -C -h -1 -d VERCOMERP `
     -Q "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE'"
 ```
 
@@ -355,25 +355,25 @@ docker exec vercom-db /opt/mssql-tools18/bin/sqlcmd `
 ⚠️ **Borra todos los datos.** Solo usar cuando algo falla sin arreglo.
 
 ```powershell
-cd C:\Users\Usuario\source\repos\Vercom\Vercom
+cd C:\Users\Usuario\source\repos\VERCOM\VERCOM
 
 # 1. Bajar todo
 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.monitoring.yml down
 
 # 2. Borrar contenedores
-docker rm -f $(docker ps -aq --filter "name=vercom") 2>$null
+docker rm -f $(docker ps -aq --filter "name=VERCOM") 2>$null
 
 # 3. Borrar volúmenes
 docker volume rm `
-    vercom-mssql-data `
-    vercom_uploads-data `
-    vercom_grafana-data `
-    vercom_loki-data `
-    vercom_prometheus-data `
-    vercom_nginx-logs 2>$null
+    VERCOM-mssql-data `
+    VERCOM_uploads-data `
+    VERCOM_grafana-data `
+    VERCOM_loki-data `
+    VERCOM_prometheus-data `
+    VERCOM_nginx-logs 2>$null
 
 # 4. Borrar red
-docker network rm vercom-network 2>$null
+docker network rm VERCOM-network 2>$null
 
 # 5. Levantar de nuevo
 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.monitoring.yml up -d
@@ -405,7 +405,7 @@ Stop-Process -Id <PID> -Force
 
 O cambiar el puerto en `docker-compose.prod.yml`.
 
-### ❌ `external volume "vercom-mssql-data" not found`
+### ❌ `external volume "VERCOM-mssql-data" not found`
 
 **Causa:** Volumen marcado como `external: true` pero no existe.
 
@@ -413,12 +413,12 @@ O cambiar el puerto en `docker-compose.prod.yml`.
 
 ```powershell
 foreach ($vol in @(
-    "vercom-mssql-data",
-    "vercom_uploads-data",
-    "vercom_grafana-data",
-    "vercom_loki-data",
-    "vercom_prometheus-data",
-    "vercom_nginx-logs"
+    "VERCOM-mssql-data",
+    "VERCOM_uploads-data",
+    "VERCOM_grafana-data",
+    "VERCOM_loki-data",
+    "VERCOM_prometheus-data",
+    "VERCOM_nginx-logs"
 )) {
     docker volume create $vol
 }
@@ -443,7 +443,7 @@ foreach ($vol in @(
 Get-Content secrets\jwt_key.txt
 ```
 
-### ❌ `vercom-app is unhealthy`
+### ❌ `VERCOM-app is unhealthy`
 
 **Causa:** App no puede conectar a BD o falla en seed.
 
@@ -451,18 +451,18 @@ Get-Content secrets\jwt_key.txt
 
 ```powershell
 # Ver logs
-docker logs vercom-app --tail 50
-docker logs vercom-app 2>&1 | Select-String "error|exception" -CaseSensitive:$false
+docker logs VERCOM-app --tail 50
+docker logs VERCOM-app 2>&1 | Select-String "error|exception" -CaseSensitive:$false
 ```
 
-### ❌ `vercom-nginx` en estado `Created`
+### ❌ `VERCOM-nginx` en estado `Created`
 
 **Causa:** Nginx espera a que la app esté healthy.
 
 **Solución:**
 
 ```powershell
-docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.monitoring.yml up -d vercom-nginx
+docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.monitoring.yml up -d VERCOM-nginx
 ```
 
 ### ❌ Docker tarda en arrancar
@@ -480,10 +480,10 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compos
 2. O `thisisunsafe` en Chrome/Edge
 3. O instalar cert como confiable (admin):
    ```powershell
-   Import-Certificate -FilePath "nginx\certs\vercom.crt" -CertStoreLocation Cert:\LocalMachine\Root
+   Import-Certificate -FilePath "nginx\certs\VERCOM.crt" -CertStoreLocation Cert:\LocalMachine\Root
    ```
 
-### ❌ `Cannot open database "VercomERP"`
+### ❌ `Cannot open database "VERCOMERP"`
 
 **Causa:** La BD no existe.
 
@@ -491,14 +491,14 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compos
 
 ```powershell
 # Ejecutar init-db manualmente
-docker exec vercom-db /opt/mssql-tools18/bin/sqlcmd `
-    -S localhost -U sa -P "Vercom#2026!StrongPass" -C `
-    -Q "CREATE DATABASE VercomERP"
+docker exec VERCOM-db /opt/mssql-tools18/bin/sqlcmd `
+    -S localhost -U sa -P "VERCOM#2026!StrongPass" -C `
+    -Q "CREATE DATABASE VERCOMERP"
 
 # Copiar y aplicar schema
-docker cp Database\scripts\01-schema.sql vercom-db:/tmp/schema.sql
-docker exec vercom-db /opt/mssql-tools18/bin/sqlcmd `
-    -S localhost -U sa -P "Vercom#2026!StrongPass" -C -d VercomERP `
+docker cp Database\scripts\01-schema.sql VERCOM-db:/tmp/schema.sql
+docker exec VERCOM-db /opt/mssql-tools18/bin/sqlcmd `
+    -S localhost -U sa -P "VERCOM#2026!StrongPass" -C -d VERCOMERP `
     -i /tmp/schema.sql
 ```
 
@@ -532,7 +532,7 @@ proxy_buffering         on;
 Reiniciar Nginx:
 
 ```bash
-docker compose restart vercom-nginx
+docker compose restart VERCOM-nginx
 ```
 
 **Verificación:**
@@ -549,16 +549,16 @@ Luego reintentar el login en el navegador.
 
 ```
 [ ] Docker Desktop corriendo
-[ ] Carpeta correcta (Vercom/Vercom)
+[ ] Carpeta correcta (VERCOM/VERCOM)
 [ ] Archivos obligatorios presentes
 [ ] .env con MSSQL_SA_PASSWORD
 [ ] secrets/jwt_key.txt existe
 [ ] Stack anterior bajado
 [ ] docker compose up -d ejecutado
 [ ] 8 servicios corriendo
-[ ] vercom-app healthy
-[ ] vercom-db healthy
-[ ] vercom-nginx healthy
+[ ] VERCOM-app healthy
+[ ] VERCOM-db healthy
+[ ] VERCOM-nginx healthy
 [ ] https://localhost/health responde
 [ ] Datos en BD (99 tablas)
 ```
@@ -569,7 +569,7 @@ Luego reintentar el login en el navegador.
 
 ```powershell
 # Ir al proyecto
-cd C:\Users\Usuario\source\repos\Vercom\Vercom
+cd C:\Users\Usuario\source\repos\VERCOM\VERCOM
 
 # Levantar todo
 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.monitoring.yml up -d
@@ -579,7 +579,7 @@ Start-Sleep -Seconds 60
 docker compose ps
 
 # Ver logs
-docker logs vercom-app -f
+docker logs VERCOM-app -f
 
 # Bajar
 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.monitoring.yml down

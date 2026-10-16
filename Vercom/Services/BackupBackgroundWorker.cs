@@ -1,4 +1,4 @@
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public class BackupBackgroundWorker : BackgroundService
 {

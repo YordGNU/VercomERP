@@ -6,10 +6,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Prometheus;
 using System.Text;
-using Vercom.Filters;
-using Vercom.Models;
-using Vercom.Security;
-using Vercom.Services;
+using VERCOM.Filters;
+using VERCOM.Models;
+using VERCOM.Security;
+using VERCOM.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -156,7 +156,7 @@ app.UseHttpMetrics();        // ← métricas HTTP automáticas
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapHub<Vercom.Hubs.NotificationHub>("/notificationHub");
+app.MapHub<VERCOM.Hubs.NotificationHub>("/notificationHub");
 
 app.MapHealthChecks("/health");
 app.MapMetrics("/metrics");  // ← endpoint /metrics

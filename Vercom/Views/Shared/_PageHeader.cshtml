@@ -1,9 +1,5 @@
-@model Vercom.ViewModels.PageHeaderModel
-@{
-    var tone = string.IsNullOrWhiteSpace(Model.Tone) ? "primary" : Model.Tone;
-    var badgeTone = string.IsNullOrWhiteSpace(Model.BadgeTone) ? tone : Model.BadgeTone;
-}
-<div class="page-title-head ux-header ux-tone-@tone">
+@model VERCOM.ViewModels.PageHeaderModel
+<div class="page-title-head d-flex align-items-center">
     @if (!string.IsNullOrWhiteSpace(Model.Icon))
     {
         <span class="ux-header-icon"><i class="ti @Model.Icon"></i></span>
@@ -22,11 +18,11 @@
     <div class="ux-header-actions">
         @if (!string.IsNullOrWhiteSpace(Model.BadgeText))
         {
-            <span class="badge ux-tone-@badgeTone">@Model.BadgeText</span>
+            <span class="badge">@Model.BadgeText</span>
         }
         @if (Model.ActionsHtml != null)
         {
             @Model.ActionsHtml
         }
-    </div>
+    </div>  
 </div>

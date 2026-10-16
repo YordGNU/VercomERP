@@ -1,9 +1,9 @@
 apiVersion: 1
 
 providers:
-  - name: 'VercomERP'
+  - name: 'VERCOMERP'
     orgId: 1
-    folder: 'VercomERP'
+    folder: 'VERCOMERP'
     type: file
     disableDeletion: false
     updateIntervalSeconds: 30

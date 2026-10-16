@@ -1,9 +1,9 @@
-@model Vercom.ViewModels.PlanProduccionFormViewModel
+@model VERCOM.ViewModels.PlanProduccionFormViewModel
 @{
     ViewBag.Title = "Nuevo Plan de Producción";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Planificación</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Establecer Metas Mensuales", Subtitle = "Planificación de volúmenes de fabricación para el cumplimiento presupuestario.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Planificación</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Establecer Metas Mensuales", Subtitle = "Planificación de volúmenes de fabricación para el cumplimiento presupuestario.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

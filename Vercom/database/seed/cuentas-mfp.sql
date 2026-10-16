@@ -1,9 +1,9 @@
 /* ============================================================
-   VercomERP – Plan de Cuentas MFP
+   VERCOMERP – Plan de Cuentas MFP
    Ejecutar DESPUÉS de 01-schema.sql
-   Alineado 1:1 con el DDL real (VercomERP)
+   Alineado 1:1 con el DDL real (VERCOMERP)
    ============================================================ */
-USE [VercomERP];
+USE [VERCOMERP];
 GO
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
@@ -24,10 +24,10 @@ BEGIN
          direccion_legal, municipio, provincia, telefono, email,
          moneda_base, activo, creado_en, actualizado_en)
     VALUES
-        (@E, 'Tierra Prometida S.U.R.L.', 'Tierra Prometida', 'DEMO00000000',
+        (@E, 'DEMO S.U.R.L.', 'ENTIDAD DEMO', 'DEMO00000000',
          'REEUP-DEMO-001', 'S.U.R.L.',
          'Calle 23 #456, Vedado', 'Plaza de la Revolución', 'La Habana',
-         '+53 7 832 0000', 'info@tierraprometida.cu',
+         '+53 7 832 0000', 'info@demo.cu',
          'CUP', 1, SYSDATETIMEOFFSET(), SYSDATETIMEOFFSET());
     PRINT '✔ Entidad DEMO creada.';
 END

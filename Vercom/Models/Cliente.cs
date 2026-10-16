@@ -1,4 +1,4 @@
-﻿namespace Vercom.Models;
+﻿namespace VERCOM.Models;
 
 /// <summary>
 /// El &quot;cliente mostrador&quot; del POS (venta anónima) se modela como registro fijo con nit_o_ci=NULL, nombre_razon_social=&apos;CONSUMIDOR FINAL&apos;.

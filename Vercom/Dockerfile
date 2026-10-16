@@ -1,5 +1,5 @@
 # ============================================================
-# VercomERP – Dockerfile multi-stage optimizado
+# VERCOM – Dockerfile multi-stage optimizado
 # .NET 10 · Usuario no-root · Healthcheck con curl
 # ============================================================
 
@@ -12,13 +12,13 @@ WORKDIR /src
 
 # Cache de restore: solo copiamos el csproj primero
 # Copiar y restaurar con cache persistente
-COPY ["Vercom.csproj", "./"]
+COPY ["vercom.csproj", "./"]
 RUN --mount=type=cache,target=/root/.nuget/packages \
-    dotnet restore "Vercom.csproj"
+    dotnet restore "vercom.csproj"
 
 COPY . .
 RUN --mount=type=cache,target=/root/.nuget/packages \
-    dotnet publish "Vercom.csproj" \
+    dotnet publish "vercom.csproj" \
     -c Release \
     -o /app/publish \
     --no-restore \
@@ -56,4 +56,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl --silent --fail http://localhost:8080/health || exit 1
 
-ENTRYPOINT ["dotnet", "Vercom.dll"]
+ENTRYPOINT ["dotnet", "vercom.dll"]

@@ -1,4 +1,4 @@
-@model Vercom.ViewModels.DashboardViewModel
+@model VERCOM.ViewModels.DashboardViewModel
 @{
     ViewBag.Title = "Panel de Control";
     string Num(decimal? v, string fmt = "N2") => v.HasValue ? v.Value.ToString(fmt) : "—";
@@ -22,7 +22,7 @@
     sbHeader.Append("</div>");
     sbHeader.Append("<a href=\"").Append(Url.Action("Index", "Dashboard", new { rango = Model.Rango })).Append("\" class=\"btn btn-sm btn-outline-secondary\" title=\"Recargar datos\" data-bs-toggle=\"tooltip\"><i class=\"ti ti-refresh\"></i></a>");
     var headerActions = sbHeader.ToString();
-    var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Panel", Title = "Panel de Control", Subtitle = "Indicadores clave de rendimiento y monitoreo operativo en tiempo real.", Icon = "ti-gauge", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) };
+    var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Panel", Title = "Panel de Control", Subtitle = "Indicadores clave de rendimiento y monitoreo operativo en tiempo real.", Icon = "ti-gauge", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) };
 }
 <partial name='_PageHeader' model='pageHeader' />
 

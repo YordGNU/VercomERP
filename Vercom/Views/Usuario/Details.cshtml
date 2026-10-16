@@ -1,10 +1,10 @@
-@model Vercom.Models.Usuario
-@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
+@model VERCOM.Models.Usuario
+@inject VERCOM.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewBag.Title = "Perfil de Usuario";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Usuarios</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Perfil de Usuario: " + Model.NombreUsuario, Subtitle = "Gestión de identidad, seguridad y roles asignados.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Usuarios</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Perfil de Usuario: " + Model.NombreUsuario, Subtitle = "Gestión de identidad, seguridad y roles asignados.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

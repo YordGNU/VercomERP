@@ -1,9 +1,9 @@
-@model Vercom.ViewModels.CostSheetCreateViewModel
+@model VERCOM.ViewModels.CostSheetCreateViewModel
 @{
     ViewBag.Title = Model.Title;
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Fichas</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = Model.Title, Subtitle = "Definición de costos estándar según metodología oficial del MFP.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Fichas</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = Model.Title, Subtitle = "Definición de costos estándar según metodología oficial del MFP.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

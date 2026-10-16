@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using Vercom.Models;
-using Vercom.Security;
-using Vercom.ViewModels;
+using VERCOM.Models;
+using VERCOM.Security;
+using VERCOM.ViewModels;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public interface IIntelligenceService
 {

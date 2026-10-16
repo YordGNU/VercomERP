@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Vercom.Services;
-using Vercom.ViewModels;
+using VERCOM.Services;
+using VERCOM.ViewModels;
 
-namespace Vercom.Controllers;
+namespace VERCOM.Controllers;
 
 [Authorize]
 public class PlanProduccionController : Controller

@@ -2,10 +2,10 @@ using System.Data;
 using System.Text.Json;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Vercom.DTOs;
-using Vercom.Models;
+using VERCOM.DTOs;
+using VERCOM.Models;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public sealed class PosSincronizacionService
 {

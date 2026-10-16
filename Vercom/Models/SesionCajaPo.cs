@@ -1,4 +1,4 @@
-﻿namespace Vercom.Models;
+﻿namespace VERCOM.Models;
 
 /// <summary>
 /// Sesión de caja compartida por todos los dispositivos de una misma caja:

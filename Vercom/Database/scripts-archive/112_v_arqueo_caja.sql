@@ -2,7 +2,7 @@
 -- 112_v_arqueo_caja.sql — Vista de conciliación de arqueo de caja POS
 -- Item P3-E2E 21: vista que expone la diferencia declarada vs sistema de cada
 -- sesión de caja y su estado contable (PENDIENTE / CONTABILIZADO / SIN_DIFERENCIA).
--- Aplicada sobre BD real VercomERP (2026-09-27) y registrada en schema_completo_corregido.sql.
+-- Aplicada sobre BD real VERCOMERP (2026-09-27) y registrada en schema_completo_corregido.sql.
 -- ============================================================================
 
 IF OBJECT_ID('contabilidad.v_arqueo_caja', 'V') IS NOT NULL

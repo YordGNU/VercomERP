@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    VercomERP - Inicializacion de base de datos
+    VERCOMERP - Inicializacion de base de datos
 .DESCRIPTION
     Crea la BD si no existe y aplica 01-schema.sql (estructura consolidada).
     Con -Force: dropea la BD y la recrea desde cero.
@@ -36,13 +36,13 @@ Get-Content "$ProjectDir\.env" | ForEach-Object {
 
 if (-not $env:MSSQL_SA_PASSWORD) { Write-Err "MSSQL_SA_PASSWORD no definida" }
 
-$DB_NAME = "VercomERP"
+$DB_NAME = "VERCOMERP"
 $SQLCMD  = "/opt/mssql-tools18/bin/sqlcmd"
 
 # Helper para ejecutar sqlcmd en master
 function Invoke-Sql {
     param([string]$Query, [string]$Database = "master")
-    $out = docker exec vercom-db $SQLCMD `
+    $out = docker exec VERCOM-db $SQLCMD `
         -S localhost -U sa -P $env:MSSQL_SA_PASSWORD -C -h -1 `
         -d $Database -Q $Query 2>&1
     return @{
@@ -117,11 +117,11 @@ $sizeKB = [math]::Round((Get-Item $SchemaFile).Length / 1KB, 1)
 Write-Log "Aplicando 01-schema.sql (${sizeKB} KB)..."
 
 # Copiar
-docker cp $SchemaFile "vercom-db:/tmp/_schema.sql" | Out-Null
+docker cp $SchemaFile "VERCOM-db:/tmp/_schema.sql" | Out-Null
 if ($LASTEXITCODE -ne 0) { Write-Err "Error copiando schema" }
 
 # Ejecutar
-$output = docker exec vercom-db $SQLCMD `
+$output = docker exec VERCOM-db $SQLCMD `
     -S localhost -U sa -P $env:MSSQL_SA_PASSWORD -C -b -d $DB_NAME `
     -i /tmp/_schema.sql 2>&1
 
@@ -144,9 +144,9 @@ if ($WithDemo) {
 
     if (Test-Path $DemoFile) {
         Write-Log "Aplicando demo-data.sql..."
-        docker cp $DemoFile "vercom-db:/tmp/_demo.sql" | Out-Null
+        docker cp $DemoFile "VERCOM-db:/tmp/_demo.sql" | Out-Null
 
-        $output = docker exec vercom-db $SQLCMD `
+        $output = docker exec VERCOM-db $SQLCMD `
             -S localhost -U sa -P $env:MSSQL_SA_PASSWORD -C -b -d $DB_NAME `
             -i /tmp/_demo.sql 2>&1
 

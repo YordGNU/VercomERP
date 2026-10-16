@@ -1,10 +1,10 @@
-@model IEnumerable<Vercom.ViewModels.KardexRowViewModel>
+@model IEnumerable<VERCOM.ViewModels.KardexRowViewModel>
 @{
-    var product = ViewBag.Product as Vercom.Models.Producto;
+    var product = ViewBag.Product as VERCOM.Models.Producto;
     ViewBag.Title = "Kardex de Producto: " + product?.Nombre;
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Details") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Ficha Técnica</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Reporte de Kardex: " + product + "?.Nombre", Subtitle = "Trazabilidad histórica de movimientos, saldos y costos del artículo.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Details") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Ficha Técnica</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Reporte de Kardex: " + product + "?.Nombre", Subtitle = "Trazabilidad histórica de movimientos, saldos y costos del artículo.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

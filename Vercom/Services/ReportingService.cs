@@ -3,10 +3,10 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using System.IO.Compression;
-using Vercom.Models;
-using Vercom.Security;
+using VERCOM.Models;
+using VERCOM.Security;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public interface IReportingService
 {

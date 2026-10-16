@@ -1,9 +1,9 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Vercom.Models;
+using VERCOM.Models;
 
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public interface IBackupService
 {
@@ -94,7 +94,7 @@ public class BackupService : IBackupService
             BACKUP DATABASE [{dbName}] 
             TO DISK = '{fullPath.Replace("\\", "\\\\")}' 
             WITH FORMAT, 
-                 MEDIANAME = 'VercomBackup', 
+                 MEDIANAME = 'VERCOMBackup', 
                  NAME = 'Full Backup of {dbName}',
                  STATS = 10;";
 

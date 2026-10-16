@@ -1,9 +1,9 @@
 /* ============================================================
-   VercomERP – Datos Demo
+   VERCOMERP – Datos Demo
    Ejecutar DESPUÉS de cuentas-mfp.sql
    Alineado 1:1 con el DDL real
    ============================================================ */
-USE [VercomERP];
+USE [VERCOMERP];
 GO
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
@@ -174,7 +174,7 @@ BEGIN
     INSERT INTO nucleo.parametro_sistema
         (entidad_id, codigo, valor, tipo_dato, descripcion, vigente_desde, vigente_hasta)
     VALUES
-    (@E,'empresa.nombre','Tierra Prometida S.U.R.L.','STRING','Razón social','2025-01-01',NULL),
+    (@E,'empresa.nombre','DEMO S.U.R.L.','STRING','Razón social','2025-01-01',NULL),
     (@E,'empresa.nit','DEMO00000000','STRING','NIT','2025-01-01',NULL),
     (@E,'contabilidad.moneda_base','CUP','STRING','Moneda funcional','2025-01-01',NULL),
     (@E,'contabilidad.tasa_iva','0.18','NUMERIC','Tasa IVA','2025-01-01',NULL),

@@ -1,9 +1,9 @@
-@model Vercom.ViewModels.PurchaseOrderViewModel
+@model VERCOM.ViewModels.PurchaseOrderViewModel
 @{
     ViewBag.Title = Model.Title;
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Compras</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Nueva Orden de Compra", Subtitle = "Gestión de aprovisionamiento y solicitudes a proveedores (RF-51).", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Compras</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Nueva Orden de Compra", Subtitle = "Gestión de aprovisionamiento y solicitudes a proveedores (RF-51).", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

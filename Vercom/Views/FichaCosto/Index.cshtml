@@ -1,7 +1,7 @@
-@model IEnumerable<Vercom.Models.FichaCosto>
+@model IEnumerable<VERCOM.Models.FichaCosto>
 @{ ViewBag.Title = "Ingeniería de Costos"; }
 
-@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-file-analytics me-1'></i> NUEVA FICHA DE COSTO</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Gestión de Fichas de Costo (MFP)", Subtitle = "Definición de precios de venta basados en costos de insumos, mano de obra y gastos indirectos.", Icon = "ti-file-analytics", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-file-analytics me-1'></i> NUEVA FICHA DE COSTO</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Gestión de Fichas de Costo (MFP)", Subtitle = "Definición de precios de venta basados en costos de insumos, mano de obra y gastos indirectos.", Icon = "ti-file-analytics", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 <div class="row">
     <div class="card shadow-sm border-0">

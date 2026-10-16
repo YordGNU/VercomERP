@@ -1,4 +1,4 @@
-namespace Vercom.ViewModels;
+namespace VERCOM.ViewModels;
 
 using Microsoft.AspNetCore.Html;
 

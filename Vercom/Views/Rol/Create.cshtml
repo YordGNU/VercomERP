@@ -1,9 +1,9 @@
-@model Vercom.Models.Rol
+@model VERCOM.Models.Rol
 @{
     ViewBag.Title = "Definir Nuevo Rol";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Roles</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Crear Nuevo Perfil de Acceso", Subtitle = "Define el nombre, código y propósito del rol según la política de roles de la organización.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Roles</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Crear Nuevo Perfil de Acceso", Subtitle = "Define el nombre, código y propósito del rol según la política de roles de la organización.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

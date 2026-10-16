@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Vercom.Models;
-using Vercom.Security;
-using Vercom.Services;
-using Vercom.ViewModels;
+using VERCOM.Models;
+using VERCOM.Security;
+using VERCOM.Services;
+using VERCOM.ViewModels;
 
-namespace Vercom.Controllers;
+namespace VERCOM.Controllers;
 
 [Authorize]
 public class ProductionController : Controller

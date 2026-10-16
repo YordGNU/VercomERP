@@ -13,7 +13,7 @@ for arg in "$@"; do
     esac
 done
 
-cd /opt/vercom
+cd /opt/VERCOM
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -31,8 +31,8 @@ hdr "Preparación del entorno"
 
 # 1a. Crear volúmenes si no existen
 info "> Verificando volúmenes..."
-for vol in vercom-mssql-data vercom_uploads-data vercom_grafana-data \
-           vercom_loki-data vercom_prometheus-data vercom_nginx-logs; do
+for vol in VERCOM-mssql-data VERCOM_uploads-data VERCOM_grafana-data \
+           VERCOM_loki-data VERCOM_prometheus-data VERCOM_nginx-logs; do
     if ! docker volume inspect "$vol" >/dev/null 2>&1; then
         docker volume create "$vol" >/dev/null
         info "  Creado: $vol"
@@ -55,15 +55,15 @@ fi
 
 # 1c. Certificados SSL
 info "> Verificando certificados SSL..."
-if [ ! -f "nginx/certs/vercom.crt" ] || [ ! -f "nginx/certs/vercom.key" ]; then
+if [ ! -f "nginx/certs/VERCOM.crt" ] || [ ! -f "nginx/certs/VERCOM.key" ]; then
     mkdir -p nginx/certs
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-        -keyout nginx/certs/vercom.key \
-        -out    nginx/certs/vercom.crt \
-        -subj "/C=CU/ST=La Habana/L=Vedado/O=Tierra Prometida S.U.R.L./CN=vercom-erp.lan" \
-        -addext "subjectAltName=DNS:vercom-erp.lan,DNS:vercom-erp,DNS:localhost,IP:127.0.0.1" \
+        -keyout nginx/certs/VERCOM.key \
+        -out    nginx/certs/VERCOM.crt \
+        -subj "/C=CU/ST=La Habana/L=Vedado/O=Demo S.U.R.L./CN=VERCOM-erp.lan" \
+        -addext "subjectAltName=DNS:VERCOM-erp.lan,DNS:VERCOM-erp,DNS:localhost,IP:127.0.0.1" \
         2>/dev/null
-    chmod 600 nginx/certs/vercom.key
+    chmod 600 nginx/certs/VERCOM.key
     info "  Generados"
 fi
 ok "Certificados OK"
@@ -81,13 +81,13 @@ ok "Imagen cargada"
 # ============================================================
 hdr "SQL Server"
 info "> Levantando SQL Server..."
-docker compose -f docker-compose.yml up -d vercom-db
+docker compose -f docker-compose.yml up -d VERCOM-db
 ok "SQL Server arrancando"
 
 info "> Esperando healthy (max 120s)..."
 WAITED=0
 while [ $WAITED -lt 120 ]; do
-    STATUS=$(docker inspect vercom-db --format='{{.State.Health.Status}}' 2>/dev/null || echo "unknown")
+    STATUS=$(docker inspect VERCOM-db --format='{{.State.Health.Status}}' 2>/dev/null || echo "unknown")
     if [ "$STATUS" = "healthy" ]; then
         ok "SQL Server healthy (${WAITED}s)"
         break
@@ -108,7 +108,7 @@ if [ "$INIT_DB" = true ]; then
     hdr "Inicialización de BD"
     INIT_ARGS=""
     [ "$FORCE_DB" = true ] && INIT_ARGS="--force"
-    bash /opt/vercom/scripts/init-db.sh $INIT_ARGS
+    bash /opt/VERCOM/scripts/init-db.sh $INIT_ARGS
     ok "BD inicializada"
 fi
 

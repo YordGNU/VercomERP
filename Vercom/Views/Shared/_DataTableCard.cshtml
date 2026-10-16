@@ -1,4 +1,4 @@
-@model Vercom.ViewModels.DataTableCardModel
+@model VERCOM.ViewModels.DataTableCardModel
 @{
     var tableId = Model.TableId ?? "dataTable";
     var showCreate = Model.CreateAction != null;
@@ -101,7 +101,7 @@
                             }
                             else
                             {
-                                <partial name="_EmptyState" model='new Vercom.ViewModels.EmptyStateModel
+                                <partial name="_EmptyState" model='new VERCOM.ViewModels.EmptyStateModel
                                 {
                                     Icon = "ti-inbox",
                                     Title = Model.EmptyMessage ?? "Sin registros",

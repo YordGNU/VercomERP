@@ -1,4 +1,4 @@
-@model IEnumerable<Vercom.Models.PlanProduccion>
+@model IEnumerable<VERCOM.Models.PlanProduccion>
 @{
     ViewBag.Title = "Planificación de Producción";
     var meses = new[] { "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
@@ -6,7 +6,7 @@
     var draftPlans = Model.Count(p => p.Estado == "BORRADOR");
 }
 
-@{ var headerActions = "<button type='button' class='btn btn-sm btn-primary me-2' data-bs-toggle='modal' data-bs-target='#suggestPlanModal'><i class='ti ti-wand me-1'></i> GENERAR SUGERENCIA</button><a asp-controller='PlanProduccion' asp-action='Create' class='btn btn-sm btn-outline-primary'><i class='ti ti-plus me-1'></i> NUEVO PLAN</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Planes de Producción (B2M)", Subtitle = "Gestión de metas de fabricación y proyección de necesidades de stock (RF-44).", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<button type='button' class='btn btn-sm btn-primary me-2' data-bs-toggle='modal' data-bs-target='#suggestPlanModal'><i class='ti ti-wand me-1'></i> GENERAR SUGERENCIA</button><a asp-controller='PlanProduccion' asp-action='Create' class='btn btn-sm btn-outline-primary'><i class='ti ti-plus me-1'></i> NUEVO PLAN</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Planes de Producción (B2M)", Subtitle = "Gestión de metas de fabricación y proyección de necesidades de stock (RF-44).", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 <div class="row g-3 mb-4">

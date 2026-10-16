@@ -1,8 +1,8 @@
-@model Vercom.Models.TipoAusencium
+@model VERCOM.Models.TipoAusencium
 @{
     ViewBag.Title = "Nuevo Tipo de Ausencia";
 }
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Ausencias</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = "Definir Causa de Incidencia Laboral", Subtitle = "Parametrización de motivos de ausencias para el control de asistencia y nómina.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Ausencias</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = "Definir Causa de Incidencia Laboral", Subtitle = "Parametrización de motivos de ausencias para el control de asistencia y nómina.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

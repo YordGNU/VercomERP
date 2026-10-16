@@ -1,6 +1,6 @@
-using Vercom.Models;
+using VERCOM.Models;
 
-namespace Vercom.ViewModels;
+namespace VERCOM.ViewModels;
 
 /// <summary>Punto de una serie para gráficos (etiqueta + valor).</summary>
 public class ChartSeriesPoint

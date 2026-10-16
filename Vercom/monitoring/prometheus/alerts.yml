@@ -1,15 +1,15 @@
 groups:
-  - name: vercom-disponibilidad
+  - name: VERCOM-disponibilidad
     interval: 30s
     rules:
       - alert: AppDown
-        expr: up{job="vercom-app"} == 0
+        expr: up{job="VERCOM-app"} == 0
         for: 1m
         labels:
           severity: critical
-          service: vercom-app
+          service: VERCOM-app
         annotations:
-          summary: "VercomERP app caida"
+          summary: "VERCOMERP app caida"
           description: "La aplicacion lleva mas de 1 minuto sin responder."
 
       - alert: ScrapeFailure
@@ -21,11 +21,11 @@ groups:
           summary: "Target inaccesible"
           description: "Prometheus no puede scrapear un target."
 
-  - name: vercom-rendimiento
+  - name: VERCOM-rendimiento
     interval: 30s
     rules:
       - alert: CpuAlta
-        expr: rate(process_cpu_seconds_total{job="vercom-app"}[5m]) * 100 > 80
+        expr: rate(process_cpu_seconds_total{job="VERCOM-app"}[5m]) * 100 > 80
         for: 5m
         labels:
           severity: warning
@@ -34,7 +34,7 @@ groups:
           description: "CPU >80% sostenida."
 
       - alert: MemoriaAlta
-        expr: process_working_set_bytes{job="vercom-app"} > 900 * 1024 * 1024
+        expr: process_working_set_bytes{job="VERCOM-app"} > 900 * 1024 * 1024
         for: 5m
         labels:
           severity: warning
@@ -43,7 +43,7 @@ groups:
           description: "Uso de RAM >900MB."
 
       - alert: LatenciaAlta
-        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="vercom-app"}[5m])) by (le)) > 1
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="VERCOM-app"}[5m])) by (le)) > 1
         for: 5m
         labels:
           severity: warning
@@ -51,11 +51,11 @@ groups:
           summary: "Latencia p95 alta"
           description: "p95 > 1 segundo."
 
-  - name: vercom-errores
+  - name: VERCOM-errores
     interval: 30s
     rules:
       - alert: ErroresServidor
-        expr: sum(rate(http_requests_received_total{job="vercom-app", code=~"5.."}[5m])) / sum(rate(http_requests_received_total{job="vercom-app"}[5m])) > 0.05
+        expr: sum(rate(http_requests_received_total{job="VERCOM-app", code=~"5.."}[5m])) / sum(rate(http_requests_received_total{job="VERCOM-app"}[5m])) > 0.05
         for: 5m
         labels:
           severity: critical
@@ -63,7 +63,7 @@ groups:
           summary: "Errores 5xx altos"
           description: "Mas del 5% de peticiones fallan."
 
-  - name: vercom-runtime
+  - name: VERCOM-runtime
     interval: 30s
     rules:
       - alert: GcPausasLargas

@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Vercom.DTOs;
-using Vercom.Models;
-using Vercom.ViewModels;
+using VERCOM.DTOs;
+using VERCOM.Models;
+using VERCOM.ViewModels;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public interface IPosService
 {
@@ -25,7 +25,7 @@ public interface IPosService
     Task<IEnumerable<PosVentaPendiente>> GetPendingSalesAsync();
     Task<PosVentaPendiente?> GetPendingSaleByIdAsync(Guid id);
     Task<(bool Succeeded, string Message)> ProcessPendingSaleAsync(Guid pendingId);
-    Task<(bool Succeeded, string Message)> QueuePendingSalesAsync(List<Vercom.DTOs.OperacionRequestDto> operaciones);
+    Task<(bool Succeeded, string Message)> QueuePendingSalesAsync(List<VERCOM.DTOs.OperacionRequestDto> operaciones);
 
     // Numeración
     Task<(string Serie, long Desde, long Hasta)> ReserveNumberRangeAsync(Guid dispositivoId, string serie, int cantidad);
@@ -242,7 +242,7 @@ public class PosService : IPosService
         return (true, "Venta legacy encargada al procesador en segundo plano (hasta 30 segundos).");
     }
 
-    public async Task<(bool Succeeded, string Message)> QueuePendingSalesAsync(List<Vercom.DTOs.OperacionRequestDto> operaciones)
+    public async Task<(bool Succeeded, string Message)> QueuePendingSalesAsync(List<VERCOM.DTOs.OperacionRequestDto> operaciones)
     {
         try
         {
@@ -291,7 +291,7 @@ public class PosService : IPosService
             AND serie = {3}";
 
         var consecutivo = await _context.Consecutivos
-            .FromSqlRaw(sql, dispositivo.EntidadId, (object?)dispositivo.SucursalId ?? DBNull.Value, Vercom.Helpers.DocumentoTipo.FacturaVenta, serie)
+            .FromSqlRaw(sql, dispositivo.EntidadId, (object?)dispositivo.SucursalId ?? DBNull.Value, VERCOM.Helpers.DocumentoTipo.FacturaVenta, serie)
             .FirstOrDefaultAsync();
 
         long start;
@@ -301,7 +301,7 @@ public class PosService : IPosService
             {
                 EntidadId = dispositivo.EntidadId,
                 SucursalId = dispositivo.SucursalId,
-                TipoDocumento = Vercom.Helpers.DocumentoTipo.FacturaVenta,
+                TipoDocumento = VERCOM.Helpers.DocumentoTipo.FacturaVenta,
                 Serie = serie,
                 UltimoNumero = 1,
                 LongitudPadding = 8,

@@ -1,5 +1,5 @@
 -- ============================================================================
--- Script de importación de inventario desde TIERRA_PROMETIDA (Versat) a VercomERP
+-- Script de importación de inventario desde TIERRA_PROMETIDA (Versat) a VERCOMERP
 -- ============================================================================
 -- Requisito: OPENROWSET habilitado (sp_configure 'Ad Hoc Distributed Queries', 1)
 -- El script es idempotente: no duplica datos existentes.

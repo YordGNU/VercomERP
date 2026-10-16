@@ -9,7 +9,7 @@ BEGIN TRY
     BEGIN TRANSACTION;
 
     -- Ejemplo de patrón seguro:
-    -- USE [VercomERP];
+    -- USE [VERCOMERP];
     -- IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'tabla_objetivo' AND type = 'U')
     -- BEGIN
     --     CREATE TABLE ...;

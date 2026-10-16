@@ -1,10 +1,10 @@
-@model Vercom.Models.FichaCosto
-@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
+@model VERCOM.Models.FichaCosto
+@inject VERCOM.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewData["Title"] = "Editar Ficha de Costo";
 }
 
-@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Editar Ficha de Costo", Subtitle = "Modificación de la ficha de costo del producto.", Icon = "ti-file", Tone = "primary" }; }
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Editar Ficha de Costo", Subtitle = "Modificación de la ficha de costo del producto.", Icon = "ti-file"}; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

@@ -1,4 +1,4 @@
-USE [VercomERP];
+USE [VERCOMERP];
 GO
 
 -- 1. Corregir clasificación de la cuenta 701 (Ingresos de Actividad Propia)

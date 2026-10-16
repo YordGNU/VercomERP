@@ -1,4 +1,4 @@
-# Base de Datos - Vercom ERP
+# Base de Datos - VERCOM ERP
 
 Scripts SQL para la creación, mantenimiento y limpieza de la base de datos del ERP.
 

@@ -1,5 +1,5 @@
 # ============================================================
-# VercomERP – Configuración de PRODUCCIÓN
+# vercomERP – Configuración de PRODUCCIÓN
 # Se combina con el base explícitamente:
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 # ============================================================

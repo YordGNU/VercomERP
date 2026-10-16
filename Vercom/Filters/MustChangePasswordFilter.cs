@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace Vercom.Filters;
+namespace VERCOM.Filters;
 
 public class MustChangePasswordFilter : IAsyncActionFilter
 {

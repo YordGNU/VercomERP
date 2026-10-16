@@ -1,10 +1,10 @@
-@model Vercom.Models.PlanProduccion
+@model VERCOM.Models.PlanProduccion
 @{
     ViewBag.Title = "Detalle del plan";
     var meses = new[] { "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti ti-arrow-left me-1'></i> VOLVER</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Detalle del plan de producción", Subtitle = "Resumen del período planificado y el volumen de materiales asociados.", Icon = "ti ti-list-details", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti ti-arrow-left me-1'></i> VOLVER</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Detalle del plan de producción", Subtitle = "Resumen del período planificado y el volumen de materiales asociados.", Icon = "ti ti-list-details", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 <div class="row g-4">

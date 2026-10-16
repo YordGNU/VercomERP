@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    VercomERP - Deploy desde Windows a la VM
+    VERCOMERP - Deploy desde Windows a la VM
 #>
 [CmdletBinding()]
 param(
@@ -21,28 +21,28 @@ function Write-Ok   { param($m) Write-Host "   OK $m" -ForegroundColor Green }
 function Write-Err  { param($m) Write-Host "   XX $m" -ForegroundColor Red; exit 1 }
 
 Write-Host "=================================================" -ForegroundColor Cyan
-Write-Host " VercomERP - Deploy Windows -> VM" -ForegroundColor Cyan
+Write-Host " VERCOMERP - Deploy Windows -> VM" -ForegroundColor Cyan
 Write-Host " Destino:  ${Usuario}@${Servidor}" -ForegroundColor Cyan
 Write-Host "=================================================" -ForegroundColor Cyan
 
 # 1. BUILD
 if (-not $SkipBuild) {
     Write-Step "1" "Construyendo imagen..."
-    docker build -t "vercom-erp:$Version" .
+    docker build -t "VERCOM-erp:$Version" .
     if ($LASTEXITCODE -ne 0) { Write-Err "docker build fallo" }
     Write-Ok "Imagen construida"
 } else {
     Write-Step "1" "SkipBuild activo"
-    docker image inspect "vercom-erp:$Version" *> $null
+    docker image inspect "VERCOM-erp:$Version" *> $null
     if ($LASTEXITCODE -ne 0) { Write-Err "Imagen no existe" }
     Write-Ok "Imagen existente"
 }
 
 # 2. EXPORTAR
 Write-Step "2" "Exportando imagen..."
-$archivo = "vercom-erp-$Version.tar"
+$archivo = "VERCOM-erp-$Version.tar"
 if (Test-Path $archivo) { Remove-Item $archivo -Force }
-docker save "vercom-erp:$Version" -o $archivo
+docker save "VERCOM-erp:$Version" -o $archivo
 if ($LASTEXITCODE -ne 0) { Write-Err "docker save fallo" }
 $sizeMB = [math]::Round((Get-Item $archivo).Length / 1MB, 2)
 Write-Ok "Archivo: $archivo ($sizeMB MB)"
@@ -82,7 +82,7 @@ Write-Host "=================================================" -ForegroundColor 
 Write-Host " Deploy completado" -ForegroundColor Green
 Write-Host "=================================================" -ForegroundColor Green
 Write-Host ""
-Write-Host " App:        https://vercom-erp.lan" -ForegroundColor Cyan
+Write-Host " App:        https://VERCOM-erp.lan" -ForegroundColor Cyan
 Write-Host " Prometheus: http://${Servidor}:9090" -ForegroundColor Cyan
 Write-Host " Grafana:    http://${Servidor}:3000" -ForegroundColor Cyan
 Write-Host ""

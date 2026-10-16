@@ -1,8 +1,8 @@
 /* ============================================================
-   VercomERP – SP reutilizable de purga por entidad
+   VERCOMERP – SP reutilizable de purga por entidad
    Uso: EXEC nucleo.sp_purgar_entidad @EntidadId = '...', @DryRun = 1;
    ============================================================ */
-USE [VercomERP];
+USE [VERCOMERP];
 GO
 
 CREATE OR ALTER PROCEDURE nucleo.sp_purgar_entidad

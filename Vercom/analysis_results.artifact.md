@@ -1,6 +1,6 @@
 # Auditoría de Cumplimiento: Plan de Desarrollo ERP
 
-Se ha realizado una revisión exhaustiva del estado actual del sistema Vercom Elite contrastándolo con las directrices del documento `Plan de desarrollo ERP.txt`. A continuación se detalla el nivel de cumplimiento por módulo y requisito.
+Se ha realizado una revisión exhaustiva del estado actual del sistema VERCOM Elite contrastándolo con las directrices del documento `Plan de desarrollo ERP.txt`. A continuación se detalla el nivel de cumplimiento por módulo y requisito.
 
 ## Resumen Ejecutivo de Avance
 

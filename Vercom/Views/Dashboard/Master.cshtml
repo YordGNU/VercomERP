@@ -1,4 +1,4 @@
-@model Vercom.ViewModels.MasterDashboardViewModel
+@model VERCOM.ViewModels.MasterDashboardViewModel
 @{
     ViewBag.Title = "Monitor Maestro";
     string Money(decimal v) => v.ToString("N2");
@@ -7,10 +7,9 @@
 }
 
 @{
-    var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Monitor Maestro", Subtitle = "Visión global de infraestructura, seguridad y entidades registradas en el ecosistema.", Icon = "ti-file", Tone = "primary" };
+    var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Monitor Maestro", Subtitle = "Visión global de infraestructura, seguridad y entidades registradas en el ecosistema.", Icon = "ti-file"};
 }
 <partial name='_PageHeader' model='pageHeader' />
-
 <!-- Fila 1: KPIs Globales -->
 <div class="row row-cols-1 row-cols-md-2 row-cols-xxl-4 g-3 mb-3">
     <div class="col">

@@ -1,5 +1,5 @@
 /* ============================================================
-   VercomERP – Limpieza de datos DEMO
+   VERCOMERP – Limpieza de datos DEMO
    Elimina todos los datos de la entidad NIT = 'DEMO00000000'
    - NO toca catálogos globales (tipo_comprobante, unidad_medida,
      tipo_movimiento, permiso, indicador, tipo_ausencia,
@@ -7,7 +7,7 @@
    - NO desactiva triggers (integridad de auditoría ONAT)
    - Usa transacción con ROLLBACK automático ante error
    ============================================================ */
-USE [VercomERP];
+USE [VERCOMERP];
 GO
 
 SET NOCOUNT ON;

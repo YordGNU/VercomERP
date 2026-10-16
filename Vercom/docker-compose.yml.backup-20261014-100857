@@ -1,28 +1,28 @@
 # ============================================================
-# VercomERP – Docker Compose (BASE)
+# VERCOMERP – Docker Compose (BASE)
 # Configuración común a todos los entornos.
 # Los overrides añaden lo específico de cada uno:
 #   - docker-compose.override.yml → desarrollo (auto-cargado)
 #   - docker-compose.prod.yml     → producción
 # ============================================================
-name: vercom
+name: VERCOM
 
 services:
   # ==========================================================
   # SQL Server 2022
   # ==========================================================
-  vercom-db:
+  VERCOM-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: vercom-db
+    container_name: VERCOM-db
     restart: unless-stopped
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
       MSSQL_PID: ${MSSQL_PID:-Developer}
     volumes:
-      - vercom-mssql-data:/var/opt/mssql
+      - VERCOM-mssql-data:/var/opt/mssql
     networks:
-      - vercom-network
+      - VERCOM-network
     healthcheck:
       test:
         - CMD-SHELL
@@ -35,46 +35,46 @@ services:
   # ==========================================================
   # Aplicación ERP (ASP.NET Core)
   # ==========================================================
-  vercom-app:
+  VERCOM-app:
     build:
       context: .
       dockerfile: Dockerfile
       target: runtime
-    image: vercom-erp:${APP_VERSION:-2.0.0}
-    container_name: vercom-app
+    image: VERCOM-erp:${APP_VERSION:-2.0.0}
+    container_name: VERCOM-app
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: "Server=vercom-db,1433;Database=VercomERP;UID=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;MultipleActiveResultSets=true;Language=us_english"
-      Jwt__Issuer: ${JWT_ISSUER:-VercomERP}
-      Jwt__Audience: ${JWT_AUDIENCE:-VercomERPClientes}
+      ConnectionStrings__DefaultConnection: "Server=VERCOM-db,1433;Database=VERCOMERP;UID=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;MultipleActiveResultSets=true;Language=us_english"
+      Jwt__Issuer: ${JWT_ISSUER:-VERCOMERP}
+      Jwt__Audience: ${JWT_AUDIENCE:-VERCOMERPClientes}
       Jwt__SecretKey_FILE: /run/secrets/jwt_key
     secrets:
       - jwt_key
     volumes:
       - uploads-data:/app/wwwroot/uploads
     depends_on:
-      vercom-db:
+      VERCOM-db:
         condition: service_healthy
     networks:
-      - vercom-network
+      - VERCOM-network
 
 # ============================================================
 # Volúmenes persistentes
 # ============================================================
 volumes:
-  vercom-mssql-data:
+  VERCOM-mssql-data:
     external: true                      # ← ya existe, no lo recrees
   uploads-data:
-    name: vercom_uploads-data
+    name: VERCOM_uploads-data
 
 # ============================================================
 # Red interna
 # ============================================================
 networks:
-  vercom-network:
-    name: vercom-network
+  VERCOM-network:
+    name: VERCOM-network
     driver: bridge
 
 # ============================================================

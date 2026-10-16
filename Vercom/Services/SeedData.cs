@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using Vercom.Models;
+using VERCOM.Models;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public static class SeedData
 {
@@ -28,7 +28,7 @@ public static class SeedData
             {
                 Id = Guid.NewGuid(),
                 RazonSocial = "S.U.R.L.",
-                NombreComercial = "Vercom ERP",
+                NombreComercial = "VERCOM ERP",
                 Nit = "90000000000",
                 CodigoReeup = "REEUP2026001",
                 FormaJuridica = "S.U.R.L.",
@@ -639,7 +639,7 @@ public static class SeedData
             NombreUsuario = "master",
             NombreCompleto = "Usuario Maestro",
             Email = "master@email.cu",
-            HashPassword = authService.HashPassword("MasterVercom2026*"),
+            HashPassword = authService.HashPassword("MasterVERCOM2026*"),
             Activo = true,
             DebeCambiarPass = false,
             CreadoEn = DateTimeOffset.UtcNow,

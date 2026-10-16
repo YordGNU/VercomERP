@@ -1,7 +1,7 @@
-@model IEnumerable<Vercom.Models.Permiso>
+@model IEnumerable<VERCOM.Models.Permiso>
 @{ ViewBag.Title = "Permisos del Sistema"; }
 
-@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVA PROGRAMACIÓN</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Permisos del Sistema", Subtitle = "Listado de permisos del sistema.", Icon = "ti-key", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVA PROGRAMACIÓN</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Permisos del Sistema", Subtitle = "Listado de permisos del sistema.", Icon = "ti-key", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

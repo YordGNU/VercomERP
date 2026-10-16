@@ -1,5 +1,5 @@
 # ============================================================
-# VercomERP – Docker Compose (BASE)
+# vercomERP – Docker Compose (BASE)
 # Configuración común a todos los entornos.
 # Los overrides añaden lo específico de cada uno:
 #   - docker-compose.override.yml → desarrollo (auto-cargado)
@@ -46,9 +46,9 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: "Server=vercom-db,1433;Database=VercomERP;UID=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;MultipleActiveResultSets=true;Language=us_english"
-      Jwt__Issuer: ${JWT_ISSUER:-VercomERP}
-      Jwt__Audience: ${JWT_AUDIENCE:-VercomERPClientes}
+      ConnectionStrings__DefaultConnection: "Server=vercom-db,1433;Database=vercomERP;UID=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;MultipleActiveResultSets=true;Language=us_english"
+      Jwt__Issuer: ${JWT_ISSUER:-vercomERP}
+      Jwt__Audience: ${JWT_AUDIENCE:-vercomERPClientes}
       Jwt__SecretKey_FILE: /run/secrets/jwt_key
     secrets:
       - jwt_key

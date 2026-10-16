@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Vercom.Models;
-using Vercom.ViewModels;
+using VERCOM.Models;
+using VERCOM.ViewModels;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public class AgingReportRow
 {
