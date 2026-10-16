@@ -502,6 +502,47 @@ docker exec vercom-db /opt/mssql-tools18/bin/sqlcmd `
     -i /tmp/schema.sql
 ```
 
+### ❌ Error 502 Bad Gateway al hacer login
+
+**Síntoma:**
+
+En el navegador aparece "502 Bad Gateway" al enviar las credenciales de login.
+
+En los logs de Nginx:
+
+```
+[error] upstream sent too big header while reading response header from upstream
+```
+
+**Causa:**
+
+Los headers de respuesta de ASP.NET Core Identity son **más grandes que los buffers por defecto de Nginx** (4 KB). Cada login genera múltiples cookies (autenticación, antiforgery, sesión) que suman 5-8 KB.
+
+**Solución:**
+
+Añadir a `nginx/conf.d/proxy_params.conf`:
+
+```nginx
+proxy_buffer_size       16k;
+proxy_buffers           4 16k;
+proxy_busy_buffers_size 32k;
+proxy_buffering         on;
+```
+
+Reiniciar Nginx:
+
+```bash
+docker compose restart vercom-nginx
+```
+
+**Verificación:**
+
+```bash
+curl -k https://localhost/health
+# Esperado: Healthy
+```
+
+Luego reintentar el login en el navegador.
 ---
 
 ## 📋 Checklist de arranque

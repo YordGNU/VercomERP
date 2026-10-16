@@ -457,7 +457,7 @@ cd /opt/vercom/nginx/certs
 
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -keyout vercom.key -out vercom.crt \
-    -subj "/C=CU/ST=La Habana/L=Vedado/O=Tierra Prometida S.U.R.L./CN=vercom-erp.lan" \
+    -subj "/C=CU/ST=La Habana/L=Vedado/O=Yord GNU/CN=vercom-erp.lan" \
     -addext "subjectAltName=DNS:vercom-erp.lan,DNS:vercom-erp,DNS:localhost,IP:192.x.x.220,IP:127.0.0.1"
 
 chmod 600 vercom.key
