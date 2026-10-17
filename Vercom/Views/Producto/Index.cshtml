@@ -1,6 +1,6 @@
 @using Microsoft.AspNetCore.Authorization
 @inject IAuthorizationService AuthorizationService
-@model IEnumerable<Vercom.Models.Producto>
+@model IEnumerable<VERCOM.Models.Producto>
 
 @{
     ViewBag.Title = "Catálogo de Productos";
@@ -15,13 +15,13 @@
         : null);
 }
 
-@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Catálogo de Inventario", Title = "Maestro de Productos e Insumos", Subtitle = "Catálogo centralizado para inventario, producción y ventas.", Icon = "ti-box", Tone = "primary", BadgeText = totalItems.ToString("N0"), BadgeTone = "primary", ActionsHtml = headerActions != null ? new Microsoft.AspNetCore.Html.HtmlString(headerActions) : null }; }
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Catálogo de Inventario", Title = "Maestro de Productos e Insumos", Subtitle = "Catálogo centralizado para inventario, producción y ventas.", Icon = "ti-box", BadgeText = totalItems.ToString("N0"), BadgeTone = "primary", ActionsHtml = headerActions != null ? new Microsoft.AspNetCore.Html.HtmlString(headerActions) : null }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 <!-- ============================================================ -->
 <!-- ESTADÍSTICAS RÁPIDAS -->
 <!-- ============================================================ -->
-@{ var kpiTotal = new Vercom.ViewModels.KpiCardModel { Label = "Total productos", Value = totalItems.ToString("N0"), Icon = "ti-box", Tone = "primary" }; var kpiActivos = new Vercom.ViewModels.KpiCardModel { Label = "Activos", Value = activos.ToString("N0"), Icon = "ti-check", Tone = "success" }; var kpiInactivos = new Vercom.ViewModels.KpiCardModel { Label = "Inactivos", Value = inactivos.ToString("N0"), Icon = "ti-x", Tone = "danger" }; }
+@{ var kpiTotal = new VERCOM.ViewModels.KpiCardModel { Label = "Total productos", Value = totalItems.ToString("N0"), Icon = "ti-box"}; var kpiActivos = new VERCOM.ViewModels.KpiCardModel { Label = "Activos", Value = activos.ToString("N0"), Icon = "ti-check", Tone = "success" }; var kpiInactivos = new VERCOM.ViewModels.KpiCardModel { Label = "Inactivos", Value = inactivos.ToString("N0"), Icon = "ti-x", Tone = "danger" }; }
 <div class='row g-2 mb-3'>
     <div class='col-md-4 col-6'>
         <partial name='_KpiCard' model='kpiTotal' />

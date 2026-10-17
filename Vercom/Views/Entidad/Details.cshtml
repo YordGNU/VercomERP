@@ -1,11 +1,11 @@
-@model Vercom.Models.Entidad
-@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
+@model VERCOM.Models.Entidad
+@inject VERCOM.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewBag.Title = "Perfil de la Entidad";
     var isMaster = User.Identity?.Name == "master";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Volver al Listado</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Información Legal", Subtitle = "Entidad: @EntidadDisplay.Name", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Volver al Listado</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Información Legal", Subtitle = "Entidad: @EntidadDisplay.Name", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

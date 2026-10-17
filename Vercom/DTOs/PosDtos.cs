@@ -1,4 +1,4 @@
-namespace Vercom.DTOs;
+namespace VERCOM.DTOs;
 
 public class ProductoRequestDto
 {

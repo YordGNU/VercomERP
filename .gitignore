@@ -266,6 +266,10 @@ ServiceFabricBackup/
 *.ldf
 *.ndf
 
+.env
+.env.*
+!.env.example
+
 # Business Intelligence projects
 *.rdl.data
 *.bim.layout
@@ -361,3 +365,9 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+secrets/
+# Nginx certificates
+nginx/certs/
+*.crt
+*.key

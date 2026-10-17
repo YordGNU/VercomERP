@@ -1,4 +1,4 @@
-namespace Vercom.Helpers;
+namespace VERCOM.Helpers;
 
 public static class DocumentoTipo
 {

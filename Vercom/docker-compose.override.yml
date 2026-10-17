@@ -1,0 +1,16 @@
+# ============================================================
+# VERCOMERP – Override para DESARROLLO
+# Compose lo carga AUTOMÁTICAMENTE con `docker compose up -d`
+# ============================================================
+services:
+  VERCOM-db:
+    # En dev expongo el puerto para poder conectar con SSMS / Azure Data Studio
+    ports:
+      - "127.0.0.1:1434:1433"
+
+  VERCOM-app:
+    # En dev accedo directo a la app sin Nginx
+    ports:
+      - "127.0.0.1:5001:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development

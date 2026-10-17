@@ -1,0 +1,82 @@
+# ============================================================
+# vercomERP – Configuración de PRODUCCIÓN
+# Se combina con el base explícitamente:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# ============================================================
+services:
+  vercom-app:
+    # En prod NO expone puertos al host. Solo accesible por Nginx.
+    ports: []
+    expose:
+      - "8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+    # Hardening
+    read_only: true
+    tmpfs:
+      - /tmp:size=100M,mode=1777
+      - /app/logs:size=100M
+    security_opt:
+      - no-new-privileges:true
+    # Recursos
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+
+  vercom-db:
+    # En prod NO expone puertos al host.
+    ports: []
+    environment:
+      MSSQL_PID: ${MSSQL_PID:-Standard}
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+
+  # ==========================================================
+  # Nginx Reverse Proxy (solo en producción)
+  # ==========================================================
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: vercom-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - nginx-logs:/var/log/nginx
+    depends_on:
+      vercom-app:
+        condition: service_healthy
+    networks:
+      - vercom-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/nginx-health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+
+
+volumes:
+  nginx-logs:
+    name: vercom_nginx-logs
+    external: true
+  prometheus-data:
+    name: vercom_prometheus-data
+    external: true
+  loki-data:
+    name: vercom_loki-data
+    external: true
+  grafana-data:
+    name: vercom_grafana-data
+    external: true

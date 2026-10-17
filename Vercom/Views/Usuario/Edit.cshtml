@@ -1,11 +1,11 @@
-@using Vercom.Security
+@using VERCOM.Security
 @inject IEntidadProvider EntidadProvider
-@model Vercom.ViewModels.UserFormViewModel
+@model VERCOM.ViewModels.UserFormViewModel
 @{
     ViewBag.Title = "Editar Perfil de Usuario";
     var isMaster = EntidadProvider.IsMaster;
 }
-@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Actualizar Usuario: " + Model.Usuario.NombreUsuario, Subtitle = "Gestión de datos personales y asignación de perfiles.", Icon = "ti-file", Tone = "primary" }; }
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Actualizar Usuario: " + Model.Usuario.NombreUsuario, Subtitle = "Gestión de datos personales y asignación de perfiles.", Icon = "ti-file"}; }
 <partial name='_PageHeader' model='pageHeader' />
 
 
@@ -147,7 +147,7 @@
                     </div>
                     <div class="mb-0">
                         <label class="form-label small fw-bold">Clave Provisoria</label>
-                        <input type="text" name="newPassword" class="form-control fw-bold text-center" value="Vercom.2026!" required />
+                        <input type="text" name="newPassword" class="form-control fw-bold text-center" value="VERCOM.2026!" required />
                     </div>
                 </div>
                 <div class="modal-footer border-0 p-4 pt-0">

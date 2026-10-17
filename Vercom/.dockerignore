@@ -1,0 +1,36 @@
+# Ignorar archivos innecesarios para acelerar el build
+**/.classpath
+**/.dockerignore
+**/.env
+**/.git
+**/.gitignore
+**/.project
+**/.settings
+**/.toolstarget
+**/.vs
+**/.vscode
+**/*.*proj.user
+**/*.dbmdl
+**/*.jfm
+**/azds.yaml
+**/bin
+**/charts
+**/docker-compose*
+**/Dockerfile*
+**/node_modules
+**/npm-debug.log
+**/obj
+**/secrets.dev.yaml
+**/values.dev.yaml
+**/publicacion
+**/Docs/screenshots
+LICENSE
+README.md
+
+# Archivos sensibles que NUNCA deben ir a la imagen
+appsettings.Development.json
+appsettings.Production.json
+*.user
+*.pfx
+# SQL de mantenimiento (no en deploy)
+Database/maintenance/

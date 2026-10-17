@@ -1,4 +1,4 @@
-@model Vercom.ViewModels.EmpleadoExpedienteViewModel
+@model VERCOM.ViewModels.EmpleadoExpedienteViewModel
 @{
     ViewBag.Title = "Expediente: " + Model.Empleado.Nombres;
     var empleado = Model.Empleado;
@@ -11,7 +11,7 @@
 <!-- ============================================================ -->
 <!-- HEADER -->
 <!-- ============================================================ -->
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Volver</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = "Expediente Digital: " + empleado.Nombres + " " + empleado.Apellidos, Subtitle = "Hoja de vida laboral, historial contractual y control de incidencias.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Volver</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = "Expediente Digital: " + empleado.Nombres + " " + empleado.Apellidos, Subtitle = "Hoja de vida laboral, historial contractual y control de incidencias.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

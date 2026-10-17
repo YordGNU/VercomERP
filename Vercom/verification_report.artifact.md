@@ -1,6 +1,6 @@
 # Reporte de Verificación de Interconexión de Módulos
 
-Se ha validado la integración técnica entre los diferentes módulos del ERP Vercom Elite para asegurar que el flujo de información cumpla con los requisitos de inmutabilidad y automatización definidos en el plan maestro.
+Se ha validado la integración técnica entre los diferentes módulos del ERP VERCOM Elite para asegurar que el flujo de información cumpla con los requisitos de inmutabilidad y automatización definidos en el plan maestro.
 
 ## Conexiones Verificadas
 

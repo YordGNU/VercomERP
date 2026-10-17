@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using Vercom.Models;
+using VERCOM.Models;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public interface IContractService
 {

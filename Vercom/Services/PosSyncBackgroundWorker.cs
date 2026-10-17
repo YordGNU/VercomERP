@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
-using Vercom.DTOs;
-using Vercom.Models;
+using VERCOM.DTOs;
+using VERCOM.Models;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public class PosSyncBackgroundWorker : BackgroundService
 {

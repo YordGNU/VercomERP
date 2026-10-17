@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Vercom.Services;
+using VERCOM.Services;
 
-namespace Vercom.Controllers;
+namespace VERCOM.Controllers;
 
 [Authorize]
 public class PosVentaPendienteController : Controller

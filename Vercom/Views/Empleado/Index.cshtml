@@ -1,21 +1,21 @@
 @using Microsoft.AspNetCore.Authorization
 @inject IAuthorizationService AuthorizationService
-@model IEnumerable<Vercom.Models.Empleado>
+@model IEnumerable<VERCOM.Models.Empleado>
 @{ ViewBag.Title = "Plantilla de Empleados"; }
 
-@{ var puedeCrear = (await AuthorizationService.AuthorizeAsync(User, "RRHH.EMPLEADO.CREAR")).Succeeded; var headerActions = puedeCrear ? "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-user-plus me-1'></i> NUEVO INGRESO</a>" : null; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = "Expedientes del Personal", Subtitle = "Gestión integral de la fuerza laboral y control de plantilla.", Icon = "ti-users", Tone = "primary", ActionsHtml = headerActions != null ? new Microsoft.AspNetCore.Html.HtmlString(headerActions) : null }; }
+@{ var puedeCrear = (await AuthorizationService.AuthorizeAsync(User, "RRHH.EMPLEADO.CREAR")).Succeeded; var headerActions = puedeCrear ? "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-user-plus me-1'></i> NUEVO INGRESO</a>" : null; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = "Expedientes del Personal", Subtitle = "Gestión integral de la fuerza laboral y control de plantilla.", Icon = "ti-users", ActionsHtml = headerActions != null ? new Microsoft.AspNetCore.Html.HtmlString(headerActions) : null }; }
 <partial name='_PageHeader' model='pageHeader' />
 @if (ViewBag.Stats != null)
 {
-    var stats = ViewBag.Stats as Vercom.Services.RRHHStatsViewModel;
+    var stats = ViewBag.Stats as VERCOM.Services.RRHHStatsViewModel;
     <div class="row g-2 mb-3">
-        @{ var kpiActivos = new Vercom.ViewModels.KpiCardModel { Label = "Trabajadores Activos", Value = stats.TotalActivos.ToString(), Icon = "ti-users", Tone = "primary" }; }
+        @{ var kpiActivos = new VERCOM.ViewModels.KpiCardModel { Label = "Trabajadores Activos", Value = stats.TotalActivos.ToString(), Icon = "ti-users"}; }
         <div class="col-md-3 col-6"><partial name="_KpiCard" model="kpiActivos" /></div>
-        @{ var kpiNomina = new Vercom.ViewModels.KpiCardModel { Label = "Costo Mensual Est.", Value = stats.NominaProyectada.ToString("C0"), Icon = "ti-report-money", Tone = "info" }; }
+        @{ var kpiNomina = new VERCOM.ViewModels.KpiCardModel { Label = "Costo Mensual Est.", Value = stats.NominaProyectada.ToString("C0"), Icon = "ti-report-money", Tone = "info" }; }
         <div class="col-md-3 col-6"><partial name="_KpiCard" model="kpiNomina" /></div>
-        @{ var kpiContratos = new Vercom.ViewModels.KpiCardModel { Label = "Contratos por Vencer", Value = stats.ContratosVencer30Dias.ToString(), Icon = "ti-calendar-clock", Tone = "warning" }; }
+        @{ var kpiContratos = new VERCOM.ViewModels.KpiCardModel { Label = "Contratos por Vencer", Value = stats.ContratosVencer30Dias.ToString(), Icon = "ti-calendar-clock", Tone = "warning" }; }
         <div class="col-md-3 col-6"><partial name="_KpiCard" model="kpiContratos" /></div>
-        @{ var kpiBajas = new Vercom.ViewModels.KpiCardModel { Label = "Bajas Acumuladas", Value = stats.TotalBajas.ToString(), Icon = "ti-user-x", Tone = "danger" }; }
+        @{ var kpiBajas = new VERCOM.ViewModels.KpiCardModel { Label = "Bajas Acumuladas", Value = stats.TotalBajas.ToString(), Icon = "ti-user-x", Tone = "danger" }; }
         <div class="col-md-3 col-6"><partial name="_KpiCard" model="kpiBajas" /></div>
     </div>
 }

@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public interface IExportService
 {

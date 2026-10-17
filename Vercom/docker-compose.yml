@@ -1,23 +1,85 @@
-version: "3.9"
+# ============================================================
+# vercomERP – Docker Compose (BASE)
+# Configuración común a todos los entornos.
+# Los overrides añaden lo específico de cada uno:
+#   - docker-compose.override.yml → desarrollo (auto-cargado)
+#   - docker-compose.prod.yml     → producción
+# ============================================================
+name: vercom
 
 services:
-  sqlserver:
+  # ==========================================================
+  # SQL Server 2022
+  # ==========================================================
+  vercom-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: vercom-sql-local
+    container_name: vercom-db
+    restart: unless-stopped
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "SqlServer2026!"
-      MSSQL_PID: "Developer"
-    ports:
-      - "1433:1433"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+      MSSQL_PID: ${MSSQL_PID:-Developer}
     volumes:
-      - sqlserver_data:/var/opt/mssql
+      - vercom-mssql-data:/var/opt/mssql
+    networks:
+      - vercom-network
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"SqlServer2026!\" -C -Q \"SELECT 1\" || /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P \"SqlServer2026!\" -Q \"SELECT 1\"" ]
-      interval: 15s
-      timeout: 10s
+      test:
+        - CMD-SHELL
+        - /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
       retries: 10
       start_period: 30s
 
+  # ==========================================================
+  # Aplicación ERP (ASP.NET Core)
+  # ==========================================================
+  vercom-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: vercom-erp:${APP_VERSION:-2.0.0}
+    container_name: vercom-app
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Server=vercom-db,1433;Database=vercomERP;UID=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;MultipleActiveResultSets=true;Language=us_english"
+      Jwt__Issuer: ${JWT_ISSUER:-vercomERP}
+      Jwt__Audience: ${JWT_AUDIENCE:-vercomERPClientes}
+      Jwt__SecretKey_FILE: /run/secrets/jwt_key
+    secrets:
+      - jwt_key
+    volumes:
+      - uploads-data:/app/wwwroot/uploads
+    depends_on:
+      vercom-db:
+        condition: service_healthy
+    networks:
+      - vercom-network
+
+# ============================================================
+# Volúmenes persistentes
+# ============================================================
 volumes:
-  sqlserver_data:
+  vercom-mssql-data:
+    external: true
+  uploads-data:
+    name: vercom_uploads-data
+    external: true    
+# ============================================================
+# Red interna
+# ============================================================
+networks:
+  vercom-network:
+    name: vercom-network
+    driver: bridge
+
+# ============================================================
+# Secrets
+# ============================================================
+secrets:
+  jwt_key:
+    file: ./secrets/jwt_key.txt

@@ -1,9 +1,9 @@
-@model Vercom.ViewModels.MermaFormViewModel
+@model VERCOM.ViewModels.MermaFormViewModel
 @{
     ViewBag.Title = "Reportar Merma";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Mermas</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Registro de Ineficiencia Extraordinaria", Subtitle = "Captación de desperdicios, roturas o mermas fuera de la norma técnica.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Mermas</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Registro de Ineficiencia Extraordinaria", Subtitle = "Captación de desperdicios, roturas o mermas fuera de la norma técnica.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

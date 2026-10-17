@@ -1,7 +1,7 @@
-@model IEnumerable<Vercom.Models.ListaMateriale>
+@model IEnumerable<VERCOM.Models.ListaMateriale>
 @{ ViewBag.Title = "Lista de Materiales (BOM)"; }
 
-@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVA LISTA</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Ingeniería: Estructura de Productos (BOM)", Subtitle = "Definición de composición y requerimientos de insumos para la fabricación.", Icon = "ti-layers-intersect", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVA LISTA</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Ingeniería: Estructura de Productos (BOM)", Subtitle = "Definición de composición y requerimientos de insumos para la fabricación.", Icon = "ti-layers-intersect", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' /><div class="container-xxl mt-4">
     <div class="row row-cards">
         @foreach (var item in Model)

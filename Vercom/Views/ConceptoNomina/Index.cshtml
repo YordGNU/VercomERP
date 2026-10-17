@@ -1,7 +1,7 @@
-@model IEnumerable<Vercom.Models.ConceptoNomina>
+@model IEnumerable<VERCOM.Models.ConceptoNomina>
 @{ ViewBag.Title = "Conceptos de Nómina"; }
 
-@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVO CONCEPTO</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = "Conceptos de Nómina", Subtitle = "Catálogo de devengados, deducciones y aportes para el cálculo de nómina.", Icon = "ti-list-details", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVO CONCEPTO</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = "Conceptos de Nómina", Subtitle = "Catálogo de devengados, deducciones y aportes para el cálculo de nómina.", Icon = "ti-list-details", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

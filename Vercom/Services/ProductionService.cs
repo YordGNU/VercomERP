@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Vercom.Helpers;
-using Vercom.Models;
-using Vercom.ViewModels;
+using VERCOM.Helpers;
+using VERCOM.Models;
+using VERCOM.ViewModels;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public interface IProductionService
 {
@@ -45,8 +45,10 @@ public interface IProductionService
 
     // Planes de Producción
     Task<IEnumerable<PlanProduccion>> GetProductionPlansAsync();
+    Task<PlanProduccion?> GetProductionPlanByIdAsync(Guid id);
     Task<PlanProduccionFormViewModel> GetPlanFormContextAsync(PlanProduccion? existing = null);
     Task<(bool Succeeded, string Message)> CreatePlanAsync(PlanProduccion plan);
+    Task<(bool Succeeded, string Message)> UpdatePlanAsync(PlanProduccion plan);
     Task<PlanProduccion> GenerateSuggestedPlanAsync(Guid entidadId, short year, short month);
 
     // Escritura Producción
@@ -83,6 +85,8 @@ public class ProductionService : IProductionService
         return await _context.OrdenProduccions
             .Include(o => o.ProductoTerminado)
             .Include(o => o.FichaCosto)
+            .Include(o => o.AlmacenInsumos)
+            .Include(o => o.AlmacenProducto)
             .OrderByDescending(o => o.CreadoEn)
             .ToListAsync();
     }
@@ -363,7 +367,16 @@ public class ProductionService : IProductionService
 
     public async Task<IEnumerable<PlanProduccion>> GetProductionPlansAsync()
     {
-        return await _context.PlanProduccions.Include(p => p.Presupuesto).OrderByDescending(p => p.Anio).ThenByDescending(p => p.Mes).ToListAsync();
+        return await _context.PlanProduccions.Include(p => p.Presupuesto).Include(p => p.PlanProduccionDetalles).OrderByDescending(p => p.Anio).ThenByDescending(p => p.Mes).ToListAsync();
+    }
+
+    public async Task<PlanProduccion?> GetProductionPlanByIdAsync(Guid id)
+    {
+        return await _context.PlanProduccions
+            .Include(p => p.Presupuesto)
+            .Include(p => p.PlanProduccionDetalles)
+                .ThenInclude(d => d.Producto)
+            .FirstOrDefaultAsync(p => p.Id == id);
     }
 
     public async Task<PlanProduccionFormViewModel> GetPlanFormContextAsync(PlanProduccion? existing = null)
@@ -385,6 +398,24 @@ public class ProductionService : IProductionService
             _context.PlanProduccions.Add(plan);
             await _context.SaveChangesAsync();
             return (true, "Plan de producción creado.");
+        }
+        catch (Exception ex) { return (false, ex.Message); }
+    }
+
+    public async Task<(bool Succeeded, string Message)> UpdatePlanAsync(PlanProduccion plan)
+    {
+        try
+        {
+            var existing = await _context.PlanProduccions.FirstOrDefaultAsync(p => p.Id == plan.Id);
+            if (existing == null) return (false, "No se encontró el plan de producción.");
+
+            existing.Anio = plan.Anio;
+            existing.Mes = plan.Mes;
+            existing.PresupuestoId = plan.PresupuestoId;
+            existing.Estado = string.IsNullOrWhiteSpace(plan.Estado) ? existing.Estado : plan.Estado;
+
+            await _context.SaveChangesAsync();
+            return (true, "Plan de producción actualizado.");
         }
         catch (Exception ex) { return (false, ex.Message); }
     }
@@ -438,11 +469,14 @@ public class ProductionService : IProductionService
         order.Estado = "PLANIFICADA";
         order.CreadoEn = DateTimeOffset.Now;
 
+        if (order.CantidadPlanificada <= 0) return (false, "La cantidad planificada debe ser mayor a cero.", null);
+
         var bom = await _context.ListaMateriales
             .Include(l => l.ListaMaterialesDetalles)
             .FirstOrDefaultAsync(l => l.ProductoTerminadoId == order.ProductoTerminadoId && l.Activa);
 
         if (bom == null) return (false, "No existe una lista de materiales (BOM) activa para este producto.", null);
+        if (!bom.ListaMaterialesDetalles.Any()) return (false, "La BOM activa no tiene componentes configurados.", null);
 
         order.ListaMaterialesId = bom.Id;
 
@@ -483,13 +517,15 @@ public class ProductionService : IProductionService
             decimal totalCostConsumed = 0;
 
             // RF-41: Consumo automático al iniciar (PUSH)
+            int lineaConsumo = 0;
             foreach (var item in order.OrdenProduccionConsumos)
             {
+                lineaConsumo++;
                 var movSalida = new MovimientoInventario
                 {
                     EntidadId = order.EntidadId,
                     TipoMovimientoId = await _inventoryService.EnsureMovementTypeAsync("CONSUMO_PRODUCCION"),
-                    NumeroDocumento = order.NumeroOrden,
+                    NumeroDocumento = $"{order.NumeroOrden}-{lineaConsumo:00}",
                     AlmacenOrigenId = order.AlmacenInsumosId,
                     Fecha = DateTimeOffset.Now,
                     ReferenciaExternaTipo = "ORDEN_PRODUCCION",
@@ -516,6 +552,7 @@ public class ProductionService : IProductionService
                 // Registrar el costo unitario real capturado tras el movimiento
                 item.CostoUnitario = invResult.Movement!.MovimientoInventarioDetalles.First().CostoUnitario ?? 0;
                 totalCostConsumed += (item.CantidadPlanificada * item.CostoUnitario.Value);
+                item.MovimientoInventarioId = invResult.Movement?.Id;
             }
 
             // El asiento de WIP lo genera automáticamente ProcessMovementAsync (CONSUMO_PRODUCCION -> CTA_WIP).
@@ -549,11 +586,14 @@ public class ProductionService : IProductionService
             if (order == null) return (false, "Orden no encontrada.");
             if (order.Estado != "EN_PROCESO") return (false, "La orden no está en proceso.");
 
-            decimal costMateriaPrimaReal = 0;
+                        if (actualQuantity <= 0) return (false, "La cantidad producida debe ser mayor a cero.");
+decimal costMateriaPrimaReal = 0;
 
             // 1. Ajustar desviaciones de consumo (RF-41: descontar/reintegrar stock real y asiento compensatorio WIP)
+            int lineaVariacion = 0;
             foreach (var consumption in actualConsumptions)
             {
+                if (consumption.CantidadReal < 0) return (false, "El consumo real no puede ser negativo.");
                 var stored = order.OrdenProduccionConsumos.First(c => c.ProductoInsumoId == consumption.ProductoInsumoId);
 
                 stored.CantidadReal = consumption.CantidadReal;
@@ -562,11 +602,12 @@ public class ProductionService : IProductionService
                 var diff = stored.CantidadReal - stored.CantidadPlanificada;
                 if (Math.Abs(diff) < 0.0001m) continue;
 
+                lineaVariacion++;
                 var movVar = new MovimientoInventario
                 {
                     EntidadId = order.EntidadId,
                     Fecha = DateTimeOffset.Now,
-                    NumeroDocumento = diff > 0 ? $"{order.NumeroOrden}-EXT" : $"{order.NumeroOrden}-DEV",
+                    NumeroDocumento = diff > 0 ? $"{order.NumeroOrden}-EXT-{lineaVariacion:00}" : $"{order.NumeroOrden}-DEV-{lineaVariacion:00}",
                     ReferenciaExternaTipo = "ORDEN_PRODUCCION",
                     ReferenciaExternaId = order.Id,
                     Canal = "ERP",
@@ -650,16 +691,46 @@ public class ProductionService : IProductionService
                     AnalizadoEn = DateTimeOffset.Now
                 });
 
-                // Desviación de Conversión (MO + GIF): la CHECK de BD solo admite componentes por tipo de recurso
-                _context.AnalisisDesviacions.Add(new AnalisisDesviacion
+                // Desviaci?n de conversi?n (MANO_OBRA y GASTOS_INDIRECTOS)
+                var moEstandar = (decimal)order.FichaCosto.CostoManoObra * actualQuantity;
+                var gifEstandar = (decimal)order.FichaCosto.GastosIndirectos * actualQuantity;
+                var convReal = costTotalReal - costMateriaPrimaReal;
+                var totalConvStd = moEstandar + gifEstandar;
+                if (moEstandar != 0 || convReal != 0)
                 {
-                    Id = Guid.NewGuid(),
-                    OrdenProduccionId = order.Id,
-                    Componente = "MANO_OBRA",
-                    CostoEstandar = (decimal)(order.FichaCosto.CostoManoObra + order.FichaCosto.GastosIndirectos) * actualQuantity,
-                    CostoReal = costTotalReal - costMateriaPrimaReal,
-                    AnalizadoEn = DateTimeOffset.Now
-                });
+                    var realMo = convReal;
+                    if (totalConvStd > 0) realMo = convReal * (moEstandar / totalConvStd);
+                    if (moEstandar != 0 || realMo != 0)
+                    {
+                        _context.AnalisisDesviacions.Add(new AnalisisDesviacion
+                        {
+                            Id = Guid.NewGuid(),
+                            OrdenProduccionId = order.Id,
+                            Componente = "MANO_OBRA",
+                            CostoEstandar = moEstandar,
+                            CostoReal = Math.Round(realMo, 4),
+                            AnalizadoEn = DateTimeOffset.Now
+                        });
+                    }
+                }
+                if (gifEstandar != 0 || convReal != 0)
+                {
+                    var realGif = convReal;
+                    if (totalConvStd > 0) realGif = convReal * (gifEstandar / totalConvStd);
+                    if (moEstandar == 0 && gifEstandar == 0 && totalConvStd == 0) realGif = convReal;
+                    if (gifEstandar != 0 || realGif != 0)
+                    {
+                        _context.AnalisisDesviacions.Add(new AnalisisDesviacion
+                        {
+                            Id = Guid.NewGuid(),
+                            OrdenProduccionId = order.Id,
+                            Componente = "GASTOS_INDIRECTOS",
+                            CostoEstandar = gifEstandar,
+                            CostoReal = Math.Round(realGif, 4),
+                            AnalizadoEn = DateTimeOffset.Now
+                        });
+                    }
+                }
             }
 
             // --- ACTUALIZACIÓN DE PLAN DE PRODUCCIÓN (Iteración 7) ---

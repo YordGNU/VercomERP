@@ -1,4 +1,4 @@
-﻿namespace Vercom.Models;
+﻿namespace VERCOM.Models;
 
 /// <summary>
 /// RNF-02/RNF-50: la app POS crea el registro localmente con idempotency_key propio y hace upsert al reconectar. El worker de sincronización procesa PENDIENTE -&gt; crea factura_venta -&gt; marca PROCESADO. Reintentos seguros gracias a la clave única (dispositivo, idempotency_key).
