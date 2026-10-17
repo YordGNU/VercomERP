@@ -252,14 +252,4 @@ public class PosVentaE2ETests
 
         throw new InvalidOperationException($"No se encontró la cuenta {codigoParametro}/{codigoDefecto}.");
     }
-
-    /// <summary>Notificaciones en memoria: el flujo notifica al procesar la venta.</summary>
-    private sealed class NotificacionNula : INotificationService
-    {
-        public Task NotifyEntityAsync(Guid entidadId, string title, string message, string type = "info") => Task.CompletedTask;
-        public Task NotifyUserAsync(Guid userId, string title, string message, string type = "info") => Task.CompletedTask;
-        public Task NotifyMasterAsync(string title, string message, string type = "warning") => Task.CompletedTask;
-        public Task EnqueueEventAsync(string eventName, object payload, Guid? entidadId = null) => Task.CompletedTask;
-        public Task<int> ProcessPendingWebhooksAsync(int batchSize = 10) => Task.FromResult(0);
-    }
 }
