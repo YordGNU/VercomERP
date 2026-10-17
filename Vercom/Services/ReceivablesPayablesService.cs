@@ -29,9 +29,9 @@ public interface IReceivablesPayablesService
     Task<CuentaPorCobrar?> GetCxCByIdAsync(Guid id);
     Task<CuentaPorPagar?> GetCxPByIdAsync(Guid id);
 
-    Task<(bool Succeeded, string Message)> CreateCxCAsync(CuentaPorCobrar item, Guid entidadId);
+    Task<(bool Succeeded, string Message)> CreateCxCAsync(CuentaPorCobrar item, Guid entidadId, Guid userId);
     Task<(bool Succeeded, string Message)> UpdateCxCAsync(CuentaPorCobrar item, Guid entidadId);
-    Task<(bool Succeeded, string Message)> CreateCxPAsync(CuentaPorPagar item, Guid entidadId);
+    Task<(bool Succeeded, string Message)> CreateCxPAsync(CuentaPorPagar item, Guid entidadId, Guid userId);
     Task<(bool Succeeded, string Message)> UpdateCxPAsync(CuentaPorPagar item, Guid entidadId);
 
     Task<(bool Succeeded, string Message)> RecordCollectionAsync(Guid cxcId, decimal amount, string paymentMethod, string? reference, Guid userId);
@@ -480,8 +480,12 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
             .FirstOrDefaultAsync(c => c.Id == id);
     }
 
-    public async Task<(bool Succeeded, string Message)> CreateCxCAsync(CuentaPorCobrar item, Guid entidadId)
+    public async Task<(bool Succeeded, string Message)> CreateCxCAsync(CuentaPorCobrar item, Guid entidadId, Guid userId)
     {
+        // La transacción se reutiliza si el llamador ya abrió una (patrón de CreateEntryAsync).
+        var ownsTransaction = _context.Database.CurrentTransaction == null;
+        var transaction = ownsTransaction ? await _context.Database.BeginTransactionAsync() : null;
+
         try
         {
             item.Id = Guid.NewGuid();
@@ -491,11 +495,39 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
             if (item.DocumentoOrigenId == Guid.Empty) item.DocumentoOrigenId = item.Id;
             if (string.IsNullOrWhiteSpace(item.Estado)) item.Estado = "PENDIENTE";
             if (string.IsNullOrWhiteSpace(item.Moneda)) item.Moneda = "CUP";
+
+            // Hueco #5: el alta manual también debe reconocerse en contabilidad, si no
+            // cartera y balance se separan. DEBE cuentas por cobrar / HABER ingresos.
+            var (asiento, errorAsiento) = await CrearAsientoAltaAsync(
+                entidadId, userId, item.Id, item.DocumentoOrigenTipo, item.DocumentoOrigenNumero,
+                item.FechaEmision, item.MontoOriginal,
+                codigoComprobante: "ING",
+                cuentaDebeParametro: "CTA_CXC_CLIENTES", cuentaDebeDefecto: "135",
+                cuentaHaberParametro: "CTA_CONTRA_ALTA_CXC", cuentaHaberDefecto: "951",
+                glosaDebe: "Alta manual de CxC", glosaHaber: "Contrapartida alta manual de CxC");
+
+            if (asiento is null)
+            {
+                if (ownsTransaction) await transaction!.RollbackAsync();
+                return (false, $"No se pudo contabilizar el alta: {errorAsiento}");
+            }
+
+            item.AsientoOrigenId = asiento.Id;
             _context.CuentaPorCobrars.Add(item);
             await _context.SaveChangesAsync();
-            return (true, "Cuenta por cobrar registrada.");
+
+            if (ownsTransaction) await transaction!.CommitAsync();
+            return (true, "Cuenta por cobrar registrada y contabilizada.");
         }
-        catch (Exception ex) { return (false, ex.Message); }
+        catch (Exception ex)
+        {
+            if (ownsTransaction) await transaction!.RollbackAsync();
+            return (false, ex.Message);
+        }
+        finally
+        {
+            if (transaction is not null) await transaction.DisposeAsync();
+        }
     }
 
     public async Task<(bool Succeeded, string Message)> UpdateCxCAsync(CuentaPorCobrar item, Guid entidadId)
@@ -530,8 +562,11 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
         catch (Exception ex) { return (false, ex.Message); }
     }
 
-    public async Task<(bool Succeeded, string Message)> CreateCxPAsync(CuentaPorPagar item, Guid entidadId)
+    public async Task<(bool Succeeded, string Message)> CreateCxPAsync(CuentaPorPagar item, Guid entidadId, Guid userId)
     {
+        var ownsTransaction = _context.Database.CurrentTransaction == null;
+        var transaction = ownsTransaction ? await _context.Database.BeginTransactionAsync() : null;
+
         try
         {
             item.Id = Guid.NewGuid();
@@ -541,11 +576,114 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
             if (item.DocumentoOrigenId == Guid.Empty) item.DocumentoOrigenId = item.Id;
             if (string.IsNullOrWhiteSpace(item.Estado)) item.Estado = "PENDIENTE";
             if (string.IsNullOrWhiteSpace(item.Moneda)) item.Moneda = "CUP";
+
+            // Hueco #5: asiento de apertura de la deuda. DEBE gasto / HABER cuentas por pagar.
+            var (asiento, errorAsiento) = await CrearAsientoAltaAsync(
+                entidadId, userId, item.Id, item.DocumentoOrigenTipo, item.DocumentoOrigenNumero,
+                item.FechaEmision, item.MontoOriginal,
+                codigoComprobante: "DIA",
+                cuentaDebeParametro: "CTA_CONTRA_ALTA_CXP", cuentaDebeDefecto: "865",
+                cuentaHaberParametro: "CTA_CXP_PROVEEDORES", cuentaHaberDefecto: "405",
+                glosaDebe: "Contrapartida alta manual de CxP", glosaHaber: "Alta manual de CxP");
+
+            if (asiento is null)
+            {
+                if (ownsTransaction) await transaction!.RollbackAsync();
+                return (false, $"No se pudo contabilizar el alta: {errorAsiento}");
+            }
+
+            item.AsientoOrigenId = asiento.Id;
             _context.CuentaPorPagars.Add(item);
             await _context.SaveChangesAsync();
-            return (true, "Cuenta por pagar registrada.");
+
+            if (ownsTransaction) await transaction!.CommitAsync();
+            return (true, "Cuenta por pagar registrada y contabilizada.");
         }
-        catch (Exception ex) { return (false, ex.Message); }
+        catch (Exception ex)
+        {
+            if (ownsTransaction) await transaction!.RollbackAsync();
+            return (false, ex.Message);
+        }
+        finally
+        {
+            if (transaction is not null) await transaction.DisposeAsync();
+        }
+    }
+
+    /// <summary>
+    /// Asiento de apertura de una CxC/CxP dada de alta a mano. Reutiliza
+    /// <see cref="IAccountingService.CreateEntryAsync"/> para heredar la validación
+    /// de partida doble, el periodo abierto y el consecutivo.
+    /// </summary>
+    private async Task<(AsientoContable? Asiento, string? Error)> CrearAsientoAltaAsync(
+        Guid entidadId, Guid userId, Guid documentoId, string documentoOrigenTipo, string? documentoOrigenNumero,
+        DateOnly fecha, decimal monto, string codigoComprobante,
+        string cuentaDebeParametro, string cuentaDebeDefecto,
+        string cuentaHaberParametro, string cuentaHaberDefecto,
+        string glosaDebe, string glosaHaber)
+    {
+        if (monto <= 0) return (null, "el importe debe ser mayor que cero.");
+
+        var tipoComprobante = await _context.TipoComprobantes.FirstOrDefaultAsync(t => t.Codigo == codigoComprobante);
+        if (tipoComprobante is null) return (null, $"no existe el tipo de comprobante '{codigoComprobante}'.");
+
+        var cuentaDebe = await ObtenerCuentaIdAsync(entidadId, cuentaDebeParametro, cuentaDebeDefecto);
+        if (cuentaDebe is null)
+            return (null, $"no se encontró la cuenta del debe (parámetro {cuentaDebeParametro}, código {cuentaDebeDefecto}).");
+
+        var cuentaHaber = await ObtenerCuentaIdAsync(entidadId, cuentaHaberParametro, cuentaHaberDefecto);
+        if (cuentaHaber is null)
+            return (null, $"no se encontró la cuenta del haber (parámetro {cuentaHaberParametro}, código {cuentaHaberDefecto}).");
+
+        var referencia = string.IsNullOrWhiteSpace(documentoOrigenNumero) ? documentoOrigenTipo : documentoOrigenNumero;
+
+        var entry = new AsientoContable
+        {
+            Id = Guid.NewGuid(),
+            EntidadId = entidadId,
+            Fecha = fecha,
+            Concepto = $"ALTA MANUAL {referencia}",
+            // El CHECK de asiento_contable.modulo_origen no admite "CARTERA": el cobro
+            // existente ya contabiliza con CONTABILIDAD.
+            ModuloOrigen = "CONTABILIDAD",
+            DocumentoOrigenTipo = documentoOrigenTipo,
+            DocumentoOrigenId = documentoId,
+            TipoComprobanteId = tipoComprobante.Id,
+            Estado = "CONTABILIZADO",
+            CreadoPor = userId,
+            CreadoEn = DateTimeOffset.Now,
+            AsientoDetalles =
+            {
+                new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = cuentaDebe.Value, Debe = monto, Glosa = glosaDebe },
+                new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = cuentaHaber.Value, Haber = monto, Glosa = glosaHaber }
+            }
+        };
+
+        var resultado = await _accountingService.CreateEntryAsync(entry);
+        return resultado.Succeeded ? (resultado.Entry, null) : (null, resultado.Message);
+    }
+
+    /// <summary>
+    /// Resuelve la cuenta contable por el parámetro configurado para la entidad y,
+    /// si no existe, por el código por defecto del catálogo.
+    /// </summary>
+    private async Task<Guid?> ObtenerCuentaIdAsync(Guid entidadId, string codigoParametro, string codigoPorDefecto)
+    {
+        var configurado = await _paramService.ObtenerValorVigenteAsync(entidadId, codigoParametro);
+
+        foreach (var codigo in new[] { configurado, codigoPorDefecto })
+        {
+            if (string.IsNullOrWhiteSpace(codigo)) continue;
+
+            var id = await _context.CuentaContables
+                .Where(c => c.Codigo == codigo && c.EntidadId == entidadId)
+                .Select(c => (Guid?)c.Id)
+                .FirstOrDefaultAsync();
+
+            if (id is not null) return id;
+        }
+
+        return null;
     }
 
     public async Task<(bool Succeeded, string Message)> UpdateCxPAsync(CuentaPorPagar item, Guid entidadId)

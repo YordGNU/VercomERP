@@ -56,7 +56,7 @@ public class CuentaPorPagarController : Controller
             return View(reload);
         }
 
-        var result = await _carteraService.CreateCxPAsync(vm.Item, _entidadProvider.CurrentEntidadId);
+        var result = await _carteraService.CreateCxPAsync(vm.Item, _entidadProvider.CurrentEntidadId, _entidadProvider.CurrentUsuarioId);
         if (!result.Succeeded)
         {
             ModelState.AddModelError("", result.Message);
