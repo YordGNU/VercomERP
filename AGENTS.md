@@ -11,7 +11,8 @@ Instrucciones y contexto aprendidos en sesiones anteriores. Es la fuente de memo
 - NO hacer commit/push salvo que se pida explícitamente.
 - Después de tocar código: `dotnet build Vercom.csproj -c Release` y esperar 0 errores.
 - No abrir arquitecturas nuevas; reutilizar servicios/patrones existentes (AccountingService, ConsecutivoService, ParametroSistemaService, IEntidadProvider).
-- Ambiente: Windows PowerShell 5.1, win32.
+- Ambiente: Windows PowerShell 5.1, win32. **Nunca editar `.cs`/`.cshtml` con `Set-Content`/`Out-File`**: el `-Encoding UTF8` de PS 5.1 añade BOM y reinterpreta el archivo (corrompe las vocales acentuadas y los símbolos). Usar la herramienta de edición, y verificar `BOM=False` + diff mínimo antes de commitear.
+- Suite de pruebas: `Vercom.Tests` (xUnit, `Assert` nativo, sin Moq/FluentAssertions). `dotnet test Vercom.slnx`. Los tests de integración corren en transacción revertida y se omiten sin BD (`VERCOM_TEST_CONNECTION`, con fallback a `appsettings.json`).
 - UI: la web de Inspinia v5.2 (demo webapplayers) es la **referencia canónica de UI/UX**. Antes de diseñar/ajustar pantallas (sobre todo dashboards), revisar el demo y reutilizar sus patrones/clases del tema. Ver "## UI / Dashboards" abajo. Ninguna idea de UI se implementa sin ok del usuario.
 
 ## UI / Dashboards — Inspinia v5.2 como referencia canónica (registrado 2026-10)
@@ -67,7 +68,7 @@ Instrucciones y contexto aprendidos en sesiones anteriores. Es la fuente de memo
 
 ## Notas de producto pendientes (NO implementadas)
 - #4: Policies CREAR/EDITAR en cartera dependen del catálogo de permisos en BD (PermissionPolicyProvider trata policies con "." como claim Permission); sin evidencia de bug en código.
-- #5: CxC/CxP dadas de alta manualmente no generan asiento de apertura.
+- #5: **RESUELTO (commits `7414541` + `ab681a9`, 2026-10)**: el alta manual de CxC/CxP genera asiento de apertura (DEBE `CTA_CXC_CLIENTES`/135 · HABER `CTA_CONTRA_ALTA_CXC`/951 para CxC; DEBE `CTA_CONTRA_ALTA_CXP`/865 · HABER `CTA_CXP_PROVEEDORES`/405 para CxP; `modulo_origen` = CONTABILIDAD porque el CHECK no admite CARTERA) y, si luego cambia el importe, `UpdateCxCAsync`/`UpdateCxPAsync` revierten el asiento y lo repostan (el revertido se conserva). Cubierto por `Vercom.Tests/Integration/CarteraAsientoAperturaTests.cs`.
 - #6: Moneda MLC sin tipo de cambio en asientos de cobro/pago.
 
 ## Nómina (P0-6, validado en BD real 2026-09-25)
