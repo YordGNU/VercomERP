@@ -14,14 +14,16 @@ public sealed class PosSincronizacionService
     private readonly IInventoryService _inventory;
     private readonly IAccountingService _accounting;
     private readonly IParametroSistemaService _parametros;
+    private readonly ILogger<PosSincronizacionService> _logger;
 
-    public PosSincronizacionService(AppDbContext db, INotificationService notifications, IInventoryService inventory, IAccountingService accounting, IParametroSistemaService parametros)
+    public PosSincronizacionService(AppDbContext db, INotificationService notifications, IInventoryService inventory, IAccountingService accounting, IParametroSistemaService parametros, ILogger<PosSincronizacionService> logger)
     {
         _db = db;
         _notifications = notifications;
         _inventory = inventory;
         _accounting = accounting;
         _parametros = parametros;
+        _logger = logger;
     }
 
     public async Task<(VentaPosPendienteDto? Result, string? Error, bool Conflict, bool Accepted)> RecibirAsync(RecibirVentaPosRequest request, CancellationToken cancellationToken)
@@ -92,7 +94,12 @@ public sealed class PosSincronizacionService
 
     private async Task<(VentaPosPendienteDto? Result, string? Error, bool Conflict)> ProcesarCoreAsync(Guid deviceId, string key, CancellationToken cancellationToken)
     {
-        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+        // Unirse a la transacción ambiente si el llamador ya abrió una (mismo patrón que
+        // InventoryService y CreateEntryAsync): sin ella se abre una SERIALIZABLE propia.
+        var ownsTransaction = _db.Database.CurrentTransaction == null;
+        await using var transaction = ownsTransaction
+            ? await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken)
+            : null;
         // IgnoreQueryFilters: el query filter global (entidad) depende del HttpContext,
         // que no existe en el scope del background worker => excluiría TODAS las filas.
         var pending = await _db.PosVentaPendientes.IgnoreQueryFilters()
@@ -264,7 +271,7 @@ public sealed class PosSincronizacionService
         pending.IntentosProcesamiento++;
 
         await _db.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+        if (ownsTransaction) await transaction!.CommitAsync(cancellationToken);
 
         await _notifications.NotifyEntityAsync(data.EntidadId, "Venta POS procesada",
             $"{device.Nombre}: venta {data.Serie}{data.NumeroFactura} por {total:N2} {data.Moneda}.", "success");
@@ -300,7 +307,7 @@ public sealed class PosSincronizacionService
                 };
 
                 var ctaCaja = (await _parametros.ObtenerValorVigenteAsync(data.EntidadId, "CTA_CAJA_MN")) ?? "101";
-                var ctaVentas = (await _parametros.ObtenerValorVigenteAsync(data.EntidadId, "CTA_VENTAS_GENERAL")) ?? "900";
+                var ctaVentas = (await _parametros.ObtenerValorVigenteAsync(data.EntidadId, "CTA_VENTAS_GENERAL")) ?? "900.0000";
                 var ctaImp = (await _parametros.ObtenerValorVigenteAsync(data.EntidadId, "CTA_IMP_VENTAS")) ?? "440.0001";
 
                 var totalPagado = data.Pagos.Sum(x => x.Monto - (x.VueltoEntregado ?? 0m));
@@ -329,16 +336,44 @@ public sealed class PosSincronizacionService
                 {
                     var res = await _accounting.CreateEntryAsync(entry);
                     if (res.Succeeded) invoice.AsientoId = entry.Id;
+                    else _logger.LogWarning("POS: la venta {Serie}-{Numero} no se pudo contabilizar: {Motivo}",
+                        data.Serie, data.NumeroFactura, res.Message);
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "POS: asiento de venta descuadrado {Serie}-{Numero} (debe {Debe}, haber {Haber}); " +
+                        "revisar parámetros CTA_CAJA_MN/CTA_VENTAS_GENERAL/CTA_IMP_VENTAS/CTA_CXC_CLIENTES.",
+                        data.Serie, data.NumeroFactura,
+                        entry.AsientoDetalles.Sum(d => d.Debe), entry.AsientoDetalles.Sum(d => d.Haber));
                 }
             }
             else if (period == null)
             {
                 // Sin periodo contable abierto no hay asiento de venta (misma salvaguarda que SalesService).
+                _logger.LogWarning("POS: no existe periodo contable abierto para {Fecha}; la venta {Serie}-{Numero} queda sin asiento de venta.",
+                    facturaFecha, data.Serie, data.NumeroFactura);
             }
         }
 
         // Asiento de COSTO (inventario ↔ costo): reutiliza la lógica canónica de InventoryService.
-        await _inventory.GenerateAccountingEntryForExistingMovementAsync(movement, ct);
+        // Un fallo de datos (producto sin cuentas y sin cuenta genérica válida) avisa pero no
+        // tumba la venta: el movimiento queda pendiente de contabilizar (AsientoId NULL).
+        try
+        {
+            await _inventory.GenerateAccountingEntryForExistingMovementAsync(movement, ct);
+        }
+        catch (InvalidOperationException ex)
+        {
+            foreach (var huerfano in _db.ChangeTracker.Entries<AsientoContable>()
+                .Where(e => e.State == EntityState.Added && e.Entity.DocumentoOrigenId == movement.Id).ToList())
+                huerfano.State = EntityState.Detached;
+
+            movement.AsientoId = null;
+            _logger.LogWarning(ex,
+                "POS: no se pudo contabilizar el costo del movimiento {Movimiento} de la venta {Serie}-{Numero}; queda pendiente de contabilizar.",
+                movement.Id, data.Serie, data.NumeroFactura);
+        }
     }
 
     private async Task<PosVentaPendiente?> FindAsync(Guid deviceId, string key, CancellationToken token) =>
