@@ -92,7 +92,7 @@ public class CuentaPorCobrarController : Controller
             return View(reload);
         }
 
-        var result = await _carteraService.UpdateCxCAsync(vm.Item, _entidadProvider.CurrentEntidadId);
+        var result = await _carteraService.UpdateCxCAsync(vm.Item, _entidadProvider.CurrentEntidadId, _entidadProvider.CurrentUsuarioId);
         if (!result.Succeeded)
         {
             ModelState.AddModelError("", result.Message);
