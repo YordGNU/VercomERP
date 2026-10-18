@@ -33,7 +33,7 @@ public class PosSyncWorkerTests
         var notificaciones = new NotificacionNula();
 
         var sync = new PosSincronizacionService(db, notificaciones, inventario, contabilidad, parametros,
-            NullLogger<PosSincronizacionService>.Instance);
+            NullLogger<PosSincronizacionService>.Instance, provider);
 
         // Fila venenosa legacy (sin TipoMovimientoId) que falla al procesarse, más antigua
         // para que el worker la atienda primero.

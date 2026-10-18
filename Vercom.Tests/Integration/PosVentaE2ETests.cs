@@ -15,15 +15,21 @@ namespace Vercom.Tests.Integration;
 /// </summary>
 public class PosVentaE2ETests
 {
-    private static PosSincronizacionService CrearServicio(AppDbContext db)
+    private static PosSincronizacionService CrearServicio(AppDbContext db, Guid? entidadDelToken = null)
     {
         var provider = new TestEntidadProvider(TestDb.EntidadIdSeed, TestDb.UsuarioIdSeed, isMaster: true);
         var parametros = new ParametroSistemaService(db);
         var contabilidad = new AccountingService(db, null!, provider, new ConsecutivoService(db));
         var inventario = new InventoryService(db, contabilidad, parametros, provider, NullLogger<InventoryService>.Instance);
 
+        // Sin entidadDelToken el servicio va con el proveedor MASTER del fixture; con una
+        // entidad explícita simula el token de un dispositivo real (no master, con su entidad).
+        IEntidadProvider solicitante = entidadDelToken is Guid entidad
+            ? new TestEntidadProvider(entidad, TestDb.UsuarioIdSeed)
+            : provider;
+
         return new PosSincronizacionService(db, new NotificacionNula(), inventario, contabilidad, parametros,
-            NullLogger<PosSincronizacionService>.Instance);
+            NullLogger<PosSincronizacionService>.Instance, solicitante);
     }
 
     [DbFact(RequiereDatosBase = true)]
@@ -231,6 +237,152 @@ public class PosVentaE2ETests
         Assert.Equal(ctx.ExistenciaInicial - 2m, existencia.Cantidad);
 
         await tx.RollbackAsync();
+    }
+
+    [DbFact(RequiereDatosBase = true)]
+    public async Task UnTokenDeOtraEntidadNoRegistraNiProcesaNiLeeVentasDelDispositivo()
+    {
+        await using var db = TestDb.Create();
+        await using var tx = await db.Database.BeginTransactionAsync();
+
+        var sesion = await PosFixture.CrearSesionAsync(db);
+        var ctx = await PosVentaFixture.PrepararAsync(db, sesion);
+
+        // Token de OTRA entidad: no acepta el recibo del dispositivo.
+        var ajeno = CrearServicio(db, Guid.NewGuid());
+        var request = PosVentaFixture.Request(sesion, ctx);
+        var recibida = await ajeno.RecibirAsync(request, CancellationToken.None);
+        Assert.NotNull(recibida.Error);
+        Assert.Contains("no encontrado", recibida.Error, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(0, await db.PosVentaPendientes.AsNoTracking()
+            .CountAsync(p => p.IdempotencyKey == request.IdempotencyKey));
+
+        // La dueña sí lo registra...
+        var duena = CrearServicio(db, ctx.EntidadId);
+        var propia = await duena.RecibirAsync(request, CancellationToken.None);
+        Assert.Null(propia.Error);
+
+        // ...pero el token ajeno no puede leer su estado ni procesarla.
+        Assert.Null(await ajeno.EstadoAsync(sesion.DispositivoPosId, request.IdempotencyKey, CancellationToken.None));
+
+        var (result, error, _) = await ajeno.ProcesarAsync(sesion.DispositivoPosId, request.IdempotencyKey, CancellationToken.None);
+        Assert.Null(result);
+        Assert.NotNull(error);
+        Assert.Contains("no corresponde al dispositivo", error, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(0, await db.FacturaVenta.AsNoTracking().CountAsync(f => f.Serie == ctx.Serie));
+
+        // La dueña sí puede leer el estado (misma consulta con filtro por entidad).
+        var estado = await duena.EstadoAsync(sesion.DispositivoPosId, request.IdempotencyKey, CancellationToken.None);
+        Assert.NotNull(estado);
+        Assert.Equal("PENDIENTE", estado!.Estado);
+
+        await tx.RollbackAsync();
+    }
+
+    [DbFact(RequiereDatosBase = true)]
+    public async Task LaNumeracionFueraDelRangoReservadoSeRechaza()
+    {
+        await using var db = TestDb.Create();
+        await using var tx = await db.Database.BeginTransactionAsync();
+
+        var sesion = await PosFixture.CrearSesionAsync(db);
+        var ctx = await PosVentaFixture.PrepararAsync(db, sesion);
+        await ReservarRangoAsync(db, sesion, ctx.Serie, desde: 100, hasta: 200);
+        var servicio = CrearServicio(db);
+
+        // Dentro del rango reservado al dispositivo: procesa normalmente.
+        var dentro = PosVentaFixture.Request(sesion, ctx, numeroFactura: "150");
+        await servicio.RecibirAsync(dentro, CancellationToken.None);
+        var ok = await servicio.ProcesarAsync(sesion.DispositivoPosId, dentro.IdempotencyKey, CancellationToken.None);
+        Assert.Null(ok.Error);
+        Assert.Equal("PROCESADO", ok.Result!.Estado);
+
+        // Fuera del rango: se rechaza sin facturar y el pendiente queda visible.
+        var fuera = PosVentaFixture.Request(sesion, ctx, numeroFactura: "999");
+        await servicio.RecibirAsync(fuera, CancellationToken.None);
+        var (result, error, conflict) = await servicio.ProcesarAsync(
+            sesion.DispositivoPosId, fuera.IdempotencyKey, CancellationToken.None);
+
+        Assert.Null(result);
+        Assert.NotNull(error);
+        Assert.True(conflict);
+        Assert.Contains("fuera del rango", error);
+        Assert.Equal(0, await db.FacturaVenta.AsNoTracking()
+            .CountAsync(f => f.Serie == ctx.Serie && f.NumeroFactura == "999"));
+
+        var pendiente = await db.PosVentaPendientes.AsNoTracking()
+            .FirstAsync(p => p.IdempotencyKey == fuera.IdempotencyKey);
+        Assert.Equal("PENDIENTE", pendiente.Estado);
+
+        await tx.RollbackAsync();
+    }
+
+    [DbFact(RequiereDatosBase = true)]
+    public async Task LaNumeracionYaUsadaSeReportaComoErrorSinDuplicarFactura()
+    {
+        await using var db = TestDb.Create();
+        await using var tx = await db.Database.BeginTransactionAsync();
+
+        var sesion = await PosFixture.CrearSesionAsync(db);
+        var ctx = await PosVentaFixture.PrepararAsync(db, sesion);
+        var servicio = CrearServicio(db);
+
+        // Dos ventas distintas (claves idempotentes distintas) con la misma serie y número.
+        var primera = PosVentaFixture.Request(sesion, ctx, numeroFactura: "700");
+        await servicio.RecibirAsync(primera, CancellationToken.None);
+        var ok = await servicio.ProcesarAsync(sesion.DispositivoPosId, primera.IdempotencyKey, CancellationToken.None);
+        Assert.Null(ok.Error);
+        Assert.Equal("PROCESADO", ok.Result!.Estado);
+
+        var segunda = PosVentaFixture.Request(sesion, ctx, numeroFactura: "700");
+        await servicio.RecibirAsync(segunda, CancellationToken.None);
+        var (result, error, conflict) = await servicio.ProcesarAsync(
+            sesion.DispositivoPosId, segunda.IdempotencyKey, CancellationToken.None);
+
+        // El índice único (entidad, sucursal, serie, número) se reporta como error de negocio,
+        // no como fallo 500, y la venta duplicada no se persiste.
+        Assert.Null(result);
+        Assert.NotNull(error);
+        Assert.False(conflict);
+        Assert.Contains("Ya existe una factura", error);
+        Assert.Equal(1, await db.FacturaVenta.AsNoTracking()
+            .CountAsync(f => f.Serie == ctx.Serie && f.NumeroFactura == "700"));
+
+        var pendienteDuplicado = await db.PosVentaPendientes.AsNoTracking()
+            .FirstAsync(p => p.IdempotencyKey == segunda.IdempotencyKey);
+        Assert.Equal("PENDIENTE", pendienteDuplicado.Estado);
+
+        // El fallo no puede dejar el pendiente marcado PROCESADO con una factura inexistente:
+        // cualquier SaveChanges posterior (el del worker) lo persistiría.
+        var rastreado = db.ChangeTracker.Entries<PosVentaPendiente>()
+            .First(e => e.Entity.IdempotencyKey == segunda.IdempotencyKey);
+        Assert.Equal("PENDIENTE", rastreado.Entity.Estado);
+        Assert.Null(rastreado.Entity.FacturaId);
+
+        // Y el llamador puede volver a fallar limpiamente: nada quedó a medio insertar.
+        var repetido = await servicio.ProcesarAsync(sesion.DispositivoPosId, segunda.IdempotencyKey, CancellationToken.None);
+        Assert.NotNull(repetido.Error);
+        Assert.Equal(1, await db.FacturaVenta.AsNoTracking()
+            .CountAsync(f => f.Serie == ctx.Serie && f.NumeroFactura == "700"));
+
+        await tx.RollbackAsync();
+    }
+
+    private static async Task ReservarRangoAsync(AppDbContext db, PosFixture.SesionPos sesion, string serie, long desde, long hasta)
+    {
+        db.PosRangoNumeracions.Add(new PosRangoNumeracion
+        {
+            Id = Guid.NewGuid(),
+            DispositivoPosId = sesion.DispositivoPosId,
+            TipoDocumento = "FACTURA_VENTA",
+            Serie = serie,
+            NumeroDesde = desde,
+            NumeroHasta = hasta,
+            NumeroSiguienteLocal = desde,
+            AsignadoEn = DateTimeOffset.UtcNow,
+            Agotado = false
+        });
+        await db.SaveChangesAsync();
     }
 
     private static async Task<Guid> CuentaAsync(AppDbContext db, Guid entidadId, string codigoParametro, string codigoDefecto)

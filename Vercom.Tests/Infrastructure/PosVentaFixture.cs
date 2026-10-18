@@ -134,7 +134,8 @@ public static class PosVentaFixture
         decimal impuestoPorcentaje = 0m,
         string formaPago = "EFECTIVO",
         decimal? montoPago = null,
-        string? idempotencyKey = null)
+        string? idempotencyKey = null,
+        string? numeroFactura = null)
     {
         var total = Total(cantidad, precioUnitario, descuentoPorcentaje, impuestoPorcentaje);
 
@@ -145,7 +146,7 @@ public static class PosVentaFixture
             ClienteId = ctx.ClienteId,
             AlmacenId = ctx.AlmacenId,
             TipoMovimientoId = TipoMovimientoVentaACliente,
-            NumeroFactura = ctx.NumeroFactura,
+            NumeroFactura = numeroFactura ?? ctx.NumeroFactura,
             Serie = ctx.Serie,
             Fecha = DateTimeOffset.UtcNow,
             Moneda = "CUP",

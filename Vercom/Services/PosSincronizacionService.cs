@@ -4,6 +4,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using VERCOM.DTOs;
 using VERCOM.Models;
+using VERCOM.Security;
 
 namespace VERCOM.Services;
 
@@ -15,8 +16,9 @@ public sealed class PosSincronizacionService
     private readonly IAccountingService _accounting;
     private readonly IParametroSistemaService _parametros;
     private readonly ILogger<PosSincronizacionService> _logger;
+    private readonly IEntidadProvider _entidad;
 
-    public PosSincronizacionService(AppDbContext db, INotificationService notifications, IInventoryService inventory, IAccountingService accounting, IParametroSistemaService parametros, ILogger<PosSincronizacionService> logger)
+    public PosSincronizacionService(AppDbContext db, INotificationService notifications, IInventoryService inventory, IAccountingService accounting, IParametroSistemaService parametros, ILogger<PosSincronizacionService> logger, IEntidadProvider entidad)
     {
         _db = db;
         _notifications = notifications;
@@ -24,6 +26,16 @@ public sealed class PosSincronizacionService
         _accounting = accounting;
         _parametros = parametros;
         _logger = logger;
+        _entidad = entidad;
+    }
+
+    // Entidad del solicitante autenticado; null cuando no corresponde restringir (rol MASTER o
+    // scope sin HttpContext, como el background worker), mismo criterio que PosService.
+    private Guid? EntidadSolicitante()
+    {
+        if (_entidad.IsMaster) return null;
+        var id = _entidad.CurrentEntidadId;
+        return id == Guid.Empty ? null : id;
     }
 
     public async Task<(VentaPosPendienteDto? Result, string? Error, bool Conflict, bool Accepted)> RecibirAsync(RecibirVentaPosRequest request, CancellationToken cancellationToken)
@@ -35,6 +47,7 @@ public sealed class PosSincronizacionService
         var device = await _db.DispositivoPos.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == request.DispositivoPosId, cancellationToken);
         if (device is null) return (null, "Dispositivo POS no encontrado.", true, false);
+        if (EntidadSolicitante() is Guid entidad && device.EntidadId != entidad) return (null, "Dispositivo POS no encontrado.", true, false);
 
         // Sesión compartida: cualquier dispositivo de la misma caja puede registrar ventas
         // contra la sesión ABIERTA de esa caja, aunque la haya abierto otro dispositivo.
@@ -67,8 +80,14 @@ public sealed class PosSincronizacionService
         return (Map(pending), null, false, true);
     }
 
-    public async Task<VentaPosPendienteDto?> EstadoAsync(Guid deviceId, string key, CancellationToken cancellationToken) =>
-        Map(await FindAsync(deviceId, key, cancellationToken));
+    public async Task<VentaPosPendienteDto?> EstadoAsync(Guid deviceId, string key, CancellationToken cancellationToken)
+    {
+        var consulta = _db.PosVentaPendientes.AsNoTracking()
+            .Where(x => x.DispositivoPosId == deviceId && x.IdempotencyKey == key);
+        if (EntidadSolicitante() is Guid entidad)
+            consulta = consulta.Where(x => x.DispositivoPos.EntidadId == entidad);
+        return Map(await consulta.FirstOrDefaultAsync(cancellationToken));
+    }
 
     public async Task<(VentaPosPendienteDto? Result, string? Error, bool Conflict)> ProcesarAsync(Guid deviceId, string key, CancellationToken cancellationToken)
     {
@@ -80,6 +99,11 @@ public sealed class PosSincronizacionService
             {
                 return await ProcesarCoreAsync(deviceId, key, cancellationToken);
             }
+            catch (DbUpdateException ex) when (EsNumeracionDuplicada(ex))
+            {
+                await RevertirCambiosFallidosAsync(cancellationToken);
+                return (null, "Ya existe una factura con esa numeración (serie y número) en la entidad y sucursal de la venta.", false);
+            }
             catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 1205 })
             {
                 await Task.Delay(100 * attempt, cancellationToken);
@@ -88,8 +112,30 @@ public sealed class PosSincronizacionService
             {
                 await Task.Delay(100 * attempt, cancellationToken);
             }
+            catch (DbUpdateException)
+            {
+                await RevertirCambiosFallidosAsync(cancellationToken);
+                throw;
+            }
         }
         return (null, "Ocurrió un conflicto de concurrencia al procesar la venta; reintente.", true);
+    }
+
+    private static bool EsNumeracionDuplicada(DbUpdateException ex) =>
+        ex.InnerException is SqlException { Number: 2601 or 2627 } ||
+        ex.InnerException?.InnerException is SqlException { Number: 2601 or 2627 };
+
+    // Tras un SaveChanges fallido el contexto queda sucio: ProcesarCoreAsync ya marcó el
+    // pendiente PROCESADO (y sumó los totales de la sesión) en memoria antes de guardar, así
+    // que un SaveChanges posterior —el de MarcarErroresAsync del worker, por ejemplo— persistiría
+    // un PROCESADO con un FacturaId inexistente. Se descartan los Added y se recarga lo modificado.
+    private async Task RevertirCambiosFallidosAsync(CancellationToken cancellationToken)
+    {
+        foreach (var entrada in _db.ChangeTracker.Entries().Where(e => e.State == EntityState.Added).ToList())
+            entrada.State = EntityState.Detached;
+
+        foreach (var entrada in _db.ChangeTracker.Entries().Where(e => e.State == EntityState.Modified).ToList())
+            await entrada.ReloadAsync(cancellationToken);
     }
 
     private async Task<(VentaPosPendienteDto? Result, string? Error, bool Conflict)> ProcesarCoreAsync(Guid deviceId, string key, CancellationToken cancellationToken)
@@ -117,7 +163,25 @@ public sealed class PosSincronizacionService
         var data = sale!;
 
         var device = await _db.DispositivoPos.AsNoTracking().IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == deviceId, cancellationToken);
-        if (device is null || device.EntidadId != data.EntidadId || device.AlmacenId != data.AlmacenId) return (null, "La venta no corresponde al dispositivo POS.", false);
+        var entidadSolicitante = EntidadSolicitante();
+        if (device is null || device.EntidadId != data.EntidadId || device.AlmacenId != data.AlmacenId ||
+            (entidadSolicitante is Guid ent && device.EntidadId != ent))
+            return (null, "La venta no corresponde al dispositivo POS.", false);
+
+        // Numeración: si el servidor reservó rangos a este dispositivo para la serie, el número
+        // debe caer dentro de uno de ellos. Sin rango reservado se conserva el comportamiento
+        // previo (el terminal asigna la numeración y el único freno es el índice único).
+        var rangos = await _db.PosRangoNumeracions.IgnoreQueryFilters()
+            .Where(r => r.DispositivoPosId == deviceId && r.Serie == data.Serie)
+            .Select(r => new { r.NumeroDesde, r.NumeroHasta })
+            .ToListAsync(cancellationToken);
+        if (rangos.Count > 0)
+        {
+            if (!long.TryParse(data.NumeroFactura, out var numero))
+                return (null, $"La numeración '{data.NumeroFactura}' no es válida para la serie {data.Serie}.", false);
+            if (!rangos.Any(r => numero >= r.NumeroDesde && numero <= r.NumeroHasta))
+                return (null, $"La numeración {data.Serie}-{data.NumeroFactura} está fuera del rango reservado al dispositivo.", true);
+        }
 
         var entidadValida = await _db.Entidads.IgnoreQueryFilters().AnyAsync(x => x.Id == data.EntidadId && x.Activo, cancellationToken);
         var sucursalValida = await _db.Sucursals.IgnoreQueryFilters().AnyAsync(x => x.Id == data.SucursalId && x.EntidadId == data.EntidadId && x.Activo, cancellationToken);
