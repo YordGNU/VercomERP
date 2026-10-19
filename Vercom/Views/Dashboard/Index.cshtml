@@ -1,15 +1,15 @@
-@model VERCOM.ViewModels.DashboardViewModel
+﻿@model VERCOM.ViewModels.DashboardViewModel
 @{
     ViewBag.Title = "Panel de Control";
-    string Num(decimal? v, string fmt = "N2") => v.HasValue ? v.Value.ToString(fmt) : "—";
+    string Num(decimal? v, string fmt = "N2") => v.HasValue ? v.Value.ToString(fmt) : "â€”";
     string Money(decimal v) => v.ToString("N2");
-    string ActIcon(string a) => a switch { "INSERT" => "ti-plus", "UPDATE" => "ti-pencil", "DELETE" => "ti-trash", _ => "ti-activity" };
-    string ActColor(string a) => a switch { "INSERT" => "success", "UPDATE" => "primary", "DELETE" => "danger", _ => "secondary" };
+    string ActIcon(string? a) => a switch { "INSERT" => "ti-plus", "UPDATE" => "ti-pencil", "DELETE" => "ti-trash", _ => "ti-activity" };
+    string ActColor(string? a) => a switch { "INSERT" => "success", "UPDATE" => "primary", "DELETE" => "danger", _ => "secondary" };
     string TablaCorta(string t) => string.IsNullOrEmpty(t) ? t : t.Substring(t.LastIndexOf('.') + 1);
 }
 
 @{
-    var rangoBtns = new (string Key, string Label)[] { ("hoy", "Hoy"), ("7d", "7 días"), ("30d", "30 días"), ("mes", "Mes"), ("trimestre", "Trimestre") };
+    var rangoBtns = new (string Key, string Label)[] { ("hoy", "Hoy"), ("7d", "7 dÃ­as"), ("30d", "30 dÃ­as"), ("mes", "Mes"), ("trimestre", "Trimestre") };
     var sbHeader = new System.Text.StringBuilder();
     sbHeader.Append("<span class=\"badge badge-soft-info py-2 px-3 me-2\"><i class=\"ti ti-calendar me-1\"></i> ").Append(Model.PeriodoActual).Append("</span>");
     sbHeader.Append("<div class=\"btn-group btn-group-sm me-2\" role=\"group\" aria-label=\"Rango de fechas\">");
@@ -22,7 +22,7 @@
     sbHeader.Append("</div>");
     sbHeader.Append("<a href=\"").Append(Url.Action("Index", "Dashboard", new { rango = Model.Rango })).Append("\" class=\"btn btn-sm btn-outline-secondary\" title=\"Recargar datos\" data-bs-toggle=\"tooltip\"><i class=\"ti ti-refresh\"></i></a>");
     var headerActions = sbHeader.ToString();
-    var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Panel", Title = "Panel de Control", Subtitle = "Indicadores clave de rendimiento y monitoreo operativo en tiempo real.", Icon = "ti-gauge", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) };
+    var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "", Title = "Panel de Control", Subtitle = "", Icon = null, ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) };
 }
 <partial name='_PageHeader' model='pageHeader' />
 
@@ -38,12 +38,12 @@
 
 @{
     var hora = DateTime.Now.Hour;
-    var saludo = hora < 12 ? "Buenos días" : (hora < 19 ? "Buenas tardes" : "Buenas noches");
+    var saludo = hora < 12 ? "Buenos dÃ­as" : (hora < 19 ? "Buenas tardes" : "Buenas noches");
     var nombreUsuario = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "";
     var entidadNombre = User.FindFirst("EntidadNombre")?.Value;
 }
 
-<!-- Resumen del día -->
+<!-- Resumen del dÃ­a -->
 <div class="card border-0 shadow-sm mb-3 overflow-hidden">
     <div class="card-body p-4">
         <div class="row align-items-center g-3">
@@ -97,17 +97,17 @@
             <div class="card-body p-3">
                 <div class="d-flex align-items-start justify-content-between">
                     <div>
-                        <div class="text-muted small text-uppercase fw-bold letter-spacing-1 mb-1">Ventas del Período</div>
-                        <div class="fs-24 fw-bold text-primary">@Money(Model.VentasMes)</div>
+                        <div class="text-muted text-uppercase small fw-semibold mb-1">Ventas del PerÃ­odo</div>
+                        <div class="fs-3 fw-semibold text-primary mb-0">@Money(Model.VentasMes)</div>
                     </div>
-                    <span class="avatar-md rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center">
-                        <i class="ti ti-shopping-cart fs-22"></i>
+                    <span class="avatar-sm rounded-3 bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center">
+                        <i class="ti ti-shopping-cart fs-5"></i>
                     </span>
                 </div>
                 <div class="mt-3">
                     <span class="badge @(Model.VariacionVentasPct >= 0 ? "badge-soft-success" : "badge-soft-danger") py-1">
                         <i class="ti @(Model.VariacionVentasPct >= 0 ? "ti-trending-up" : "ti-trending-down") me-1"></i>
-                        @Model.VariacionVentasPct.ToString("N1")% vs período anterior
+                        @Model.VariacionVentasPct.ToString("N1")% vs perÃ­odo anterior
                     </span>
                 </div>
                 <div class="mt-2" style="height: 36px;">
@@ -126,11 +126,11 @@
             <div class="card-body p-3">
                 <div class="d-flex align-items-start justify-content-between">
                     <div>
-                        <div class="text-muted small text-uppercase fw-bold letter-spacing-1 mb-1">Posición de Efectivo</div>
-                        <div class="fs-24 fw-bold text-success">@Money(Model.PosicionEfectivo)</div>
+                        <div class="text-muted text-uppercase small fw-semibold mb-1">PosiciÃ³n de Efectivo</div>
+                        <div class="fs-3 fw-semibold text-success mb-0">@Money(Model.PosicionEfectivo)</div>
                     </div>
-                    <span class="avatar-md rounded-circle bg-success bg-opacity-10 text-success d-inline-flex align-items-center justify-content-center">
-                        <i class="ti ti-wallet fs-22"></i>
+                    <span class="avatar-sm rounded-3 bg-success-subtle text-success d-inline-flex align-items-center justify-content-center">
+                        <i class="ti ti-wallet fs-5"></i>
                     </span>
                 </div>
                 <div class="mt-3">
@@ -149,11 +149,11 @@
             <div class="card-body p-3">
                 <div class="d-flex align-items-start justify-content-between">
                     <div>
-                        <div class="text-muted small text-uppercase fw-bold letter-spacing-1 mb-1">Cuentas por Cobrar</div>
-                        <div class="fs-24 fw-bold text-info">@Money(Model.PorCobrar)</div>
+                        <div class="text-muted text-uppercase small fw-semibold mb-1">Cuentas por Cobrar</div>
+                        <div class="fs-3 fw-semibold text-info mb-0">@Money(Model.PorCobrar)</div>
                     </div>
-                    <span class="avatar-md rounded-circle bg-info bg-opacity-10 text-info d-inline-flex align-items-center justify-content-center">
-                        <i class="ti ti-receipt fs-22"></i>
+                    <span class="avatar-sm rounded-3 bg-info-subtle text-info d-inline-flex align-items-center justify-content-center">
+                        <i class="ti ti-receipt fs-5"></i>
                     </span>
                 </div>
                 <div class="mt-3">
@@ -169,7 +169,7 @@
                 <hr class="my-3 opacity-50" />
                 <div class="d-flex justify-content-between text-muted small">
                     <span>Por vencer: <strong class="text-body">@Money(Model.CxcPorVencer)</strong></span>
-                    <span>Días cobro: <strong class="text-body">@Num(Model.DiasCobro, "N0")</strong></span>
+                    <span>DÃ­as cobro: <strong class="text-body">@Num(Model.DiasCobro, "N0")</strong></span>
                 </div>
             </div>
         </div>
@@ -179,11 +179,11 @@
             <div class="card-body p-3">
                 <div class="d-flex align-items-start justify-content-between">
                     <div>
-                        <div class="text-muted small text-uppercase fw-bold letter-spacing-1 mb-1">Cuentas por Pagar</div>
-                        <div class="fs-24 fw-bold text-warning">@Money(Model.PorPagar)</div>
+                        <div class="text-muted text-uppercase small fw-semibold mb-1">Cuentas por Pagar</div>
+                        <div class="fs-3 fw-semibold text-warning mb-0">@Money(Model.PorPagar)</div>
                     </div>
-                    <span class="avatar-md rounded-circle bg-warning bg-opacity-10 text-warning d-inline-flex align-items-center justify-content-center">
-                        <i class="ti ti-file-invoice fs-22"></i>
+                    <span class="avatar-sm rounded-3 bg-warning-subtle text-warning d-inline-flex align-items-center justify-content-center">
+                        <i class="ti ti-file-invoice fs-5"></i>
                     </span>
                 </div>
                 <div class="mt-3">
@@ -199,7 +199,7 @@
                 <hr class="my-3 opacity-50" />
                 <div class="d-flex justify-content-between text-muted small">
                     <span>Por vencer: <strong class="text-body">@Money(Model.CxpPorVencer)</strong></span>
-                    <span>Días pago: <strong class="text-body">@Num(Model.DiasPago, "N0")</strong></span>
+                    <span>DÃ­as pago: <strong class="text-body">@Num(Model.DiasPago, "N0")</strong></span>
                 </div>
             </div>
         </div>
@@ -213,7 +213,7 @@
             <div class="card-body py-3">
                 <div class="d-flex align-items-center gap-2 mb-2">
                     <i class="ti ti-droplet fs-18 text-primary"></i>
-                    <span class="text-muted small text-uppercase fw-bold letter-spacing-1">Liquidez</span>
+                    <span class="text-muted small text-uppercase fw-semibold">Liquidez</span>
                 </div>
                 <div class="fs-22 fw-bold">@Num(Model.Liquidez)</div>
             </div>
@@ -224,7 +224,7 @@
             <div class="card-body py-3">
                 <div class="d-flex align-items-center gap-2 mb-2">
                     <i class="ti ti-percentage fs-18 text-success"></i>
-                    <span class="text-muted small text-uppercase fw-bold letter-spacing-1">Rentabilidad</span>
+                    <span class="text-muted small text-uppercase fw-semibold">Rentabilidad</span>
                 </div>
                 <div class="fs-22 fw-bold @(Model.Rentabilidad >= 0 ? "text-success" : "text-danger")">@Num(Model.Rentabilidad, "N1")%</div>
             </div>
@@ -235,7 +235,7 @@
             <div class="card-body py-3">
                 <div class="d-flex align-items-center gap-2 mb-2">
                     <i class="ti ti-rotate-clockwise fs-18 text-info"></i>
-                    <span class="text-muted small text-uppercase fw-bold letter-spacing-1">Rotación Stock</span>
+                    <span class="text-muted small text-uppercase fw-semibold">RotaciÃ³n Stock</span>
                 </div>
                 <div class="fs-22 fw-bold text-info">@Num(Model.RotacionStock)</div>
             </div>
@@ -246,7 +246,7 @@
             <div class="card-body py-3">
                 <div class="d-flex align-items-center gap-2 mb-2">
                     <i class="ti ti-scale fs-18 text-warning"></i>
-                    <span class="text-muted small text-uppercase fw-bold letter-spacing-1">Solvencia</span>
+                    <span class="text-muted small text-uppercase fw-semibold">Solvencia</span>
                 </div>
                 <div class="fs-22 fw-bold text-warning">@Num(Model.Solvencia)</div>
             </div>
@@ -257,7 +257,7 @@
             <div class="card-body py-3">
                 <div class="d-flex align-items-center gap-2 mb-2">
                     <i class="ti ti-ticket fs-18 text-purple"></i>
-                    <span class="text-muted small text-uppercase fw-bold letter-spacing-1">Ticket Prom.</span>
+                    <span class="text-muted small text-uppercase fw-semibold">Ticket Prom.</span>
                 </div>
                 <div class="fs-22 fw-bold">@Money(Model.TicketPromedio)</div>
             </div>
@@ -268,7 +268,7 @@
             <div class="card-body py-3">
                 <div class="d-flex align-items-center gap-2 mb-2">
                     <i class="ti ti-shopping-bag fs-18 text-cyan"></i>
-                    <span class="text-muted small text-uppercase fw-bold letter-spacing-1">Ventas Hoy</span>
+                    <span class="text-muted small text-uppercase fw-semibold">Ventas Hoy</span>
                 </div>
                 <div class="fs-22 fw-bold text-cyan">@Money(Model.VentasHoy)</div>
             </div>
@@ -280,10 +280,10 @@
 <div class="row g-3 mb-3">
     <div class="col-xl-4">
         <div class="card border-0 shadow-sm card-h-100">
-            <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex align-items-center justify-content-between">
-                <h5 class="m-0 fw-bold"><i class="ti ti-target me-2 text-primary"></i>Meta de Ventas del Mes</h5>
+            <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between">
+                <h6 class="m-0 fw-semibold"><i class="ti ti-target me-2 text-primary"></i>Meta de Ventas del Mes</h6>
             </div>
-            <div class="card-body pt-2">
+            <div class="card-body pt-0">
                 <div class="position-relative mx-auto" style="height: 200px; max-width: 240px;">
                     <canvas id="metaGaugeChart"></canvas>
                     <div class="position-absolute top-50 start-50 translate-middle text-center">
@@ -303,18 +303,18 @@
                 </div>
                 @if (Model.MetaVentasMes <= 0)
                 {
-                    <div class="alert alert-light border small mt-3 mb-0 py-2"><i class="ti ti-info-circle me-1"></i>Configure el parámetro <code>META_VENTAS_MENSUAL</code> para fijar un objetivo.</div>
+                    <div class="alert alert-light border small mt-3 mb-0 py-2"><i class="ti ti-info-circle me-1"></i>Configure el parÃ¡metro <code>META_VENTAS_MENSUAL</code> para fijar un objetivo.</div>
                 }
             </div>
         </div>
     </div>
     <div class="col-xl-8">
         <div class="card border-0 shadow-sm card-h-100">
-            <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <h5 class="m-0 fw-bold"><i class="ti ti-history me-2 text-info"></i>Actividad Reciente</h5>
-                <a asp-controller="Admin" asp-action="Audit" class="btn btn-sm btn-outline-secondary"><i class="ti ti-arrow-right me-1"></i>Ver auditoría</a>
+            <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <h6 class="m-0 fw-semibold"><i class="ti ti-history me-2 text-info"></i>Actividad Reciente</h6>
+                <a asp-controller="Admin" asp-action="Audit" class="btn btn-sm btn-outline-secondary"><i class="ti ti-arrow-right me-1"></i>Ver auditorÃ­a</a>
             </div>
-            <div class="card-body pt-2">
+            <div class="card-body pt-0">
                 @if (Model.ActividadReciente.Any())
                 {
                     <div data-simplebar style="max-height: 320px;">
@@ -348,15 +348,15 @@
     </div>
 </div>
 
-<!-- Fila 3: Ventas 14 días + Ventas por Canal/Forma de Pago -->
+<!-- Fila 3: Ventas 14 dÃ­as + Ventas por Canal/Forma de Pago -->
 <div class="row g-3 mb-3">
     <div class="col-lg-8">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <h5 class="m-0 fw-bold"><i class="ti ti-chart-line me-2 text-primary"></i>Ventas de los áltimos 14 Días</h5>
-                <span class="badge badge-soft-primary"><i class="ti ti-coin me-1"></i>@Money(Model.VentasMes) · @Model.RangoNombre</span>
+            <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <h6 class="m-0 fw-semibold"><i class="ti ti-chart-line me-2 text-primary"></i>Ventas de los Ãºltimos 14 DÃ­as</h6>
+                <span class="badge badge-soft-primary"><i class="ti ti-coin me-1"></i>@Money(Model.VentasMes) en @Model.RangoNombre</span>
             </div>
-            <div class="card-body pt-2">
+            <div class="card-body pt-0">
                 <div class="chart-box" style="height: 320px;">
                     <canvas id="ventasSerieChart"></canvas>
                 </div>
@@ -367,10 +367,10 @@
         <div class="row g-3 h-100">
             <div class="col-12">
                 <div class="card border-0 shadow-sm h-100">
-                    <div class="card-header bg-transparent border-0 pt-4 px-4">
-                        <h5 class="m-0 fw-bold"><i class="ti ti-chart-donut me-2 text-info"></i>Ventas por Canal</h5>
+                    <div class="card-header bg-transparent border-0">
+                        <h6 class="m-0 fw-semibold"><i class="ti ti-chart-donut me-2 text-info"></i>Ventas por Canal</h6>
                     </div>
-                    <div class="card-body pt-2">
+                    <div class="card-body pt-0">
                         <div class="chart-box" style="height: 240px;">
                             <canvas id="canalChart"></canvas>
                         </div>
@@ -379,10 +379,10 @@
             </div>
             <div class="col-12">
                 <div class="card border-0 shadow-sm h-100">
-                    <div class="card-header bg-transparent border-0 pt-4 px-4">
-                        <h5 class="m-0 fw-bold"><i class="ti ti-credit-card me-2 text-success"></i>Ventas por Forma de Pago</h5>
+                    <div class="card-header bg-transparent border-0">
+                        <h6 class="m-0 fw-semibold"><i class="ti ti-credit-card me-2 text-success"></i>Ventas por Forma de Pago</h6>
                     </div>
-                    <div class="card-body pt-2">
+                    <div class="card-body pt-0">
                         <div class="chart-box" style="height: 240px;">
                             <canvas id="pagoChart"></canvas>
                         </div>
@@ -397,11 +397,11 @@
 <div class="row g-3 mb-3">
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <h5 class="m-0 fw-bold"><i class="ti ti-trending-up me-2 text-success"></i>Tendencia de Rentabilidad</h5>
+            <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <h6 class="m-0 fw-semibold"><i class="ti ti-trending-up me-2 text-success"></i>Tendencia de Rentabilidad</h6>
                 <span class="badge badge-soft-success">@Num(Model.Rentabilidad, "N1")% actual</span>
             </div>
-            <div class="card-body pt-2">
+            <div class="card-body pt-0">
                 <div class="chart-box" style="height: 280px;">
                     <canvas id="profitTrendChart"></canvas>
                 </div>
@@ -410,11 +410,11 @@
     </div>
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <h5 class="m-0 fw-bold"><i class="ti ti-chart-bar me-2 text-warning"></i>Índice de Liquidez Mensual</h5>
+            <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <h6 class="m-0 fw-semibold"><i class="ti ti-chart-bar me-2 text-warning"></i>Ãndice de Liquidez Mensual</h6>
                 <span class="badge badge-soft-warning">@Num(Model.Liquidez) veces</span>
             </div>
-            <div class="card-body pt-2">
+            <div class="card-body pt-0">
                 <div class="chart-box" style="height: 280px;">
                     <canvas id="liquidityTrendChart"></canvas>
                 </div>
@@ -423,12 +423,12 @@
     </div>
 </div>
 
-<!-- Fila 4b: Últimas Ventas + Top Clientes + Aging CxC -->
+<!-- Fila 4b: Ãšltimas Ventas + Top Clientes + Aging CxC -->
 <div class="row g-3 mb-3">
     <div class="col-lg-5">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <h5 class="m-0 fw-bold"><i class="ti ti-receipt-2 me-2 text-primary"></i>Últimas Ventas</h5>
+            <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <h6 class="m-0 fw-semibold"><i class="ti ti-receipt-2 me-2 text-primary"></i>Ãšltimas Ventas</h6>
                 <a asp-controller="Sales" asp-action="Index" class="btn btn-sm btn-outline-secondary"><i class="ti ti-arrow-right me-1"></i> Ver todas</a>
             </div>
             <div class="card-body pt-0">
@@ -470,10 +470,10 @@
     </div>
     <div class="col-lg-4">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <h5 class="m-0 fw-bold"><i class="ti ti-users me-2 text-success"></i>Top Clientes (Período)</h5>
+            <div class="card-header bg-transparent border-0">
+                <h6 class="m-0 fw-semibold"><i class="ti ti-users me-2 text-success"></i>Top Clientes (PerÃ­odo)</h6>
             </div>
-            <div class="card-body">
+            <div class="card-body pt-0">
                 @if (Model.TopClientes.Any())
                 {
                     var maxCliente = Model.TopClientes.Max(c => c.Importe);
@@ -506,11 +506,11 @@
     </div>
     <div class="col-lg-3">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <h5 class="m-0 fw-bold"><i class="ti ti-hourglass-high me-2 text-danger"></i>Aging CxC</h5>
+            <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <h6 class="m-0 fw-semibold"><i class="ti ti-hourglass-high me-2 text-danger"></i>Aging CxC</h6>
                 <span class="badge badge-soft-danger">@Money(Model.PorCobrar)</span>
             </div>
-            <div class="card-body pt-2">
+            <div class="card-body pt-0">
                 <div class="chart-box" style="height: 260px;">
                     <canvas id="agingCxcChart"></canvas>
                 </div>
@@ -523,15 +523,15 @@
 <div class="row g-3 mb-3">
     <div class="col-12">
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <h5 class="m-0 fw-bold"><i class="ti ti-cash-banknote me-2 text-primary"></i>Flujo de Caja <span class="text-muted fw-normal fs-14">· últimas 8 semanas</span></h5>
+            <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <h6 class="m-0 fw-semibold"><i class="ti ti-cash-banknote me-2 text-primary"></i>Flujo de Caja <span class="text-muted fw-normal fs-14">últimas 8 semanas</span></h6>
                 <div class="d-flex gap-2 flex-wrap">
                     <span class="badge badge-soft-success py-1"><i class="ti ti-arrow-down-left me-1"></i>Cobrado: @Money(Model.CobradoMes)</span>
                     <span class="badge badge-soft-danger py-1"><i class="ti ti-arrow-up-right me-1"></i>Pagado: @Money(Model.PagadoMes)</span>
                     <span class="badge @(Model.CobradoMes - Model.PagadoMes >= 0 ? "badge-soft-primary" : "badge-soft-warning") py-1">Neto: @Money(Model.CobradoMes - Model.PagadoMes)</span>
                 </div>
             </div>
-            <div class="card-body pt-2 pb-3">
+            <div class="card-body pt-0">
                 <div class="chart-box" style="height: 300px;">
                     <canvas id="flujoCajaChart"></canvas>
                 </div>
@@ -540,16 +540,17 @@
     </div>
 </div>
 
-<!-- Fila 5: Operación POS -->
+<!-- Fila 5: OperaciÃ³n POS -->
 <div class="row g-3 mb-3">
     <div class="col-12">
         <div class="card border-0 shadow-sm">
-            <div class="card-header border-0 bg-transparent pt-4 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <h5 class="m-0 fw-bold text-primary"><i class="ti ti-device-laptop me-2"></i>Operación Punto de Venta (POS)</h5>
+            <div class="card-header border-0 bg-transparent d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <h6 class="m-0 fw-semibold text-primary"><i class="ti ti-device-laptop me-2"></i>Operación Punto de Venta (POS)</h6>
                 <div class="d-flex gap-2">
                     <button class="btn btn-sm btn-outline-primary" type="button" id="pos-refresh" title="Actualizar" data-bs-toggle="tooltip"><i class="ti ti-refresh"></i></button>
                     <a asp-controller="PosVentaPendiente" asp-action="Index" class="btn btn-sm btn-outline-secondary"><i class="ti ti-list me-1"></i> Ver Pendientes</a>
                 </div>
+            </div>
             </div>
             <div id="pos-card-container" data-pos-url="@Url.Action("PosPartial", "Dashboard")">
                 <partial name="_PosCard" model="Model" />
@@ -562,10 +563,10 @@
 <div class="row g-3 mb-3">
     <div class="col-lg-5">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <h5 class="m-0 fw-bold text-success"><i class="ti ti-trophy me-2"></i>Productos Más Vendidos (Período)</h5>
+            <div class="card-header bg-transparent border-0">
+                <h6 class="m-0 fw-semibold text-success"><i class="ti ti-trophy me-2"></i>Productos Más Vendidos (Período)</h6>
             </div>
-            <div class="card-body">
+            <div class="card-body pt-0">
                 @if (Model.TopProductos.Any())
                 {
                     var maxImporte = Model.TopProductos.Max(p => p.Importe);
@@ -609,8 +610,8 @@
     </div>
     <div class="col-lg-7">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <h5 class="m-0 fw-bold text-danger"><i class="ti ti-alert-triangle me-2"></i>Alertas Críticas de Inventario</h5>
+            <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <h6 class="m-0 fw-semibold text-danger"><i class="ti ti-alert-triangle me-2"></i>Alertas Críticas de Inventario</h6>
                 <a asp-controller="Inventory" asp-action="LowStock" class="btn btn-sm btn-outline-secondary">
                     <i class="ti ti-arrow-right me-1"></i> Ver Todo
                 </a>
@@ -638,7 +639,7 @@
                                 </div>
                                 <div class="text-end">
                                     <div class="fw-bold @(agotado ? "text-danger" : "text-warning")">@alert.Cantidad.ToString("N0")</div>
-                                    <div class="text-muted small">mín. @alert.StockMinimo.ToString("N0")</div>
+                                    <div class="text-muted small">mÃ­n. @alert.StockMinimo.ToString("N0")</div>
                                 </div>
                                 <span class="badge @statusCls">@statusTxt</span>
                                 <a asp-controller="Purchase" asp-action="Create" class="btn btn-sm btn-outline-primary px-2" title="Generar compra">
@@ -652,7 +653,7 @@
                 {
                     <div class="text-center py-5 text-muted small">
                         <i class="ti ti-circle-check fs-32 d-block mb-2 text-success opacity-50"></i>
-                        Niveles de stock óptimos en todos los almacenes.
+                        Niveles de stock Ã³ptimos en todos los almacenes.
                     </div>
                 }
             </div>
@@ -660,14 +661,14 @@
     </div>
 </div>
 
-<!-- Fila 7: Vencimientos + Contratos + Operaciones Rápidas -->
+<!-- Fila 7: Vencimientos + Contratos + Operaciones RÃ¡pidas -->
 <div class="row g-3 mb-3">
     <div class="col-lg-8">
         @if (Model.AlertasVencimiento.Any())
         {
             <div class="card border-0 shadow-sm mb-3 border-start border-danger border-3">
                 <div class="card-header bg-transparent border-0 pt-4 px-4">
-                    <h5 class="m-0 fw-bold text-danger"><i class="ti ti-calendar-x me-2"></i>Lotes Próximos a Vencer (30 días)</h5>
+                    <h5 class="m-0 fw-bold text-danger"><i class="ti ti-calendar-x me-2"></i>Lotes PrÃ³ximos a Vencer (30 dÃ­as)</h5>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -675,7 +676,7 @@
                             <thead class="thead-sm text-uppercase fs-xxs text-muted">
                                 <tr>
                                     <th>Producto</th>
-                                    <th>Almacén</th>
+                                    <th>AlmacÃ©n</th>
                                     <th>Lote</th>
                                     <th class="text-center">Vence</th>
                                     <th class="text-end">Cantidad</th>
@@ -702,14 +703,14 @@
         {
             <div class="card border-0 shadow-sm border-start border-warning border-3">
                 <div class="card-header bg-transparent border-0 pt-4 px-4">
-                    <h5 class="m-0 fw-bold text-warning"><i class="ti ti-calendar-clock me-2"></i>Contratos Económicos por Vencer (15 días)</h5>
+                    <h5 class="m-0 fw-bold text-warning"><i class="ti ti-calendar-clock me-2"></i>Contratos EconÃ³micos por Vencer (15 dÃ­as)</h5>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-vcenter card-table table-hover mb-0">
                             <thead class="thead-sm text-uppercase fs-xxs text-muted">
                                 <tr>
-                                    <th>Número de Contrato</th>
+                                    <th>NÃºmero de Contrato</th>
                                     <th>Tercero (Cliente/Prov)</th>
                                     <th class="text-center">Vencimiento</th>
                                     <th class="text-end"></th>
@@ -740,7 +741,7 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body text-center py-5 text-muted small">
                     <i class="ti ti-calendar-stats fs-32 d-block mb-2 opacity-50"></i>
-                    Sin vencimientos próximos en inventario ni contratos por vencer.
+                    Sin vencimientos prÃ³ximos en inventario ni contratos por vencer.
                 </div>
             </div>
         }
@@ -748,7 +749,7 @@
     <div class="col-lg-4">
         <div class="card bg-primary border-0 shadow-lg h-100 overflow-hidden">
             <div class="card-header border-white border-opacity-10 bg-transparent pt-4 px-4">
-                <h5 class="m-0 fw-bold text-white"><i class="ti ti-bolt me-2"></i>Operaciones Rápidas</h5>
+                <h5 class="m-0 fw-bold text-white"><i class="ti ti-bolt me-2"></i>Operaciones RÃ¡pidas</h5>
             </div>
             <div class="card-body p-4">
                 <div class="d-grid gap-3">
@@ -757,7 +758,7 @@
                         <i class="ti ti-chevron-right text-muted"></i>
                     </a>
                     <a asp-controller="Inventory" asp-action="CreateMovement" class="btn btn-light fw-bold py-3 d-flex align-items-center justify-content-between">
-                        <span><i class="ti ti-transfer-in me-2 text-primary"></i>Entrada de Almacén</span>
+                        <span><i class="ti ti-transfer-in me-2 text-primary"></i>Entrada de AlmacÃ©n</span>
                         <i class="ti ti-chevron-right text-muted"></i>
                     </a>
                     <a asp-controller="AsientoContable" asp-action="Create" class="btn btn-light fw-bold py-3 d-flex align-items-center justify-content-between">
@@ -766,7 +767,7 @@
                     </a>
                 </div>
                 <div class="mt-4 pt-3 border-top border-white border-opacity-10 text-center">
-                    <p class="small text-white-50 mb-0">Acceso rápido a los documentos primarios de la S.U.R.L.</p>
+                    <p class="small text-white-50 mb-0">Acceso rÃ¡pido a los documentos primarios de la S.U.R.L.</p>
                 </div>
             </div>
         </div>
@@ -938,7 +939,7 @@
             new Chart(agingCtx.getContext('2d'), {
                 type: 'doughnut',
                 data: {
-                    labels: ['Corriente', '1-30 días', '31-60 días', '61-90 días', '+90 días'],
+                    labels: ['Corriente', '1-30 dÃ­as', '31-60 dÃ­as', '61-90 dÃ­as', '+90 dÃ­as'],
                     datasets: [{
                         data: agingCxc,
                         backgroundColor: ['#1ab394', '#23c6c8', '#f8ac59', '#fd7e14', '#ed5565'],
@@ -1015,3 +1016,8 @@
         }
     </script>
 }
+
+
+
+
+

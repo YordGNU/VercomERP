@@ -1,36 +1,57 @@
-# Ignorar archivos innecesarios para acelerar el build
-**/.classpath
-**/.dockerignore
-**/.env
-**/.git
-**/.gitignore
-**/.project
-**/.settings
-**/.toolstarget
-**/.vs
-**/.vscode
-**/*.*proj.user
-**/*.dbmdl
-**/*.jfm
-**/azds.yaml
-**/bin
-**/charts
-**/docker-compose*
-**/Dockerfile*
-**/node_modules
-**/npm-debug.log
-**/obj
-**/secrets.dev.yaml
-**/values.dev.yaml
-**/publicacion
-**/Docs/screenshots
-LICENSE
-README.md
+# ============================================================
+# .dockerignore — VercomERP
+# ============================================================
+# Build artifacts
+**/bin/
+**/obj/
+**/out/
+**/publish/
+**/TestResults/
+**/coverage/
+*.trx
 
-# Archivos sensibles que NUNCA deben ir a la imagen
+# IDE
+**/.vs/
+**/.vscode/
+**/.idea/
+**/*.user
+**/*.suo
+
+# Git
+**/.git/
+**/.gitignore
+**/.gitattributes
+**/.github/
+
+# Docker / infra (NO van en la imagen de la app)
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+**/nginx/
+**/monitoring/
+**/secrets/
+**/backups/
+**/docs/
+**/scripts/
+**/Database/
+Database/
+docs/
+scripts/
+nginx/
+monitoring/
+secrets/
+backups/
+
+# Config local
+.env
+.env.*
 appsettings.Development.json
-appsettings.Production.json
-*.user
-*.pfx
-# SQL de mantenimiento (no en deploy)
-Database/maintenance/
+appsettings.Local.json
+
+# Documentación
+*.md
+README*
+
+# Logs
+*.log
+logs/

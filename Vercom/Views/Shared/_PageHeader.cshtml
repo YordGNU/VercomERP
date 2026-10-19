@@ -1,28 +1,16 @@
 @model VERCOM.ViewModels.PageHeaderModel
 <div class="page-title-head d-flex align-items-center">
-    @if (!string.IsNullOrWhiteSpace(Model.Icon))
-    {
-        <span class="ux-header-icon"><i class="ti @Model.Icon"></i></span>
-    }
-    <div class="ux-header-text">
-        @if (!string.IsNullOrWhiteSpace(Model.Eyebrow))
-        {
-            <span class="ux-eyebrow">@Model.Eyebrow</span>
-        }
-        <h4 class="ux-header-title">@Model.Title</h4>
+    <div class="flex-grow-3">
+        <h4 class="page-main-title m-0">@Model.Title</h4>
         @if (!string.IsNullOrWhiteSpace(Model.Subtitle))
         {
-            <p class="ux-header-subtitle">@Model.Subtitle</p>
+            <p class="text-muted mb-0 mt-1">@Model.Subtitle</p>
         }
     </div>
-    <div class="ux-header-actions">
-        @if (!string.IsNullOrWhiteSpace(Model.BadgeText))
-        {
-            <span class="badge">@Model.BadgeText</span>
-        }
+    <div class="text-end">
         @if (Model.ActionsHtml != null)
         {
             @Model.ActionsHtml
         }
-    </div>  
+    </div>
 </div>

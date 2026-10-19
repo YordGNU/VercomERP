@@ -1,6 +1,6 @@
 # ============================================================
-# VERCOM – Dockerfile multi-stage optimizado
-# .NET 10 · Usuario no-root · Healthcheck con curl
+# VERCOM â€“ Dockerfile multi-stage optimizado
+# .NET 10 Â· Usuario no-root Â· Healthcheck con curl
 # ============================================================
 
 # ============================================================
@@ -12,13 +12,13 @@ WORKDIR /src
 
 # Cache de restore: solo copiamos el csproj primero
 # Copiar y restaurar con cache persistente
-COPY ["vercom.csproj", "./"]
+COPY ["Vercom.csproj", "./"]
 RUN --mount=type=cache,target=/root/.nuget/packages \
-    dotnet restore "vercom.csproj"
+    dotnet restore "Vercom.csproj"
 
 COPY . .
 RUN --mount=type=cache,target=/root/.nuget/packages \
-    dotnet publish "vercom.csproj" \
+    dotnet publish "Vercom.csproj" \
     -c Release \
     -o /app/publish \
     --no-restore \
@@ -29,7 +29,7 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
-# ✅ TZ PRIMERO (bug #1 fix)
+# âœ… TZ PRIMERO (bug #1 fix)
 ENV TZ=America/Havana \
     ASPNETCORE_ENVIRONMENT=Production \
     ASPNETCORE_URLS=http://+:8080 \
@@ -52,7 +52,7 @@ USER app
 
 EXPOSE 8080
 
-# ✅ Healthcheck contra /health (bug #2 fix)
+# âœ… Healthcheck contra /health (bug #2 fix)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl --silent --fail http://localhost:8080/health || exit 1
 

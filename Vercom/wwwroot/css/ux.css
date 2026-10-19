@@ -5,8 +5,6 @@
     --ux-shadow: 0 2px 6px rgba(16, 24, 40, .05), 0 12px 28px rgba(16, 24, 40, .05);
     --ux-shadow-primary: 0 6px 18px rgba(var(--theme-primary-rgb), .22);
     --ux-transition: .16s ease;
-    --ux-eyebrow-size: .68rem;
-    --ux-title-size: 1.15rem;
     --ux-kpi-icon: 2.75rem;
     --ux-muted: var(--theme-gray-600);
     --ux-faint: var(--theme-gray-500);
@@ -23,78 +21,9 @@
 .ux-tone-dark { --ux-tone: var(--theme-dark); --ux-tone-rgb: var(--theme-dark-rgb); }
 .ux-tone-light { --ux-tone: var(--theme-gray-700); --ux-tone-rgb: var(--theme-gray-700); }
 
-.page-title-head,
-.ux-header {
-    min-height: 0;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: .75rem 1.25rem;
-    margin: 0 0 1.25rem;
-    padding: .875rem 1.25rem;
-    background: var(--theme-card-bg);
-    border: 0;
-    border-bottom: 1px solid var(--theme-border-color);
-    border-radius: 0;
-}
-
-.page-title-head.p-3,
-.page-title-head.rounded-3 {
-    padding: .875rem 1.25rem;
-    margin: 0 0 1.25rem;
-    border-radius: 0 !important;
-}
-
-.ux-header-icon,
-.page-title-head .ux-header-icon {
-    flex: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: var(--ux-radius);
-    font-size: 1.2rem;
-    color: var(--ux-tone, var(--theme-primary));
-    background: rgba(var(--ux-tone-rgb, var(--theme-primary-rgb)), .12);
-}
-
-.ux-header-text { flex: 1 1 16rem; min-width: 0; }
-
-.ux-eyebrow {
-    display: block;
-    font-size: var(--ux-eyebrow-size);
-    font-weight: 700;
-    letter-spacing: .07em;
-    text-transform: uppercase;
-    color: var(--ux-muted);
-    margin-bottom: .15rem;
-}
-
-.ux-header-title,
-.page-title-head .page-main-title {
-    font-size: var(--ux-title-size);
-    font-weight: 700;
-    line-height: 1.3;
-    letter-spacing: -.01em;
-    color: var(--theme-heading-color);
-    margin: 0;
-}
-
-.ux-header-subtitle,
-.page-title-head p {
-    font-size: .78rem;
-    color: var(--ux-muted);
-    margin: .1rem 0 0;
-}
-
-.ux-header-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: .5rem;
-    margin-left: auto;
-}
+/* El header de pagina (.page-title-head) conserva los estilos originales de
+   Inspinia (franja full-bleed con fondo sutil, min-height 40px y borde
+   inferior). No sobrescribir aqui para no romper la plantilla. */
 
 .ux-kpi {
     display: flex;
@@ -491,12 +420,7 @@ button:focus-visible,
 .progress-bar { border-radius: 999px; }
 
 @media (max-width: 767.98px) {
-    .ux-header,
     .page-title-head { flex-direction: column; align-items: flex-start; gap: .625rem; }
-
-    .ux-header-actions { margin-left: 0; width: 100%; }
-
-    .ux-header-actions .btn { flex: 1 1 auto; }
 
     .ux-kpi { padding: .8125rem .9375rem; }
 

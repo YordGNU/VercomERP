@@ -168,5 +168,4 @@ app.MapControllerRoute(
     pattern: "{controller=Dashboard}/{action=Index}/{id?}")
     .WithStaticAssets();
 
-
 app.Run();
