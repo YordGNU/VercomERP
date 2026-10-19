@@ -6,19 +6,19 @@ using Vercom.Tests.Infrastructure;
 using VERCOM.Models;
 using VERCOM.Security;
 using VERCOM.Services;
-using VERCOM.ViewModels;
 using Xunit;
 
 namespace Vercom.Tests.Integration;
 
 /// <summary>
-/// Barrido del worker de sincronización POS: una fila irrecuperable no puede bloquear
-/// la cola (era el fallo de la rama legacy, que abortaba el barrido completo).
+/// Barrido del worker de sincronización POS: una fila irrecuperable —numeración ya usada por
+/// otra venta del mismo barrido, índice único (entidad, sucursal, serie, número)— no puede
+/// bloquear la cola ni dejar el pendiente marcado PROCESADO con una factura que no existe.
 /// </summary>
 public class PosSyncWorkerTests
 {
     [DbFact(RequiereDatosBase = true)]
-    public async Task UnaFilaLegacyQueFallaNoBloqueaElBarrido()
+    public async Task UnaFilaVenenosaNoBloqueaElBarridoNiEnsuciaElPendiente()
     {
         await using var db = TestDb.Create();
         await using var tx = await db.Database.BeginTransactionAsync();
@@ -35,32 +35,24 @@ public class PosSyncWorkerTests
         var sync = new PosSincronizacionService(db, notificaciones, inventario, contabilidad, parametros,
             NullLogger<PosSincronizacionService>.Instance, provider);
 
-        // Fila venenosa legacy (sin TipoMovimientoId) que falla al procesarse, más antigua
-        // para que el worker la atienda primero.
-        var venenosa = new PosVentaPendiente
-        {
-            Id = Guid.NewGuid(),
-            DispositivoPosId = sesion.DispositivoPosId,
-            SesionCajaPosId = sesion.SesionId,
-            IdempotencyKey = $"poison-{Guid.NewGuid():N}",
-            PayloadJson = "{\"LocalId\":1,\"Moneda\":\"CUP\"}",
-            FechaVentaLocal = DateTimeOffset.UtcNow.AddMinutes(-10),
-            FechaRecibidoServidor = DateTimeOffset.UtcNow.AddMinutes(-10),
-            Estado = "PENDIENTE",
-            IntentosProcesamiento = 0
-        };
-        db.PosVentaPendientes.Add(venenosa);
-        await db.SaveChangesAsync();
+        // Dos ventas distintas (claves idempotentes distintas) con la misma serie y número: la
+        // primera del lote factura; la segunda choca contra el índice único y queda en ERROR.
+        var buena = PosVentaFixture.Request(sesion, ctx, cantidad: 2m, precioUnitario: 100m, numeroFactura: "900");
+        var venenosa = PosVentaFixture.Request(sesion, ctx, cantidad: 1m, precioUnitario: 100m, numeroFactura: "900");
 
-        // Venta v2 válida, más nueva: el mismo barrido debe alcanzarla.
-        var request = PosVentaFixture.Request(sesion, ctx, cantidad: 2m, precioUnitario: 100m);
-        var recibida = await sync.RecibirAsync(request, CancellationToken.None);
-        Assert.Null(recibida.Error);
+        await sync.RecibirAsync(buena, CancellationToken.None);
+        await sync.RecibirAsync(venenosa, CancellationToken.None);
+
+        // El barrido va por fecha de recibo: la buena debe ir primero.
+        var filaBuena = await db.PosVentaPendientes.FirstAsync(p => p.IdempotencyKey == buena.IdempotencyKey);
+        var filaVenenosa = await db.PosVentaPendientes.FirstAsync(p => p.IdempotencyKey == venenosa.IdempotencyKey);
+        filaBuena.FechaRecibidoServidor = DateTimeOffset.UtcNow.AddMinutes(-10);
+        filaVenenosa.FechaRecibidoServidor = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync();
 
         var services = new ServiceCollection();
         services.AddSingleton(db);
         services.AddSingleton<INotificationService>(notificaciones);
-        services.AddSingleton<ISalesService>(new SalesServiceFalso(db));
         services.AddSingleton(sync);
         using var serviceProvider = services.BuildServiceProvider();
 
@@ -69,56 +61,33 @@ public class PosSyncWorkerTests
             .GetMethod("ProcessPendingSalesAsync", BindingFlags.NonPublic | BindingFlags.Instance)!;
         await (Task)barrido.Invoke(worker, new object[] { CancellationToken.None })!;
 
-        // La fila venenosa queda ERROR (visible, sin reintento infinito)...
-        var venenosaDb = await db.PosVentaPendientes.AsNoTracking().FirstAsync(p => p.Id == venenosa.Id);
-        Assert.Equal("ERROR", venenosaDb.Estado);
-        Assert.Contains("legacy no soportado", venenosaDb.MensajeError);
-        Assert.Equal(1, venenosaDb.IntentosProcesamiento);
+        // La venta buena se factura, mueve inventario y contabiliza...
+        var almacenada = await db.PosVentaPendientes.AsNoTracking().FirstAsync(p => p.Id == filaBuena.Id);
+        Assert.Equal("PROCESADO", almacenada.Estado);
+        Assert.NotNull(almacenada.FacturaId);
 
-        // La factura a medio insertar por el intento legacy no queda persistida.
-        Assert.Equal(0, await db.FacturaVenta.AsNoTracking().CountAsync(f => f.CreadoPor == Guid.Empty));
-
-        // ...y la venta v2 se procesa igual en el mismo barrido.
-        var v2 = await db.PosVentaPendientes.AsNoTracking().FirstAsync(p => p.IdempotencyKey == request.IdempotencyKey);
-        Assert.Equal("PROCESADO", v2.Estado);
-        Assert.NotNull(v2.FacturaId);
-
-        var factura = await db.FacturaVenta.AsNoTracking().FirstAsync(f => f.Id == v2.FacturaId);
+        var factura = await db.FacturaVenta.AsNoTracking().FirstAsync(f => f.Id == almacenada.FacturaId);
         Assert.Equal("EMITIDA", factura.Estado);
         Assert.Equal("POS", factura.CanalVenta);
         Assert.NotNull(factura.AsientoId);
 
+        // ...y la venenosa queda ERROR con el motivo de negocio, sin factura asociada, sin
+        // consumir existencia (su transacción SERIALIZABLE se revirtió) y sin duplicar factura.
+        var venenoDb = await db.PosVentaPendientes.AsNoTracking().FirstAsync(p => p.Id == filaVenenosa.Id);
+        Assert.Equal("ERROR", venenoDb.Estado);
+        Assert.Contains("Ya existe una factura", venenoDb.MensajeError);
+        Assert.Equal(1, venenoDb.IntentosProcesamiento);
+        Assert.Null(venenoDb.FacturaId);
+        Assert.Equal(1, await db.FacturaVenta.AsNoTracking()
+            .CountAsync(f => f.Serie == ctx.Serie && f.NumeroFactura == "900"));
+
+        // Nada a medias de la venta venenosa llegó a persistirse: solo queda el movimiento de
+        // inventario de la venta buena. (Su decremento crudo de existencia no se revierte aquí
+        // porque el test comparte su transacción ambiente y el servicio no la posee; en
+        // producción ProcesarAsync abre —y revierte— su propia transacción SERIALIZABLE.)
+        Assert.Equal(1, await db.MovimientoInventarios.AsNoTracking()
+            .CountAsync(m => m.ReferenciaExternaTipo == "FACTURA_VENTA" && m.ReferenciaExternaId == factura.Id));
+
         await tx.RollbackAsync();
-    }
-
-    // El fallo de la rama legacy se simula aquí: en producción lo disparan la FK
-    // creado_por = Guid.Empty, el cliente/almacén vacíos o el estado inválido. La factura
-    // se agrega al contexto antes de fallar para reproducir el insert que no persiste.
-    private sealed class SalesServiceFalso : ISalesService
-    {
-        private readonly AppDbContext _db;
-
-        public SalesServiceFalso(AppDbContext db) => _db = db;
-
-        public Task<IEnumerable<FacturaVentum>> GetInvoicesAsync(string? search = null, string? status = null, string? channel = null)
-            => throw new NotSupportedException();
-
-        public Task<IReadOnlyList<PrecioVentaDto>> GetSalePricesAsync(Guid? clienteId, DateOnly fecha, CancellationToken cancellationToken = default)
-            => throw new NotSupportedException();
-
-        public Task<FacturaVentum?> GetInvoiceByIdAsync(Guid id)
-            => throw new NotSupportedException();
-
-        public Task<SalesCreateViewModel> GetSalesCreateContextAsync(FacturaVentum? existingInvoice = null)
-            => throw new NotSupportedException();
-
-        public Task<(bool Succeeded, string Message, FacturaVentum? Invoice)> CreateInvoiceAsync(FacturaVentum invoice)
-        {
-            _db.FacturaVenta.Add(invoice);
-            throw new InvalidOperationException("legacy no soportado");
-        }
-
-        public Task<(bool Succeeded, string Message)> CancelInvoiceAsync(Guid invoiceId, string reason)
-            => throw new NotSupportedException();
     }
 }

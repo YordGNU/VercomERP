@@ -461,7 +461,12 @@ public sealed class PosSincronizacionService
             string.IsNullOrWhiteSpace(sale.Serie) || sale.Serie.Length > 10 ||
             sale.Moneda.Length != 3 || sale.Lineas.Count == 0 || sale.Pagos.Count == 0)
             return "La venta debe incluir numeración, moneda, líneas y pagos.";
-        var paymentTypes = new[] { "EFECTIVO", "TRANSFERMOVIL", "ENZONA", "TRANSFERENCIA_BANCARIA", "CHEQUE", "CREDITO" };
+        // El POS solo cobra el total: no hay crédito con CuentaPorCobrar ni verificación de
+        // límite de crédito (a diferencia de SalesService), así que una venta a crédito
+        // dejaría la deuda invisible en cartera. Se rechaza hasta que exista ese flujo.
+        if (sale.Pagos.Any(x => x.FormaPago == "CREDITO"))
+            return "El POS no admite ventas a crédito; cobre el total de la venta.";
+        var paymentTypes = new[] { "EFECTIVO", "TRANSFERMOVIL", "ENZONA", "TRANSFERENCIA_BANCARIA", "CHEQUE" };
         if (sale.Lineas.Any(x => x.ProductoId == Guid.Empty || x.Cantidad <= 0 || x.PrecioUnitario < 0 ||
             x.DescuentoPorcentaje is < 0 or > 100 || x.ImpuestoPorcentaje is < 0 or > 100))
             return "La venta contiene líneas inválidas.";

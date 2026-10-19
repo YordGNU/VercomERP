@@ -368,6 +368,36 @@ public class PosVentaE2ETests
         await tx.RollbackAsync();
     }
 
+    [DbFact(RequiereDatosBase = true)]
+    public async Task ElPosNoAdmiteVentasACredito()
+    {
+        await using var db = TestDb.Create();
+        await using var tx = await db.Database.BeginTransactionAsync();
+
+        var sesion = await PosFixture.CrearSesionAsync(db);
+        var ctx = await PosVentaFixture.PrepararAsync(db, sesion);
+        var servicio = CrearServicio(db);
+
+        // Pago con forma "CREDITO" por el total: el POS no crea CuentaPorCobrar ni verifica el
+        // límite de crédito (a diferencia de SalesService), así que la deuda quedaría invisible
+        // en cartera; el flujo la rechaza en vez de facturar sin cobrar.
+        var request = PosVentaFixture.Request(sesion, ctx, formaPago: "CREDITO");
+        await servicio.RecibirAsync(request, CancellationToken.None);
+
+        var (result, error, conflict) = await servicio.ProcesarAsync(
+            sesion.DispositivoPosId, request.IdempotencyKey, CancellationToken.None);
+
+        Assert.Null(result);
+        Assert.NotNull(error);
+        Assert.Contains("crédito", error);
+        Assert.False(conflict);
+        Assert.Equal(0, await db.FacturaVenta.AsNoTracking()
+            .CountAsync(f => f.Serie == ctx.Serie && f.NumeroFactura == ctx.NumeroFactura));
+        Assert.Equal(0, await db.CuentaPorCobrars.AsNoTracking().CountAsync(c => c.ClienteId == ctx.ClienteId));
+
+        await tx.RollbackAsync();
+    }
+
     private static async Task ReservarRangoAsync(AppDbContext db, PosFixture.SesionPos sesion, string serie, long desde, long hasta)
     {
         db.PosRangoNumeracions.Add(new PosRangoNumeracion
