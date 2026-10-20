@@ -73,6 +73,9 @@ public sealed class SesionCajaPosDto
     public decimal? MontoCierreSistema { get; init; }
     public decimal TotalVentas { get; init; }
     public decimal TotalEfectivo { get; init; }
+    public decimal TotalTransfermovil { get; init; }
+    public decimal TotalEnzona { get; init; }
+    public decimal TotalOtrosMedios { get; init; }
     public int CantidadFacturas { get; init; }
     public string Estado { get; init; } = string.Empty;
 }

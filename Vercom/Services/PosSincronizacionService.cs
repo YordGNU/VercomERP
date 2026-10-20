@@ -152,6 +152,15 @@ public sealed class PosSincronizacionService
             catch (DbUpdateException ex) when (EsNumeracionDuplicada(ex))
             {
                 await RevertirCambiosFallidosAsync(cancellationToken);
+                // Carrera entre el worker y la API: si esta misma venta ya quedó procesada
+                // (otra transacción insertó la factura), el duplicado no es un error de datos
+                // sino que ya está hecha; se devuelve la factura existente para no marcarla
+                // ERROR ni provocar un reintento/venta duplicada en el terminal.
+                var yaProcesada = await _db.PosVentaPendientes.AsNoTracking()
+                    .FirstOrDefaultAsync(p => p.DispositivoPosId == deviceId && p.IdempotencyKey == key, cancellationToken);
+                if (yaProcesada is { Estado: "PROCESADO", FacturaId: not null })
+                    return (Map(yaProcesada), null, false);
+
                 return (null, "Ya existe una factura con esa numeración (serie y número) en la entidad y sucursal de la venta.", false);
             }
             catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 1205 })

@@ -31,6 +31,10 @@
         cartBody: document.getElementById('posCartBody'),
         emptyCart: document.getElementById('posEmptyCart'),
         total: document.getElementById('posTotal'),
+        payments: document.getElementById('posPayments'),
+        cashFields: document.getElementById('posCashFields'),
+        transferFields: document.getElementById('posTransferFields'),
+        reference: document.getElementById('posReference'),
         cash: document.getElementById('posCash'),
         change: document.getElementById('posChange'),
         checkout: document.getElementById('posCheckout')
@@ -39,6 +43,13 @@
     const money = n => (Number(n) || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const round2 = n => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    const PAYMENT_LABEL = {
+        EFECTIVO: 'Efectivo',
+        TRANSFERMOVIL: 'Transfermóvil',
+        ENZONA: 'Enzona',
+        TRANSFERENCIA_BANCARIA: 'Transferencia bancaria'
+    };
 
     function toast(icon, title) {
         Swal.fire({ toast: true, position: 'top-end', icon: icon, title: title, showConfirmButton: false, timer: 2600, timerProgressBar: true });
@@ -143,10 +154,12 @@
 
     function renderShift() {
         if (state.session && state.session.estado === 'ABIERTA') {
+            const otros = round2((state.session.totalTransfermovil || 0) + (state.session.totalEnzona || 0) + (state.session.totalOtrosMedios || 0));
             el.shiftState.innerHTML =
                 '<span class="badge bg-success">Turno abierto</span>' +
                 '<span class="text-muted small">Ventas: <b>' + money(state.session.totalVentas) + '</b>' +
-                ' · ' + (state.session.cantidadFacturas || 0) + ' factura(s)</span>';
+                ' · ' + (state.session.cantidadFacturas || 0) + ' factura(s)' +
+                (otros > 0 ? ' · otros medios: <b>' + money(otros) + '</b>' : '') + '</span>';
             el.openShift.classList.add('d-none');
             el.closeShift.classList.remove('d-none');
         } else {
@@ -191,12 +204,17 @@
 
     async function closeShift() {
         if (!state.session) return;
+        const s = state.session;
+        const esperado = round2((s.montoApertura || 0) + (s.totalEfectivo || 0));
+        const otros = round2((s.totalTransfermovil || 0) + (s.totalEnzona || 0) + (s.totalOtrosMedios || 0));
         const result = await Swal.fire({
             title: 'Cerrar caja',
-            html: 'Ventas del turno: <b>' + money(state.session.totalVentas) + '</b>',
+            html: 'Ventas del turno: <b>' + money(s.totalVentas) + '</b><br>' +
+                  'Efectivo esperado en caja: <b>' + money(esperado) + '</b>' +
+                  (otros > 0 ? '<br><small class="text-muted">Cobrado por otros medios (fuera de caja): ' + money(otros) + '</small>' : ''),
             input: 'number',
             inputLabel: 'Efectivo declarado',
-            inputValue: round2(state.session.totalVentas),
+            inputValue: esperado,
             inputAttributes: { min: 0, step: '0.01' },
             showCancelButton: true,
             confirmButtonText: 'Cerrar turno',
@@ -215,7 +233,8 @@
                 title: 'Turno cerrado',
                 html: 'Sistema: <b>' + money(cierre.montoCierreSistema) + '</b><br>' +
                       'Declarado: <b>' + money(cierre.montoCierreDeclarado) + '</b><br>' +
-                      'Diferencia: <b>' + money(diff) + '</b>'
+                      'Diferencia: <b>' + money(diff) + '</b>' +
+                      (otros > 0 ? '<br><small class="text-muted">Otros medios del turno: ' + money(otros) + '</small>' : '')
             });
             state.cart = [];
             renderCart();
@@ -354,24 +373,33 @@
         updateCheckout();
     }
 
+    function paymentMethod() {
+        const checked = el.payments.querySelector('input[name="posPayment"]:checked');
+        return checked ? checked.value : 'EFECTIVO';
+    }
+
     function updateChange() {
         const total = cartTotal();
+        const isCash = paymentMethod() === 'EFECTIVO';
         const cash = Number(el.cash.value) || 0;
         const change = round2(cash - total);
         el.change.textContent = money(change);
         el.change.classList.toggle('text-danger', change < -0.001);
         el.change.classList.toggle('text-success', change >= -0.001 && cash > 0);
+        el.cashFields.classList.toggle('d-none', !isCash);
+        el.transferFields.classList.toggle('d-none', isCash);
         updateCheckout();
     }
 
     function updateCheckout() {
         const total = cartTotal();
+        const isCash = paymentMethod() === 'EFECTIVO';
         const cash = Number(el.cash.value) || 0;
         const canSell = !state.busy
             && state.cart.length > 0
             && !!state.session
             && state.session.estado === 'ABIERTA'
-            && cash + 0.001 >= total;
+            && (!isCash || cash + 0.001 >= total);
         el.checkout.disabled = !canSell;
     }
 
@@ -394,9 +422,13 @@
         if (!state.config) { fail('No hay terminal seleccionada.'); return; }
 
         const total = cartTotal();
-        const cash = round2(Number(el.cash.value) || 0);
+        const metodo = paymentMethod();
+        const esEfectivo = metodo === 'EFECTIVO';
+        const cash = esEfectivo ? round2(Number(el.cash.value) || 0) : total;
+        const vuelto = esEfectivo ? round2(cash - total) : 0;
+        const referencia = esEfectivo ? null : (el.reference.value.trim() || null);
         if (total <= 0) { fail('Agregue artículos a la venta.'); return; }
-        if (cash + 0.001 < total) { fail('El efectivo recibido no cubre el total.'); return; }
+        if (esEfectivo && cash + 0.001 < total) { fail('El efectivo recibido no cubre el total.'); return; }
 
         setBusy(true);
         const lineas = state.cart.map(function (l) {
@@ -417,7 +449,9 @@
                 fecha: fecha,
                 moneda: state.config.monedaBase || 'CUP',
                 lineas: lineas,
-                pagos: [{ formaPago: 'EFECTIVO', monto: cash, vueltoEntregado: round2(cash - total) }]
+                pagos: [esEfectivo
+                    ? { formaPago: 'EFECTIVO', monto: cash, vueltoEntregado: vuelto }
+                    : { formaPago: metodo, monto: total, referenciaExterna: referencia }]
             };
 
             const key = newIdempotencyKey();
@@ -435,9 +469,11 @@
             const procesada = await api('/sincronizacion/ventas/' + encodeURIComponent(state.config.dispositivoPosId) + '/' + encodeURIComponent(key) + '/procesar', { method: 'POST' });
 
             if (procesada && procesada.estado === 'PROCESADO') {
-                printTicket(venta, total, cash, round2(cash - total));
+                printTicket(venta, total, { metodo: metodo, monto: cash, vuelto: vuelto, referencia: referencia });
                 state.cart = [];
                 el.cash.value = '';
+                el.reference.value = '';
+                el.payments.querySelector('input[value="EFECTIVO"]').checked = true;
                 renderCart();
                 await loadSession();
                 toast('success', 'Venta ' + venta.serie + '-' + venta.numeroFactura + ' registrada');
@@ -448,6 +484,8 @@
                     html: 'La venta quedó registrada y se procesará en segundo plano.<br><small class="text-muted">' + esc((procesada && procesada.mensajeError) || '') + '</small>'
                 });
                 state.cart = [];
+                el.reference.value = '';
+                el.payments.querySelector('input[value="EFECTIVO"]').checked = true;
                 renderCart();
                 await loadSession();
             }
@@ -458,7 +496,7 @@
         }
     }
 
-    function printTicket(venta, total, cash, change) {
+    function printTicket(venta, total, pago) {
         const cfg = state.config;
         const rows = state.cart.map(function (line) {
             return '<tr><td>' + esc(line.nombre) + '</td>' +
@@ -491,8 +529,9 @@
             '<div class="hr"></div>' +
             '<table>' +
             '<tr class="tot"><td>TOTAL ' + esc(venta.moneda) + '</td><td class="r">' + money(total) + '</td></tr>' +
-            '<tr><td>Efectivo</td><td class="r">' + money(cash) + '</td></tr>' +
-            '<tr><td>Cambio</td><td class="r">' + money(change) + '</td></tr>' +
+            '<tr><td>' + esc(PAYMENT_LABEL[pago.metodo] || pago.metodo) + '</td><td class="r">' + money(pago.monto) + '</td></tr>' +
+            (pago.metodo === 'EFECTIVO' ? '<tr><td>Cambio</td><td class="r">' + money(pago.vuelto) + '</td></tr>' : '') +
+            (pago.referencia ? '<tr><td>Ref.</td><td class="r">' + esc(pago.referencia) + '</td></tr>' : '') +
             '</table>' +
             '<div class="hr"></div>' +
             '<div class="c mt">¡Gracias por su compra!</div>' +
@@ -512,6 +551,10 @@
         el.device.addEventListener('change', function () { selectDevice(el.device.value); });
         el.openShift.addEventListener('click', openShift);
         el.closeShift.addEventListener('click', closeShift);
+        el.payments.addEventListener('change', function () {
+            updateChange();
+            (paymentMethod() === 'EFECTIVO' ? el.cash : el.reference).focus();
+        });
         el.clearSearch.addEventListener('click', function () {
             el.search.value = '';
             el.results.innerHTML = '';

@@ -144,6 +144,7 @@ public sealed class PosCajaService
         Id = x.Id, CajaId = x.CajaId, DispositivoPosId = x.DispositivoPosId, CajeroId = x.CajeroId, FechaApertura = x.FechaApertura,
         FechaCierre = x.FechaCierre, MontoApertura = x.MontoApertura, MontoCierreDeclarado = x.MontoCierreDeclarado,
         MontoCierreSistema = x.MontoCierreSistema, TotalVentas = x.TotalVentas, TotalEfectivo = x.TotalEfectivo,
+        TotalTransfermovil = x.TotalTransfermovil, TotalEnzona = x.TotalEnzona, TotalOtrosMedios = x.TotalOtrosMedios,
         CantidadFacturas = x.CantidadFacturas, Estado = x.Estado
     };
 }
