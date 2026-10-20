@@ -3,11 +3,11 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Vercom.DTOs;
-using Vercom.Models;
+using VERCOM.DTOs;
+using VERCOM.Models;
 using BC = BCrypt.Net.BCrypt;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public sealed class PosAuthService
 {

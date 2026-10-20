@@ -1,9 +1,9 @@
 ﻿// Services/EmpleadoService.cs
 using Microsoft.EntityFrameworkCore;
-using Vercom.Models;
-using Vercom.ViewModels;
+using VERCOM.Models;
+using VERCOM.ViewModels;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 // Services/IEmpleadoService.cs
 
 

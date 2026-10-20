@@ -1,16 +1,20 @@
-using System.Text;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Vercom.Filters;
-using Vercom.Models;
-using Vercom.Security;
-using Vercom.Services;
+using Prometheus;
+using System.Text;
+using VERCOM.Filters;
+using VERCOM.Models;
+using VERCOM.Security;
+using VERCOM.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IEntidadProvider, HttpContextEntidadProvider>();
@@ -74,11 +78,17 @@ builder.Services.AddDbContext<AppDbContext>((sp, options) =>
            .AddInterceptors(sp.GetRequiredService<AuditInterceptor>());
 });
 
+builder.Configuration.AddKeyPerFile("/run/secrets", optional: true);
 var jwtSecret = builder.Configuration["Jwt:SecretKey"];
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 var jwtAudience = builder.Configuration["Jwt:Audience"];
-if (string.IsNullOrWhiteSpace(jwtSecret) || Encoding.UTF8.GetByteCount(jwtSecret) < 32)
-    throw new InvalidOperationException("Jwt:SecretKey debe tener al menos 32 bytes.");
+
+if (string.IsNullOrWhiteSpace(jwtSecret))
+{
+    const string secretPath = "/run/secrets/jwt_key";
+    if (File.Exists(secretPath))
+        jwtSecret = File.ReadAllText(secretPath).Trim();
+}
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -115,7 +125,6 @@ builder.Services.AddControllersWithViews(options =>
 });
 
 builder.Services.AddHealthChecks();
-
 var app = builder.Build();
 
 app.UseForwardedHeaders(new ForwardedHeadersOptions
@@ -142,12 +151,15 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
+app.UseHttpMetrics();        // ← métricas HTTP automáticas
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapHub<Vercom.Hubs.NotificationHub>("/notificationHub");
+app.MapHub<VERCOM.Hubs.NotificationHub>("/notificationHub");
 
 app.MapHealthChecks("/health");
+app.MapMetrics("/metrics");  // ← endpoint /metrics
 
 app.MapStaticAssets();
 
@@ -155,6 +167,5 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Dashboard}/{action=Index}/{id?}")
     .WithStaticAssets();
-
 
 app.Run();

@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Vercom.DTOs;
+namespace VERCOM.DTOs;
 
 public sealed class PosLoginRequest
 {

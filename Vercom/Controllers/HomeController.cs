@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Vercom.Controllers
+namespace VERCOM.Controllers
 {
     [Authorize]
     public class HomeController : Controller

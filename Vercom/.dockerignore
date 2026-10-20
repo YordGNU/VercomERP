@@ -1,0 +1,57 @@
+# ============================================================
+# .dockerignore — VercomERP
+# ============================================================
+# Build artifacts
+**/bin/
+**/obj/
+**/out/
+**/publish/
+**/TestResults/
+**/coverage/
+*.trx
+
+# IDE
+**/.vs/
+**/.vscode/
+**/.idea/
+**/*.user
+**/*.suo
+
+# Git
+**/.git/
+**/.gitignore
+**/.gitattributes
+**/.github/
+
+# Docker / infra (NO van en la imagen de la app)
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+**/nginx/
+**/monitoring/
+**/secrets/
+**/backups/
+**/docs/
+**/scripts/
+**/Database/
+Database/
+docs/
+scripts/
+nginx/
+monitoring/
+secrets/
+backups/
+
+# Config local
+.env
+.env.*
+appsettings.Development.json
+appsettings.Local.json
+
+# Documentación
+*.md
+README*
+
+# Logs
+*.log
+logs/

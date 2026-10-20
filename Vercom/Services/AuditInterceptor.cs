@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using System.Text.Json;
-using Vercom.Helpers;
-using Vercom.Models;
+using VERCOM.Helpers;
+using VERCOM.Models;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public class AuditInterceptor : SaveChangesInterceptor
 {

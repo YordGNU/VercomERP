@@ -8,7 +8,7 @@ param(
 )
 
 Write-Host "==============================================" -ForegroundColor Cyan
-Write-Host "  Aplicando plantilla Inspinia a Vercom" -ForegroundColor Cyan
+Write-Host "  Aplicando plantilla Inspinia a VERCOM" -ForegroundColor Cyan
 Write-Host "==============================================" -ForegroundColor Cyan
 Write-Host "Directorio de vistas: $ViewsRoot" -ForegroundColor Yellow
 Write-Host ""
@@ -86,7 +86,7 @@ foreach ($file in $files) {
     </div>
     <div class="text-end">
         <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="javascript: void(0);">Vercom</a></li>
+            <li class="breadcrumb-item"><a href="javascript: void(0);">VERCOM</a></li>
             <li class="breadcrumb-item"><a href="javascript: void(0);">$entityName</a></li>
             <li class="breadcrumb-item active">$breadcrumbAction</li>
         </ol>

@@ -1,9 +1,9 @@
-@model Vercom.ViewModels.ContractSuplementoFormViewModel
+@model VERCOM.ViewModels.ContractSuplementoFormViewModel
 @{
     ViewBag.Title = Model.Title;
 }
 
-@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Suplemento de Contrato", Subtitle = "Documento propio que modifica términos del contrato " + Model.NumeroContrato + ".", Icon = "ti-file-plus", Tone = "primary" }; }
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Suplemento de Contrato", Subtitle = "Documento propio que modifica términos del contrato " + Model.NumeroContrato + ".", Icon = "ti-file-plus"}; }
 <partial name='_PageHeader' model='pageHeader' />
 
 <div class="row">

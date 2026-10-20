@@ -1,10 +1,10 @@
-@model IEnumerable<Vercom.Models.Feedback>
-@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
+@model IEnumerable<VERCOM.Models.Feedback>
+@inject VERCOM.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewBag.Title = "Bandeja de Feedback y Soporte";
 }
 
-@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Centro de Atención al Usuario", Subtitle = "Sugerencias, reportes de error y comunicaciones de todas las entidades.", Icon = "ti-file", Tone = "primary" }; }
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Centro de Atención al Usuario", Subtitle = "Sugerencias, reportes de error y comunicaciones de todas las entidades.", Icon = "ti-file"}; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

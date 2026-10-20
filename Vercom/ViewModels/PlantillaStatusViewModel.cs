@@ -1,5 +1,5 @@
 
-namespace Vercom.ViewModels;
+namespace VERCOM.ViewModels;
 
 public class PlantillaStatusViewModel
 {

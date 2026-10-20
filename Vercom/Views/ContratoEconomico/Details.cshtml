@@ -1,9 +1,9 @@
-@model Vercom.Models.ContratoEconomico
+@model VERCOM.Models.ContratoEconomico
 @{
     ViewBag.Title = "Detalle de Contrato: " + Model.NumeroContrato;
 }
 
-@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Ficha de Instrumento Jurídico", Subtitle = "Control de vigencia y trazabilidad de convenios comerciales (RF-50).", Icon = "ti-file", Tone = "primary" }; }
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Ficha de Instrumento Jurídico", Subtitle = "Control de vigencia y trazabilidad de convenios comerciales (RF-50).", Icon = "ti-file"}; }
 <partial name='_PageHeader' model='pageHeader' />
 <div class="row">
     <div class="row">

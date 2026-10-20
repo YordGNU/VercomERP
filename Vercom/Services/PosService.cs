@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Vercom.DTOs;
-using Vercom.Models;
-using Vercom.ViewModels;
+using VERCOM.DTOs;
+using VERCOM.Models;
+using VERCOM.ViewModels;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public interface IPosService
 {
@@ -25,10 +25,8 @@ public interface IPosService
     Task<IEnumerable<PosVentaPendiente>> GetPendingSalesAsync();
     Task<PosVentaPendiente?> GetPendingSaleByIdAsync(Guid id);
     Task<(bool Succeeded, string Message)> ProcessPendingSaleAsync(Guid pendingId);
-    Task<(bool Succeeded, string Message)> QueuePendingSalesAsync(List<Vercom.DTOs.OperacionRequestDto> operaciones);
 
     // Numeración
-    Task<(string Serie, long Desde, long Hasta)> ReserveNumberRangeAsync(Guid dispositivoId, string serie, int cantidad);
     Task<IEnumerable<PosRangoNumeracion>> GetRangesAsync();
 
     // Sincronización de Datos (Master Data para POS)
@@ -225,117 +223,17 @@ public class PosService : IPosService
         if (pending.Estado == "PROCESADO") return (true, "La venta ya estaba procesada.");
         if (pending.Estado != "PENDIENTE") return (false, $"La venta está en estado {pending.Estado} y no se puede procesar.");
 
-        // Formato nuevo (VentaPosPayload): procesar de forma síncrona reutilizando el flujo
-        // transaccional del API (valida sesión, existencias, crea factura y mueve inventario).
-        if (pending.PayloadJson.IndexOf("TipoMovimientoId", StringComparison.OrdinalIgnoreCase) >= 0)
-        {
-            using var scope = _serviceScopeFactory.CreateScope();
-            var sync = scope.ServiceProvider.GetRequiredService<PosSincronizacionService>();
-            var result = await sync.ProcesarAsync(pending.DispositivoPosId, pending.IdempotencyKey, CancellationToken.None);
-            if (result.Error is not null) return (false, result.Error);
-            return result.Result!.Estado == "PROCESADO"
-                ? (true, "Venta procesada correctamente.")
-                : (true, "La venta quedó pendiente.");
-        }
-
-        // Formato legacy: lo toma el worker de sincronización en el siguiente barrido (hasta 30s).
-        return (true, "Venta legacy encargada al procesador en segundo plano (hasta 30 segundos).");
-    }
-
-    public async Task<(bool Succeeded, string Message)> QueuePendingSalesAsync(List<Vercom.DTOs.OperacionRequestDto> operaciones)
-    {
-        try
-        {
-            foreach (var op in operaciones)
-            {
-                var deviceId = Guid.Parse(op.TerminalId ?? Guid.Empty.ToString());
-                var existe = await _context.PosVentaPendientes
-                    .AnyAsync(p => p.IdempotencyKey == op.LocalId.ToString() && p.DispositivoPosId == deviceId);
-
-                if (existe) continue;
-
-                var pendiente = new PosVentaPendiente
-                {
-                    Id = Guid.NewGuid(),
-                    DispositivoPosId = deviceId,
-                    IdempotencyKey = op.LocalId.ToString(),
-                    PayloadJson = System.Text.Json.JsonSerializer.Serialize(op),
-                    Estado = "PENDIENTE",
-                    FechaRecibidoServidor = DateTimeOffset.Now,
-                    FechaVentaLocal = op.Fecha ?? DateTimeOffset.Now
-                };
-
-                _context.PosVentaPendientes.Add(pendiente);
-            }
-
-            await _context.SaveChangesAsync();
-            return (true, "Operaciones encoladas correctamente.");
-        }
-        catch (Exception ex) { return (false, ex.Message); }
-    }
-
-    public async Task<(string Serie, long Desde, long Hasta)> ReserveNumberRangeAsync(Guid dispositivoId, string serie, int cantidad)
-    {
-        var dispositivo = await _context.DispositivoPos.FindAsync(dispositivoId);
-        if (dispositivo == null) throw new Exception("Dispositivo no registrado");
-        if (cantidad <= 0 || cantidad > 100000) throw new Exception("La cantidad reservada debe estar entre 1 y 100000.");
-
-        // Reserva atómica: UPDLOCK en la misma transacción garantiza exclusión mutua
-        // entre dispositivos de la sucursal y evita reservas duplicadas.
-        await using var transaction = await _context.Database.BeginTransactionAsync();
-        var sql = @"
-            SELECT * FROM nucleo.consecutivo WITH (UPDLOCK, ROWLOCK)
-            WHERE entidad_id = {0}
-            AND (sucursal_id = {1} OR ({1} IS NULL AND sucursal_id IS NULL))
-            AND tipo_documento = {2}
-            AND serie = {3}";
-
-        var consecutivo = await _context.Consecutivos
-            .FromSqlRaw(sql, dispositivo.EntidadId, (object?)dispositivo.SucursalId ?? DBNull.Value, Vercom.Helpers.DocumentoTipo.FacturaVenta, serie)
-            .FirstOrDefaultAsync();
-
-        long start;
-        if (consecutivo == null)
-        {
-            consecutivo = new Consecutivo
-            {
-                EntidadId = dispositivo.EntidadId,
-                SucursalId = dispositivo.SucursalId,
-                TipoDocumento = Vercom.Helpers.DocumentoTipo.FacturaVenta,
-                Serie = serie,
-                UltimoNumero = 1,
-                LongitudPadding = 8,
-                ActualizadoEn = DateTimeOffset.Now
-            };
-            _context.Consecutivos.Add(consecutivo);
-            start = 1;
-        }
-        else
-        {
-            start = consecutivo.UltimoNumero + 1;
-        }
-
-        var end = start + cantidad - 1;
-        consecutivo.UltimoNumero = end;
-        consecutivo.ActualizadoEn = DateTimeOffset.Now;
-
-        var reserva = new PosRangoNumeracion
-        {
-            Id = Guid.NewGuid(),
-            DispositivoPosId = dispositivoId,
-            Serie = serie,
-            NumeroDesde = (int)start,
-            NumeroHasta = (int)end,
-            NumeroSiguienteLocal = (int)start,
-            AsignadoEn = DateTimeOffset.Now,
-            Agotado = false
-        };
-
-        _context.PosRangoNumeracions.Add(reserva);
-        await _context.SaveChangesAsync();
-        await transaction.CommitAsync();
-
-        return (serie, start, end);
+        // Se procesa de forma síncrona reutilizando el mismo flujo transaccional que la API
+        // JWT (valida sesión, existencias, crea factura, mueve inventario y contabiliza).
+        // Un payload de un formato anterior al actual no se procesa: ProcesarAsync lo rechaza
+        // con el motivo concreto en vez de encolarlo a un procesador que ya no existe.
+        using var scope = _serviceScopeFactory.CreateScope();
+        var sync = scope.ServiceProvider.GetRequiredService<PosSincronizacionService>();
+        var result = await sync.ProcesarAsync(pending.DispositivoPosId, pending.IdempotencyKey, CancellationToken.None);
+        if (result.Error is not null) return (false, result.Error);
+        return result.Result!.Estado == "PROCESADO"
+            ? (true, "Venta procesada correctamente.")
+            : (true, "La venta quedó pendiente.");
     }
 
     public async Task<IReadOnlyList<PosCatalogoProductoDto>> GetCatalogForPosAsync(DateTimeOffset? updatedSince, Guid? clienteId = null)

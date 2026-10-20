@@ -1,9 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
-using Vercom.DTOs;
-using Vercom.Models;
+using VERCOM.Models;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public class PosSyncBackgroundWorker : BackgroundService
 {
@@ -40,7 +38,6 @@ public class PosSyncBackgroundWorker : BackgroundService
     {
         using var scope = _serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var salesService = scope.ServiceProvider.GetRequiredService<ISalesService>();
 
         var pendingList = await context.PosVentaPendientes
             .IgnoreQueryFilters()
@@ -53,108 +50,69 @@ public class PosSyncBackgroundWorker : BackgroundService
 
         foreach (var pending in pendingList)
         {
-            // Formato nuevo (VentaPosPayload): se procesa con la MISMA implementación que
-            // usa la API JWT (/api/pos/sincronizacion/.../procesar), es decir
-            // PosSincronizacionService.ProcesarAsync — transacción SERIALIZABLE, reintento
-            // acotado de interbloqueo 1205 y decremento atómico condicional.
-            // Esto elimina la doble facturación (una para worker-legacy y otra para JWT)
-            // y actúa además como red de seguridad: si el terminal queda offline y nunca
-            // vuelve a llamar /procesar, el worker absorbe la venta en vez de dejarla
-            // PENDIENTE-huérfana para siempre.
-            if (pending.PayloadJson.IndexOf("TipoMovimientoId", StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                var syncService = scope.ServiceProvider.GetRequiredService<PosSincronizacionService>();
-
-                var result = await syncService.ProcesarAsync(pending.DispositivoPosId, pending.IdempotencyKey, ct);
-
-                if (result.Conflict)
-                {
-                    // Carrera entre el worker y el endpoint JWT: la transacción del servicio
-                    // es SERIALIZABLE y reintenta 1205; se deja PENDIENTE para el siguiente
-                    // barrido en vez de marcarla ERROR.
-                    continue;
-                }
-
-                if (result.Error is not null)
-                {
-                    // El servicio no persiste la venta en caso de error de validación; se
-                    // marca aquí para no reprocesarla sin fin (poison). El reintento del
-                    // dispositivo por JWT seguirá siendo la ruta normal.
-                    pending.Estado = "ERROR";
-                    pending.MensajeError = result.Error;
-                    pending.IntentosProcesamiento++;
-                    await context.SaveChangesAsync(ct);
-                }
-
-                // Si result.Result no es null y no hay conflicto, el servicio ya marcó la
-                // venta como PROCESADO (CommitAsync con SERIALIZABLE) y este SaveChanges
-                // es un no-op seguro.
-                continue;
-            }
-
             try
             {
-                var op = JsonSerializer.Deserialize<OperacionRequestDto>(pending.PayloadJson);
-                if (op == null) throw new Exception("Payload JSON inválido");
-
-                var device = await context.DispositivoPos.AsNoTracking()
-                    .Where(d => d.Id == pending.DispositivoPosId)
-                    .Select(d => new { d.EntidadId, d.Nombre })
-                    .FirstAsync(ct);
-
-                // Mapear DTO a modelo Factura
-                var invoice = new FacturaVentum
-                {
-                    EntidadId = device.EntidadId,
-                    SucursalId = await context.DispositivoPos.Where(d => d.Id == pending.DispositivoPosId).Select(d => d.SucursalId).FirstOrDefaultAsync(ct),
-                    Serie = "POS",
-                    ClienteId = op.ClienteId ?? Guid.Empty,
-                    AlmacenId = op.PuntoVentaid ?? Guid.Empty,
-                    CanalVenta = "POS",
-                    TipoVenta = "MINORISTA",
-                    Fecha = op.Fecha ?? pending.FechaVentaLocal.DateTime,
-                    Moneda = op.Moneda,
-                    Total = op.Importe ?? 0,
-                    CreadoPor = Guid.Empty // Sistema
-                };
-
-                if (op.Productoid.HasValue)
-                {
-                    invoice.FacturaVentaDetalles.Add(new FacturaVentaDetalle
-                    {
-                        ProductoId = op.Productoid.Value,
-                        Cantidad = op.Cantidad ?? 0,
-                        PrecioUnitario = (op.Importe / op.Cantidad) ?? 0,
-                        DescuentoPorcentaje = 0
-                    });
-                }
-
-                var result = await salesService.CreateInvoiceAsync(invoice);
-
-                if (result.Succeeded)
-                {
-                    pending.Estado = "PROCESADA";
-                    pending.FacturaId = result.Invoice?.Id;
-                    pending.ProcesadoEn = DateTimeOffset.Now;
-
-                    var notifications = scope.ServiceProvider.GetRequiredService<INotificationService>();
-                    await notifications.NotifyEntityAsync(device.EntidadId, "Venta POS procesada",
-                        $"{device.Nombre}: venta por {invoice.Total:N2} {op.Moneda} procesada.", "success");
-                }
-                else
-                {
-                    pending.Estado = "ERROR";
-                    pending.MensajeError = result.Message;
-                }
+                await ProcesarPendienteAsync(context, scope.ServiceProvider, pending, ct);
             }
             catch (Exception ex)
             {
-                pending.Estado = "ERROR";
-                pending.MensajeError = ex.Message;
-                pending.IntentosProcesamiento++;
+                // Una fila venenosa (FK rota, número duplicado, cuenta contable sin resolver...)
+                // no debe abortar el barrido completo: se marca ERROR —visible para el operador
+                // y sin reintento infinito— y el resto del lote sigue procesándose.
+                _logger.LogError(ex, "POS: falló el procesamiento de la venta pendiente {PendienteId}.", pending.Id);
+                await MarcarErrorAsync(context, pending, ex.Message, ct);
             }
+        }
+    }
 
+    private async Task ProcesarPendienteAsync(AppDbContext context, IServiceProvider services, PosVentaPendiente pending, CancellationToken ct)
+    {
+        // Se procesa con la MISMA implementación que usa la API JWT
+        // (/api/pos/sincronizacion/ventas/{dispositivo}/{clave}/procesar): una sola ruta de
+        // facturación, inventario y contabilidad. El worker es la red de seguridad para los
+        // terminales que quedaron offline y nunca llamaron a /procesar.
+        var syncService = services.GetRequiredService<PosSincronizacionService>();
+
+        var result = await syncService.ProcesarAsync(pending.DispositivoPosId, pending.IdempotencyKey, ct);
+
+        if (result.Conflict)
+        {
+            // Carrera entre el worker y el endpoint JWT: la transacción del servicio es
+            // SERIALIZABLE y reintenta 1205; se deja PENDIENTE para el siguiente barrido
+            // en vez de marcarla ERROR.
+            return;
+        }
+
+        if (result.Error is not null)
+        {
+            // El servicio no persiste nada en caso de error de validación; se marca aquí para
+            // no reprocesarla sin fin (poison). El reintento del dispositivo por JWT sigue
+            // siendo la ruta normal.
+            pending.Estado = "ERROR";
+            pending.MensajeError = result.Error;
+            pending.IntentosProcesamiento++;
             await context.SaveChangesAsync(ct);
+        }
+    }
+
+    // Marca la venta pendiente como ERROR sin arrastrar entidades a medias del intento
+    // fallido, de modo que el error quede registrado aunque la fila sea irrecuperable.
+    private async Task MarcarErrorAsync(AppDbContext context, PosVentaPendiente pending, string mensaje, CancellationToken ct)
+    {
+        foreach (var entry in context.ChangeTracker.Entries().Where(e => e.State == EntityState.Added).ToList())
+            entry.State = EntityState.Detached;
+
+        pending.Estado = "ERROR";
+        pending.MensajeError = mensaje;
+        pending.IntentosProcesamiento++;
+
+        try
+        {
+            await context.SaveChangesAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "POS: tampoco se pudo marcar como ERROR la venta pendiente {PendienteId}.", pending.Id);
         }
     }
 }

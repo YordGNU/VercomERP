@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Vercom.Models;
-using Vercom.ViewModels;
+using VERCOM.Models;
+using VERCOM.ViewModels;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public interface IAccountingService
 {
@@ -303,7 +303,7 @@ public class AccountingService : IAccountingService
                 entry.NumeroComprobante = await _consecutivoService.ObtenerSiguienteNumeroLongAsync(
                     entry.EntidadId,
                     null, // numeración central por entidad (comportamiento previo del MAX+1)
-                    Vercom.Helpers.DocumentoTipo.AsientoContable,
+                    VERCOM.Helpers.DocumentoTipo.AsientoContable,
                     entry.TipoComprobanteId.ToString(System.Globalization.CultureInfo.InvariantCulture));
             }
 

@@ -2,11 +2,11 @@
 
 
 
-@model Vercom.ViewModels.AuditIndexViewModel
-@using Vercom.Helpers
+@model VERCOM.ViewModels.AuditIndexViewModel
+@using VERCOM.Helpers
 @{ ViewBag.Title = Model.Title; }
 
-@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = Model.Title, Subtitle = "Seguimiento de eventos críticos y operaciones sensibles del sistema.", Icon = "ti-shield-check", Tone = "primary" }; }
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = Model.Title, Subtitle = "Seguimiento de eventos críticos y operaciones sensibles del sistema.", Icon = "ti-shield-check"}; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

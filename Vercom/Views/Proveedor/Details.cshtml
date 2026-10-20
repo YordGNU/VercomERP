@@ -1,11 +1,11 @@
-@model Vercom.Models.Proveedor
+@model VERCOM.Models.Proveedor
 @{
     ViewBag.Title = "Ficha Comercial de Proveedor";
     var balance = Model.CuentaPorPagars.Where(c => c.Estado != "PAGADA").Sum(c => c.SaldoPendiente);
     var totalPurchases = Model.OrdenCompras.Where(o => o.Estado == "RECIBIDA").Sum(o => o.Total);
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Proveedores</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Ventas", Title = "Proveedor: " + Model.RazonSocial, Subtitle = "Gestión de abastecimiento, pasivos corrientes y acuerdos comerciales.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Proveedores</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Ventas", Title = "Proveedor: " + Model.RazonSocial, Subtitle = "Gestión de abastecimiento, pasivos corrientes y acuerdos comerciales.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

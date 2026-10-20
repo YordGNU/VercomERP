@@ -1,4 +1,4 @@
-@model Vercom.Models.CuentaPorPagar
+@model VERCOM.Models.CuentaPorPagar
 @{
     ViewBag.Title = "Ficha de Cuenta por Pagar";
     var fmt = new System.Globalization.CultureInfo("es-CU");
@@ -16,7 +16,7 @@
         : "badge-soft-danger";
 }
 
-@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Ficha de Cuenta por Pagar", Subtitle = "Detalle del pasivo y su trazabilidad de pagos.", Icon = "ti-file", Tone = "primary" }; }
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Ficha de Cuenta por Pagar", Subtitle = "Detalle del pasivo y su trazabilidad de pagos.", Icon = "ti-file"}; }
 <partial name='_PageHeader' model='pageHeader' />
 
 
