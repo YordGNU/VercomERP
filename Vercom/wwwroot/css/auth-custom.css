@@ -1,72 +1,77 @@
-﻿.auth-bg {
+﻿/* ============================================================
+   auth-custom.css · VERCOM login
+   Ajustado a Login.cshtml (INSPINIA + logoanimate.css)
+   Incluye: entrada, fondo, burbujas, paralaje, tarjeta 3D,
+   botón magnético y onda al hacer clic.
+   ============================================================ */
+
+[hidden] {
+    display: none !important;
+}
+
+/* ============================================================
+   1. Base y fondo
+   ============================================================ */
+.auth-body {
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: #0b1116;
+    color: #e2e8f0;
+    font-family: var(--theme-font-sans-serif, "Open Sans", system-ui, sans-serif);
+}
+
+.auth-bg {
     position: fixed;
     inset: 0;
-    background: linear-gradient(270deg, #0a0a0a, #0f172a, #111827);
-    background-size: 400% 400%;
-    animation: gradientShift 20s ease infinite;
-    z-index: -1; 
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(60vmax 60vmax at 12% 8%, rgba(26, 179, 148, 0.18), transparent 60%), radial-gradient(45vmax 45vmax at 92% 92%, rgba(45, 212, 191, 0.10), transparent 60%), linear-gradient(160deg, #0b1116 0%, #0f1d22 60%, #0b1116 100%);
 }
 
-@keyframes gradientShift {
-    0% {
-        background-position: 0% 50%;
-    }
-
-    50% {
-        background-position: 100% 50%;
-    }
-
-    100% {
-        background-position: 0% 50%;
-    }
-}
-
-
-.circles li {
-    opacity: 0.5; 
-}
-
-
-.auth-form .card {
-    width: 100%;
-}
-
-
-.auth-form .auth-submit .spinner-border-sm {
-    width: 1rem;
-    height: 1rem;
-    border-width: 0.15em;
-}
-
-.area,
-.circles-container {
+.auth-box {
     position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 100vh;
+    min-height: 100dvh;
     overflow: hidden;
+    isolation: isolate;
 }
 
+    .auth-box > .container-xxl {
+        position: relative;
+        z-index: 1;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+
+/* ============================================================
+   2. Burbujas de fondo (INSPINIA .circles)
+   ============================================================ */
 .circles {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
+    position: fixed;
+    inset: 0;
+    z-index: 0;
     margin: 0;
     padding: 0;
-    z-index: 0;
+    list-style: none;
+    overflow: hidden;
     pointer-events: none;
+    translate: var(--bx, 0px) var(--by, 0px);
+    transition: translate 0.6s ease-out;
 }
 
     .circles li {
         position: absolute;
+        bottom: -160px;
         display: block;
-        list-style: none;
         width: 20px;
         height: 20px;
-        background: rgba(255, 255, 255, 0.06);
-        animation: animate 30s linear infinite;
-        bottom: -150px;
-        pointer-events: none;
+        border-radius: 50%;
+        background: rgba(45, 212, 191, 0.12);
+        will-change: transform, opacity;
+        animation: auth-bubble 25s linear infinite;
     }
 
         .circles li:nth-child(1) {
@@ -144,58 +149,310 @@
             animation-duration: 11s;
         }
 
-@keyframes animate {
+@keyframes auth-bubble {
     0% {
-        transform: translateY(0) rotate(0deg) scale(1);
-        opacity: 1;
-        border-radius: 0;
+        transform: translate3d(0, 0, 0) rotate(0deg);
+        opacity: 0;
     }
 
-    50% {
-        transform: translateY(-500px) rotate(360deg) scale(1.2);
-        opacity: 0.7;
-        border-radius: 50%;
+    10% {
+        opacity: 1;
     }
 
     100% {
-        transform: translateY(-1000px) rotate(720deg) scale(1);
+        transform: translate3d(0, -1100px, 0) rotate(360deg);
         opacity: 0;
-        border-radius: 50%;
     }
 }
 
+/* ============================================================
+   3. Panel de marca
+   ============================================================ */
+.auth-brand > * {
+    animation: auth-rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.auth-brand > :nth-child(2) {
+    animation-delay: 0.12s;
+}
+
+.auth-brand > :nth-child(3) {
+    animation-delay: 0.22s;
+}
+
+.auth-brand > :nth-child(4) {
+    animation-delay: 0.34s;
+}
+
+/* Paralaje del logo (logoanimate.css no usa transform en .logo-wrapper) */
+.logo-wrapper {
+    translate: var(--lx, 0px) var(--ly, 0px);
+    transition: translate 0.4s ease-out;
+}
+
+/* ============================================================
+   4. Formulario y tarjeta 3D
+   ============================================================ */
+/* La entrada vive en el <form>; la tarjeta queda libre para la inclinación */
+.auth-form {
+    animation: auth-rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both;
+}
+
+    .auth-form .card {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        border-radius: 14px;
+        box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.6);
+        transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+        transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.45s ease;
+        will-change: transform;
+    }
+
+        /* Foco de luz que sigue al cursor */
+        .auth-form .card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient( 360px circle at var(--mx, 50%) var(--my, 50%), rgba(45, 212, 191, 0.14), transparent 60% );
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .auth-form .card:hover::before {
+            opacity: 1;
+        }
+
+        .auth-form .card > * {
+            position: relative;
+            z-index: 1;
+        }
+
+    .auth-form .card-header {
+        background: transparent;
+        border-bottom: 1px solid var(--bs-border-color);
+    }
+
+    .auth-form .card-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    /* ============================================================
+   5. Campos
+   ============================================================ */
+    .auth-form .form-control {
+        height: 46px;
+        font-size: 16px; /* evita el zoom automático en iOS */
+    }
+
+        .auth-form .form-control:focus {
+            border-color: var(--bs-primary, #1ab394);
+            box-shadow: 0 0 0 0.2rem rgba(26, 179, 148, 0.25);
+        }
+
+    .auth-form .input-group .form-control:focus {
+        z-index: 3;
+    }
+
+    .auth-form .input-group-text {
+        min-width: 44px;
+        justify-content: center;
+        background: var(--bs-tertiary-bg, #f8f9fa) !important;
+        color: var(--bs-secondary-color);
+        transition: color 0.2s;
+    }
+
+    /* Icono iluminado cuando el campo tiene el foco */
+    .auth-form .input-group:focus-within .input-group-text {
+        color: var(--bs-primary, #1ab394);
+    }
+
+.auth-eye {
+    cursor: pointer;
+    transition: color 0.2s, background-color 0.2s;
+}
+
+    .auth-eye:hover {
+        color: var(--bs-body-color);
+    }
+
+    .auth-eye:focus-visible {
+        outline: 2px solid var(--bs-primary, #1ab394);
+        outline-offset: -2px;
+    }
+
+/* ============================================================
+   6. Botón: magnético y onda
+   ============================================================ */
+.auth-submit {
+    position: relative;
+    overflow: hidden;
+    height: 48px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    border-radius: 9px;
+    transition: transform 0.15s, translate 0.25s ease-out, box-shadow 0.2s, background-color 0.2s;
+}
+
+    .auth-submit:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 24px -12px rgba(26, 179, 148, 0.6);
+    }
+
+    .auth-submit:active:not(:disabled) {
+        transform: scale(0.985);
+    }
+
+    .auth-submit:focus-visible {
+        outline: 2px solid var(--bs-primary, #1ab394);
+        outline-offset: 3px;
+    }
+
+    .auth-submit:disabled {
+        opacity: 0.75;
+        cursor: progress;
+    }
+
+    .auth-submit .btn-loading {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+.auth-ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.45);
+    transform: translate(-50%, -50%) scale(0);
+    pointer-events: none;
+    animation: auth-ripple 0.6s ease-out forwards;
+}
+
+@keyframes auth-ripple {
+    to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0;
+    }
+}
+
+/* ============================================================
+   7. Alerta de error
+   ============================================================ */
+.auth-form .alert {
+    animation: auth-fade 0.3s ease-out both, auth-shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) 0.15s both;
+}
+
+    .auth-form .alert:focus {
+        outline: 2px solid var(--bs-danger);
+        outline-offset: 2px;
+    }
+
+/* Texto de soporte bajo la tarjeta, sobre fondo oscuro */
+.auth-form > .text-center {
+    color: rgba(226, 232, 240, 0.7);
+}
+
+/* ============================================================
+   8. Keyframes de entrada
+   ============================================================ */
+@keyframes auth-rise {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes auth-fade {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes auth-shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+
+    20% {
+        transform: translateX(-7px);
+    }
+
+    40% {
+        transform: translateX(6px);
+    }
+
+    60% {
+        transform: translateX(-4px);
+    }
+
+    80% {
+        transform: translateX(3px);
+    }
+}
+
+/* ============================================================
+   9. Responsive
+   ============================================================ */
+@media (max-width: 991.98px) {
+    .auth-box > .container-xxl {
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    /* Menos burbujas en pantallas pequeñas para aligerar el render */
+    .circles li:nth-child(n + 6) {
+        display: none;
+    }
+}
+
+/* ============================================================
+   10. Movimiento reducido
+   ============================================================ */
 @media (prefers-reduced-motion: reduce) {
-    .circles li {
+    .circles,
+    .circles li,
+    .auth-brand > *,
+    .auth-form,
+    .auth-form .card,
+    .auth-form .alert,
+    .auth-submit,
+    .logo-wrapper {
         animation: none !important;
+        transition: none !important;
+        transform: none !important;
+        translate: none !important;
     }
+
+        .auth-form .card::before {
+            display: none;
+        }
 }
 
+/* ============================================================
+   11. Alto contraste del sistema
+   ============================================================ */
+@media (forced-colors: active) {
+    .auth-bg,
+    .circles {
+        display: none;
+    }
 
-.swal2-toast {
-    background: rgba(17, 24, 39, 0.95) !important;
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(220, 38, 38, 0.35) !important;
-    border-radius: 12px !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45) !important;
-    color: #f3f4f6 !important;
+    .auth-submit,
+    .auth-form .form-control {
+        border: 1px solid ButtonText;
+    }
 }
-
-    .swal2-toast .swal2-title {
-        color: #f3f4f6 !important;
-        font-size: .9rem !important;
-        font-weight: 600 !important;
-    }
-
-    .swal2-toast .swal2-html-container {
-        color: #cbd5e1 !important;
-        font-size: .85rem !important;
-    }
-
-    .swal2-toast .swal2-icon {
-        border-color: #ef4444 !important;
-        color: #ef4444 !important;
-    }
-
-    .swal2-toast .swal2-timer-progress-bar {
-        background: linear-gradient(90deg, #00bfff, #b400ff) !important;
-    }

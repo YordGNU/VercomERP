@@ -1,10 +1,10 @@
 @model VERCOM.ViewModels.PageHeaderModel
 <div class="page-title-head d-flex align-items-center">
-    <div class="flex-grow-3">
+    <div class="flex-grow-1" style="padding-top: 10px; padding-bottom:10px;">
         <h4 class="page-main-title m-0">@Model.Title</h4>
         @if (!string.IsNullOrWhiteSpace(Model.Subtitle))
         {
-            <p class="text-muted mb-0 mt-1">@Model.Subtitle</p>
+            <p class="text-muted mb-0">@Model.Subtitle</p>
         }
     </div>
     <div class="text-end">
