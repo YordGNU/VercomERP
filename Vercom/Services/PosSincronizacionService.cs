@@ -101,9 +101,42 @@ public sealed class PosSincronizacionService
         if (string.IsNullOrWhiteSpace(serie) || serie.Length > 10)
             return (null, "Serie de facturación inválida.");
 
+        // Si el servidor reservó bloques a este dispositivo para la serie, la numeración tiene que
+        // salir del bloque: es exactamente lo que exige ProcesarCoreAsync al validar la venta. Sin
+        // bloques reservados la asigna el consecutivo de la entidad, igual que el resto del ERP.
+        var rangos = await _db.PosRangoNumeracions.IgnoreQueryFilters().AsNoTracking()
+            .Where(r => r.DispositivoPosId == deviceId && r.Serie == serie && !r.Agotado)
+            .OrderBy(r => r.NumeroDesde)
+            .Select(r => new { r.NumeroDesde, r.NumeroHasta, r.NumeroSiguienteLocal })
+            .ToListAsync(cancellationToken);
+
+        foreach (var rango in rangos)
+        {
+            var ultimo = await UltimoNumeroEnBloqueAsync(device, serie, rango.NumeroDesde, rango.NumeroHasta, cancellationToken);
+            var siguiente = Math.Max(rango.NumeroDesde, Math.Max(ultimo, rango.NumeroSiguienteLocal) + 1);
+            if (siguiente <= rango.NumeroHasta)
+                return (siguiente.ToString().PadLeft(rango.NumeroHasta.ToString().Length, '0'), null);
+        }
+
+        if (rangos.Count > 0)
+            return (null, $"Los bloques de numeración reservados al dispositivo para la serie {serie} están agotados.");
+
         var numero = await _consecutivo.ObtenerSiguienteNumeroAsync(
             device.EntidadId, device.SucursalId, DocumentoTipo.FacturaVenta, serie);
         return (numero, null);
+    }
+
+    // TRY_CAST del lado del servidor: en comercial.factura_venta conviven numeraciones no
+    // numéricas (p. ej. "SMK-9001" de las pruebas por HTTP), que un CAST directo haría estallar.
+    private async Task<long> UltimoNumeroEnBloqueAsync(DispositivoPo device, string serie, long desde, long hasta, CancellationToken cancellationToken)
+    {
+        return await _db.Database.SqlQuery<long>($@"
+            SELECT ISNULL(MAX(TRY_CAST(numero_factura AS bigint)), 0) AS [Value]
+            FROM comercial.factura_venta
+            WHERE entidad_id = {device.EntidadId}
+              AND sucursal_id = {device.SucursalId}
+              AND serie = {serie}
+              AND TRY_CAST(numero_factura AS bigint) BETWEEN {desde} AND {hasta}").FirstAsync(cancellationToken);
     }
 
     public async Task<(VentaPosPendienteDto? Result, string? Error, bool Conflict)> ProcesarAsync(Guid deviceId, string key, CancellationToken cancellationToken)

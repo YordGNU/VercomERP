@@ -2,6 +2,8 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
+using VERCOM.Helpers;
+using VERCOM.Models;
 using VERCOM.Security;
 using VERCOM.Services;
 using Vercom.Tests.Infrastructure;
@@ -120,4 +122,68 @@ public class PosTerminalWebTests
         Assert.Null(result.Numero);
         Assert.NotNull(result.Error);
     }
+
+    [DbFact(RequiereDatosBase = true)]
+    public async Task LaNumeracionSaleDelBloqueReservadoAlDispositivoYNoDelConsecutivo()
+    {
+        await using var db = TestDb.Create();
+        await using var tx = await db.Database.BeginTransactionAsync();
+
+        var sesion = await PosFixture.CrearSesionAsync(db);
+        var device = await db.DispositivoPos.IgnoreQueryFilters().FirstAsync(x => x.Id == sesion.DispositivoPosId);
+        var cliente = await db.Clientes.IgnoreQueryFilters().OrderBy(c => c.Id).FirstAsync();
+
+        db.PosRangoNumeracions.Add(new PosRangoNumeracion
+        {
+            Id = Guid.NewGuid(),
+            DispositivoPosId = sesion.DispositivoPosId,
+            TipoDocumento = DocumentoTipo.FacturaVenta,
+            Serie = "A",
+            NumeroDesde = 1,
+            NumeroHasta = 1000,
+            NumeroSiguienteLocal = 1,
+            AsignadoEn = DateTimeOffset.UtcNow,
+            Agotado = false
+        });
+
+        // "SMK-9001" convive en la tabla real: la numeración no numérica no puede romper la consulta.
+        db.FacturaVenta.AddRange(
+            FacturaDePrueba(sesion, device, cliente, "SMK-9001"),
+            FacturaDePrueba(sesion, device, cliente, "00002"));
+        await db.SaveChangesAsync();
+
+        var sync = CrearSync(db, new TestEntidadProvider(sesion.EntidadId, TestDb.UsuarioIdSeed, isMaster: true));
+
+        var siguiente = await sync.SiguienteNumeroAsync(sesion.DispositivoPosId, "A", CancellationToken.None);
+        Assert.Null(siguiente.Error);
+        Assert.Equal("0003", siguiente.Numero);
+
+        var bloque = await db.PosRangoNumeracions.IgnoreQueryFilters().FirstAsync(r => r.DispositivoPosId == sesion.DispositivoPosId);
+        bloque.NumeroSiguienteLocal = 1000;
+        await db.SaveChangesAsync();
+
+        var agotado = await sync.SiguienteNumeroAsync(sesion.DispositivoPosId, "A", CancellationToken.None);
+        Assert.Null(agotado.Numero);
+        Assert.NotNull(agotado.Error);
+
+        await tx.RollbackAsync();
+    }
+
+    private static FacturaVentum FacturaDePrueba(PosFixture.SesionPos sesion, DispositivoPo device, Cliente cliente, string numero) => new()
+    {
+        Id = Guid.NewGuid(),
+        EntidadId = sesion.EntidadId,
+        SucursalId = device.SucursalId,
+        AlmacenId = device.AlmacenId,
+        ClienteId = cliente.Id,
+        NumeroFactura = numero,
+        Serie = "A",
+        CanalVenta = "POS",
+        TipoVenta = "MINORISTA",
+        Fecha = DateTimeOffset.UtcNow,
+        Moneda = "CUP",
+        Estado = "EMITIDA",
+        CreadoPor = sesion.CajeroId,
+        CreadoEn = DateTimeOffset.UtcNow
+    };
 }
