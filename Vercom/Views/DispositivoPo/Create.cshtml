@@ -18,7 +18,7 @@
                 <div class="card-body p-4">
                     <form asp-action="Create" method="post" class="row g-4">
                         @Html.AntiForgeryToken()
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
+                        <div asp-validation-summary="All" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
 
                         <div class="col-md-3">
                             <label class="form-label fw-bold">Código Interno</label>
@@ -37,12 +37,16 @@
                             <select asp-for="Dispositivo.SucursalId" name="Dispositivo.SucursalId" class="form-control form-select w-100 select2" asp-items="Model.Sucursales" required>
                                 <option value="">-- Seleccione Sucursal --</option>
                             </select>
+                            @if (!string.IsNullOrWhiteSpace(Model.EntidadNombre))
+                            {
+                                <small class="text-muted">Entidad: @Model.EntidadNombre. La caja y el almacén se filtran por la sucursal elegida.</small>
+                            }
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Caja Asociada (Tesorería)</label>
                             <select asp-for="Dispositivo.CajaId" name="Dispositivo.CajaId" class="form-control form-select w-100 select2" asp-items="Model.Cajas" required>
-                                <option value="">-- Seleccione Arca de Fondos --</option>
+                                <option value="">-- Seleccione Caja --</option>
                             </select>
                         </div>
 
@@ -52,6 +56,10 @@
                                 <option value="">-- Seleccione Almacén --</option>
                             </select>
                             <small class="text-muted">El dispositivo descuenta de este almacén el stock de sus ventas.</small>
+                        </div>
+
+                        <div class="col-12 d-none" id="posUbicacionAviso">
+                            <div class="alert alert-warning py-2 small border-0 mb-0"></div>
                         </div>
 
                         <div class="col-md-12">
@@ -92,6 +100,72 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(function () {
+            const url = '@Url.Action("Ubicaciones", "DispositivoPo")';
+            const sucursal = $('#Dispositivo_SucursalId');
+            const almacen = $('#Dispositivo_AlmacenId');
+            const caja = $('#Dispositivo_CajaId');
+
+            function rellenar(select, items, placeholder) {
+                if (select.hasClass('select2-hidden-accessible')) select.select2('destroy');
+                select.empty().append(new Option(placeholder, ''));
+                (items || []).forEach(function (i) { select.append(new Option(i.text, i.value)); });
+                select.prop('disabled', !items || items.length === 0);
+                select.select2({ width: '100%', placeholder: placeholder, allowClear: true });
+            }
+
+            function limpiar() {
+                rellenar(caja, [], '-- Seleccione Caja --');
+                rellenar(almacen, [], '-- Seleccione Almacén --');
+                $('#posUbicacionAviso').addClass('d-none');
+            }
+
+            function avisar(data) {
+                const faltan = [];
+                if (!data.cajas || !data.cajas.length) faltan.push('cajas activas');
+                if (!data.almacenes || !data.almacenes.length) faltan.push('almacenes activos');
+                const aviso = $('#posUbicacionAviso');
+                if (faltan.length) {
+                    aviso.removeClass('d-none').find('.alert').text(
+                        'La sucursal seleccionada no tiene ' + faltan.join(' ni ') +
+                        '. Créelos (Tesorería / Almacenes) antes de registrar el terminal.');
+                } else {
+                    aviso.addClass('d-none');
+                }
+            }
+
+            async function cargar(valores) {
+                const sucursalId = sucursal.val();
+                if (!sucursalId) { limpiar(); return; }
+
+                try {
+                    const res = await fetch(url + '?sucursalId=' + encodeURIComponent(sucursalId), { headers: { Accept: 'application/json' } });
+                    if (!res.ok) throw new Error('No se pudieron cargar las cajas y almacenes.');
+                    const data = await res.json();
+
+                    rellenar(caja, data.cajas, '-- Seleccione Caja --');
+                    rellenar(almacen, data.almacenes, '-- Seleccione Almacén --');
+                    avisar(data);
+
+                    if (valores) {
+                        if (valores.caja) caja.val(valores.caja).trigger('change.select2');
+                        if (valores.almacen) almacen.val(valores.almacen).trigger('change.select2');
+                    }
+                } catch (e) {
+                    Swal.fire({ icon: 'error', title: 'Caja y almacén', text: e.message });
+                }
+            }
+
+            sucursal.on('change', function () { cargar(); });
+
+            if (sucursal.val()) {
+                cargar({ caja: '@Model.Dispositivo.CajaId', almacen: '@Model.Dispositivo.AlmacenId' });
+            } else {
+                limpiar();
+            }
+        });
+    </script>
 }
 
 <style>

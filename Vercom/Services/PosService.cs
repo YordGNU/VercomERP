@@ -13,7 +13,8 @@ public interface IPosService
     Task<IEnumerable<DispositivoPo>> GetDevicesAsync();
     Task<DispositivoPo?> GetDeviceByIdAsync(Guid id);
     Task<DispositivoPosFormViewModel> GetDeviceFormContextAsync(DispositivoPo? existing = null);
-    Task<(bool Succeeded, string Message)> SaveDeviceAsync(DispositivoPo device);
+    Task<(IEnumerable<SelectListItem> Almacenes, IEnumerable<SelectListItem> Cajas)> GetUbicacionesPorSucursalAsync(Guid sucursalId);
+    Task<(bool Succeeded, string Message)> SaveDeviceAsync(DispositivoPo device, Guid? entidadId = null);
     Task<(bool Succeeded, string? Message)> HeartbeatAsync(Guid dispositivoPosId);
 
     // Sesiones
@@ -69,34 +70,84 @@ public class PosService : IPosService
 
     public async Task<DispositivoPosFormViewModel> GetDeviceFormContextAsync(DispositivoPo? existing = null)
     {
-        var entidadId = EntidadId();
-        IQueryable<Sucursal> sucursales = _context.Sucursals.Where(s => s.Activo);
-        IQueryable<Almacen> almacenes = _context.Almacens.Where(a => a.Activo);
-        IQueryable<Caja> cajas = _context.Cajas.Where(c => c.Activa);
-        if (entidadId.HasValue)
-        {
-            sucursales = sucursales.Where(s => s.EntidadId == entidadId.Value);
-            almacenes = almacenes.Where(a => a.EntidadId == entidadId.Value);
-            cajas = cajas.Where(c => c.EntidadId == entidadId.Value);
-        }
+        // La entidad no se elige: sale del usuario (o de la sesión, en MASTER). La cascada es
+        // sucursal -> cajas/almacenes, y para un usuario con sucursal asignada esa es la suya.
+        var entidad = existing is { EntidadId: var e } && e != Guid.Empty ? e : _entidadProvider.CurrentEntidadId;
+        var sucursalUsuario = _entidadProvider.IsMaster ? null : _entidadProvider.CurrentSucursalId;
+        var sucursal = existing is { SucursalId: var s } && s != Guid.Empty ? s : sucursalUsuario;
+
+        var sucursales = await _context.Sucursals
+            .Where(x => x.Activo && x.EntidadId == entidad)
+            .Where(x => sucursalUsuario == null || x.Id == sucursalUsuario || x.Id == sucursal)
+            .OrderBy(x => x.Nombre)
+            .Select(x => new SelectListItem(x.Nombre, x.Id.ToString()))
+            .ToListAsync();
+
+        var ubicaciones = sucursal.HasValue
+            ? await GetUbicacionesPorSucursalAsync(sucursal.Value)
+            : (Almacenes: (IEnumerable<SelectListItem>)new List<SelectListItem>(),
+               Cajas: (IEnumerable<SelectListItem>)new List<SelectListItem>());
 
         return new DispositivoPosFormViewModel
         {
-            Dispositivo = existing ?? new DispositivoPo { Estado = "ACTIVO" },
-            Sucursales = new SelectList(await sucursales.OrderBy(s => s.Nombre).ToListAsync(), "Id", "Nombre"),
-            Almacenes = new SelectList(await almacenes.OrderBy(a => a.Nombre).ToListAsync(), "Id", "Nombre"),
-            Cajas = new SelectList(await cajas.OrderBy(c => c.Nombre).ToListAsync(), "Id", "Nombre")
+            Dispositivo = existing ?? new DispositivoPo
+            {
+                Estado = "ACTIVO",
+                EntidadId = entidad,
+                SucursalId = sucursalUsuario ?? Guid.Empty
+            },
+            EntidadNombre = entidad == Guid.Empty
+                ? null
+                : await _context.Entidads.Where(x => x.Id == entidad)
+                    .Select(x => x.NombreComercial ?? x.RazonSocial).FirstOrDefaultAsync(),
+            Sucursales = sucursales,
+            Almacenes = ubicaciones.Almacenes,
+            Cajas = ubicaciones.Cajas
         };
     }
 
-    public async Task<(bool Succeeded, string Message)> SaveDeviceAsync(DispositivoPo device)
+    // Cajas y almacenes de una sucursal concreta: alimenta la carga dinámica del formulario.
+    public async Task<(IEnumerable<SelectListItem> Almacenes, IEnumerable<SelectListItem> Cajas)> GetUbicacionesPorSucursalAsync(Guid sucursalId)
+    {
+        if (sucursalId == Guid.Empty)
+            return (new List<SelectListItem>(), new List<SelectListItem>());
+
+        var almacenes = await _context.Almacens.Where(a => a.Activo && a.SucursalId == sucursalId)
+            .OrderBy(a => a.Nombre).Select(a => new SelectListItem(a.Nombre, a.Id.ToString())).ToListAsync();
+        var cajas = await _context.Cajas.Where(c => c.Activa && c.SucursalId == sucursalId)
+            .OrderBy(c => c.Nombre).Select(c => new SelectListItem(c.Nombre, c.Id.ToString())).ToListAsync();
+
+        return (almacenes, cajas);
+    }
+
+    public async Task<(bool Succeeded, string Message)> SaveDeviceAsync(DispositivoPo device, Guid? entidadId = null)
     {
         try
         {
+            var entidad = entidadId is { } id && id != Guid.Empty ? id : _entidadProvider.CurrentEntidadId;
+            if (entidad == Guid.Empty)
+                return (false, "El usuario no tiene una entidad asignada; no se puede registrar el terminal.");
+
+            if (device.SucursalId == Guid.Empty || device.AlmacenId == Guid.Empty || device.CajaId == Guid.Empty)
+                return (false, "Seleccione sucursal, almacén y caja del terminal.");
+
+            var sucursal = await _context.Sucursals.FirstOrDefaultAsync(s => s.Id == device.SucursalId && s.EntidadId == entidad);
+            if (sucursal == null)
+                return (false, "La sucursal seleccionada no pertenece a la entidad del usuario.");
+
+            var sucursalUsuario = _entidadProvider.IsMaster ? null : _entidadProvider.CurrentSucursalId;
+            if (sucursalUsuario.HasValue && sucursalUsuario.Value != device.SucursalId)
+                return (false, "Solo puede registrar terminales en su sucursal asignada.");
+
+            if (!await _context.Almacens.AnyAsync(a => a.Id == device.AlmacenId && a.SucursalId == device.SucursalId))
+                return (false, "El almacén seleccionado no pertenece a la sucursal del terminal.");
+            if (!await _context.Cajas.AnyAsync(c => c.Id == device.CajaId && c.SucursalId == device.SucursalId))
+                return (false, "La caja seleccionada no pertenece a la sucursal del terminal.");
+
             if (device.Id == Guid.Empty)
             {
                 device.Id = Guid.NewGuid();
-                device.EntidadId = _entidadProvider.CurrentEntidadId;
+                device.EntidadId = entidad;
                 device.CreadoEn = DateTimeOffset.UtcNow;
                 _context.DispositivoPos.Add(device);
             }
@@ -105,7 +156,7 @@ public class PosService : IPosService
                 var existing = await _context.DispositivoPos.FindAsync(device.Id);
                 if (existing == null) return (false, "No existe.");
                 _context.Entry(existing).CurrentValues.SetValues(device);
-                existing.EntidadId = _entidadProvider.CurrentEntidadId;
+                existing.EntidadId = entidad;
             }
             await _context.SaveChangesAsync();
             return (true, "Dispositivo guardado.");

@@ -22,6 +22,7 @@
                     <form asp-action="Edit" method="post" id="editDeviceForm" class="row g-4">
                         @Html.AntiForgeryToken()
                         <input type="hidden" asp-for="Dispositivo.Id" name="Dispositivo.Id" />
+                        <input type="hidden" asp-for="Dispositivo.EntidadId" />
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small border-0 mb-0 shadow-sm"></div>
 
                         <div class="col-md-3">
@@ -33,6 +34,12 @@
                             <label class="form-label fw-bold">Nombre del Dispositivo</label>
                             <input asp-for="Dispositivo.Nombre" name="Dispositivo.Nombre" class="form-control" placeholder="Ej: Tablet Ventas" required maxlength="100" />
                             <span asp-validation-for="Dispositivo.Nombre" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Entidad</label>
+                            <input type="text" class="form-control bg-light" readonly value="@(Model.EntidadNombre ?? "—")" />
+                            <small class="text-muted">La entidad del terminal no se modifica al editarlo.</small>
                         </div>
 
                         <div class="col-md-6">
@@ -50,10 +57,14 @@
                             <select asp-for="Dispositivo.AlmacenId" name="Dispositivo.AlmacenId" class="form-control form-select select2" asp-items="Model.Almacenes" required></select>
                         </div>
 
-                        <div class="col-md-12">
+                        <div class="col-12">
                             <label class="form-label fw-bold">Identificador de Hardware (MAC/UUID/IMEI)</label>
                             <input asp-for="Dispositivo.IdentificadorHardware" name="Dispositivo.IdentificadorHardware" class="form-control font-monospace" placeholder="ID único del dispositivo físico" maxlength="100" />
                             <small class="text-muted">Debe coincidir con el MAC WiFi que envía la app al auto-configurarse.</small>
+                        </div>
+
+                        <div class="col-12 d-none" id="posUbicacionAviso">
+                            <div class="alert alert-warning py-2 small border-0 mb-0"></div>
                         </div>
 
                         <div class="col-md-6">
@@ -86,8 +97,50 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script>
-        $(document).ready(function() {
+        $(function () {
             window.SubmitAjaxForm('editDeviceForm');
+
+            const url = '@Url.Action("Ubicaciones", "DispositivoPo")';
+            const sucursal = $('#Dispositivo_SucursalId');
+            const almacen = $('#Dispositivo_AlmacenId');
+            const caja = $('#Dispositivo_CajaId');
+
+            if (!sucursal.length) return;
+
+            // Al cambiar la sucursal, solo quedan sus cajas y almacenes.
+            sucursal.on('change', function () {
+                const sucursalId = sucursal.val();
+                if (!sucursalId) return;
+                fetch(url + '?sucursalId=' + encodeURIComponent(sucursalId), { headers: { Accept: 'application/json' } })
+                    .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error('No se pudieron cargar cajas y almacenes.')); })
+                    .then(function (data) {
+                        rellenar(caja, data.cajas, '-- Seleccione Caja --');
+                        rellenar(almacen, data.almacenes, '-- Seleccione Almacén --');
+                        avisar(data);
+                    })
+                    .catch(function (e) { Swal.fire({ icon: 'error', title: 'Caja y almacén', text: e.message }); });
+            });
+
+            function avisar(data) {
+                const faltan = [];
+                if (!data.cajas || !data.cajas.length) faltan.push('cajas activas');
+                if (!data.almacenes || !data.almacenes.length) faltan.push('almacenes activos');
+                const aviso = $('#posUbicacionAviso');
+                if (faltan.length) {
+                    aviso.removeClass('d-none').find('.alert').text(
+                        'La sucursal seleccionada no tiene ' + faltan.join(' ni ') + '.');
+                } else {
+                    aviso.addClass('d-none');
+                }
+            }
+
+            function rellenar(select, items, placeholder) {
+                if (select.hasClass('select2-hidden-accessible')) select.select2('destroy');
+                select.empty().append(new Option(placeholder, ''));
+                (items || []).forEach(function (i) { select.append(new Option(i.text, i.value)); });
+                select.prop('disabled', !items || items.length === 0);
+                select.select2({ width: '100%', placeholder: placeholder, allowClear: true });
+            }
         });
     </script>
 }
