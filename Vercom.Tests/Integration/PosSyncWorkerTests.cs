@@ -33,7 +33,7 @@ public class PosSyncWorkerTests
         var notificaciones = new NotificacionNula();
 
         var sync = new PosSincronizacionService(db, notificaciones, inventario, contabilidad, parametros,
-            NullLogger<PosSincronizacionService>.Instance, provider);
+            NullLogger<PosSincronizacionService>.Instance, provider, new ConsecutivoService(db));
 
         // Dos ventas distintas (claves idempotentes distintas) con la misma serie y número: la
         // primera del lote factura; la segunda choca contra el índice único y queda en ERROR.

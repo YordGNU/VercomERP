@@ -29,7 +29,7 @@ public class PosVentaE2ETests
             : provider;
 
         return new PosSincronizacionService(db, new NotificacionNula(), inventario, contabilidad, parametros,
-            NullLogger<PosSincronizacionService>.Instance, solicitante);
+            NullLogger<PosSincronizacionService>.Instance, solicitante, new ConsecutivoService(db));
     }
 
     [DbFact(RequiereDatosBase = true)]

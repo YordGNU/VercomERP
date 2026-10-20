@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using VERCOM.DTOs;
 using VERCOM.Services;
 
@@ -24,6 +26,26 @@ public sealed class PosConfigController : ControllerBase
         var config = await _service.GetConfiguracionAsync(request.IdentificadorHardware, cancellationToken);
         return config is null
             ? NotFound(new { message = "El dispositivo POS no está registrado en el sistema o se encuentra inactivo." })
+            : Ok(config);
+    }
+
+    /// <summary>
+    /// Configuración para el terminal web del ERP: mismo contenido que la auto-configuración por
+    /// hardware, pero el dispositivo se elige por id (el navegador no tiene MAC registrada).
+    /// </summary>
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [HttpGet("terminal")]
+    public async Task<ActionResult<DispositivoConfigDto>> GetTerminal([FromQuery] Guid dispositivoPosId, CancellationToken cancellationToken = default)
+    {
+        if (dispositivoPosId == Guid.Empty) return BadRequest(new { message = "dispositivoPosId es obligatorio." });
+
+        Guid? entidadId = null;
+        if (!User.IsInRole("MASTER") && Guid.TryParse(User.FindFirstValue("EntidadId"), out var entidad) && entidad != Guid.Empty)
+            entidadId = entidad;
+
+        var config = await _service.GetConfiguracionPorDispositivoAsync(dispositivoPosId, entidadId, cancellationToken);
+        return config is null
+            ? NotFound(new { message = "El dispositivo POS no existe, está inactivo o no pertenece a su entidad." })
             : Ok(config);
     }
 }

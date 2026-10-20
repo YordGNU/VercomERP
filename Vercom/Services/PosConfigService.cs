@@ -27,8 +27,27 @@ public sealed class PosConfigService
                 && x.IdentificadorHardware != null
                 && x.IdentificadorHardware.ToUpper().Replace(":", "").Replace("-", "").Replace(".", "").Replace(" ", "") == mac,
                 cancellationToken);
-        if (device is null) return null;
+        return device is null ? null : await BuildAsync(device, cancellationToken);
+    }
 
+    /// <summary>
+    /// Configuración para el terminal web del ERP: el dispositivo se elige por id y debe
+    /// pertenecer a la entidad del token solicitante.
+    /// </summary>
+    public async Task<DispositivoConfigDto?> GetConfiguracionPorDispositivoAsync(Guid dispositivoPosId, Guid? entidadId, CancellationToken cancellationToken)
+    {
+        if (dispositivoPosId == Guid.Empty) return null;
+
+        var device = await _db.DispositivoPos.IgnoreQueryFilters().AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == dispositivoPosId
+                && (x.Estado == "ACTIVO" || x.Estado == "ONLINE")
+                && (!entidadId.HasValue || x.EntidadId == entidadId.Value),
+                cancellationToken);
+        return device is null ? null : await BuildAsync(device, cancellationToken);
+    }
+
+    private async Task<DispositivoConfigDto?> BuildAsync(DispositivoPo device, CancellationToken cancellationToken)
+    {
         var entidad = await _db.Entidads.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == device.EntidadId && x.Activo, cancellationToken);
         if (entidad is null) return null;

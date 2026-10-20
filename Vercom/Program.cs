@@ -116,6 +116,9 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("pos_gestionar_usuarios", policy => policy.RequireClaim("Permission", "gestionar_usuarios"));
     options.AddPolicy("pos_configuracion", policy => policy.RequireClaim("Permission", "configuracion"));
+    // Permiso real del POS (código en minúsculas, sin puntos): el proveedor dinámico no lo
+    // reconoce como permiso, así que se registra para gatear el terminal de venta.
+    options.AddPolicy("vender", policy => policy.AddRequirements(new PermissionRequirement("vender")));
 });
 
 // Add services to the container.

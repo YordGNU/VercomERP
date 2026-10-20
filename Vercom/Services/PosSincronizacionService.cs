@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using VERCOM.DTOs;
+using VERCOM.Helpers;
 using VERCOM.Models;
 using VERCOM.Security;
 
@@ -17,8 +18,9 @@ public sealed class PosSincronizacionService
     private readonly IParametroSistemaService _parametros;
     private readonly ILogger<PosSincronizacionService> _logger;
     private readonly IEntidadProvider _entidad;
+    private readonly IConsecutivoService _consecutivo;
 
-    public PosSincronizacionService(AppDbContext db, INotificationService notifications, IInventoryService inventory, IAccountingService accounting, IParametroSistemaService parametros, ILogger<PosSincronizacionService> logger, IEntidadProvider entidad)
+    public PosSincronizacionService(AppDbContext db, INotificationService notifications, IInventoryService inventory, IAccountingService accounting, IParametroSistemaService parametros, ILogger<PosSincronizacionService> logger, IEntidadProvider entidad, IConsecutivoService consecutivo)
     {
         _db = db;
         _notifications = notifications;
@@ -27,6 +29,7 @@ public sealed class PosSincronizacionService
         _parametros = parametros;
         _logger = logger;
         _entidad = entidad;
+        _consecutivo = consecutivo;
     }
 
     // Entidad del solicitante autenticado; null cuando no corresponde restringir (rol MASTER o
@@ -87,6 +90,20 @@ public sealed class PosSincronizacionService
         if (EntidadSolicitante() is Guid entidad)
             consulta = consulta.Where(x => x.DispositivoPos.EntidadId == entidad);
         return Map(await consulta.FirstOrDefaultAsync(cancellationToken));
+    }
+
+    public async Task<(string? Numero, string? Error)> SiguienteNumeroAsync(Guid deviceId, string serie, CancellationToken cancellationToken)
+    {
+        var device = await _db.DispositivoPos.IgnoreQueryFilters().AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == deviceId, cancellationToken);
+        if (device is null || (EntidadSolicitante() is Guid entidad && device.EntidadId != entidad))
+            return (null, "Dispositivo POS no encontrado.");
+        if (string.IsNullOrWhiteSpace(serie) || serie.Length > 10)
+            return (null, "Serie de facturación inválida.");
+
+        var numero = await _consecutivo.ObtenerSiguienteNumeroAsync(
+            device.EntidadId, device.SucursalId, DocumentoTipo.FacturaVenta, serie);
+        return (numero, null);
     }
 
     public async Task<(VentaPosPendienteDto? Result, string? Error, bool Conflict)> ProcesarAsync(Guid deviceId, string key, CancellationToken cancellationToken)

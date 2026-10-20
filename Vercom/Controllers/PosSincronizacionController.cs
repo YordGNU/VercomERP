@@ -15,6 +15,14 @@ public sealed class PosSincronizacionController : ControllerBase
 
     public PosSincronizacionController(PosSincronizacionService service) => _service = service;
 
+    [HttpGet("siguiente-numero")]
+    public async Task<ActionResult> SiguienteNumero([FromQuery] Guid dispositivoPosId, [FromQuery] string serie = "A", CancellationToken cancellationToken = default)
+    {
+        var result = await _service.SiguienteNumeroAsync(dispositivoPosId, serie, cancellationToken);
+        if (result.Error is not null) return BadRequest(new { message = result.Error });
+        return Ok(new { numeroFactura = result.Numero, serie });
+    }
+
     [HttpPost("ventas")]
     public async Task<ActionResult<VentaPosPendienteDto>> Recibir([FromBody] RecibirVentaPosRequest request, CancellationToken cancellationToken = default)
     {
