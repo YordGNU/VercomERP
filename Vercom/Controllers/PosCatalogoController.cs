@@ -24,7 +24,9 @@ public sealed class PosCatalogoController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         if (almacenId == Guid.Empty) return BadRequest("almacenId es obligatorio.");
-        return Ok(await _service.GetProductosAsync(almacenId, search, updatedSince, cancellationToken));
+        var entidadIdRaw = User.FindFirstValue("EntidadId");
+        if (!Guid.TryParse(entidadIdRaw, out var entidadId) || entidadId == Guid.Empty) return Unauthorized();
+        return Ok(await _service.GetProductosAsync(almacenId, entidadId, search, updatedSince, cancellationToken));
     }
 
     [HttpGet("precios")]

@@ -31,7 +31,7 @@ public sealed class PosProductoDto
     public string? Descripcion { get; init; }
     public Guid? FamiliaId { get; init; }
     public int UnidadMedidaId { get; init; }
-    public decimal? PrecioVentaActual { get; init; }
+    public decimal? PrecioVentaActual { get; set; }
     public bool AplicaImpuestoVentas { get; init; }
     public decimal Stock { get; init; }
     public decimal StockMinimo { get; init; }

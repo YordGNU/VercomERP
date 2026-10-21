@@ -267,6 +267,10 @@ public sealed class PosSincronizacionService
         var discount = data.Lineas.Sum(x => Math.Round(x.Cantidad * x.PrecioUnitario * x.DescuentoPorcentaje / 100m, 2));
         var tax = data.Lineas.Sum(x => Math.Round((x.Cantidad * x.PrecioUnitario - x.Cantidad * x.PrecioUnitario * x.DescuentoPorcentaje / 100m) * x.ImpuestoPorcentaje / 100m, 2));
         var total = Math.Round(subtotal - discount + tax, 2);
+        // Una venta de importe cero no debe facturarse: el terminal ya lo impide, pero la API es
+        // pública para cualquier cliente POS y dejaría facturas de 0.00 en contabilidad.
+        if (total <= 0)
+            return (null, "El total de la venta debe ser mayor que cero.", false);
         if (Math.Abs(data.Pagos.Sum(x => x.Monto - (x.VueltoEntregado ?? 0m)) - total) > 0.01m)
             return (null, "Los pagos no coinciden con el total de la venta.", false);
 
