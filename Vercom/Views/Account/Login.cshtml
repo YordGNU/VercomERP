@@ -1,149 +1,272 @@
+@inject IConfiguration Configuration
 @{
-    ViewData["Title"] = "Iniciar Sesión";
-    Layout = "_LayoutAuth";
-}
+    Layout = null;
+    ViewData["Title"] = "Iniciar sesión · VERCOM";
 
-<div class="auth-page">
-    <section class="auth-hero" aria-label="Presentación del sistema">
-        <div class="auth-hero-content">
-            <div class="auth-brand">
-                <img src="~/css/images/logo.svg" alt="Logo Vercom" class="auth-logo" />
-                <h1 class="auth-title">Tierra Prometida</h1>
-                <p class="auth-tagline">Gestión empresarial, contable y operativa.</p>
+    var supportEmail = Configuration["Soporte:Email"] ?? "soporte@tierra-prometida.cu";
+    var returnUrl = ViewData["ReturnUrl"] as string ?? string.Empty;
+    var errors = ViewData.ModelState.Values
+        .SelectMany(v => v.Errors)
+        .Select(e => e.ErrorMessage)
+        .Where(m => !string.IsNullOrWhiteSpace(m))
+        .ToList();
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"]</title>
+
+    <script src="~/js/config.js"></script>
+    <link href="~/css/vendors.min.css" rel="stylesheet" />
+    <link id="app-style" href="~/css/app.min.css" rel="stylesheet" />
+    <link href="~/css/logoanimate.css" rel="stylesheet" asp-append-version="true" />
+    <link href="~/css/animate.css" rel="stylesheet" />
+    <link href="~/css/auth-custom.css" rel="stylesheet" asp-append-version="true" />
+</head>
+<body>
+    <div class="auth-bg"></div>
+
+    <div class="auth-box d-flex">
+        <div class="container-xxl">
+            <div class="row justify-content-center position-relative">
+
+                <ul class="circles" aria-hidden="true">
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                </ul>
+
+                <div class="col-xl-7">
+                    <div class="rounded-3">
+                        <div class="row g-0">
+
+                            <!-- Panel de marca: solo desde lg -->
+                            <div class="col-lg-7 d-none d-lg-block align-content-around rounded-3">
+                                <div class="auth-brand text-center mb-4">
+                                    <div class="logo-wrapper">
+                                        <img src="~/css/images/logo.gif" alt="Logotipo de VERCOM" class="logo" decoding="async" />
+                                    </div>
+                                    <h4 class="fw-bold mt-4">Bienvenido a VERCOM</h4>
+                                    <p class="text-muted w-lg-75 mx-auto">"Las personas no compran bienes y servicios. Compran relaciones, historias y magia."</p>
+                                    <p class="text-muted w-lg-75 mx-auto" style="margin-left:10%">Seth Godin</p>
+                                </div>
+                            </div>
+
+                            <!-- Formulario -->
+                            <div class="col-12 col-lg-5">
+
+                                <!-- Logo compacto solo en móvil -->
+                                <div class="d-lg-none text-center mb-3">
+                                    <div class="logo-wrapper">
+                                        <img src="~/css/images/logo.gif" alt="Logotipo de VERCOM" class="logo" decoding="async" />
+                                    </div>
+                                </div>
+
+                                <form asp-action="Login" asp-controller="Account" method="post"
+                                      class="auth-form" id="loginForm" autocomplete="on">
+                                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+                                    <div class="card mb-0">
+                                        <div class="card-header py-2">
+                                            <h5 class="card-title mb-0">Inicia sesión</h5>
+                                        </div>
+
+                                        <div class="card-body p-3">
+
+                                            @if (errors.Count > 0)
+                                            {
+                                                <div class="alert alert-danger py-2 small mb-3" role="alert"
+                                                     tabindex="-1" id="loginAlert">
+                                                    <ul class="list-unstyled mb-0">
+                                                        @foreach (var message in errors)
+                                                        {
+                                                            <li>@message</li>
+                                                        }
+                                                    </ul>
+                                                </div>
+                                            }
+
+                                            <!-- Usuario -->
+                                            <div class="mb-2">
+                                                <label for="username" class="form-label mb-1">Usuario</label>
+                                                <div class="input-group has-validation">
+                                                    <span class="input-group-text bg-light border-end-0">
+                                                        <i class="ti ti-user" aria-hidden="true"></i>
+                                                    </span>
+                                                    <input type="text" id="username" name="username"
+                                                           class="form-control border-start-0 ps-0"
+                                                           placeholder="nombre.usuario"
+                                                           autocomplete="username" autocapitalize="none" spellcheck="false"
+                                                           required autofocus />
+                                                    <div class="invalid-feedback">Ingresa tu usuario.</div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Contraseña -->
+                                            <div class="mb-2">
+                                                <label for="password" class="form-label mb-1">Contraseña</label>
+                                                <div class="input-group has-validation">
+                                                    <span class="input-group-text bg-light border-end-0">
+                                                        <i class="ti ti-lock" aria-hidden="true"></i>
+                                                    </span>
+                                                    <input type="password" id="password" name="password"
+                                                           class="form-control border-start-0 border-end-0 ps-0 auth-password-input"
+                                                           placeholder="••••••••"
+                                                           autocomplete="current-password" required />
+                                                    <button type="button" id="togglePassword"
+                                                            class="input-group-text bg-light border-start-0 auth-eye"
+                                                            aria-label="Mostrar contraseña" aria-pressed="false"
+                                                            aria-controls="password">
+                                                        <i class="ti ti-eye icon-eye" aria-hidden="true"></i>
+                                                        <i class="ti ti-eye-off icon-eye-off" aria-hidden="true" hidden></i>
+                                                    </button>
+                                                    <div class="invalid-feedback">Ingresa tu contraseña.</div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Recordarme -->
+                                            <div class="form-check mb-2">
+                                                <input type="checkbox" class="form-check-input" id="rememberMe"
+                                                       name="rememberMe" value="true" />
+                                                <label class="form-check-label" for="rememberMe">Recordarme</label>
+                                            </div>
+
+                                            <!-- Botón -->
+                                            <div class="d-grid">
+                                                <button type="submit" class="btn btn-primary auth-submit" id="submitBtn">
+                                                    <span class="btn-text">
+                                                        <i class="ti ti-login me-1" aria-hidden="true"></i> Entrar
+                                                    </span>
+                                                    <span class="btn-loading" role="status" aria-live="polite" hidden>
+                                                        <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                                                        Autenticando…
+                                                    </span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="text-center mt-2">
+                                        <small>
+                                            ¿Problemas para entrar?
+                                            <a href="mailto:@supportEmail" class="text-primary fw-semibold">Soporte</a>
+                                            &nbsp;·&nbsp; &copy; @DateTime.Now.Year VERCOM
+                                        </small>
+                                    </div>
+                                </form>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
+    </div>
 
-        <div class="auth-hero-footer">
-            <p>Acceso exclusivo para personal autorizado</p>
-        </div>
-    </section>
-
-    <section class="auth-panel" aria-label="Formulario de acceso">
-        <div class="auth-form-wrap">
-            <form asp-action="Login" method="post" class="auth-form">
-                <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
-
-                <div class="auth-form-header">
-                    <h2>Inicia sesión</h2>
-                    <p>Accede a tu espacio de trabajo.</p>
-                </div>
-
-                @if (!ViewData.ModelState.IsValid)
-                {
-                    <div asp-validation-summary="ModelOnly" class="auth-alert" role="alert" aria-live="assertive" tabindex="-1"></div>
-                }
-
-                <div class="auth-field">
-                    <label for="username" class="auth-label">Usuario</label>
-                    <div class="auth-input">
-                        <i class="ti ti-user auth-input-icon" aria-hidden="true"></i>
-                        <input 
-                            type="text" 
-                            id="username" 
-                            name="username" 
-                            placeholder="nombre.usuario"
-                            autocomplete="username"
-                            required 
-                            autofocus
-                            aria-describedby="username-hint" />
-                    </div>
-                            <small id="username-hint" class="auth-hint">Usa el nombre de usuario asignado a tu cuenta.</small>
-                </div>
-
-                <div class="auth-field">
-                    <div class="auth-label-row">
-                        <label for="password" class="auth-label">Contraseña</label>
-                    </div>
-                    <div class="auth-input">
-                        <i class="ti ti-lock auth-input-icon" aria-hidden="true"></i>
-                        <input 
-                            type="password" 
-                            id="password" 
-                            name="password" 
-                            class="auth-password-input"
-                            placeholder="••••••••"
-                            autocomplete="current-password"
-                            required
-                            aria-describedby="password-hint" />
-                        <button 
-                            class="auth-eye" 
-                            type="button" 
-                            id="togglePassword"
-                            aria-label="Mostrar contraseña"
-                            aria-pressed="false">
-                            <i class="ti ti-eye icon-eye" aria-hidden="true"></i>
-                            <i class="ti ti-eye-off icon-eye-off" aria-hidden="true" style="display: none;"></i>
-                        </button>
-                    </div>
-                    <small id="password-hint" class="auth-hint">La contraseña distingue mayúsculas y minúsculas.</small>
-                </div>
-
-                <label class="auth-remember">
-                    <input 
-                        type="checkbox" 
-                        id="rememberMe" 
-                        name="rememberMe" 
-                        value="true" />
-                    Recordarme en este equipo
-                </label>
-
-                <button type="submit" class="auth-submit">
-                    <span class="btn-text">Entrar</span>
-                    <span class="btn-loading" style="display: none;">
-                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        Autenticando...
-                    </span>
-                </button>
-
-                <div class="auth-foot">
-                    <p>¿Problemas para entrar? <a href="mailto:yordanisvc@gmail.com">Contacta con soporte</a></p>
-                    <small>&copy; 2026 Tierra Prometida</small>
-                </div>
-            </form>
-        </div>
-    </section>
-</div>
-
-@section Styles {
-    <link href="~/css/login.style.css" rel="stylesheet" type="text/css">
-}
-
-@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script>
-        const authAlert = document.querySelector('.auth-alert');
-        if (authAlert) authAlert.focus();
+            (function () {
+                'use strict';
 
-        const togglePasswordBtn = document.getElementById('togglePassword');
-        const passwordInput = document.getElementById('password');
+                // Respeto a movimiento reducido: sin efectos
+                if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-        if (togglePasswordBtn && passwordInput) {
-            const eyeIcon = togglePasswordBtn.querySelector('.icon-eye');
-            const eyeOffIcon = togglePasswordBtn.querySelector('.icon-eye-off');
+                // Onda al hacer clic en el botón (también en táctil)
+                var submit = document.getElementById('submitBtn');
 
-            togglePasswordBtn.addEventListener('click', function (e) {
-                e.preventDefault();
-                const isPassword = passwordInput.type === 'password';
-                passwordInput.type = isPassword ? 'text' : 'password';
-                eyeIcon.style.display = isPassword ? 'none' : 'block';
-                eyeOffIcon.style.display = isPassword ? 'block' : 'none';
-                this.setAttribute('aria-label', isPassword ? 'Ocultar contraseña' : 'Mostrar contraseña');
-                this.setAttribute('aria-pressed', isPassword ? 'true' : 'false');
-            });
-        }
-
-        const loginForm = document.querySelector('.auth-form');
-        if (loginForm) {
-            loginForm.addEventListener('submit', function (e) {
-                const submitBtn = loginForm.querySelector('button[type="submit"]');
-                const btnText = submitBtn.querySelector('.btn-text');
-                const btnLoading = submitBtn.querySelector('.btn-loading');
-
-                if (btnText && btnLoading) {
-                    submitBtn.disabled = true;
-                    btnText.style.display = 'none';
-                    btnLoading.style.display = 'block';
+                function ripple(el, e) {
+                    var r = el.getBoundingClientRect();
+                    var span = document.createElement('span');
+                    var size = Math.max(r.width, r.height) * 2;
+                    span.className = 'auth-ripple';
+                    span.style.width = size + 'px';
+                    span.style.height = size + 'px';
+                    span.style.left = (e.clientX - r.left) + 'px';
+                    span.style.top = (e.clientY - r.top) + 'px';
+                    el.appendChild(span);
+                    span.addEventListener('animationend', function () { span.remove(); });
                 }
-            });
-        }
+
+                if (submit) {
+                    submit.addEventListener('click', function (e) { ripple(submit, e); });
+                }
+
+                // Efectos de puntero: solo con ratón o lápiz con precisión
+                if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+
+                var root = document.querySelector('.auth-box');
+                var card = document.querySelector('.auth-form .card');
+                var logo = document.querySelector('.logo-wrapper');
+                var bubbles = document.querySelector('.circles');
+                if (!root) return;
+
+                var pos = { x: 0.5, y: 0.5, raf: 0 };
+
+                function frame() {
+                    pos.raf = 0;
+                    var dx = pos.x - 0.5;   // -0.5 … 0.5
+                    var dy = pos.y - 0.5;
+
+                    if (card) {
+                        card.style.setProperty('--rx', (-dy * 6).toFixed(2) + 'deg');
+                        card.style.setProperty('--ry', (dx * 8).toFixed(2) + 'deg');
+                        card.style.setProperty('--mx', (pos.x * 100).toFixed(1) + '%');
+                        card.style.setProperty('--my', (pos.y * 100).toFixed(1) + '%');
+                    }
+                    if (logo) {
+                        logo.style.setProperty('--lx', (dx * 16).toFixed(1) + 'px');
+                        logo.style.setProperty('--ly', (dy * 16).toFixed(1) + 'px');
+                    }
+                    if (bubbles) {
+                        bubbles.style.setProperty('--bx', (dx * -28).toFixed(1) + 'px');
+                        bubbles.style.setProperty('--by', (dy * -28).toFixed(1) + 'px');
+                    }
+                }
+
+                function schedule() {
+                    if (!pos.raf) pos.raf = requestAnimationFrame(frame);
+                }
+
+                root.addEventListener('pointermove', function (e) {
+                    var r = root.getBoundingClientRect();
+                    pos.x = (e.clientX - r.left) / r.width;
+                    pos.y = (e.clientY - r.top) / r.height;
+                    schedule();
+                });
+
+                root.addEventListener('pointerleave', function () {
+                    pos.x = 0.5;
+                    pos.y = 0.5;
+                    schedule();
+                });
+
+                // Botón magnético
+                if (submit) {
+                    var MAX = 8; // px máximos de desplazamiento
+
+                    submit.addEventListener('pointermove', function (e) {
+                        if (submit.disabled) return;
+                        var r = submit.getBoundingClientRect();
+                        var mx = (e.clientX - (r.left + r.width / 2)) / r.width;
+                        var my = (e.clientY - (r.top + r.height / 2)) / r.height;
+                        submit.style.translate = (mx * MAX * 2).toFixed(1) + 'px ' + (my * MAX * 2).toFixed(1) + 'px';
+                    });
+
+                    submit.addEventListener('pointerleave', function () {
+                        submit.style.translate = '';
+                    });
+                }
+            })();
     </script>
-}
+</body>
+</html>

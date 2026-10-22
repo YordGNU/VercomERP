@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using Vercom.Hubs;
-using Vercom.Models;
+using VERCOM.Hubs;
+using VERCOM.Models;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public interface INotificationService
 {
@@ -134,7 +134,7 @@ public class NotificationService : INotificationService
             var sub = delivery.Suscripcion;
 
             // 1. Calcular Firma HMAC-SHA256
-            var secret = sub.SecretoFirmaHash ?? "VercomDefaultSecret";
+            var secret = sub.SecretoFirmaHash ?? "VERCOMDefaultSecret";
             var signature = "";
             using (var hmac = new System.Security.Cryptography.HMACSHA256(System.Text.Encoding.UTF8.GetBytes(secret)))
             {

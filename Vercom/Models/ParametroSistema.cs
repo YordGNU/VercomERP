@@ -1,4 +1,4 @@
-﻿namespace Vercom.Models;
+﻿namespace VERCOM.Models;
 
 /// <summary>
 /// Tasas fiscales, escalas salariales, % vacaciones, etc. Versionado por vigencia para resistir cambios normativos frecuentes del MFP/ONAT.

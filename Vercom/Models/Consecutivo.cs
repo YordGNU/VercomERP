@@ -1,4 +1,4 @@
-﻿namespace Vercom.Models;
+﻿namespace VERCOM.Models;
 
 /// <summary>
 /// Actualizar con SELECT ... FOR UPDATE dentro de la transacción para evitar saltos/duplicados concurrentes (POS + ERP simultáneo).

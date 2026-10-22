@@ -1,0 +1,127 @@
+@{
+    ViewBag.Title = "Terminal POS";
+}
+
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Punto de venta", Title = "Terminal de Venta", Subtitle = "Cobre en efectivo o por transferencia y emita el ticket sin salir del ERP.", Icon = "ti-device-desktop" }; }
+<partial name="_PageHeader" model="pageHeader" />
+
+<div id="posTerminal"
+     data-token-url="@Url.Action("Token", "Pos")"
+     data-api-base="/api/pos">
+
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body py-2 d-flex flex-wrap align-items-center gap-3">
+            <div class="d-flex align-items-center gap-2">
+                <label for="posDevice" class="text-muted small text-uppercase fw-bold mb-0">Terminal</label>
+                <select id="posDevice" class="form-select form-select-sm" style="min-width: 260px;" disabled>
+                    <option value="">Cargando terminales…</option>
+                </select>
+            </div>
+            <div id="posShiftState" class="d-flex align-items-center gap-2"></div>
+            <div class="ms-auto d-flex gap-2">
+                <button id="posOpenShift" type="button" class="btn btn-sm btn-success d-none">
+                    <i class="ti ti-lock-open me-1"></i>Abrir caja
+                </button>
+                <button id="posCloseShift" type="button" class="btn btn-sm btn-outline-danger d-none">
+                    <i class="ti ti-lock me-1"></i>Cerrar caja
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-xl-7">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-light-subtle">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-search me-2 text-primary"></i>Buscar producto</h5>
+                </div>
+                <div class="card-body">
+                    <div class="input-group input-group-lg mb-3">
+                        <span class="input-group-text"><i class="ti ti-barcode"></i></span>
+                        <input id="posSearch" type="text" class="form-control" autocomplete="off" autofocus
+                               placeholder="Escanee el código de barras o escriba código / nombre (F2)" />
+                        <button id="posClearSearch" type="button" class="btn btn-outline-secondary" title="Limpiar">
+                            <i class="ti ti-x"></i>
+                        </button>
+                    </div>
+                    <div id="posResults" class="list-group list-group-flush pos-results"></div>
+                    <div id="posSearchHint" class="text-muted small mt-2">Escriba al menos 2 caracteres para buscar.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-5">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-light-subtle d-flex justify-content-between align-items-center">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-shopping-cart me-2 text-primary"></i>Venta actual</h5>
+                    <button id="posEmptyCart" type="button" class="btn btn-sm btn-outline-secondary" title="Vaciar">
+                        <i class="ti ti-trash"></i>
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive pos-cart-wrap">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="thead-sm text-uppercase fs-xxs">
+                                <tr>
+                                    <th class="ps-3">Producto</th>
+                                    <th class="text-center" style="width: 120px;">Cant.</th>
+                                    <th class="text-end">Importe</th>
+                                    <th style="width: 40px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="posCartBody">
+                                <tr id="posCartEmpty">
+                                    <td colspan="4" class="text-center text-muted py-4">Sin artículos</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-top-0">
+                    <div class="d-flex justify-content-between fs-5 fw-bold">
+                        <span>TOTAL</span>
+                        <span id="posTotal">0.00</span>
+                    </div>
+                    <label class="text-muted small text-uppercase fw-bold mb-1 mt-2 d-block">Forma de pago</label>
+                    <div id="posPayments" class="d-flex flex-wrap gap-2" role="group" aria-label="Forma de pago">
+                        <input type="radio" class="btn-check" name="posPayment" id="posPayEfectivo" value="EFECTIVO" checked />
+                        <label class="btn btn-outline-success btn-sm flex-fill" for="posPayEfectivo"><i class="ti ti-cash-banknote me-1"></i>Efectivo</label>
+                        <input type="radio" class="btn-check" name="posPayment" id="posPayTransfermovil" value="TRANSFERMOVIL" />
+                        <label class="btn btn-outline-success btn-sm flex-fill" for="posPayTransfermovil"><i class="ti ti-device-mobile me-1"></i>Transfermóvil</label>
+                        <input type="radio" class="btn-check" name="posPayment" id="posPayEnzona" value="ENZONA" />
+                        <label class="btn btn-outline-success btn-sm flex-fill" for="posPayEnzona"><i class="ti ti-qrcode me-1"></i>Enzona</label>
+                        <input type="radio" class="btn-check" name="posPayment" id="posPayTransferencia" value="TRANSFERENCIA_BANCARIA" />
+                        <label class="btn btn-outline-success btn-sm flex-fill" for="posPayTransferencia"><i class="ti ti-building-bank me-1"></i>Transferencia</label>
+                    </div>
+                    <div id="posCashFields" class="row g-2 mt-2 align-items-end">
+                        <div class="col-6">
+                            <label for="posCash" class="text-muted small text-uppercase fw-bold mb-1">Efectivo recibido</label>
+                            <input id="posCash" type="number" min="0" step="0.01" class="form-control form-control-lg text-end" placeholder="0.00" />
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small text-uppercase fw-bold mb-1">Cambio</label>
+                            <div id="posChange" class="form-control form-control-lg text-end bg-light fw-bold">0.00</div>
+                        </div>
+                    </div>
+                    <div id="posTransferFields" class="mt-2 d-none">
+                        <label for="posReference" class="text-muted small text-uppercase fw-bold mb-1">Referencia / No. de operación</label>
+                        <input id="posReference" type="text" maxlength="100" class="form-control" autocomplete="off" placeholder="Opcional" />
+                        <div class="text-muted tiny mt-1">Se cobra el total exacto; no aplica cambio.</div>
+                    </div>
+                    <button id="posCheckout" type="button" class="btn btn-success btn-lg w-100 mt-3" disabled>
+                        <i class="ti ti-cash-banknote me-1"></i>COBRAR
+                    </button>
+                    <div class="text-muted tiny text-center mt-2">Efectivo, Transfermóvil, Enzona o transferencia bancaria. La venta se contabiliza al emitirse.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pos-terminal.css" />
+}
+
+@section Scripts {
+    <script src="~/js/pages/pos-terminal.js"></script>
+}

@@ -1,0 +1,35 @@
+.pos-results {
+    max-height: 52vh;
+    overflow-y: auto;
+}
+
+.pos-result-item {
+    cursor: pointer;
+}
+
+.pos-result-item:hover,
+.pos-result-item:focus {
+    background: rgba(var(--bs-primary-rgb), .06);
+}
+
+.pos-result-item.sin-stock {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.pos-cart-wrap {
+    max-height: 42vh;
+    overflow-y: auto;
+}
+
+.pos-qty {
+    width: 52px;
+    text-align: center;
+}
+
+.pos-cart-wrap .btn-icon-sm {
+    --bs-btn-padding-y: .1rem;
+    --bs-btn-padding-x: .35rem;
+    --bs-btn-font-size: .75rem;
+    line-height: 1;
+}

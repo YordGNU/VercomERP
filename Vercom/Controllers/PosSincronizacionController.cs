@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Vercom.DTOs;
-using Vercom.Services;
+using VERCOM.DTOs;
+using VERCOM.Services;
 
-namespace Vercom.Controllers;
+namespace VERCOM.Controllers;
 
 [ApiController]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -14,6 +14,14 @@ public sealed class PosSincronizacionController : ControllerBase
     private readonly PosSincronizacionService _service;
 
     public PosSincronizacionController(PosSincronizacionService service) => _service = service;
+
+    [HttpGet("siguiente-numero")]
+    public async Task<ActionResult> SiguienteNumero([FromQuery] Guid dispositivoPosId, [FromQuery] string serie = "A", CancellationToken cancellationToken = default)
+    {
+        var result = await _service.SiguienteNumeroAsync(dispositivoPosId, serie, cancellationToken);
+        if (result.Error is not null) return BadRequest(new { message = result.Error });
+        return Ok(new { numeroFactura = result.Numero, serie });
+    }
 
     [HttpPost("ventas")]
     public async Task<ActionResult<VentaPosPendienteDto>> Recibir([FromBody] RecibirVentaPosRequest request, CancellationToken cancellationToken = default)

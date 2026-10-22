@@ -1,11 +1,11 @@
-@model Vercom.Models.SesionCajaPo
+@model VERCOM.Models.SesionCajaPo
 @{
     ViewBag.Title = "Detalle de Sesión POS";
     var isClosed = Model.Estado == "CERRADA";
     var diffClass = Model.DiferenciaArqueo < 0 ? "text-danger" : "text-success";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> VOLVER</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Turno de Venta: " + Model.DispositivoPos.Nombre, Subtitle = "Auditoría de arqueo y conciliación de valores en terminal.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> VOLVER</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Turno de Venta: " + Model.DispositivoPos.Nombre, Subtitle = "Auditoría de arqueo y conciliación de valores en terminal.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

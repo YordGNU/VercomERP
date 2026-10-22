@@ -1,9 +1,9 @@
-@model Vercom.ViewModels.ProductionOrderViewModel
+@model VERCOM.ViewModels.ProductionOrderViewModel
 @{
     ViewBag.Title = Model.Title;
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Monitor</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = Model.Title, Subtitle = "Planificación técnica de lotes industriales basados en estructuras BOM vigentes.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Monitor</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = Model.Title, Subtitle = "Planificación técnica de lotes industriales basados en estructuras BOM vigentes.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

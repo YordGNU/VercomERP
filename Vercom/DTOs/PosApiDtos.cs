@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Vercom.DTOs;
+namespace VERCOM.DTOs;
 
 public sealed class PosLoginRequest
 {
@@ -31,7 +31,7 @@ public sealed class PosProductoDto
     public string? Descripcion { get; init; }
     public Guid? FamiliaId { get; init; }
     public int UnidadMedidaId { get; init; }
-    public decimal? PrecioVentaActual { get; init; }
+    public decimal? PrecioVentaActual { get; set; }
     public bool AplicaImpuestoVentas { get; init; }
     public decimal Stock { get; init; }
     public decimal StockMinimo { get; init; }
@@ -73,6 +73,9 @@ public sealed class SesionCajaPosDto
     public decimal? MontoCierreSistema { get; init; }
     public decimal TotalVentas { get; init; }
     public decimal TotalEfectivo { get; init; }
+    public decimal TotalTransfermovil { get; init; }
+    public decimal TotalEnzona { get; init; }
+    public decimal TotalOtrosMedios { get; init; }
     public int CantidadFacturas { get; init; }
     public string Estado { get; init; } = string.Empty;
 }

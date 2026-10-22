@@ -1,10 +1,10 @@
 @using Microsoft.AspNetCore.Authorization
-@model IEnumerable<Vercom.Models.CuentaContable>
+@model IEnumerable<VERCOM.Models.CuentaContable>
 @inject IAuthorizationService AuthorizationService
-@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
+@inject VERCOM.Services.IEntidadDisplayService EntidadDisplay
 @{ ViewBag.Title = "Plan de Cuentas"; var canCreate = (await AuthorizationService.AuthorizeAsync(User, "CONTABILIDAD.CUENTA.CREAR")).Succeeded; }
 
-@{ var headerActions = canCreate ? "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVA CUENTA</a>" : null; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Plan de Cuentas Institucional", Subtitle = "Gestión del nomenclador oficial según normativas del MFP.", Icon = "ti-list-tree", Tone = "primary", ActionsHtml = headerActions != null ? new Microsoft.AspNetCore.Html.HtmlString(headerActions) : null }; }
+@{ var headerActions = canCreate ? "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVA CUENTA</a>" : null; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Plan de Cuentas Institucional", Subtitle = "Gestión del nomenclador oficial según normativas del MFP.", Icon = "ti-list-tree", ActionsHtml = headerActions != null ? new Microsoft.AspNetCore.Html.HtmlString(headerActions) : null }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

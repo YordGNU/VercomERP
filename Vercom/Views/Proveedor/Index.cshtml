@@ -1,10 +1,10 @@
-@model Vercom.ViewModels.ProviderListViewModel
+@model VERCOM.ViewModels.ProviderListViewModel
 @{ ViewData["Title"] = "Registro de Proveedores"; var estado = Model.Activo switch { true => "activa", false => "inactiva", _ => "" }; }
 
-@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-truck-delivery me-1'></i> NUEVO PROVEEDOR</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Gestión de Abastecimiento", Title = "Proveedores", Subtitle = "Directorio de suministradores de bienes y servicios para la S.U.R.L.", Icon = "ti-building-factory", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-truck-delivery me-1'></i> NUEVO PROVEEDOR</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Gestión de Abastecimiento", Title = "Proveedores", Subtitle = "Directorio de suministradores de bienes y servicios para la S.U.R.L.", Icon = "ti-building-factory", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
-@{ var kpiTotal = new Vercom.ViewModels.KpiCardModel { Label = "Proveedores", Value = Model.Total.ToString(), Icon = "ti-building-factory", Tone = "primary" }; var kpiActivos = new Vercom.ViewModels.KpiCardModel { Label = "Proveedores activos", Value = Model.Activos.ToString(), Icon = "ti-circle-check", Tone = "success" }; var kpiInactivos = new Vercom.ViewModels.KpiCardModel { Label = "Proveedores inactivos", Value = Model.Inactivos.ToString(), Icon = "ti-circle-x", Tone = "danger" }; }
+@{ var kpiTotal = new VERCOM.ViewModels.KpiCardModel { Label = "Proveedores", Value = Model.Total.ToString(), Icon = "ti-building-factory"}; var kpiActivos = new VERCOM.ViewModels.KpiCardModel { Label = "Proveedores activos", Value = Model.Activos.ToString(), Icon = "ti-circle-check", Tone = "success" }; var kpiInactivos = new VERCOM.ViewModels.KpiCardModel { Label = "Proveedores inactivos", Value = Model.Inactivos.ToString(), Icon = "ti-circle-x", Tone = "danger" }; }
 <div class='row g-2 mb-3'>
     <div class='col-md-4 col-6'>
         <partial name='_KpiCard' model='kpiTotal' />

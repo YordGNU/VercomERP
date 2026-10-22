@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Vercom.Services;
-using Vercom.ViewModels;
+using VERCOM.Services;
+using VERCOM.ViewModels;
 
-namespace Vercom.Controllers;
+namespace VERCOM.Controllers;
 
 [Authorize]
 public class DispositivoPoController : Controller
@@ -52,18 +52,30 @@ public class DispositivoPoController : Controller
     public async Task<IActionResult> Create(DispositivoPosFormViewModel vm)
     {
         var device = vm.Dispositivo;
-        ModelState.Remove("Dispositivo.Entidad");
-        ModelState.Remove("Dispositivo.Sucursal");
+        LimpiarNavegacion();
 
         if (ModelState.IsValid)
         {
-            var result = await _posService.SaveDeviceAsync(device);
+            var result = await _posService.SaveDeviceAsync(device, device.EntidadId);
             if (result.Succeeded) return RedirectToAction(nameof(Index));
             ModelState.AddModelError("", result.Message);
         }
 
         var contextVm = await _posService.GetDeviceFormContextAsync(device);
         return View(contextVm);
+    }
+
+    // Los combos de caja/almacén dependen de la sucursal elegida: se recargan por AJAX.
+    [HttpGet]
+    [Authorize(Policy = "POS.CONFIGURACION.VER")]
+    public async Task<IActionResult> Ubicaciones(Guid sucursalId)
+    {
+        var ubicaciones = await _posService.GetUbicacionesPorSucursalAsync(sucursalId);
+        return Json(new
+        {
+            almacenes = ubicaciones.Almacenes.Select(x => new { value = x.Value, text = x.Text }),
+            cajas = ubicaciones.Cajas.Select(x => new { value = x.Value, text = x.Text })
+        });
     }
 
     [Authorize(Policy = "POS.CONFIGURACION.EDITAR")]
@@ -83,12 +95,11 @@ public class DispositivoPoController : Controller
         var device = vm.Dispositivo;
         if (id != device.Id) return NotFound();
 
-        ModelState.Remove("Dispositivo.Entidad");
-        ModelState.Remove("Dispositivo.Sucursal");
+        LimpiarNavegacion();
 
         if (ModelState.IsValid)
         {
-            var result = await _posService.SaveDeviceAsync(device);
+            var result = await _posService.SaveDeviceAsync(device, device.EntidadId);
             if (result.Succeeded)
             {
                 return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
@@ -96,6 +107,29 @@ public class DispositivoPoController : Controller
             return Json(new { success = false, message = result.Message });
         }
 
-        return Json(new { success = false, message = "Errores de validación." });
+        var errores = string.Join(" ", ModelState.Values
+            .SelectMany(v => v.Errors)
+            .Select(e => e.ErrorMessage)
+            .Where(m => !string.IsNullOrWhiteSpace(m)));
+        return Json(new { success = false, message = errores.Length > 0 ? errores : "Errores de validación." });
+    }
+
+    // Las propiedades de navegación (Entidad, Sucursal, Almacén, Caja...) son no anulables y el
+    // binder las marca como requeridas aunque el formulario solo envíe los Id: eso dejaba
+    // ModelState inválido y el alta no guardaba nada (ni mostraba el motivo).
+    private void LimpiarNavegacion()
+    {
+        const string raiz = "Dispositivo.";
+        var navegaciones = new[]
+        {
+            "Entidad", "Sucursal", "Almacen", "Caja", "ApiCliente", "Auditoria", "FacturaVenta",
+            "MovimientoInventarios", "PosRangoNumeracions", "PosSyncLogs", "PosVentaPendientes", "SesionCajaPo"
+        };
+
+        foreach (var clave in ModelState.Keys.Where(k => k.StartsWith(raiz, StringComparison.Ordinal)).ToList())
+        {
+            var propiedad = clave[raiz.Length..];
+            if (navegaciones.Contains(propiedad, StringComparer.Ordinal)) ModelState.Remove(clave);
+        }
     }
 }

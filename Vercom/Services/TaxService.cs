@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using Vercom.Models;
+using VERCOM.Models;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public interface ITaxService
 {

@@ -382,17 +382,24 @@ El APK se generará en `app/build/outputs/apk/debug/`.
 
 El proyecto usa:
 
-- **xUnit** para tests unitarios
-- **Moq** para mocking
-- **FluentAssertions** para aserciones legibles
+- **xUnit** con `Assert` nativo (sin Moq ni FluentAssertions)
+- Tests de **integración contra SQL Server** para invariantes de datos y reglas de negocio
 
 Ejecutar tests:
 
 ```bash
-dotnet test
+dotnet test Vercom.slnx
 ```
 
-Cobertura en lógica crítica: **>85%** (contabilidad, nómina, seguridad).
+Los tests de integración se conectan a la BD de desarrollo tomando la cadena de
+`appsettings.json`, o la variable de entorno `VERCOM_TEST_CONNECTION` si está
+definida. Se ejecutan dentro de una transacción que siempre se revierte, y si no
+hay motor accesible se marcan como **omitidos** en lugar de fallar.
+
+Cobertura: medida automatizada **sin configurar** todavía. La suite (35 tests)
+cubre seguridad de permisos, sincronización modelo EF ↔ esquema real, integridad
+contable, estados de cartera, impuestos parametrizados, arqueo/cierre de caja del
+POS y el tope máximo de precio del MFP.
 
 ---
 

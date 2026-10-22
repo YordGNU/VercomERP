@@ -2,10 +2,12 @@ using System.Data;
 using System.Text.Json;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Vercom.DTOs;
-using Vercom.Models;
+using VERCOM.DTOs;
+using VERCOM.Helpers;
+using VERCOM.Models;
+using VERCOM.Security;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public sealed class PosSincronizacionService
 {
@@ -14,14 +16,29 @@ public sealed class PosSincronizacionService
     private readonly IInventoryService _inventory;
     private readonly IAccountingService _accounting;
     private readonly IParametroSistemaService _parametros;
+    private readonly ILogger<PosSincronizacionService> _logger;
+    private readonly IEntidadProvider _entidad;
+    private readonly IConsecutivoService _consecutivo;
 
-    public PosSincronizacionService(AppDbContext db, INotificationService notifications, IInventoryService inventory, IAccountingService accounting, IParametroSistemaService parametros)
+    public PosSincronizacionService(AppDbContext db, INotificationService notifications, IInventoryService inventory, IAccountingService accounting, IParametroSistemaService parametros, ILogger<PosSincronizacionService> logger, IEntidadProvider entidad, IConsecutivoService consecutivo)
     {
         _db = db;
         _notifications = notifications;
         _inventory = inventory;
         _accounting = accounting;
         _parametros = parametros;
+        _logger = logger;
+        _entidad = entidad;
+        _consecutivo = consecutivo;
+    }
+
+    // Entidad del solicitante autenticado; null cuando no corresponde restringir (rol MASTER o
+    // scope sin HttpContext, como el background worker), mismo criterio que PosService.
+    private Guid? EntidadSolicitante()
+    {
+        if (_entidad.IsMaster) return null;
+        var id = _entidad.CurrentEntidadId;
+        return id == Guid.Empty ? null : id;
     }
 
     public async Task<(VentaPosPendienteDto? Result, string? Error, bool Conflict, bool Accepted)> RecibirAsync(RecibirVentaPosRequest request, CancellationToken cancellationToken)
@@ -33,6 +50,7 @@ public sealed class PosSincronizacionService
         var device = await _db.DispositivoPos.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == request.DispositivoPosId, cancellationToken);
         if (device is null) return (null, "Dispositivo POS no encontrado.", true, false);
+        if (EntidadSolicitante() is Guid entidad && device.EntidadId != entidad) return (null, "Dispositivo POS no encontrado.", true, false);
 
         // Sesión compartida: cualquier dispositivo de la misma caja puede registrar ventas
         // contra la sesión ABIERTA de esa caja, aunque la haya abierto otro dispositivo.
@@ -65,8 +83,61 @@ public sealed class PosSincronizacionService
         return (Map(pending), null, false, true);
     }
 
-    public async Task<VentaPosPendienteDto?> EstadoAsync(Guid deviceId, string key, CancellationToken cancellationToken) =>
-        Map(await FindAsync(deviceId, key, cancellationToken));
+    public async Task<VentaPosPendienteDto?> EstadoAsync(Guid deviceId, string key, CancellationToken cancellationToken)
+    {
+        var consulta = _db.PosVentaPendientes.AsNoTracking()
+            .Where(x => x.DispositivoPosId == deviceId && x.IdempotencyKey == key);
+        if (EntidadSolicitante() is Guid entidad)
+            consulta = consulta.Where(x => x.DispositivoPos.EntidadId == entidad);
+        return Map(await consulta.FirstOrDefaultAsync(cancellationToken));
+    }
+
+    public async Task<(string? Numero, string? Error)> SiguienteNumeroAsync(Guid deviceId, string serie, CancellationToken cancellationToken)
+    {
+        var device = await _db.DispositivoPos.IgnoreQueryFilters().AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == deviceId, cancellationToken);
+        if (device is null || (EntidadSolicitante() is Guid entidad && device.EntidadId != entidad))
+            return (null, "Dispositivo POS no encontrado.");
+        if (string.IsNullOrWhiteSpace(serie) || serie.Length > 10)
+            return (null, "Serie de facturación inválida.");
+
+        // Si el servidor reservó bloques a este dispositivo para la serie, la numeración tiene que
+        // salir del bloque: es exactamente lo que exige ProcesarCoreAsync al validar la venta. Sin
+        // bloques reservados la asigna el consecutivo de la entidad, igual que el resto del ERP.
+        var rangos = await _db.PosRangoNumeracions.IgnoreQueryFilters().AsNoTracking()
+            .Where(r => r.DispositivoPosId == deviceId && r.Serie == serie && !r.Agotado)
+            .OrderBy(r => r.NumeroDesde)
+            .Select(r => new { r.NumeroDesde, r.NumeroHasta, r.NumeroSiguienteLocal })
+            .ToListAsync(cancellationToken);
+
+        foreach (var rango in rangos)
+        {
+            var ultimo = await UltimoNumeroEnBloqueAsync(device, serie, rango.NumeroDesde, rango.NumeroHasta, cancellationToken);
+            var siguiente = Math.Max(rango.NumeroDesde, Math.Max(ultimo, rango.NumeroSiguienteLocal) + 1);
+            if (siguiente <= rango.NumeroHasta)
+                return (siguiente.ToString().PadLeft(rango.NumeroHasta.ToString().Length, '0'), null);
+        }
+
+        if (rangos.Count > 0)
+            return (null, $"Los bloques de numeración reservados al dispositivo para la serie {serie} están agotados.");
+
+        var numero = await _consecutivo.ObtenerSiguienteNumeroAsync(
+            device.EntidadId, device.SucursalId, DocumentoTipo.FacturaVenta, serie);
+        return (numero, null);
+    }
+
+    // TRY_CAST del lado del servidor: en comercial.factura_venta conviven numeraciones no
+    // numéricas (p. ej. "SMK-9001" de las pruebas por HTTP), que un CAST directo haría estallar.
+    private async Task<long> UltimoNumeroEnBloqueAsync(DispositivoPo device, string serie, long desde, long hasta, CancellationToken cancellationToken)
+    {
+        return await _db.Database.SqlQuery<long>($@"
+            SELECT ISNULL(MAX(TRY_CAST(numero_factura AS bigint)), 0) AS [Value]
+            FROM comercial.factura_venta
+            WHERE entidad_id = {device.EntidadId}
+              AND sucursal_id = {device.SucursalId}
+              AND serie = {serie}
+              AND TRY_CAST(numero_factura AS bigint) BETWEEN {desde} AND {hasta}").FirstAsync(cancellationToken);
+    }
 
     public async Task<(VentaPosPendienteDto? Result, string? Error, bool Conflict)> ProcesarAsync(Guid deviceId, string key, CancellationToken cancellationToken)
     {
@@ -78,6 +149,20 @@ public sealed class PosSincronizacionService
             {
                 return await ProcesarCoreAsync(deviceId, key, cancellationToken);
             }
+            catch (DbUpdateException ex) when (EsNumeracionDuplicada(ex))
+            {
+                await RevertirCambiosFallidosAsync(cancellationToken);
+                // Carrera entre el worker y la API: si esta misma venta ya quedó procesada
+                // (otra transacción insertó la factura), el duplicado no es un error de datos
+                // sino que ya está hecha; se devuelve la factura existente para no marcarla
+                // ERROR ni provocar un reintento/venta duplicada en el terminal.
+                var yaProcesada = await _db.PosVentaPendientes.AsNoTracking()
+                    .FirstOrDefaultAsync(p => p.DispositivoPosId == deviceId && p.IdempotencyKey == key, cancellationToken);
+                if (yaProcesada is { Estado: "PROCESADO", FacturaId: not null })
+                    return (Map(yaProcesada), null, false);
+
+                return (null, "Ya existe una factura con esa numeración (serie y número) en la entidad y sucursal de la venta.", false);
+            }
             catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 1205 })
             {
                 await Task.Delay(100 * attempt, cancellationToken);
@@ -86,13 +171,40 @@ public sealed class PosSincronizacionService
             {
                 await Task.Delay(100 * attempt, cancellationToken);
             }
+            catch (DbUpdateException)
+            {
+                await RevertirCambiosFallidosAsync(cancellationToken);
+                throw;
+            }
         }
         return (null, "Ocurrió un conflicto de concurrencia al procesar la venta; reintente.", true);
     }
 
+    private static bool EsNumeracionDuplicada(DbUpdateException ex) =>
+        ex.InnerException is SqlException { Number: 2601 or 2627 } ||
+        ex.InnerException?.InnerException is SqlException { Number: 2601 or 2627 };
+
+    // Tras un SaveChanges fallido el contexto queda sucio: ProcesarCoreAsync ya marcó el
+    // pendiente PROCESADO (y sumó los totales de la sesión) en memoria antes de guardar, así
+    // que un SaveChanges posterior —el de MarcarErroresAsync del worker, por ejemplo— persistiría
+    // un PROCESADO con un FacturaId inexistente. Se descartan los Added y se recarga lo modificado.
+    private async Task RevertirCambiosFallidosAsync(CancellationToken cancellationToken)
+    {
+        foreach (var entrada in _db.ChangeTracker.Entries().Where(e => e.State == EntityState.Added).ToList())
+            entrada.State = EntityState.Detached;
+
+        foreach (var entrada in _db.ChangeTracker.Entries().Where(e => e.State == EntityState.Modified).ToList())
+            await entrada.ReloadAsync(cancellationToken);
+    }
+
     private async Task<(VentaPosPendienteDto? Result, string? Error, bool Conflict)> ProcesarCoreAsync(Guid deviceId, string key, CancellationToken cancellationToken)
     {
-        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+        // Unirse a la transacción ambiente si el llamador ya abrió una (mismo patrón que
+        // InventoryService y CreateEntryAsync): sin ella se abre una SERIALIZABLE propia.
+        var ownsTransaction = _db.Database.CurrentTransaction == null;
+        await using var transaction = ownsTransaction
+            ? await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken)
+            : null;
         // IgnoreQueryFilters: el query filter global (entidad) depende del HttpContext,
         // que no existe en el scope del background worker => excluiría TODAS las filas.
         var pending = await _db.PosVentaPendientes.IgnoreQueryFilters()
@@ -110,7 +222,25 @@ public sealed class PosSincronizacionService
         var data = sale!;
 
         var device = await _db.DispositivoPos.AsNoTracking().IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == deviceId, cancellationToken);
-        if (device is null || device.EntidadId != data.EntidadId || device.AlmacenId != data.AlmacenId) return (null, "La venta no corresponde al dispositivo POS.", false);
+        var entidadSolicitante = EntidadSolicitante();
+        if (device is null || device.EntidadId != data.EntidadId || device.AlmacenId != data.AlmacenId ||
+            (entidadSolicitante is Guid ent && device.EntidadId != ent))
+            return (null, "La venta no corresponde al dispositivo POS.", false);
+
+        // Numeración: si el servidor reservó rangos a este dispositivo para la serie, el número
+        // debe caer dentro de uno de ellos. Sin rango reservado se conserva el comportamiento
+        // previo (el terminal asigna la numeración y el único freno es el índice único).
+        var rangos = await _db.PosRangoNumeracions.IgnoreQueryFilters()
+            .Where(r => r.DispositivoPosId == deviceId && r.Serie == data.Serie)
+            .Select(r => new { r.NumeroDesde, r.NumeroHasta })
+            .ToListAsync(cancellationToken);
+        if (rangos.Count > 0)
+        {
+            if (!long.TryParse(data.NumeroFactura, out var numero))
+                return (null, $"La numeración '{data.NumeroFactura}' no es válida para la serie {data.Serie}.", false);
+            if (!rangos.Any(r => numero >= r.NumeroDesde && numero <= r.NumeroHasta))
+                return (null, $"La numeración {data.Serie}-{data.NumeroFactura} está fuera del rango reservado al dispositivo.", true);
+        }
 
         var entidadValida = await _db.Entidads.IgnoreQueryFilters().AnyAsync(x => x.Id == data.EntidadId && x.Activo, cancellationToken);
         var sucursalValida = await _db.Sucursals.IgnoreQueryFilters().AnyAsync(x => x.Id == data.SucursalId && x.EntidadId == data.EntidadId && x.Activo, cancellationToken);
@@ -137,6 +267,10 @@ public sealed class PosSincronizacionService
         var discount = data.Lineas.Sum(x => Math.Round(x.Cantidad * x.PrecioUnitario * x.DescuentoPorcentaje / 100m, 2));
         var tax = data.Lineas.Sum(x => Math.Round((x.Cantidad * x.PrecioUnitario - x.Cantidad * x.PrecioUnitario * x.DescuentoPorcentaje / 100m) * x.ImpuestoPorcentaje / 100m, 2));
         var total = Math.Round(subtotal - discount + tax, 2);
+        // Una venta de importe cero no debe facturarse: el terminal ya lo impide, pero la API es
+        // pública para cualquier cliente POS y dejaría facturas de 0.00 en contabilidad.
+        if (total <= 0)
+            return (null, "El total de la venta debe ser mayor que cero.", false);
         if (Math.Abs(data.Pagos.Sum(x => x.Monto - (x.VueltoEntregado ?? 0m)) - total) > 0.01m)
             return (null, "Los pagos no coinciden con el total de la venta.", false);
 
@@ -264,7 +398,7 @@ public sealed class PosSincronizacionService
         pending.IntentosProcesamiento++;
 
         await _db.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+        if (ownsTransaction) await transaction!.CommitAsync(cancellationToken);
 
         await _notifications.NotifyEntityAsync(data.EntidadId, "Venta POS procesada",
             $"{device.Nombre}: venta {data.Serie}{data.NumeroFactura} por {total:N2} {data.Moneda}.", "success");
@@ -300,7 +434,7 @@ public sealed class PosSincronizacionService
                 };
 
                 var ctaCaja = (await _parametros.ObtenerValorVigenteAsync(data.EntidadId, "CTA_CAJA_MN")) ?? "101";
-                var ctaVentas = (await _parametros.ObtenerValorVigenteAsync(data.EntidadId, "CTA_VENTAS_GENERAL")) ?? "900";
+                var ctaVentas = (await _parametros.ObtenerValorVigenteAsync(data.EntidadId, "CTA_VENTAS_GENERAL")) ?? "900.0000";
                 var ctaImp = (await _parametros.ObtenerValorVigenteAsync(data.EntidadId, "CTA_IMP_VENTAS")) ?? "440.0001";
 
                 var totalPagado = data.Pagos.Sum(x => x.Monto - (x.VueltoEntregado ?? 0m));
@@ -329,16 +463,44 @@ public sealed class PosSincronizacionService
                 {
                     var res = await _accounting.CreateEntryAsync(entry);
                     if (res.Succeeded) invoice.AsientoId = entry.Id;
+                    else _logger.LogWarning("POS: la venta {Serie}-{Numero} no se pudo contabilizar: {Motivo}",
+                        data.Serie, data.NumeroFactura, res.Message);
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "POS: asiento de venta descuadrado {Serie}-{Numero} (debe {Debe}, haber {Haber}); " +
+                        "revisar parámetros CTA_CAJA_MN/CTA_VENTAS_GENERAL/CTA_IMP_VENTAS/CTA_CXC_CLIENTES.",
+                        data.Serie, data.NumeroFactura,
+                        entry.AsientoDetalles.Sum(d => d.Debe), entry.AsientoDetalles.Sum(d => d.Haber));
                 }
             }
             else if (period == null)
             {
                 // Sin periodo contable abierto no hay asiento de venta (misma salvaguarda que SalesService).
+                _logger.LogWarning("POS: no existe periodo contable abierto para {Fecha}; la venta {Serie}-{Numero} queda sin asiento de venta.",
+                    facturaFecha, data.Serie, data.NumeroFactura);
             }
         }
 
         // Asiento de COSTO (inventario ↔ costo): reutiliza la lógica canónica de InventoryService.
-        await _inventory.GenerateAccountingEntryForExistingMovementAsync(movement, ct);
+        // Un fallo de datos (producto sin cuentas y sin cuenta genérica válida) avisa pero no
+        // tumba la venta: el movimiento queda pendiente de contabilizar (AsientoId NULL).
+        try
+        {
+            await _inventory.GenerateAccountingEntryForExistingMovementAsync(movement, ct);
+        }
+        catch (InvalidOperationException ex)
+        {
+            foreach (var huerfano in _db.ChangeTracker.Entries<AsientoContable>()
+                .Where(e => e.State == EntityState.Added && e.Entity.DocumentoOrigenId == movement.Id).ToList())
+                huerfano.State = EntityState.Detached;
+
+            movement.AsientoId = null;
+            _logger.LogWarning(ex,
+                "POS: no se pudo contabilizar el costo del movimiento {Movimiento} de la venta {Serie}-{Numero}; queda pendiente de contabilizar.",
+                movement.Id, data.Serie, data.NumeroFactura);
+        }
     }
 
     private async Task<PosVentaPendiente?> FindAsync(Guid deviceId, string key, CancellationToken token) =>
@@ -362,7 +524,12 @@ public sealed class PosSincronizacionService
             string.IsNullOrWhiteSpace(sale.Serie) || sale.Serie.Length > 10 ||
             sale.Moneda.Length != 3 || sale.Lineas.Count == 0 || sale.Pagos.Count == 0)
             return "La venta debe incluir numeración, moneda, líneas y pagos.";
-        var paymentTypes = new[] { "EFECTIVO", "TRANSFERMOVIL", "ENZONA", "TRANSFERENCIA_BANCARIA", "CHEQUE", "CREDITO" };
+        // El POS solo cobra el total: no hay crédito con CuentaPorCobrar ni verificación de
+        // límite de crédito (a diferencia de SalesService), así que una venta a crédito
+        // dejaría la deuda invisible en cartera. Se rechaza hasta que exista ese flujo.
+        if (sale.Pagos.Any(x => x.FormaPago == "CREDITO"))
+            return "El POS no admite ventas a crédito; cobre el total de la venta.";
+        var paymentTypes = new[] { "EFECTIVO", "TRANSFERMOVIL", "ENZONA", "TRANSFERENCIA_BANCARIA", "CHEQUE" };
         if (sale.Lineas.Any(x => x.ProductoId == Guid.Empty || x.Cantidad <= 0 || x.PrecioUnitario < 0 ||
             x.DescuentoPorcentaje is < 0 or > 100 || x.ImpuestoPorcentaje is < 0 or > 100))
             return "La venta contiene líneas inválidas.";

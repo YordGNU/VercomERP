@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
-namespace Vercom.Models;
+namespace VERCOM.Models;
 
 [ModelMetadataType(typeof(FacturaVentumMetadata))]
 public partial class FacturaVentum

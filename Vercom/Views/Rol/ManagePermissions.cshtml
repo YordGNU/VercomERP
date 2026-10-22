@@ -1,9 +1,9 @@
-@model Vercom.ViewModels.RolPermissionsViewModel
+@model VERCOM.ViewModels.RolPermissionsViewModel
 @{
     ViewBag.Title = "Permisos del Rol";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Roles</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Matriz de Acceso", Subtitle = "@Model.Rol.Nombre · @Model.Rol.Codigo", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Roles</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Matriz de Acceso", Subtitle = "@Model.Rol.Nombre · @Model.Rol.Codigo", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

@@ -1,8 +1,8 @@
-@model IEnumerable<Vercom.Models.BackupLog>
+@model IEnumerable<VERCOM.Models.BackupLog>
 @using System.IO
 @{ ViewBag.Title = "Seguridad de Datos"; }
 
-@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Copias de Seguridad (Backups)", Subtitle = "Gestión y restauración de respaldos de base de datos.", Icon = "ti-database", Tone = "primary" }; }
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Copias de Seguridad (Backups)", Subtitle = "Gestión y restauración de respaldos de base de datos.", Icon = "ti-database"}; }
 <partial name='_PageHeader' model='pageHeader' />
 <div class="row mt-4">
     <div class="col-12 mb-4">
