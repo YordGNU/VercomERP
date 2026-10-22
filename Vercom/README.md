@@ -35,10 +35,11 @@
 
 **VERCOM ERP** es un sistema de planificación de recursos empresariales diseñado para una S.U.R.L. cubana con múltiples sucursales y centros de costo. Cubre el ciclo completo de operación: contabilidad, inventario, producción, recursos humanos, compras, ventas y gestión fiscal.
 
-El sistema está compuesto por dos aplicaciones:
+El sistema está compuesto por tres clientes:
 
 1. **Backend + Web (ASP.NET Core MVC)**: Interfaz administrativa completa.
-2. **App POS Android (Kotlin + Jetpack Compose)**: Terminal de punto de venta con soporte **offline-first**.
+2. **Terminal POS Web (dentro del ERP, `/POS`)**: Punto de venta en el navegador sobre la misma API POS, con cobro en efectivo, transferencias y **mixto**, descuentos por línea, devoluciones y arqueo/cierre de turno.
+3. **App POS Android (Kotlin + Jetpack Compose)**: Terminal de punto de venta con soporte **offline-first**.
 
 ### Objetivos principales
 
@@ -56,6 +57,7 @@ El sistema está compuesto por dos aplicaciones:
 | **Núcleo y Seguridad** | ✅ Producción | Usuarios, roles, permisos granulares, auditoría inmutable |
 | **Inventario** | ✅ Producción | Productos, familias, almacenes, movimientos, conteo físico |
 | **Comercial (POS + Ventas)** | ✅ Producción | Facturación, clientes, proveedores, órdenes de compra |
+| **Terminal POS Web** | ✅ Producción | Cobro efectivo/transferencias/mixto, descuentos, devoluciones y arqueo |
 | **Punto de Venta Android** | ✅ Producción | App nativa offline-first con sincronización |
 | **Contabilidad** | 🔄 En desarrollo | Plan de cuentas MFP, asientos, estados financieros NCC |
 | **RR.HH. y Nómina** | 🔄 En desarrollo | Expedientes, contratos, nómina, vacaciones, SC-4-08 |
@@ -276,9 +278,10 @@ VERCOM-ERP/
 │ ├── Models/ # Entidades EF Core + AppDbContext
 │ ├── DTOs/ # Data Transfer Objects
 │ ├── Security/ # IEntidadProvider, policies
-│ ├── wwwroot/ # Archivos estáticos
-│ ├── Program.cs
-│ └── appsettings.json
+│   ├── wwwroot/ # Archivos estáticos
+│   ├── Program.cs
+│   └── appsettings.json
+├── Vercom.Tests/ # Tests xUnit (integración contra SQL Server)
 ├── database/ # Scripts SQL
 │ ├── scripts/
 │ │ ├── 01-schema.sql # Esquema completo

@@ -32,10 +32,11 @@
 
 **Vercom ERP** es un sistema de planificación de recursos empresariales diseñado para una S.U.R.L. cubana con múltiples sucursales y centros de costo. Cubre el ciclo completo de operación: contabilidad, inventario, producción, recursos humanos, compras, ventas y gestión fiscal.
 
-El sistema está compuesto por dos aplicaciones:
+El sistema está compuesto por tres clientes:
 
 1. **Backend + Web (ASP.NET Core MVC)**: Interfaz administrativa completa.
-2. **App POS Android (Kotlin + Jetpack Compose)**: Terminal de punto de venta con soporte **offline-first**.
+2. **Terminal POS Web (dentro del ERP, `/POS`)**: Punto de venta en el navegador sobre la misma API POS, con cobro en efectivo, transferencias y **mixto**, descuentos por línea, devoluciones y arqueo/cierre de turno.
+3. **App POS Android (Kotlin + Jetpack Compose)**: Terminal de punto de venta con soporte **offline-first**.
 
 ### Objetivos principales
 
@@ -53,6 +54,7 @@ El sistema está compuesto por dos aplicaciones:
 | **Núcleo y Seguridad** | ✅ Producción | Usuarios, roles, permisos granulares, auditoría inmutable |
 | **Inventario** | ✅ Producción | Productos, familias, almacenes, movimientos, conteo físico |
 | **Comercial (POS + Ventas)** | ✅ Producción | Facturación, clientes, proveedores, órdenes de compra |
+| **Terminal POS Web** | ✅ Producción | Cobro efectivo/transferencias/mixto, descuentos, devoluciones y arqueo |
 | **Punto de Venta Android** | ✅ Producción | App nativa offline-first con sincronización |
 | **Contabilidad** | 🔄 En desarrollo | Plan de cuentas MFP, asientos, estados financieros NCC |
 | **RR.HH. y Nómina** | 🔄 En desarrollo | Expedientes, contratos, nómina, vacaciones, SC-4-08 |
@@ -266,23 +268,16 @@ El plan de cuentas sigue la **Resolución 494/2016 del MFP**, con soporte para:
 
 ```
 Vercom-ERP/
-├── src/
-│   ├── Vercom.Web/              # ASP.NET Core MVC
-│   │   ├── Controllers/
-│   │   ├── Views/
-│   │   ├── wwwroot/
-│   │   └── Program.cs
-│   ├── Vercom.Services/         # Lógica de negocio
-│   ├── Vercom.Data/             # EF Core DbContext + Entidades
-│   └── Vercom.Shared/           # DTOs, ViewModels, Utilidades
-├── android/
-│   └── VercomPos/               # App POS Android (Kotlin)
-├── database/
-│   ├── scripts/                 # Scripts SQL
-│   └── seed/                    # Datos iniciales
-├── docs/
-│   ├── architecture.md
-│   └── screenshots/
+├── Vercom/                      # ASP.NET Core MVC (.NET 10)
+│   ├── Controllers/             # Controladores delgados
+│   ├── Views/                   # Vistas Razor (incluye POS/)
+│   ├── Services/                # Lógica de negocio
+│   ├── Models/                  # Entidades EF Core + AppDbContext
+│   ├── DTOs/                    # Contratos de la API POS y del ERP
+│   ├── Database/                # scripts/ (esquema) y seed/
+│   └── wwwroot/                 # Estáticos (js/pages/pos-terminal.js, css)
+├── Vercom.Tests/                # xUnit: integración contra SQL Server
+├── publicacion/                 # Salida publicada (no editar a mano)
 └── README.md
 ```
 
@@ -396,10 +391,11 @@ Los tests de integración se conectan a la BD de desarrollo tomando la cadena de
 definida. Se ejecutan dentro de una transacción que siempre se revierte, y si no
 hay motor accesible se marcan como **omitidos** en lugar de fallar.
 
-Cobertura: medida automatizada **sin configurar** todavía. La suite (35 tests)
+Cobertura: medida automatizada **sin configurar** todavía. La suite (60 tests)
 cubre seguridad de permisos, sincronización modelo EF ↔ esquema real, integridad
 contable, estados de cartera, impuestos parametrizados, arqueo/cierre de caja del
-POS y el tope máximo de precio del MFP.
+POS, terminal POS web (serie configurable, cobro mixto, descuentos y devoluciones)
+y el tope máximo de precio del MFP.
 
 ---
 

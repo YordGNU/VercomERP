@@ -371,3 +371,11 @@ secrets/
 nginx/certs/
 *.crt
 *.key
+
+# Artefactos de pruebas HTTP manuales (curl/Invoke-WebRequest)
+cookies.txt
+headers.txt
+headers_after_login.txt
+after_login.html
+post.html
+login-test-*.html

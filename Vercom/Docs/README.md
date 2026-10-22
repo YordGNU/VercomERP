@@ -7,15 +7,14 @@ Stack: **ASP.NET Core 10 + SQL Server 2022 + Docker + Nginx**
 
 | Documento | Contenido |
 |---|---|
-| [01 - Arquitectura](01-ARQUITECTURA.md) | Diseño del sistema, componentes, redes |
-| [02 - Instalación](02-INSTALACION.md) | Setup desde cero en un servidor nuevo |
-| [03 - Deploy](03-DEPLOY.md) | Procedimiento de despliegue automatizado |
-| [04 - Operaciones](04-OPERACIONES.md) | Tareas del día a día |
-| [05 - Backup y Restore](05-BACKUP-RESTORE.md) | Respaldos y recuperación |
-| [06 - Troubleshooting](06-TROUBLESHOOTING.md) | Problemas comunes y soluciones |
-| [07 - Mantenimiento](07-MANTENIMIENTO.md) | Tareas periódicas (semanal/mensual) |
-| [08 - Seguridad](08-SEGURIDAD.md) | Hardening y buenas prácticas |
-| [09 - Comandos](09-COMANDOS.md) | Chuleta de comandos rápidos |
+| [Levantar el stack en local](DIPLOY-LOCAL.md) | Stack completo en Windows con Docker Desktop |
+| [Despliegue en VM](DIPLOY-VM.md) | Publicación en servidor Debian + Nginx |
+| [README del proyecto](../../README.md) | Módulos, arquitectura, terminal POS web y pruebas |
+| [Memoria de trabajo](../../AGENTS.md) | Decisiones, hallazgos y estado por módulo |
+
+> Los documentos numerados `01-ARQUITECTURA` … `09-COMANDOS` que figuraban aquí
+> nunca llegaron al repositorio; su contenido vive hoy en el README del proyecto,
+> en `AGENTS.md` y en los dos procedimientos de despliegue de esta carpeta.
 
 ## 🚀 Inicio rápido
 
