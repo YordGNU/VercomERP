@@ -19,6 +19,9 @@
             </div>
             <div id="posShiftState" class="d-flex align-items-center gap-2"></div>
             <div class="ms-auto d-flex gap-2">
+                <button id="posReturn" type="button" class="btn btn-sm btn-outline-primary" disabled>
+                    <i class="ti ti-arrow-back-up me-1"></i>Devolución
+                </button>
                 <button id="posOpenShift" type="button" class="btn btn-sm btn-success d-none">
                     <i class="ti ti-lock-open me-1"></i>Abrir caja
                 </button>
@@ -64,14 +67,15 @@
                             <thead class="thead-sm text-uppercase fs-xxs">
                                 <tr>
                                     <th class="ps-3">Producto</th>
-                                    <th class="text-center" style="width: 120px;">Cant.</th>
+                                    <th class="text-center" style="width: 110px;">Cant.</th>
+                                    <th class="text-center" style="width: 80px;">Desc. %</th>
                                     <th class="text-end">Importe</th>
                                     <th style="width: 40px;"></th>
                                 </tr>
                             </thead>
                             <tbody id="posCartBody">
                                 <tr id="posCartEmpty">
-                                    <td colspan="4" class="text-center text-muted py-4">Sin artículos</td>
+                                    <td colspan="5" class="text-center text-muted py-4">Sin artículos</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -92,6 +96,8 @@
                         <label class="btn btn-outline-success btn-sm flex-fill" for="posPayEnzona"><i class="ti ti-qrcode me-1"></i>Enzona</label>
                         <input type="radio" class="btn-check" name="posPayment" id="posPayTransferencia" value="TRANSFERENCIA_BANCARIA" />
                         <label class="btn btn-outline-success btn-sm flex-fill" for="posPayTransferencia"><i class="ti ti-building-bank me-1"></i>Transferencia</label>
+                        <input type="radio" class="btn-check" name="posPayment" id="posPayMixto" value="MIXTO" />
+                        <label class="btn btn-outline-success btn-sm flex-fill" for="posPayMixto"><i class="ti ti-arrows-split me-1"></i>Mixto</label>
                     </div>
                     <div id="posCashFields" class="row g-2 mt-2 align-items-end">
                         <div class="col-6">
@@ -104,6 +110,15 @@
                         </div>
                     </div>
                     <div id="posTransferFields" class="mt-2 d-none">
+                        <div id="posMixedMethodWrap" class="d-none mb-2">
+                            <label for="posMixedMethod" class="text-muted small text-uppercase fw-bold mb-1">Resto por</label>
+                            <select id="posMixedMethod" class="form-select">
+                                <option value="TRANSFERMOVIL">Transfermóvil</option>
+                                <option value="ENZONA">Enzona</option>
+                                <option value="TRANSFERENCIA_BANCARIA">Transferencia bancaria</option>
+                            </select>
+                            <div class="text-muted tiny mt-1">Se cobrará <b id="posMixedAmount">0.00</b> por este medio.</div>
+                        </div>
                         <label for="posReference" class="text-muted small text-uppercase fw-bold mb-1">Referencia / No. de operación</label>
                         <input id="posReference" type="text" maxlength="100" class="form-control" autocomplete="off" placeholder="Opcional" />
                         <div class="text-muted tiny mt-1">Se cobra el total exacto; no aplica cambio.</div>
@@ -112,6 +127,63 @@
                         <i class="ti ti-cash-banknote me-1"></i>COBRAR
                     </button>
                     <div class="text-muted tiny text-center mt-2">Efectivo, Transfermóvil, Enzona o transferencia bancaria. La venta se contabiliza al emitirse.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="posReturnModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="ti ti-arrow-back-up me-2"></i>Devolución de venta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2 align-items-end mb-3">
+                        <div class="col-8">
+                            <label for="posReturnNumber" class="text-muted small text-uppercase fw-bold mb-1">Número de factura</label>
+                            <input id="posReturnNumber" type="text" class="form-control" autocomplete="off" placeholder="Ej. 00000012" />
+                        </div>
+                        <div class="col-4">
+                            <button id="posReturnLoad" type="button" class="btn btn-outline-primary w-100">Cargar factura</button>
+                        </div>
+                    </div>
+                    <div id="posReturnHint" class="text-muted small mb-2">Cargue la factura para ver sus artículos y cantidades devueltas.</div>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="thead-sm text-uppercase fs-xxs">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-end">Vendido</th>
+                                    <th class="text-end">Devuelto</th>
+                                    <th class="text-end">Precio</th>
+                                    <th class="text-center" style="width: 110px;">Devolver</th>
+                                </tr>
+                            </thead>
+                            <tbody id="posReturnLines"></tbody>
+                        </table>
+                    </div>
+                    <div class="row g-2 mt-2">
+                        <div class="col-md-6">
+                            <label for="posReturnReason" class="text-muted small text-uppercase fw-bold mb-1">Motivo</label>
+                            <input id="posReturnReason" type="text" maxlength="200" class="form-control" autocomplete="off" placeholder="Motivo de la devolución" />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="posReturnMethod" class="text-muted small text-uppercase fw-bold mb-1">Forma de reembolso</label>
+                            <select id="posReturnMethod" class="form-select">
+                                <option value="EFECTIVO">Efectivo</option>
+                                <option value="TRANSFERMOVIL">Transfermóvil</option>
+                                <option value="ENZONA">Enzona</option>
+                                <option value="TRANSFERENCIA_BANCARIA">Transferencia bancaria</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <span class="me-auto text-muted small">Total a devolver: <b id="posReturnTotal">0.00</b></span>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button id="posReturnSubmit" type="button" class="btn btn-danger" disabled>Registrar devolución</button>
                 </div>
             </div>
         </div>

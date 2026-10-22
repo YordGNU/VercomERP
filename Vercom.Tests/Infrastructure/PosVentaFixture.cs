@@ -62,6 +62,9 @@ public static class PosVentaFixture
         else
         {
             existencia.Cantidad = existenciaInicial;
+            // La BD de desarrollo puede traer la existencia sembrada con otro costo;
+            // el test necesita un costo conocido para comprobar el asiento de costo.
+            existencia.CostoPromedio = 60m;
         }
 
         await db.SaveChangesAsync();

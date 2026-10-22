@@ -43,6 +43,48 @@ public class PosTerminalWebTests
     }
 
     [DbFact(RequiereDatosBase = true)]
+    public async Task LaConfiguracionDelTerminalUsaLaSerieParametrizada()
+    {
+        await using var db = TestDb.Create();
+        await using var tx = await db.Database.BeginTransactionAsync();
+
+        var sesion = await PosFixture.CrearSesionAsync(db);
+        var device = await db.DispositivoPos.AsNoTracking().FirstAsync(d => d.Id == sesion.DispositivoPosId);
+        var config = new PosConfigService(db, new ParametroSistemaService(db));
+
+        var inicial = await config.GetConfiguracionPorDispositivoAsync(sesion.DispositivoPosId, device.EntidadId, CancellationToken.None);
+        Assert.NotNull(inicial);
+        Assert.False(string.IsNullOrWhiteSpace(inicial!.Serie));
+
+        // POS_SERIE manda en la serie que usa el terminal para numerar.
+        var hoy = DateOnly.FromDateTime(DateTime.Today);
+        var parametro = await db.ParametroSistemas
+            .FirstOrDefaultAsync(p => p.EntidadId == device.EntidadId && p.Codigo == "POS_SERIE" && p.VigenteDesde == hoy);
+        if (parametro is null)
+        {
+            db.ParametroSistemas.Add(new ParametroSistema
+            {
+                EntidadId = device.EntidadId,
+                Codigo = "POS_SERIE",
+                Valor = "B",
+                TipoDato = "STRING",
+                Descripcion = "Serie POS (prueba)",
+                VigenteDesde = hoy
+            });
+        }
+        else
+        {
+            parametro.Valor = "B";
+        }
+        await db.SaveChangesAsync();
+
+        var conParametro = await config.GetConfiguracionPorDispositivoAsync(sesion.DispositivoPosId, device.EntidadId, CancellationToken.None);
+        Assert.Equal("B", conParametro!.Serie);
+
+        await tx.RollbackAsync();
+    }
+
+    [DbFact(RequiereDatosBase = true)]
     public async Task ElTokenDelTerminalWebSeEmiteParaElUsuarioDeLaSesionSinPedirContrasena()
     {
         await using var db = TestDb.Create();
@@ -133,12 +175,16 @@ public class PosTerminalWebTests
         var device = await db.DispositivoPos.IgnoreQueryFilters().FirstAsync(x => x.Id == sesion.DispositivoPosId);
         var cliente = await db.Clientes.IgnoreQueryFilters().OrderBy(c => c.Id).FirstAsync();
 
+        // Serie propia de la prueba: la BD de desarrollo puede tener facturas POS reales
+        // en otras series y la numeración dentro del bloque se calcula sobre la serie.
+        var serie = "N" + Guid.NewGuid().ToString("N")[..6].ToUpperInvariant();
+
         db.PosRangoNumeracions.Add(new PosRangoNumeracion
         {
             Id = Guid.NewGuid(),
             DispositivoPosId = sesion.DispositivoPosId,
             TipoDocumento = DocumentoTipo.FacturaVenta,
-            Serie = "A",
+            Serie = serie,
             NumeroDesde = 1,
             NumeroHasta = 1000,
             NumeroSiguienteLocal = 1,
@@ -148,13 +194,13 @@ public class PosTerminalWebTests
 
         // "SMK-9001" convive en la tabla real: la numeración no numérica no puede romper la consulta.
         db.FacturaVenta.AddRange(
-            FacturaDePrueba(sesion, device, cliente, "SMK-9001"),
-            FacturaDePrueba(sesion, device, cliente, "00002"));
+            FacturaDePrueba(sesion, device, cliente, serie, "SMK-9001"),
+            FacturaDePrueba(sesion, device, cliente, serie, "00002"));
         await db.SaveChangesAsync();
 
         var sync = CrearSync(db, new TestEntidadProvider(sesion.EntidadId, TestDb.UsuarioIdSeed, isMaster: true));
 
-        var siguiente = await sync.SiguienteNumeroAsync(sesion.DispositivoPosId, "A", CancellationToken.None);
+        var siguiente = await sync.SiguienteNumeroAsync(sesion.DispositivoPosId, serie, CancellationToken.None);
         Assert.Null(siguiente.Error);
         Assert.Equal("0003", siguiente.Numero);
 
@@ -162,14 +208,14 @@ public class PosTerminalWebTests
         bloque.NumeroSiguienteLocal = 1000;
         await db.SaveChangesAsync();
 
-        var agotado = await sync.SiguienteNumeroAsync(sesion.DispositivoPosId, "A", CancellationToken.None);
+        var agotado = await sync.SiguienteNumeroAsync(sesion.DispositivoPosId, serie, CancellationToken.None);
         Assert.Null(agotado.Numero);
         Assert.NotNull(agotado.Error);
 
         await tx.RollbackAsync();
     }
 
-    private static FacturaVentum FacturaDePrueba(PosFixture.SesionPos sesion, DispositivoPo device, Cliente cliente, string numero) => new()
+    private static FacturaVentum FacturaDePrueba(PosFixture.SesionPos sesion, DispositivoPo device, Cliente cliente, string serie, string numero) => new()
     {
         Id = Guid.NewGuid(),
         EntidadId = sesion.EntidadId,
@@ -177,7 +223,7 @@ public class PosTerminalWebTests
         AlmacenId = device.AlmacenId,
         ClienteId = cliente.Id,
         NumeroFactura = numero,
-        Serie = "A",
+        Serie = serie,
         CanalVenta = "POS",
         TipoVenta = "MINORISTA",
         Fecha = DateTimeOffset.UtcNow,

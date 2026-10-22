@@ -173,7 +173,7 @@ public class PosVentaE2ETests
     }
 
     [DbFact(RequiereDatosBase = true)]
-    public async Task LosPagosQueNoCuadranConElTotalSeRechazanSinFacturar()
+    public async Task LosPagosQueNoCuadranConElTotalSeRechazanAlRecibirSinEncolarNiFacturar()
     {
         await using var db = TestDb.Create();
         await using var tx = await db.Database.BeginTransactionAsync();
@@ -182,21 +182,90 @@ public class PosVentaE2ETests
         var ctx = await PosVentaFixture.PrepararAsync(db, sesion);
         var servicio = CrearServicio(db);
 
-        // Total real 200 (2 x 100) pero se declara un pago de 150.
+        // Total real 200 (2 x 100) pero se declara un pago de 150. Antes quedaba PENDIENTE y
+        // bloqueaba el cierre hasta que el barrido la marcaba ERROR; ahora se rechaza al recibir.
         var request = PosVentaFixture.Request(sesion, ctx, cantidad: 2m, precioUnitario: 100m, montoPago: 150m);
-        await servicio.RecibirAsync(request, CancellationToken.None);
+        var recibida = await servicio.RecibirAsync(request, CancellationToken.None);
 
-        var (result, error, conflict) = await servicio.ProcesarAsync(
-            sesion.DispositivoPosId, request.IdempotencyKey, CancellationToken.None);
-
-        Assert.Null(result);
-        Assert.NotNull(error);
-        Assert.False(conflict);
-        Assert.Contains("pagos", error, StringComparison.OrdinalIgnoreCase);
+        Assert.Null(recibida.Result);
+        Assert.NotNull(recibida.Error);
+        Assert.Contains("pagos", recibida.Error, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(0, await db.PosVentaPendientes.AsNoTracking()
+            .CountAsync(p => p.IdempotencyKey == request.IdempotencyKey));
         Assert.Equal(0, await db.FacturaVenta.AsNoTracking().CountAsync(f => f.Serie == ctx.Serie));
 
-        var pendiente = await db.PosVentaPendientes.AsNoTracking().FirstAsync(p => p.IdempotencyKey == request.IdempotencyKey);
-        Assert.Equal("PENDIENTE", pendiente.Estado);
+        await tx.RollbackAsync();
+    }
+
+    [DbFact(RequiereDatosBase = true)]
+    public async Task UnaVentaDeImporteCeroSeRechazaAlRecibir()
+    {
+        await using var db = TestDb.Create();
+        await using var tx = await db.Database.BeginTransactionAsync();
+
+        var sesion = await PosFixture.CrearSesionAsync(db);
+        var ctx = await PosVentaFixture.PrepararAsync(db, sesion);
+        var servicio = CrearServicio(db);
+
+        // Descuento del 100%: el total es 0 y no debe llegar a la cola.
+        var request = PosVentaFixture.Request(sesion, ctx, cantidad: 1m, precioUnitario: 100m, descuentoPorcentaje: 100m);
+        var recibida = await servicio.RecibirAsync(request, CancellationToken.None);
+
+        Assert.Null(recibida.Result);
+        Assert.NotNull(recibida.Error);
+        Assert.Contains("mayor que cero", recibida.Error);
+        Assert.Equal(0, await db.PosVentaPendientes.AsNoTracking()
+            .CountAsync(p => p.IdempotencyKey == request.IdempotencyKey));
+
+        await tx.RollbackAsync();
+    }
+
+    [DbFact(RequiereDatosBase = true)]
+    public async Task UnCobroMixtoDebitaCajaYBancoEnElAsientoDeVenta()
+    {
+        await using var db = TestDb.Create();
+        await using var tx = await db.Database.BeginTransactionAsync();
+
+        var sesion = await PosFixture.CrearSesionAsync(db);
+        var ctx = await PosVentaFixture.PrepararAsync(db, sesion);
+        var servicio = CrearServicio(db);
+
+        // Total 200: 120 en efectivo y 80 por Transfermóvil.
+        var request = PosVentaFixture.Request(sesion, ctx, cantidad: 2m, precioUnitario: 100m, formaPago: "EFECTIVO", montoPago: 120m);
+        var payload = System.Text.Json.JsonSerializer.Deserialize<VERCOM.DTOs.VentaPosPayload>(
+            request.Venta.GetRawText(),
+            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+        payload.Pagos.Add(new VERCOM.DTOs.VentaPosPagoPayload { FormaPago = "TRANSFERMOVIL", Monto = 80m, ReferenciaExterna = "TRX-TEST" });
+        request = new VERCOM.DTOs.RecibirVentaPosRequest
+        {
+            DispositivoPosId = request.DispositivoPosId,
+            SesionCajaPosId = request.SesionCajaPosId,
+            IdempotencyKey = request.IdempotencyKey,
+            FechaVentaLocal = request.FechaVentaLocal,
+            Venta = System.Text.Json.JsonSerializer.SerializeToElement(payload)
+        };
+
+        var recibida = await servicio.RecibirAsync(request, CancellationToken.None);
+        Assert.Null(recibida.Error);
+
+        var (result, error, _) = await servicio.ProcesarAsync(sesion.DispositivoPosId, request.IdempotencyKey, CancellationToken.None);
+        Assert.Null(error);
+        Assert.Equal("PROCESADO", result!.Estado);
+
+        var factura = await db.FacturaVenta.AsNoTracking().FirstAsync(f => f.Id == result.FacturaId);
+        var asiento = await db.AsientoContables.AsNoTracking()
+            .Include(a => a.AsientoDetalles)
+            .FirstAsync(a => a.Id == factura.AsientoId);
+
+        var ctaCaja = await CuentaAsync(db, ctx.EntidadId, "CTA_CAJA_MN", "101");
+        var ctaBanco = await CuentaAsync(db, ctx.EntidadId, "CTA_BANCO_MN", "109");
+        Assert.Contains(asiento.AsientoDetalles, d => d.CuentaId == ctaCaja && d.Debe == 120m);
+        Assert.Contains(asiento.AsientoDetalles, d => d.CuentaId == ctaBanco && d.Debe == 80m);
+
+        var sesionDb = await db.SesionCajaPos.AsNoTracking().FirstAsync(s => s.Id == sesion.SesionId);
+        Assert.Equal(200m, sesionDb.TotalVentas);
+        Assert.Equal(120m, sesionDb.TotalEfectivo);
+        Assert.Equal(80m, sesionDb.TotalTransfermovil);
 
         await tx.RollbackAsync();
     }
@@ -380,20 +449,109 @@ public class PosVentaE2ETests
 
         // Pago con forma "CREDITO" por el total: el POS no crea CuentaPorCobrar ni verifica el
         // límite de crédito (a diferencia de SalesService), así que la deuda quedaría invisible
-        // en cartera; el flujo la rechaza en vez de facturar sin cobrar.
+        // en cartera; el flujo la rechaza al recibir en vez de facturar sin cobrar.
         var request = PosVentaFixture.Request(sesion, ctx, formaPago: "CREDITO");
-        await servicio.RecibirAsync(request, CancellationToken.None);
+        var recibida = await servicio.RecibirAsync(request, CancellationToken.None);
 
-        var (result, error, conflict) = await servicio.ProcesarAsync(
-            sesion.DispositivoPosId, request.IdempotencyKey, CancellationToken.None);
-
-        Assert.Null(result);
-        Assert.NotNull(error);
-        Assert.Contains("crédito", error);
-        Assert.False(conflict);
+        Assert.Null(recibida.Result);
+        Assert.NotNull(recibida.Error);
+        Assert.Contains("crédito", recibida.Error);
+        Assert.Equal(0, await db.PosVentaPendientes.AsNoTracking()
+            .CountAsync(p => p.IdempotencyKey == request.IdempotencyKey));
         Assert.Equal(0, await db.FacturaVenta.AsNoTracking()
             .CountAsync(f => f.Serie == ctx.Serie && f.NumeroFactura == ctx.NumeroFactura));
         Assert.Equal(0, await db.CuentaPorCobrars.AsNoTracking().CountAsync(c => c.ClienteId == ctx.ClienteId));
+
+        await tx.RollbackAsync();
+    }
+
+    [DbFact(RequiereDatosBase = true)]
+    public async Task UnaDevolucionParcialReponeInventarioReembolsaYReduceElTurno()
+    {
+        await using var db = TestDb.Create();
+        await using var tx = await db.Database.BeginTransactionAsync();
+
+        var sesion = await PosFixture.CrearSesionAsync(db, montoApertura: 100m);
+        var ctx = await PosVentaFixture.PrepararAsync(db, sesion);
+        var servicio = CrearServicio(db);
+
+        // Venta de 2 x 100 (200 en efectivo).
+        var venta = PosVentaFixture.Request(sesion, ctx, cantidad: 2m, precioUnitario: 100m);
+        await servicio.RecibirAsync(venta, CancellationToken.None);
+        var (procesada, error, _) = await servicio.ProcesarAsync(sesion.DispositivoPosId, venta.IdempotencyKey, CancellationToken.None);
+        Assert.Null(error);
+        Assert.NotNull(procesada!.FacturaId);
+
+        var factura = await db.FacturaVenta.AsNoTracking()
+            .Include(f => f.FacturaVentaDetalles)
+            .FirstAsync(f => f.Id == procesada.FacturaId);
+        var detalle = factura.FacturaVentaDetalles.Single();
+
+        // El terminal consulta la factura para saber qué queda por devolver.
+        var consulta = await servicio.ObtenerFacturaAsync(sesion.DispositivoPosId, factura.Serie, factura.NumeroFactura, CancellationToken.None);
+        Assert.Null(consulta.Error);
+        Assert.Equal(2m, consulta.Result!.Lineas.Single().Cantidad);
+        Assert.Equal(0m, consulta.Result.Lineas.Single().CantidadDevuelta);
+
+        // Devolución de una unidad, reembolsada en efectivo.
+        var devolucion = await servicio.ProcesarDevolucionAsync(new VERCOM.DTOs.DevolucionPosRequest
+        {
+            DispositivoPosId = sesion.DispositivoPosId,
+            SesionCajaPosId = sesion.SesionId,
+            Serie = factura.Serie,
+            NumeroFactura = factura.NumeroFactura,
+            Motivo = "Producto defectuoso",
+            FormaPagoReembolso = "EFECTIVO",
+            Lineas = new[] { new VERCOM.DTOs.DevolucionPosLineaRequest { FacturaDetalleId = detalle.Id, Cantidad = 1m } }
+        }, CancellationToken.None);
+
+        Assert.Null(devolucion.Error);
+        Assert.Equal(100m, devolucion.Result!.TotalDevuelto);
+
+        var devolucionDb = await db.DevolucionVenta.AsNoTracking()
+            .Include(d => d.DevolucionVentaDetalles)
+            .FirstAsync(d => d.Id == devolucion.Result.DevolucionId);
+        Assert.Equal("Producto defectuoso", devolucionDb.Motivo);
+        Assert.Equal(100m, devolucionDb.TotalDevuelto);
+        Assert.Equal(1m, devolucionDb.DevolucionVentaDetalles.Single().CantidadDevuelta);
+        Assert.NotNull(devolucionDb.MovimientoInventarioId);
+        Assert.NotNull(devolucionDb.AsientoId);
+
+        // Inventario: la venta dejó 998 y la devolución repone 1.
+        var existencia = await db.Existencia.AsNoTracking()
+            .FirstAsync(e => e.AlmacenId == ctx.AlmacenId && e.ProductoId == ctx.ProductoId);
+        Assert.Equal(ctx.ExistenciaInicial - 1m, existencia.Cantidad);
+
+        // Asiento del reembolso: debe ingresos 100 / haber caja 100, cuadrado.
+        var asiento = await db.AsientoContables.AsNoTracking()
+            .Include(a => a.AsientoDetalles)
+            .FirstAsync(a => a.Id == devolucionDb.AsientoId);
+        Assert.Equal("DEVOLUCION_VENTA", asiento.DocumentoOrigenTipo);
+        Assert.Equal(asiento.AsientoDetalles.Sum(d => d.Debe), asiento.AsientoDetalles.Sum(d => d.Haber));
+        var ctaVentas = await CuentaAsync(db, ctx.EntidadId, "CTA_VENTAS_GENERAL", "900.0000");
+        var ctaCaja = await CuentaAsync(db, ctx.EntidadId, "CTA_CAJA_MN", "101");
+        Assert.Contains(asiento.AsientoDetalles, d => d.CuentaId == ctaVentas && d.Debe == 100m);
+        Assert.Contains(asiento.AsientoDetalles, d => d.CuentaId == ctaCaja && d.Haber == 100m);
+
+        // El turno descuenta la venta y el efectivo reembolsado.
+        var sesionDb = await db.SesionCajaPos.AsNoTracking().FirstAsync(s => s.Id == sesion.SesionId);
+        Assert.Equal(100m, sesionDb.TotalVentas);
+        Assert.Equal(100m, sesionDb.TotalEfectivo);
+
+        // La factura ya tiene 1 devuelta y no admite devolver más de lo vendido.
+        var otra = await servicio.ProcesarDevolucionAsync(new VERCOM.DTOs.DevolucionPosRequest
+        {
+            DispositivoPosId = sesion.DispositivoPosId,
+            SesionCajaPosId = sesion.SesionId,
+            Serie = factura.Serie,
+            NumeroFactura = factura.NumeroFactura,
+            Motivo = "Segunda devolución",
+            FormaPagoReembolso = "EFECTIVO",
+            Lineas = new[] { new VERCOM.DTOs.DevolucionPosLineaRequest { FacturaDetalleId = detalle.Id, Cantidad = 2m } }
+        }, CancellationToken.None);
+        Assert.Null(otra.Result);
+        Assert.NotNull(otra.Error);
+        Assert.Contains("excede", otra.Error);
 
         await tx.RollbackAsync();
     }

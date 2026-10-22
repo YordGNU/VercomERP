@@ -6,7 +6,7 @@
 
     const API = root.dataset.apiBase;
     const TOKEN_URL = root.dataset.tokenUrl;
-    const SERIE = 'A';
+    const SERIE_DEFECTO = 'A';
 
     const state = {
         token: null,
@@ -24,6 +24,7 @@
         shiftState: document.getElementById('posShiftState'),
         openShift: document.getElementById('posOpenShift'),
         closeShift: document.getElementById('posCloseShift'),
+        returnButton: document.getElementById('posReturn'),
         search: document.getElementById('posSearch'),
         clearSearch: document.getElementById('posClearSearch'),
         results: document.getElementById('posResults'),
@@ -34,11 +35,26 @@
         payments: document.getElementById('posPayments'),
         cashFields: document.getElementById('posCashFields'),
         transferFields: document.getElementById('posTransferFields'),
+        mixedMethodWrap: document.getElementById('posMixedMethodWrap'),
+        mixedMethod: document.getElementById('posMixedMethod'),
+        mixedAmount: document.getElementById('posMixedAmount'),
         reference: document.getElementById('posReference'),
         cash: document.getElementById('posCash'),
         change: document.getElementById('posChange'),
-        checkout: document.getElementById('posCheckout')
+        checkout: document.getElementById('posCheckout'),
+        returnModal: document.getElementById('posReturnModal'),
+        returnNumber: document.getElementById('posReturnNumber'),
+        returnLoad: document.getElementById('posReturnLoad'),
+        returnHint: document.getElementById('posReturnHint'),
+        returnLines: document.getElementById('posReturnLines'),
+        returnReason: document.getElementById('posReturnReason'),
+        returnMethod: document.getElementById('posReturnMethod'),
+        returnTotal: document.getElementById('posReturnTotal'),
+        returnSubmit: document.getElementById('posReturnSubmit')
     };
+
+    const returnState = { invoice: null };
+    const serie = () => (state.config && state.config.serie) || SERIE_DEFECTO;
 
     const money = n => (Number(n) || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const round2 = n => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
@@ -59,6 +75,13 @@
         Swal.fire({ icon: 'error', title: 'No se pudo completar', text: message });
     }
 
+    function puede(codigo) {
+        const roles = (state.user && state.user.roles) || [];
+        if (roles.indexOf('MASTER') >= 0 || roles.indexOf('ADMINISTRADOR') >= 0) return true;
+        const permisos = (state.user && state.user.permisos) || [];
+        return permisos.indexOf(codigo) >= 0;
+    }
+
     async function api(path, options) {
         const opts = options || {};
         const headers = {
@@ -72,6 +95,13 @@
             body: opts.body,
             headers: headers
         });
+
+        // El JWT del POS caduca (60 min por defecto) mientras la cookie de sesión sigue viva:
+        // al recibir 401 se renueva el token con /POS/Token y se repite la operación una vez.
+        if (res.status === 401 && !opts.retried) {
+            await loadToken();
+            return api(path, Object.assign({}, opts, { retried: true }));
+        }
 
         const text = await res.text();
         let data = null;
@@ -169,6 +199,7 @@
             el.openShift.classList.remove('d-none');
             el.closeShift.classList.add('d-none');
         }
+        el.returnButton.disabled = !(state.session && state.session.estado === 'ABIERTA') || !puede('procesar_devolucion');
         updateCheckout();
     }
 
@@ -323,6 +354,7 @@
                 nombre: product.nombre,
                 precio: precio,
                 cantidad: 1,
+                descuento: 0,
                 stock: stock
             });
         }
@@ -333,22 +365,27 @@
         el.search.focus();
     }
 
+    function lineImporte(line) {
+        return round2(line.cantidad * line.precio * (1 - (Number(line.descuento) || 0) / 100));
+    }
+
     function cartTotal() {
-        return round2(state.cart.reduce(function (sum, l) { return sum + l.cantidad * l.precio; }, 0));
+        return round2(state.cart.reduce(function (sum, l) { return sum + lineImporte(l); }, 0));
     }
 
     function renderCart() {
         el.cartBody.innerHTML = '';
 
         if (!state.cart.length) {
-            el.cartBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Sin artículos</td></tr>';
+            el.cartBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Sin artículos</td></tr>';
         } else {
             state.cart.forEach(function (line, index) {
-                const imp = round2(line.cantidad * line.precio);
+                const imp = lineImporte(line);
+                const descuento = Number(line.descuento) || 0;
                 const tr = document.createElement('tr');
                 tr.innerHTML =
                     '<td class="ps-3">' +
-                        '<div class="fw-bold text-truncate" style="max-width: 220px;">' + esc(line.nombre) + '</div>' +
+                        '<div class="fw-bold text-truncate" style="max-width: 200px;">' + esc(line.nombre) + '</div>' +
                         '<small class="text-muted">' + esc(line.codigo) + ' · ' + money(line.precio) + '</small>' +
                     '</td>' +
                     '<td class="text-center">' +
@@ -357,6 +394,10 @@
                             '<input type="number" class="form-control form-control-sm pos-qty" data-action="qty" data-index="' + index + '" value="' + line.cantidad + '" min="1" step="1" />' +
                             '<button type="button" class="btn btn-light btn-icon-sm" data-action="inc" data-index="' + index + '">+</button>' +
                         '</div>' +
+                    '</td>' +
+                    '<td class="text-center">' +
+                        '<input type="number" class="form-control form-control-sm pos-discount" data-action="discount" data-index="' + index + '" value="' + descuento + '" min="0" max="100" step="1"' +
+                        (puede('aplicar_descuento') ? '' : ' disabled title="Sin permiso para aplicar descuentos"') + ' />' +
                     '</td>' +
                     '<td class="text-end fw-bold">' + money(imp) + '</td>' +
                     '<td class="text-end pe-3">' +
@@ -378,28 +419,38 @@
         return checked ? checked.value : 'EFECTIVO';
     }
 
+    function mixedTransfer() {
+        const total = cartTotal();
+        const cash = Number(el.cash.value) || 0;
+        return round2(Math.max(0, total - Math.min(cash, total)));
+    }
+
     function updateChange() {
         const total = cartTotal();
-        const isCash = paymentMethod() === 'EFECTIVO';
+        const metodo = paymentMethod();
+        const conEfectivo = metodo === 'EFECTIVO' || metodo === 'MIXTO';
         const cash = Number(el.cash.value) || 0;
         const change = round2(cash - total);
         el.change.textContent = money(change);
-        el.change.classList.toggle('text-danger', change < -0.001);
-        el.change.classList.toggle('text-success', change >= -0.001 && cash > 0);
-        el.cashFields.classList.toggle('d-none', !isCash);
-        el.transferFields.classList.toggle('d-none', isCash);
+        el.change.classList.toggle('text-danger', change < -0.001 && metodo === 'EFECTIVO');
+        el.change.classList.toggle('text-success', change >= -0.001 && cash > 0 && metodo === 'EFECTIVO');
+        el.cashFields.classList.toggle('d-none', !conEfectivo);
+        el.transferFields.classList.toggle('d-none', metodo === 'EFECTIVO');
+        el.mixedMethodWrap.classList.toggle('d-none', metodo !== 'MIXTO');
+        el.mixedAmount.textContent = money(mixedTransfer());
         updateCheckout();
     }
 
     function updateCheckout() {
         const total = cartTotal();
-        const isCash = paymentMethod() === 'EFECTIVO';
+        const metodo = paymentMethod();
         const cash = Number(el.cash.value) || 0;
+        const pagoEfectivoOk = metodo !== 'EFECTIVO' || cash + 0.001 >= total;
         const canSell = !state.busy
             && state.cart.length > 0
             && !!state.session
             && state.session.estado === 'ABIERTA'
-            && (!isCash || cash + 0.001 >= total);
+            && pagoEfectivoOk;
         el.checkout.disabled = !canSell;
     }
 
@@ -423,20 +474,37 @@
 
         const total = cartTotal();
         const metodo = paymentMethod();
-        const esEfectivo = metodo === 'EFECTIVO';
-        const cash = esEfectivo ? round2(Number(el.cash.value) || 0) : total;
-        const vuelto = esEfectivo ? round2(cash - total) : 0;
-        const referencia = esEfectivo ? null : (el.reference.value.trim() || null);
+        const referencia = el.reference.value.trim() || null;
         if (total <= 0) { fail('Agregue artículos a la venta.'); return; }
-        if (esEfectivo && cash + 0.001 < total) { fail('El efectivo recibido no cubre el total.'); return; }
+
+        const pagos = [];
+        if (metodo === 'EFECTIVO') {
+            const cash = round2(Number(el.cash.value) || 0);
+            if (cash + 0.001 < total) { fail('El efectivo recibido no cubre el total.'); return; }
+            pagos.push({ formaPago: 'EFECTIVO', monto: cash, vueltoEntregado: round2(cash - total) });
+        } else if (metodo === 'MIXTO') {
+            const cash = round2(Number(el.cash.value) || 0);
+            const resto = round2(Math.max(0, total - Math.min(cash, total)));
+            if (cash > 0) pagos.push({ formaPago: 'EFECTIVO', monto: cash, vueltoEntregado: round2(Math.max(0, cash - total)) });
+            if (resto > 0) pagos.push({ formaPago: el.mixedMethod.value, monto: resto, referenciaExterna: referencia });
+            if (!pagos.length) { fail('Indique el efectivo o el importe a cobrar por transferencia.'); return; }
+        } else {
+            pagos.push({ formaPago: metodo, monto: total, referenciaExterna: referencia });
+        }
 
         setBusy(true);
         const lineas = state.cart.map(function (l) {
-            return { productoId: l.productoId, cantidad: l.cantidad, precioUnitario: l.precio, descuentoPorcentaje: 0, impuestoPorcentaje: 0 };
+            return {
+                productoId: l.productoId,
+                cantidad: l.cantidad,
+                precioUnitario: l.precio,
+                descuentoPorcentaje: Number(l.descuento) || 0,
+                impuestoPorcentaje: 0
+            };
         });
 
         try {
-            const siguiente = await api('/ventas/siguiente-numero?dispositivoPosId=' + encodeURIComponent(state.config.dispositivoPosId) + '&serie=' + SERIE);
+            const siguiente = await api('/ventas/siguiente-numero?dispositivoPosId=' + encodeURIComponent(state.config.dispositivoPosId) + '&serie=' + encodeURIComponent(serie()));
             const fecha = new Date().toISOString();
             const venta = {
                 entidadId: state.config.entidadId,
@@ -445,13 +513,11 @@
                 almacenId: state.config.almacenId,
                 tipoMovimientoId: state.config.tipoMovimientoVenta,
                 numeroFactura: siguiente.numeroFactura,
-                serie: SERIE,
+                serie: serie(),
                 fecha: fecha,
                 moneda: state.config.monedaBase || 'CUP',
                 lineas: lineas,
-                pagos: [esEfectivo
-                    ? { formaPago: 'EFECTIVO', monto: cash, vueltoEntregado: vuelto }
-                    : { formaPago: metodo, monto: total, referenciaExterna: referencia }]
+                pagos: pagos
             };
 
             const key = newIdempotencyKey();
@@ -469,12 +535,8 @@
             const procesada = await api('/sincronizacion/ventas/' + encodeURIComponent(state.config.dispositivoPosId) + '/' + encodeURIComponent(key) + '/procesar', { method: 'POST' });
 
             if (procesada && procesada.estado === 'PROCESADO') {
-                printTicket(venta, total, { metodo: metodo, monto: cash, vuelto: vuelto, referencia: referencia });
-                state.cart = [];
-                el.cash.value = '';
-                el.reference.value = '';
-                el.payments.querySelector('input[value="EFECTIVO"]').checked = true;
-                renderCart();
+                printTicket(venta, total, pagos);
+                resetSale();
                 await loadSession();
                 toast('success', 'Venta ' + venta.serie + '-' + venta.numeroFactura + ' registrada');
             } else {
@@ -483,10 +545,7 @@
                     title: 'Venta en cola',
                     html: 'La venta quedó registrada y se procesará en segundo plano.<br><small class="text-muted">' + esc((procesada && procesada.mensajeError) || '') + '</small>'
                 });
-                state.cart = [];
-                el.reference.value = '';
-                el.payments.querySelector('input[value="EFECTIVO"]').checked = true;
-                renderCart();
+                resetSale();
                 await loadSession();
             }
         } catch (e) {
@@ -496,13 +555,29 @@
         }
     }
 
-    function printTicket(venta, total, pago) {
+    function resetSale() {
+        state.cart = [];
+        el.cash.value = '';
+        el.reference.value = '';
+        el.payments.querySelector('input[value="EFECTIVO"]').checked = true;
+        renderCart();
+    }
+
+    function printTicket(venta, total, pagos) {
         const cfg = state.config;
         const rows = state.cart.map(function (line) {
-            return '<tr><td>' + esc(line.nombre) + '</td>' +
+            const descuento = Number(line.descuento) || 0;
+            return '<tr><td>' + esc(line.nombre) +
+                   (descuento > 0 ? ' <small>(-' + descuento + '%)</small>' : '') + '</td>' +
                    '<td class="r">' + line.cantidad + '</td>' +
                    '<td class="r">' + money(line.precio) + '</td>' +
-                   '<td class="r">' + money(round2(line.cantidad * line.precio)) + '</td></tr>';
+                   '<td class="r">' + money(lineImporte(line)) + '</td></tr>';
+        }).join('');
+
+        const pagosRows = pagos.map(function (p) {
+            return '<tr><td>' + esc(PAYMENT_LABEL[p.formaPago] || p.formaPago) + '</td><td class="r">' + money(p.monto) + '</td></tr>' +
+                   (p.vueltoEntregado > 0 ? '<tr><td>Cambio</td><td class="r">' + money(p.vueltoEntregado) + '</td></tr>' : '') +
+                   (p.referenciaExterna ? '<tr><td>Ref.</td><td class="r">' + esc(p.referenciaExterna) + '</td></tr>' : '');
         }).join('');
 
         const html = '<!doctype html><html><head><meta charset="utf-8"><title>Ticket ' + esc(venta.serie + '-' + venta.numeroFactura) + '</title>' +
@@ -529,9 +604,7 @@
             '<div class="hr"></div>' +
             '<table>' +
             '<tr class="tot"><td>TOTAL ' + esc(venta.moneda) + '</td><td class="r">' + money(total) + '</td></tr>' +
-            '<tr><td>' + esc(PAYMENT_LABEL[pago.metodo] || pago.metodo) + '</td><td class="r">' + money(pago.monto) + '</td></tr>' +
-            (pago.metodo === 'EFECTIVO' ? '<tr><td>Cambio</td><td class="r">' + money(pago.vuelto) + '</td></tr>' : '') +
-            (pago.referencia ? '<tr><td>Ref.</td><td class="r">' + esc(pago.referencia) + '</td></tr>' : '') +
+            pagosRows +
             '</table>' +
             '<div class="hr"></div>' +
             '<div class="c mt">¡Gracias por su compra!</div>' +
@@ -547,14 +620,152 @@
         setTimeout(function () { win.print(); }, 250);
     }
 
+    function openReturns() {
+        if (el.returnButton.disabled) return;
+        returnState.invoice = null;
+        el.returnNumber.value = '';
+        el.returnLines.innerHTML = '';
+        el.returnReason.value = '';
+        el.returnMethod.value = 'EFECTIVO';
+        el.returnTotal.textContent = money(0);
+        el.returnSubmit.disabled = true;
+        el.returnHint.textContent = 'Cargue la factura para ver sus artículos y cantidades devueltas.';
+        bootstrap.Modal.getOrCreateInstance(el.returnModal).show();
+        setTimeout(function () { el.returnNumber.focus(); }, 300);
+    }
+
+    async function loadReturnInvoice() {
+        const numero = el.returnNumber.value.trim();
+        if (!numero) { el.returnHint.textContent = 'Escriba el número de factura.'; return; }
+        if (!state.config) return;
+
+        el.returnHint.textContent = 'Cargando…';
+        try {
+            const factura = await api('/sincronizacion/facturas?dispositivoPosId=' + encodeURIComponent(state.config.dispositivoPosId) +
+                '&serie=' + encodeURIComponent(serie()) + '&numero=' + encodeURIComponent(numero));
+            returnState.invoice = factura;
+            if (!factura.lineas.length) {
+                el.returnLines.innerHTML = '';
+                el.returnHint.textContent = 'La factura no tiene artículos.';
+                el.returnSubmit.disabled = true;
+                return;
+            }
+            el.returnHint.textContent = 'Factura ' + factura.serie + '-' + factura.numeroFactura + ' · ' + money(factura.total) + ' (' + factura.estado + ')';
+            renderReturnLines();
+        } catch (e) {
+            returnState.invoice = null;
+            el.returnLines.innerHTML = '';
+            el.returnSubmit.disabled = true;
+            el.returnHint.textContent = e.message;
+        }
+    }
+
+    function renderReturnLines() {
+        const factura = returnState.invoice;
+        el.returnLines.innerHTML = '';
+        factura.lineas.forEach(function (linea) {
+            const restante = round2(linea.cantidad - linea.cantidadDevuelta);
+            const tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td>' + esc(linea.producto) + '</td>' +
+                '<td class="text-end">' + esc(linea.cantidad) + '</td>' +
+                '<td class="text-end">' + esc(linea.cantidadDevuelta) + '</td>' +
+                '<td class="text-end">' + money(linea.precioUnitario) + '</td>' +
+                '<td class="text-center">' +
+                    '<input type="number" class="form-control form-control-sm text-end" data-return="' + linea.facturaDetalleId + '"' +
+                    ' min="0" max="' + restante + '" step="0.001" value="0"' + (restante <= 0 ? ' disabled' : '') + ' />' +
+                '</td>';
+            el.returnLines.appendChild(tr);
+        });
+        updateReturnTotal();
+    }
+
+    function updateReturnTotal() {
+        const factura = returnState.invoice;
+        if (!factura) { el.returnTotal.textContent = money(0); el.returnSubmit.disabled = true; return; }
+
+        let total = 0;
+        factura.lineas.forEach(function (linea) {
+            const input = el.returnLines.querySelector('input[data-return="' + linea.facturaDetalleId + '"]');
+            if (!input || input.disabled) return;
+            const maximo = round2(linea.cantidad - linea.cantidadDevuelta);
+            const cantidad = Math.min(Math.max(Number(input.value) || 0, 0), maximo);
+            if (cantidad <= 0) return;
+            const proporcion = linea.cantidad > 0 ? cantidad / linea.cantidad : 0;
+            const neto = round2(linea.subtotalLinea * proporcion);
+            const impuesto = round2(neto * linea.impuestoPorcentaje / 100);
+            total += neto + impuesto;
+        });
+
+        el.returnTotal.textContent = money(round2(total));
+        el.returnSubmit.disabled = total <= 0 || state.busy;
+    }
+
+    async function submitReturn() {
+        const factura = returnState.invoice;
+        if (!factura) return;
+        const motivo = el.returnReason.value.trim();
+        if (!motivo) { toast('warning', 'Escriba el motivo de la devolución'); return; }
+
+        const lineas = [];
+        factura.lineas.forEach(function (linea) {
+            const input = el.returnLines.querySelector('input[data-return="' + linea.facturaDetalleId + '"]');
+            if (!input || input.disabled) return;
+            const maximo = round2(linea.cantidad - linea.cantidadDevuelta);
+            const cantidad = Math.min(Math.max(Number(input.value) || 0, 0), maximo);
+            if (cantidad > 0) lineas.push({ facturaDetalleId: linea.facturaDetalleId, cantidad: cantidad });
+        });
+        if (!lineas.length) { toast('warning', 'Indique las cantidades a devolver'); return; }
+
+        el.returnSubmit.disabled = true;
+        const texto = el.returnSubmit.textContent;
+        el.returnSubmit.textContent = 'Procesando…';
+        try {
+            const resultado = await api('/sincronizacion/devoluciones', {
+                method: 'POST',
+                body: JSON.stringify({
+                    dispositivoPosId: state.config.dispositivoPosId,
+                    sesionCajaPosId: state.session.id,
+                    serie: factura.serie,
+                    numeroFactura: factura.numeroFactura,
+                    motivo: motivo,
+                    formaPagoReembolso: el.returnMethod.value,
+                    lineas: lineas
+                })
+            });
+            bootstrap.Modal.getOrCreateInstance(el.returnModal).hide();
+            Swal.fire({
+                icon: 'success',
+                title: 'Devolución registrada',
+                html: 'Factura <b>' + esc(resultado.serie + '-' + resultado.numeroFactura) + '</b><br>' +
+                      'Reembolso: <b>' + money(resultado.totalDevuelto) + '</b> (' + esc(PAYMENT_LABEL[resultado.formaPagoReembolso] || resultado.formaPagoReembolso) + ')'
+            });
+            await loadSession();
+        } catch (e) {
+            fail(e.message);
+        } finally {
+            el.returnSubmit.textContent = texto;
+            updateReturnTotal();
+        }
+    }
+
     function bindEvents() {
         el.device.addEventListener('change', function () { selectDevice(el.device.value); });
         el.openShift.addEventListener('click', openShift);
         el.closeShift.addEventListener('click', closeShift);
         el.payments.addEventListener('change', function () {
             updateChange();
-            (paymentMethod() === 'EFECTIVO' ? el.cash : el.reference).focus();
+            if (paymentMethod() === 'EFECTIVO' || paymentMethod() === 'MIXTO') el.cash.focus();
+            else el.reference.focus();
         });
+        el.mixedMethod.addEventListener('change', updateChange);
+        el.returnButton.addEventListener('click', openReturns);
+        el.returnLoad.addEventListener('click', loadReturnInvoice);
+        el.returnNumber.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); loadReturnInvoice(); }
+        });
+        el.returnLines.addEventListener('input', updateReturnTotal);
+        el.returnSubmit.addEventListener('click', submitReturn);
         el.clearSearch.addEventListener('click', function () {
             el.search.value = '';
             el.results.innerHTML = '';
@@ -596,12 +807,22 @@
         });
 
         el.cartBody.addEventListener('change', function (e) {
-            const input = e.target.closest('input[data-action="qty"]');
+            const input = e.target.closest('input[data-action]');
             if (!input) return;
             const index = Number(input.dataset.index);
             const line = state.cart[index];
             if (!line) return;
 
+            if (input.dataset.action === 'discount') {
+                let descuento = Number(input.value) || 0;
+                if (descuento < 0) descuento = 0;
+                if (descuento > 100) { descuento = 100; toast('warning', 'El descuento máximo es 100%'); }
+                line.descuento = descuento;
+                renderCart();
+                return;
+            }
+
+            if (input.dataset.action !== 'qty') return;
             let value = Math.floor(Number(input.value) || 0);
             if (value <= 0) { state.cart.splice(index, 1); renderCart(); return; }
             if (value > line.stock) { value = line.stock; toast('warning', 'Existencia insuficiente'); }

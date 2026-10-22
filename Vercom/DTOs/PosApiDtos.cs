@@ -206,6 +206,58 @@ public sealed class DispositivoConfigDto
     public string DispositivoNombre { get; init; } = string.Empty;
     public int TipoMovimientoVenta { get; init; }
     public Guid ClienteConsumidorFinalId { get; init; }
+    public string Serie { get; init; } = "A";
+}
+
+public sealed class DevolucionPosLineaRequest
+{
+    public Guid FacturaDetalleId { get; init; }
+    public decimal Cantidad { get; init; }
+}
+
+public sealed class DevolucionPosRequest
+{
+    public Guid DispositivoPosId { get; init; }
+    public Guid SesionCajaPosId { get; init; }
+    public string Serie { get; init; } = "A";
+    public string NumeroFactura { get; init; } = string.Empty;
+    public string Motivo { get; init; } = string.Empty;
+    public string FormaPagoReembolso { get; init; } = "EFECTIVO";
+    public IReadOnlyList<DevolucionPosLineaRequest> Lineas { get; init; } = Array.Empty<DevolucionPosLineaRequest>();
+}
+
+public sealed class DevolucionPosResultDto
+{
+    public Guid DevolucionId { get; init; }
+    public Guid FacturaId { get; init; }
+    public string Serie { get; init; } = string.Empty;
+    public string NumeroFactura { get; init; } = string.Empty;
+    public decimal TotalDevuelto { get; init; }
+    public string FormaPagoReembolso { get; init; } = string.Empty;
+}
+
+public sealed class FacturaPosLineaDto
+{
+    public Guid FacturaDetalleId { get; init; }
+    public Guid ProductoId { get; init; }
+    public string Producto { get; init; } = string.Empty;
+    public decimal Cantidad { get; init; }
+    public decimal CantidadDevuelta { get; init; }
+    public decimal PrecioUnitario { get; init; }
+    public decimal DescuentoPorcentaje { get; init; }
+    public decimal ImpuestoPorcentaje { get; init; }
+    public decimal SubtotalLinea { get; init; }
+}
+
+public sealed class FacturaPosDto
+{
+    public Guid FacturaId { get; init; }
+    public string Serie { get; init; } = string.Empty;
+    public string NumeroFactura { get; init; } = string.Empty;
+    public DateTimeOffset Fecha { get; init; }
+    public decimal Total { get; init; }
+    public string Estado { get; init; } = string.Empty;
+    public IReadOnlyList<FacturaPosLineaDto> Lineas { get; init; } = Array.Empty<FacturaPosLineaDto>();
 }
 
 public sealed class CrearUsuarioPosRequest

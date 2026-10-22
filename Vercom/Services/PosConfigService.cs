@@ -7,8 +7,13 @@ namespace VERCOM.Services;
 public sealed class PosConfigService
 {
     private readonly AppDbContext _db;
+    private readonly IParametroSistemaService _parametros;
 
-    public PosConfigService(AppDbContext db) => _db = db;
+    public PosConfigService(AppDbContext db, IParametroSistemaService parametros)
+    {
+        _db = db;
+        _parametros = parametros;
+    }
 
     /// <summary>
     /// Devuelve la configuración completa de la terminal (entidad, sucursal, almacén, dispositivo,
@@ -76,6 +81,12 @@ public sealed class PosConfigService
                 .OrderBy(x => x.NombreRazonSocial)
                 .FirstOrDefaultAsync(cancellationToken);
 
+        // Serie de facturación del terminal: configurable por entidad; "A" si no hay parámetro.
+        var serieConfigurada = await _parametros.ObtenerValorVigenteAsync(device.EntidadId, "POS_SERIE");
+        var serie = string.IsNullOrWhiteSpace(serieConfigurada) || serieConfigurada.Trim().Length > 10
+            ? "A"
+            : serieConfigurada.Trim();
+
         return new DispositivoConfigDto
         {
             EntidadId = device.EntidadId,
@@ -94,7 +105,8 @@ public sealed class PosConfigService
             DispositivoCodigo = device.Codigo,
             DispositivoNombre = device.Nombre,
             TipoMovimientoVenta = tipoMovimiento?.Id ?? 1,
-            ClienteConsumidorFinalId = clienteCF?.Id ?? Guid.Empty
+            ClienteConsumidorFinalId = clienteCF?.Id ?? Guid.Empty,
+            Serie = serie
         };
     }
 
