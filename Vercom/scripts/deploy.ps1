@@ -28,21 +28,21 @@ Write-Host "=================================================" -ForegroundColor 
 # 1. BUILD
 if (-not $SkipBuild) {
     Write-Step "1" "Construyendo imagen..."
-    docker build -t "VERCOM-erp:$Version" .
+    docker build -t "vercom-erp:$Version" .
     if ($LASTEXITCODE -ne 0) { Write-Err "docker build fallo" }
     Write-Ok "Imagen construida"
 } else {
     Write-Step "1" "SkipBuild activo"
-    docker image inspect "VERCOM-erp:$Version" *> $null
+    docker image inspect "vercom-erp:$Version" *> $null
     if ($LASTEXITCODE -ne 0) { Write-Err "Imagen no existe" }
     Write-Ok "Imagen existente"
 }
 
 # 2. EXPORTAR
 Write-Step "2" "Exportando imagen..."
-$archivo = "VERCOM-erp-$Version.tar"
+$archivo = "vercom-erp-$Version.tar"
 if (Test-Path $archivo) { Remove-Item $archivo -Force }
-docker save "VERCOM-erp:$Version" -o $archivo
+docker save "vercom-erp:$Version" -o $archivo
 if ($LASTEXITCODE -ne 0) { Write-Err "docker save fallo" }
 $sizeMB = [math]::Round((Get-Item $archivo).Length / 1MB, 2)
 Write-Ok "Archivo: $archivo ($sizeMB MB)"
