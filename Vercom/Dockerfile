@@ -56,4 +56,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl --silent --fail http://localhost:8080/health || exit 1
 
-ENTRYPOINT ["dotnet", "vercom.dll"]
+ENTRYPOINT ["dotnet", "Vercom.dll"]

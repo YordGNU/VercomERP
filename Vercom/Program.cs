@@ -87,7 +87,11 @@ if (string.IsNullOrWhiteSpace(jwtSecret))
 {
     const string secretPath = "/run/secrets/jwt_key";
     if (File.Exists(secretPath))
+    {
         jwtSecret = File.ReadAllText(secretPath).Trim();
+        builder.Configuration.AddInMemoryCollection(
+            new Dictionary<string, string?> { ["Jwt:SecretKey"] = jwtSecret });
+    }
 }
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
