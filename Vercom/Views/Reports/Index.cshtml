@@ -137,5 +137,16 @@
             const type = button.getAttribute('data-type');
             document.getElementById('reportType').value = type;
         });
+        const reportForm = reportModal.querySelector('form');
+        reportForm.addEventListener('submit', event => {
+            const format = reportForm.querySelector('input[name="format"]:checked')?.value;
+            if (format === 'PDF') {
+                event.preventDefault();
+                const periodId = reportForm.querySelector('select[name="periodId"]').value;
+                const type = document.getElementById('reportType').value;
+                const url = '@Url.Action("ExportFinancialStatementPdf", "Reports")' + '?periodId=' + encodeURIComponent(periodId) + '&type=' + encodeURIComponent(type);
+                window.open(url, '_blank');
+            }
+        });
     </script>
 }
