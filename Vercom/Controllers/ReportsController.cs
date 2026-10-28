@@ -51,6 +51,9 @@ public class ReportsController : Controller
             ? await _intelligenceService.GetBalanceGeneralContextAsync(_entidadProvider.CurrentEntidadId, periodId)
             : await _intelligenceService.GetEstadoResultadosContextAsync(_entidadProvider.CurrentEntidadId, periodId);
 
+        vm.PeriodId = periodId;
+        vm.ReportType = type;
+
         return View("FinancialReport", vm);
     }
 

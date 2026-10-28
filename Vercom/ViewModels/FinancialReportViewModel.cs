@@ -5,6 +5,8 @@ public class FinancialReportViewModel
     public string ReportName { get; set; } = string.Empty;
     public string EntityName { get; set; } = string.Empty;
     public string PeriodName { get; set; } = string.Empty;
+    public Guid PeriodId { get; set; }
+    public string ReportType { get; set; } = string.Empty;
 
     // Para Balance General
     public FinancialStatement? Balance { get; set; }
