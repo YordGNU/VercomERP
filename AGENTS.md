@@ -342,3 +342,42 @@ Notas LAtentes (sin acción, registradas por contexto): #4 policies con "." como
 - Contenedor local: seed POS minimo (P-001 450, P-002 300, caja CAJA POS WEB, dispositivo POS-WEB, cuentas 900.0000/810.0000, Consumidor Final 3333...). E2E: venta 2x450 con 10% = 810, devolucion 1 = 405, cierre 405=405, stock 99, 0 descuadres.
 - VM 192.168.5.220 (/opt/vercom, APP_VERSION=latest): mismo seed y E2E; /health, /POS y /POS/Token OK tras reiniciar nginx.
 - seed-docker.sql: revisado y corregido contra el DDL real (cuenta_contable usa clase/naturaleza/requiere_*/moneda, sesion_caja_pos vive en integracion, consecutivo.id es identity, cliente.segmento solo MINORISTA/MAYORISTA). IDs de producto validos y hashes BCrypt reales para master/admin/cajero. Validado en BD temporal creada desde init-docker.sql: 4 productos con existencia y precio, caja y sesion ABIERTA, terminal POS-01, 59 permisos; segunda pasada sin cambios (idempotente).
+
+## Mapa de completamiento por modulo (diagnostico 360) - actualizado 2026-10-28
+
+% = avance del diagnostico por modulo: Hitó 1 auditado (25%) → Hitó 2 corregido (50%) → Hitó 3 validado E2E contra BD real (75%) → sin pendientes/decisiones (100%).
+
+| Modulo | % | Estado / evidencia |
+|---|---:|---|
+| Inventario (movs, transferencia, ajustes, conteo) | 100% | E2E asiento de costo VALE_ENTREGA cuadrado |
+| Cartera CxC/CxP | 100% | cobro/pago, sobrepago, carrera; alta manual con asiento de apertura (7414541/ab681a9) |
+| Compras (OC→CxP→Pago) | 100% | E2E completo |
+| Ventas/Comercial | 100% | descuento, asiento de costo |
+| Contabilidad/estados financieros | 100% | Balance, ER, cierre anual |
+| Caja/Banco | 100% | limite, arqueo, CRUD cuenta bancaria |
+| RRHH (asistencia, turnos, nomina) | 100% | P0-6, acumulacion vacaciones |
+| POS backend (API viva) | 100% | reserva/procesar/asiento/cierre, worker, RBAC multi-entidad |
+| Seguridad/RBAC | 100% | 26 permisos, guardia de endpoints anonimos |
+| Maestras/BD/schema | 100% | P1-1, CHECKs alineados |
+| Reportes regulatorios (MFP) | 100% | item 22: PDF/ZIP + REST |
+| Produccion | 100% | OP, equipos/mantenimiento, plan |
+| Activo Fijo | 100% | depreciacion, baja con perdida |
+| Integridad/auditoria | 100% | 0 descuadres, AuditInterceptor |
+| POS terminal web (2026-10-20/22) | 85% | venta/mixto/descuentos/devoluciones/cierre E2E; falta cola offline, descarte de ventas ERROR, concurrencia real, impresion fiscal/QR |
+| Reportes web (Balance/ER/Ratios/Dashboard) | 60% | solo Index + FinancialStatement; menu repuntado a Index (sin 404) |
+| UI web / navegacion | 75% | 6 enlaces rotos corregidos (2026-10-28): TipoObligacionFiscal CRUD nuevo, Produccion/Deviations, Dashboard/Index, Reports/Index; pantallas scaffold CRUD, ideas de dashboard pendientes |
+| POS Android | 70% | Room + WorkManager + sync + RBAC + printer; release APK del 2026-09-21 (stale), 3 tests instrumentados |
+| Despliegue/operaciones | 95% | Docker + VM + nginx + monitoring; falta CI/CD, restore drill, backups programados verificados |
+| Importacion (Versat) | 70% | controller + vista unica; sin E2E documentado |
+| Global producto | ~88% | |
+
+Deuda restante (priorizada):
+1. Menu roto: CORREGIDO 2026-10-28 (0 de 78 enlaces rotos tras crear TipoObligacionFiscalController y repuntar Produccion/Deviations, Dashboard/Index, Reports/Index).
+2. Reportes financieros web: implementar pantalla con selector de periodo/tipo y exportacion (reutilizar FinancialStatement/ExportFinancialStatement).
+3. POS web: cola offline + descarte de ventas ERROR (hoy bloquea el cierre); test de concurrencia real.
+4. Android: rebuild + firma del APK con la API actual; tests de sync.
+5. Operacion: restore drill del .bak; automatizar backups y alertar; CI minimo (build + dotnet test con BD de prueba sembrada).
+6. Moneda: tipo de cambio MLC↔CUP sin resolver (nota #6); existencias solo para 4 productos en el seed nuevo.
+
+Despliegue (hecho 2026-10-28): local y VM resembrados con el seed del repo, E2E completo (venta 810 → devolucion 405 → cierre 1405=1405, 0 descuadres, stock 99), sesion reabierta. Backups en %TEMP%\opencode\dbbackup (local) y /opt/vercom/backups (VM).
+
