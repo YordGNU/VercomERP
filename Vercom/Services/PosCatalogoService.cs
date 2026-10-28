@@ -21,9 +21,11 @@ public sealed class PosCatalogoService
         return await _pricingService.GetSalePricesAsync(entidadId, clienteId, fecha, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<PosProductoDto>> GetProductosAsync(Guid almacenId, Guid entidadId, string? search, DateTimeOffset? updatedSince, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<PosProductoDto>> GetProductosAsync(Guid almacenId, Guid entidadId, Guid? familiaId, string? search, DateTimeOffset? updatedSince, CancellationToken cancellationToken)
     {
         var query = _db.Productos.AsNoTracking().Where(x => x.Activo);
+        if (familiaId.HasValue && familiaId.Value != Guid.Empty)
+            query = query.Where(x => x.FamiliaId == familiaId.Value);
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(x => x.Codigo.Contains(search) || (x.CodigoBarras != null && x.CodigoBarras.Contains(search)) || x.Nombre.Contains(search));
         if (updatedSince.HasValue)
@@ -75,6 +77,15 @@ public sealed class PosCatalogoService
         }
 
         return items;
+    }
+
+    public async Task<IReadOnlyList<object>> GetFamiliasAsync(Guid entidadId, CancellationToken cancellationToken)
+    {
+        return await _db.FamiliaProductos.AsNoTracking()
+            .Where(x => x.EntidadId == entidadId)
+            .OrderBy(x => x.Nombre)
+            .Select(x => (object)new { id = x.Id, codigo = x.Codigo, nombre = x.Nombre })
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<object>> GetClientesAsync(Guid entidadId, CancellationToken cancellationToken)

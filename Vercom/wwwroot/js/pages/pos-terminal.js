@@ -16,7 +16,11 @@
         session: null,
         cart: [],
         busy: false,
-        searchSeq: 0
+        searchSeq: 0,
+        categories: [],
+        selectedCategory: null,
+        favorites: (function () { try { return new Set(JSON.parse(localStorage.getItem('posFavorites') || '[]')); } catch (e) { return new Set(); } })(),
+        allProducts: []
     };
 
     const el = {
@@ -27,6 +31,7 @@
         returnButton: document.getElementById('posReturn'),
         search: document.getElementById('posSearch'),
         clearSearch: document.getElementById('posClearSearch'),
+        categories: document.getElementById('posCategories'),
         results: document.getElementById('posResults'),
         hint: document.getElementById('posSearchHint'),
         cartBody: document.getElementById('posCartBody'),
@@ -156,7 +161,8 @@
         renderCart();
         el.search.value = '';
         el.results.innerHTML = '';
-        el.hint.classList.remove('d-none');
+        state.allProducts = [];
+        state.selectedCategory = null;
 
         try {
             state.config = await api('/config/terminal?dispositivoPosId=' + encodeURIComponent(id));
@@ -167,7 +173,68 @@
         }
 
         await loadSession();
+        await loadCategories();
+        await loadProducts();
         el.search.focus();
+    }
+
+    async function loadCategories() {
+        if (!state.config) return;
+        try {
+            const cats = await api('/catalogo/familias');
+            state.categories = Array.isArray(cats) ? cats : [];
+        } catch (e) {
+            state.categories = [];
+        }
+        renderCategories();
+    }
+
+    function renderCategories() {
+        if (!el.categories) return;
+        el.categories.innerHTML = '';
+
+        const chip = (label, value, active) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn btn-sm ' + (active ? 'btn-primary' : 'btn-outline-secondary') + ' rounded-pill';
+            btn.textContent = label;
+            btn.addEventListener('click', function () {
+                state.selectedCategory = value;
+                renderCategories();
+                loadProducts();
+            });
+            return btn;
+        };
+
+        el.categories.appendChild(chip('Todos', null, state.selectedCategory === null));
+        el.categories.appendChild(chip('★ Favoritos', '__fav__', state.selectedCategory === '__fav__'));
+
+        (state.categories || []).forEach(function (c) {
+            el.categories.appendChild(chip(c.nombre, c.id, state.selectedCategory === c.id));
+        });
+    }
+
+    async function loadProducts() {
+        if (!state.config) return;
+        const params = ['almacenId=' + encodeURIComponent(state.config.almacenId)];
+        if (state.selectedCategory && state.selectedCategory !== '__fav__') {
+            params.push('familiaId=' + encodeURIComponent(state.selectedCategory));
+        }
+        // search handled client-side; only fetch filtered by category
+        try {
+            const items = await api('/catalogo/productos?' + params.join('&'));
+            state.allProducts = Array.isArray(items) ? items : [];
+        } catch (e) {
+            state.allProducts = [];
+            toast('warning', 'No se pudo cargar el catálogo');
+        }
+        renderResults();
+    }
+
+    function toggleFavorite(id) {
+        if (state.favorites.has(id)) state.favorites.delete(id); else state.favorites.add(id);
+        try { localStorage.setItem('posFavorites', JSON.stringify(Array.from(state.favorites))); } catch (e) { }
+        renderResults();
     }
 
     async function loadSession() {
@@ -275,94 +342,81 @@
         }
     }
 
-    async function onSearch() {
-        const q = el.search.value.trim();
+    function onSearch() {
         if (!state.config) return;
-
-        if (q.length < 2) {
-            el.results.innerHTML = '';
-            el.hint.textContent = 'Escriba al menos 2 caracteres para buscar.';
-            el.hint.classList.remove('d-none');
-            return;
-        }
-
-        const seq = ++state.searchSeq;
-        el.hint.textContent = 'Buscando…';
-        el.hint.classList.remove('d-none');
-
-        try {
-            const items = await api('/catalogo/productos?almacenId=' + encodeURIComponent(state.config.almacenId) +
-                '&search=' + encodeURIComponent(q));
-            if (seq !== state.searchSeq) return;
-            renderResults(items || []);
-        } catch (e) {
-            if (seq !== state.searchSeq) return;
-            el.results.innerHTML = '';
-            el.hint.textContent = e.message;
-        }
+        renderResults();
     }
 
-    function renderResults(items) {
+    function renderResults() {
         el.results.innerHTML = '';
+        const q = (el.search.value || '').trim().toLowerCase();
+        let items = state.allProducts || [];
+
+        if (state.selectedCategory === '__fav__') {
+            items = items.filter(function (p) { return state.favorites.has(p.id); });
+        }
+
+        if (q.length >= 2) {
+            items = items.filter(function (p) {
+                return (p.nombre || '').toLowerCase().indexOf(q) >= 0 ||
+                    (p.codigo || '').toLowerCase().indexOf(q) >= 0 ||
+                    (p.codigoBarras || '').toLowerCase().indexOf(q) >= 0;
+            });
+        }
+
+        items = items.slice().sort(function (a, b) {
+            const fa = state.favorites.has(a.id) ? 0 : 1;
+            const fb = state.favorites.has(b.id) ? 0 : 1;
+            if (fa !== fb) return fa - fb;
+            return String(a.nombre || '').localeCompare(String(b.nombre || ''));
+        });
+
         if (!items.length) {
-            el.hint.textContent = 'Sin coincidencias.';
+            el.hint.textContent = q.length >= 2 ? 'Sin coincidencias.' : (state.allProducts.length ? 'Sin productos en esta categoria.' : 'Seleccione una categoria o escriba para buscar.');
             el.hint.classList.remove('d-none');
             return;
         }
 
         el.hint.classList.add('d-none');
-        items.slice(0, 20).forEach(function (p) {
+
+        items.slice(0, 80).forEach(function (p) {
             const sinStock = (Number(p.stock) || 0) <= 0;
             const precio = p.precioVentaActual;
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'list-group-item list-group-item-action pos-result-item' + (sinStock ? ' sin-stock' : '');
-            button.disabled = sinStock || precio == null;
-            button.innerHTML =
-                '<div class="d-flex justify-content-between align-items-center gap-2">' +
-                    '<div class="overflow-hidden">' +
-                        '<div class="fw-bold text-truncate">' + esc(p.nombre) + '</div>' +
-                        '<small class="text-muted">' + esc(p.codigo) + ' · existencia: ' + esc(p.stock) + '</small>' +
+            const isFav = state.favorites.has(p.id);
+            const col = document.createElement('div');
+            col.className = 'col-6 col-md-4 col-lg-3';
+            const card = document.createElement('div');
+            card.className = 'pos-product-card card h-100' + (sinStock ? ' sin-stock' : '') + (isFav ? ' is-fav' : '');
+            card.innerHTML =
+                '<div class="card-body p-2">' +
+                    '<div class="d-flex justify-content-between align-items-start mb-1">' +
+                        '<span class="small text-muted text-truncate" style="max-width:70%">' + esc(p.codigo) + '</span>' +
+                        '<button type="button" class="btn btn-link btn-sm p-0 pos-fav-btn" data-id="' + esc(p.id) + '" title="Favorito">' +
+                            '<i class="ti ' + (isFav ? 'ti-star-filled text-warning' : 'ti-star') + '"></i>' +
+                        '</button>' +
                     '</div>' +
-                    '<div class="text-end">' +
-                        '<div class="fw-bold text-primary">' + (precio == null ? 'Sin precio' : money(precio)) + '</div>' +
-                        (sinStock ? '<small class="text-danger">Sin existencia</small>' : '') +
+                    '<div class="fw-bold small text-truncate mb-1" title="' + esc(p.nombre) + '">' + esc(p.nombre) + '</div>' +
+                    '<div class="d-flex justify-content-between align-items-center">' +
+                        '<span class="fw-bold text-primary">' + (precio == null || !(precio > 0) ? 'Sin precio' : money(precio)) + '</span>' +
+                        '<small class="text-muted">Stock: ' + esc(p.stock) + '</small>' +
                     '</div>' +
+                    (sinStock ? '<small class="text-danger d-block mt-1">Sin existencia</small>' : '') +
                 '</div>';
-            button.addEventListener('click', function () { addToCart(p); });
-            el.results.appendChild(button);
-        });
-    }
-
-    function addToCart(product) {
-        const precio = Number(product.precioVentaActual);
-        if (!isFinite(precio) || precio < 0) {
-            fail('El producto no tiene precio de venta asignado.');
-            return;
-        }
-
-        const line = state.cart.find(function (l) { return l.productoId === product.id; });
-        const stock = Number(product.stock) || 0;
-
-        if (line) {
-            if (line.cantidad + 1 > stock) { toast('warning', 'Existencia insuficiente'); return; }
-            line.cantidad += 1;
-        } else {
-            state.cart.push({
-                productoId: product.id,
-                codigo: product.codigo,
-                nombre: product.nombre,
-                precio: precio,
-                cantidad: 1,
-                descuento: 0,
-                stock: stock
+            if (!(sinStock || precio == null || !(precio > 0))) {
+                card.style.cursor = 'pointer';
+                card.addEventListener('click', function (e) {
+                    if (e.target.closest('.pos-fav-btn')) return;
+                    addToCart(p);
+                });
+            }
+            const favBtn = card.querySelector('.pos-fav-btn');
+            favBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                toggleFavorite(p.id);
             });
-        }
-
-        renderCart();
-        el.search.value = '';
-        el.results.innerHTML = '';
-        el.search.focus();
+            col.appendChild(card);
+            el.results.appendChild(col);
+        });
     }
 
     function lineImporte(line) {
@@ -768,7 +822,7 @@
         el.returnSubmit.addEventListener('click', submitReturn);
         el.clearSearch.addEventListener('click', function () {
             el.search.value = '';
-            el.results.innerHTML = '';
+            renderResults();
             el.search.focus();
         });
 
@@ -776,7 +830,7 @@
         el.search.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                const first = el.results.querySelector('button.pos-result-item:not(:disabled)');
+                const first = el.results.querySelector('.pos-product-card:not(.sin-stock)');
                 if (first) first.click();
             }
         });

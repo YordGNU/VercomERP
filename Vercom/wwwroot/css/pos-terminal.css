@@ -27,9 +27,26 @@
     text-align: center;
 }
 
-.pos-cart-wrap .btn-icon-sm {
-    --bs-btn-padding-y: .1rem;
-    --bs-btn-padding-x: .35rem;
-    --bs-btn-font-size: .75rem;
+.pos-product-card {
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease;
+}
+
+.pos-product-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 .25rem .75rem rgba(0,0,0,.08);
+}
+
+.pos-product-card.sin-stock {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.pos-product-card.is-fav {
+    border-color: var(--bs-warning);
+}
+
+.pos-fav-btn {
     line-height: 1;
+    text-decoration: none;
 }

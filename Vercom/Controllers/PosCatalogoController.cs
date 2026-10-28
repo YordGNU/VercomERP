@@ -19,6 +19,7 @@ public sealed class PosCatalogoController : ControllerBase
     [HttpGet("productos")]
     public async Task<ActionResult<IReadOnlyList<PosProductoDto>>> GetProductos(
         [FromQuery] Guid almacenId,
+        [FromQuery] Guid? familiaId = null,
         [FromQuery] string? search = null,
         [FromQuery] DateTimeOffset? updatedSince = null,
         CancellationToken cancellationToken = default)
@@ -26,7 +27,15 @@ public sealed class PosCatalogoController : ControllerBase
         if (almacenId == Guid.Empty) return BadRequest("almacenId es obligatorio.");
         var entidadIdRaw = User.FindFirstValue("EntidadId");
         if (!Guid.TryParse(entidadIdRaw, out var entidadId) || entidadId == Guid.Empty) return Unauthorized();
-        return Ok(await _service.GetProductosAsync(almacenId, entidadId, search, updatedSince, cancellationToken));
+        return Ok(await _service.GetProductosAsync(almacenId, entidadId, familiaId, search, updatedSince, cancellationToken));
+    }
+
+    [HttpGet("familias")]
+    public async Task<ActionResult<IReadOnlyList<object>>> GetFamilias(CancellationToken cancellationToken = default)
+    {
+        var entidadIdRaw = User.FindFirstValue("EntidadId");
+        if (!Guid.TryParse(entidadIdRaw, out var entidadId) || entidadId == Guid.Empty) return Unauthorized();
+        return Ok(await _service.GetFamiliasAsync(entidadId, cancellationToken));
     }
 
     [HttpGet("precios")]
