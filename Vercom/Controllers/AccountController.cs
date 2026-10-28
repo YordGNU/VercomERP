@@ -68,6 +68,12 @@ public class AccountController : Controller
             return View();
         }
 
+        if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 6)
+        {
+            ModelState.AddModelError("", "La nueva contraseña debe tener al menos 6 caracteres.");
+            return View();
+        }
+
         var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
         var result = await _authService.ChangePasswordAsync(userId, currentPassword, newPassword);
 

@@ -95,6 +95,13 @@
                                                 </div>
                                             }
 
+                                            @if (TempData["Success"] != null)
+                                            {
+                                                <div class="alert alert-success py-2 small mb-3" role="alert">
+                                                    @TempData["Success"]
+                                                </div>
+                                            }
+
                                             <!-- Usuario -->
                                             <div class="mb-2">
                                                 <label for="username" class="form-label mb-1">Usuario</label>
