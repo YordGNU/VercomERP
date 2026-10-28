@@ -332,3 +332,12 @@ Notas LAtentes (sin acción, registradas por contexto): #4 policies con "." como
 ## Historial abreviado de trabajo previo
 - Edit-con-documento en contratos: validado end-to-end (UpdateContractAsync Succeeded, documento_url actualizado, archivo nuevo en wwwroot real, viejo borrado; harness `erp_harness_di`).
 - Revisión CxC/CxP: hallazgos #1..#6 → fixes #1 (Estado en CreateEntryAsync), #2 (guarda atómica concurrencia), #3 (saldo recalculado), forma de pago/modulo alineados a CHECKs, catálogo tipo_comprobante insertado, DDL estado PAGADA, consecutivo desde 1. Validado con harness real + revert.
+
+## Tanda 2026-10-28 - despliegue Docker local y VM (CERRADA)
+- Dockerfile: ENTRYPOINT ["dotnet","vercom.dll"] no existia en Linux (el assembly es Vercom.dll); el contenedor entraba en crash-loop. Corregido.
+- Program.cs: el JWT leido de /run/secrets/jwt_key ahora tambien se inyecta en Jwt:SecretKey; antes /POS/Token devolvia 500 en contenedor.
+- deploy.ps1: tag en minusculas (ercom-erp:<version>); Docker rechaza repositorios con mayusculas.
+- deploy-remote.sh: rutas reales de la VM (/opt/vercom, volumenes ercom_*, servicio ercom-db) y reinicio de nginx tras recrear la app (nginx cachea la IP del upstream; sintoma 502).
+- nginx: proxy_buffer_size 32k, proxy_buffers 8 32k, proxy_busy_buffers_size 64k y cabeceras 16k/32k; sin esto el POST de login falla con "upstream sent too big header" por la cookie de auth troceada.
+- Contenedor local: seed POS minimo (P-001 450, P-002 300, caja CAJA POS WEB, dispositivo POS-WEB, cuentas 900.0000/810.0000, Consumidor Final 3333...). E2E: venta 2x450 con 10% = 810, devolucion 1 = 405, cierre 405=405, stock 99, 0 descuadres.
+- VM 192.168.5.220 (/opt/vercom, APP_VERSION=latest): mismo seed y E2E; /health, /POS y /POS/Token OK tras reiniciar nginx.
