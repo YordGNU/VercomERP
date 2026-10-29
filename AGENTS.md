@@ -380,4 +380,4 @@ Deuda restante (priorizada):
 6. Moneda: tipo de cambio MLC↔CUP sin resolver (nota #6); existencias solo para 4 productos en el seed nuevo.
 
 Despliegue (hecho 2026-10-28): local y VM resembrados con el seed del repo, E2E completo (venta 810 → devolucion 405 → cierre 1405=1405, 0 descuadres, stock 99), sesion reabierta. Backups en %TEMP%\opencode\dbbackup (local) y /opt/vercom/backups (VM).
-
+- Restore drill (2026-10-29): backup local VERCOMERP-local-20261028-113542.bak restaurado en BD temporal VERCOMRESTORETEST (MOVE de data/log) + DBCC CHECKDB sin errores; 2 productos, 1 factura, 4 asientos, 0 descuadres, 1 sesion CERRADA. Procedimiento validado; RPO/RTO por definir por la administracion.
