@@ -87,12 +87,27 @@ public sealed class PosSincronizacionController : ControllerBase
         return result is null ? NotFound() : Ok(result);
     }
 
-    [HttpPost("ventas/{dispositivoPosId:guid}/{idempotencyKey}/procesar")]
+    [HttpGet("ventas/{dispositivoPosId:guid}/{idempotencyKey}/procesar")]
     public async Task<ActionResult<VentaPosPendienteDto>> Procesar(Guid dispositivoPosId, string idempotencyKey, CancellationToken cancellationToken = default)
     {
         var result = await _service.ProcesarAsync(dispositivoPosId, idempotencyKey, cancellationToken);
         if (result.Error is not null) return result.Conflict ? Conflict(result.Error) : BadRequest(result.Error);
         if (result.Result is null) return NotFound();
         return result.Conflict ? Conflict(result.Result) : Ok(result.Result);
+    }
+
+    [HttpGet("pendientes")]
+    public async Task<ActionResult<IReadOnlyList<VentaPosPendienteDto>>> Pendientes([FromQuery] Guid dispositivoPosId, CancellationToken cancellationToken = default)
+    {
+        if (dispositivoPosId == Guid.Empty) return BadRequest("dispositivoPosId es obligatorio.");
+        return Ok(await _service.PendientesAsync(dispositivoPosId, cancellationToken));
+    }
+
+    [HttpPost("ventas/{dispositivoPosId:guid}/{idempotencyKey}/descartar")]
+    public async Task<ActionResult> Descartar(Guid dispositivoPosId, string idempotencyKey, CancellationToken cancellationToken = default)
+    {
+        var result = await _service.DescartarAsync(dispositivoPosId, idempotencyKey, cancellationToken);
+        if (!result.Succeeded) return BadRequest(new { message = result.Message });
+        return Ok(new { message = result.Message });
     }
 }

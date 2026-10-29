@@ -109,6 +109,41 @@ public sealed class PosSincronizacionService
         return Map(await consulta.FirstOrDefaultAsync(cancellationToken));
     }
 
+    public async Task<IReadOnlyList<VentaPosPendienteDto>> PendientesAsync(Guid deviceId, CancellationToken cancellationToken)
+    {
+        if (deviceId == Guid.Empty) return Array.Empty<VentaPosPendienteDto>();
+        var items = await _db.PosVentaPendientes.AsNoTracking()
+            .Where(x => x.DispositivoPosId == deviceId && (x.Estado == "PENDIENTE" || x.Estado == "ERROR"))
+            .OrderByDescending(x => x.FechaRecibidoServidor)
+            .ToListAsync(cancellationToken);
+        return items.Select(Map).Where(x => x is not null).Cast<VentaPosPendienteDto>().ToList();
+    }
+
+    public async Task<(bool Succeeded, string Message)> DescartarAsync(Guid deviceId, string idempotencyKey, CancellationToken cancellationToken)
+    {
+        if (deviceId == Guid.Empty || string.IsNullOrWhiteSpace(idempotencyKey)) return (false, "Dispositivo y clave son obligatorios.");
+        var pending = await _db.PosVentaPendientes.FirstOrDefaultAsync(x => x.DispositivoPosId == deviceId && x.IdempotencyKey == idempotencyKey, cancellationToken);
+        if (pending is null) return (false, "Venta pendiente no encontrada.");
+        if (pending.Estado == "PROCESADO") return (false, "La venta ya fue procesada; no se puede descartar.");
+        pending.Estado = "DUPLICADO";
+        pending.MensajeError = "Descartada por el cajero desde el terminal web.";
+        pending.IntentosProcesamiento++;
+        try { await _db.SaveChangesAsync(cancellationToken); }
+        catch (DbUpdateException) { return (false, "No se pudo descartar la venta."); }
+        return (true, "Venta descartada.");
+    }
+
+    public async Task MarcarPendienteErrorAsync(Guid deviceId, string idempotencyKey, string mensaje, CancellationToken cancellationToken)
+    {
+        var pending = await _db.PosVentaPendientes.FirstOrDefaultAsync(x => x.DispositivoPosId == deviceId && x.IdempotencyKey == idempotencyKey, cancellationToken);
+        if (pending is null || pending.Estado != "PENDIENTE") return;
+        pending.Estado = "ERROR";
+        pending.MensajeError = mensaje;
+        pending.IntentosProcesamiento++;
+        try { await _db.SaveChangesAsync(cancellationToken); }
+        catch (DbUpdateException) { /* best effort */ }
+    }
+
     public async Task<(string? Numero, string? Error)> SiguienteNumeroAsync(Guid deviceId, string serie, CancellationToken cancellationToken)
     {
         var device = await _db.DispositivoPos.IgnoreQueryFilters().AsNoTracking()
@@ -164,7 +199,10 @@ public sealed class PosSincronizacionService
         {
             try
             {
-                return await ProcesarCoreAsync(deviceId, key, cancellationToken);
+                var resultado = await ProcesarCoreAsync(deviceId, key, cancellationToken);
+                if (resultado.Error is not null && !resultado.Conflict)
+                    await MarcarPendienteErrorAsync(deviceId, key, resultado.Error, cancellationToken);
+                return resultado;
             }
             catch (DbUpdateException ex) when (EsNumeracionDuplicada(ex))
             {
@@ -177,6 +215,9 @@ public sealed class PosSincronizacionService
                     .FirstOrDefaultAsync(p => p.DispositivoPosId == deviceId && p.IdempotencyKey == key, cancellationToken);
                 if (yaProcesada is { Estado: "PROCESADO", FacturaId: not null })
                     return (Map(yaProcesada), null, false);
+
+                await MarcarPendienteErrorAsync(deviceId, key, "Ya existe una factura con esa numeracion (serie y numero) en la entidad y sucursal de la venta.", cancellationToken);
+
 
                 return (null, "Ya existe una factura con esa numeración (serie y número) en la entidad y sucursal de la venta.", false);
             }
@@ -827,7 +868,9 @@ public sealed class PosSincronizacionService
         IdempotencyKey = x.IdempotencyKey,
         Estado = x.Estado,
         FacturaId = x.FacturaId,
-        MensajeError = x.MensajeError
+        MensajeError = x.MensajeError,
+        FechaRecibidoServidor = x.FechaRecibidoServidor,
+        SesionCajaPosId = x.SesionCajaPosId
     };
 
     private static string? Validate(VentaPosPayload? sale)

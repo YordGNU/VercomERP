@@ -29,6 +29,8 @@
         openShift: document.getElementById('posOpenShift'),
         closeShift: document.getElementById('posCloseShift'),
         returnButton: document.getElementById('posReturn'),
+        pendingButton: document.getElementById('posPending'),
+        pendingModal: document.getElementById('posPendingModal'),
         search: document.getElementById('posSearch'),
         clearSearch: document.getElementById('posClearSearch'),
         categories: document.getElementById('posCategories'),
@@ -52,6 +54,8 @@
         returnLoad: document.getElementById('posReturnLoad'),
         returnHint: document.getElementById('posReturnHint'),
         returnLines: document.getElementById('posReturnLines'),
+        pendingHint: document.getElementById('posPendingHint'),
+        pendingLines: document.getElementById('posPendingLines'),
         returnReason: document.getElementById('posReturnReason'),
         returnMethod: document.getElementById('posReturnMethod'),
         returnTotal: document.getElementById('posReturnTotal'),
@@ -247,6 +251,7 @@
             }
         }
         renderShift();
+        loadPendingCount();
     }
 
     function renderShift() {
@@ -302,6 +307,15 @@
 
     async function closeShift() {
         if (!state.session) return;
+        // Si hay ventas pendientes, mostrar el panel para reintentar/descartar antes de cerrar.
+        try {
+            const pend = await api('/sincronizacion/pendientes?dispositivoPosId=' + encodeURIComponent(state.config.dispositivoPosId));
+            if (Array.isArray(pend) && pend.length) {
+                await Swal.fire({ icon: 'warning', title: 'Ventas pendientes', html: 'Hay <b>' + pend.length + '</b> venta(s) pendiente(s). Resuelvalas (reintentar o descartar) antes de cerrar la caja.' });
+                openPending();
+                return;
+            }
+        } catch (e) { /* continuar */ }
         const s = state.session;
         const esperado = round2((s.montoApertura || 0) + (s.totalEfectivo || 0));
         const otros = round2((s.totalTransfermovil || 0) + (s.totalEnzona || 0) + (s.totalOtrosMedios || 0));
@@ -593,6 +607,7 @@
                 resetSale();
                 await loadSession();
                 toast('success', 'Venta ' + venta.serie + '-' + venta.numeroFactura + ' registrada');
+                loadPendingCount();
             } else {
                 Swal.fire({
                     icon: 'warning',
@@ -803,6 +818,113 @@
         }
     }
 
+
+    async function loadPendingCount() {
+        if (!state.config) return;
+        try {
+            const items = await api('/sincronizacion/pendientes?dispositivoPosId=' + encodeURIComponent(state.config.dispositivoPosId));
+            const n = (items || []).length;
+            if (n > 0) {
+                el.pendingButton.disabled = false;
+                el.pendingButton.innerHTML = '<i class="ti ti-clock-pause me-1"></i>Ventas pendientes <span class="badge bg-danger ms-1">' + n + '</span>';
+            } else {
+                el.pendingButton.disabled = true;
+                el.pendingButton.innerHTML = '<i class="ti ti-clock-pause me-1"></i>Ventas pendientes';
+            }
+        } catch (e) {
+            el.pendingButton.disabled = true;
+        }
+    }
+
+    function openPending() {
+        if (el.pendingButton.disabled) return;
+        bootstrap.Modal.getOrCreateInstance(el.pendingModal).show();
+        loadPending();
+    }
+
+    async function loadPending() {
+        if (!state.config) return;
+        el.pendingHint.textContent = 'Cargando...';
+        el.pendingLines.innerHTML = '';
+        try {
+            const items = await api('/sincronizacion/pendientes?dispositivoPosId=' + encodeURIComponent(state.config.dispositivoPosId));
+            renderPending(items || []);
+        } catch (e) {
+            el.pendingHint.textContent = e.message;
+        }
+    }
+
+    function renderPending(items) {
+        el.pendingLines.innerHTML = '';
+        if (!items.length) {
+            el.pendingHint.textContent = 'No hay ventas pendientes.';
+            return;
+        }
+        el.pendingHint.textContent = items.length + ' venta(s) pendiente(s). Reintente o descarte las que no se puedan procesar.';
+        items.forEach(function (p) {
+            const tr = document.createElement('tr');
+            const estadoBadge = p.estado === 'ERROR' ? 'badge bg-danger' : 'badge bg-warning text-dark';
+            tr.innerHTML =
+                '<td class="small text-monospace">' + esc(p.idempotencyKey.slice(0, 8)) + '</td>' +
+                '<td><span class="' + estadoBadge + '">' + esc(p.estado) + '</span></td>' +
+                '<td class="small">' + esc(new Date(p.fechaRecibidoServidor).toLocaleString('es-ES')) + '</td>' +
+                '<td class="small text-muted">' + esc(p.mensajeError || '-') + '</td>' +
+                '<td class="text-end">' +
+                    '<button type="button" class="btn btn-sm btn-outline-primary me-1" data-retry="' + esc(p.idempotencyKey) + '">Reintentar</button>' +
+                    '<button type="button" class="btn btn-sm btn-outline-danger" data-discard="' + esc(p.idempotencyKey) + '">Descartar</button>' +
+                '</td>';
+            el.pendingLines.appendChild(tr);
+        });
+
+        el.pendingLines.querySelectorAll('button[data-retry]').forEach(function (btn) {
+            btn.addEventListener('click', function () { retryPending(btn.dataset.retry, btn); });
+        });
+        el.pendingLines.querySelectorAll('button[data-discard]').forEach(function (btn) {
+            btn.addEventListener('click', function () { discardPending(btn.dataset.discard, btn); });
+        });
+    }
+
+    async function retryPending(key, btn) {
+        if (!state.config) return;
+        const original = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        try {
+            const r = await api('/sincronizacion/ventas/' + encodeURIComponent(state.config.dispositivoPosId) + '/' + encodeURIComponent(key) + '/procesar', { method: 'POST' });
+            if (r && r.estado === 'PROCESADO') {
+                toast('success', 'Venta procesada');
+                await loadSession();
+            } else {
+                toast('warning', (r && r.mensajeError) || 'Quedo pendiente');
+            }
+            await loadPending();
+            await loadPendingCount();
+        } catch (e) {
+            fail(e.message);
+            await loadPending();
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = original;
+        }
+    }
+
+    async function discardPending(key, btn) {
+        if (!state.config) return;
+        const ok = await Swal.fire({ title: 'Descartar venta', text: 'La venta se marcara como descartada y no se facturara. Continuar?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Descartar', cancelButtonText: 'Cancelar' });
+        if (!ok.isConfirmed) return;
+        btn.disabled = true;
+        try {
+            await api('/sincronizacion/ventas/' + encodeURIComponent(state.config.dispositivoPosId) + '/' + encodeURIComponent(key) + '/descartar', { method: 'POST' });
+            toast('success', 'Venta descartada');
+            await loadPending();
+            await loadPendingCount();
+        } catch (e) {
+            fail(e.message);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
     function bindEvents() {
         el.device.addEventListener('change', function () { selectDevice(el.device.value); });
         el.openShift.addEventListener('click', openShift);
@@ -813,6 +935,7 @@
             else el.reference.focus();
         });
         el.mixedMethod.addEventListener('change', updateChange);
+        el.pendingButton.addEventListener('click', openPending);
         el.returnButton.addEventListener('click', openReturns);
         el.returnLoad.addEventListener('click', loadReturnInvoice);
         el.returnNumber.addEventListener('keydown', function (e) {

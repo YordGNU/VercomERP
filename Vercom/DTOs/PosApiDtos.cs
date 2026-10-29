@@ -96,6 +96,8 @@ public sealed class VentaPosPendienteDto
     public string Estado { get; init; } = string.Empty;
     public Guid? FacturaId { get; init; }
     public string? MensajeError { get; init; }
+    public DateTimeOffset FechaRecibidoServidor { get; init; }
+    public Guid SesionCajaPosId { get; init; }
 }
 
 public sealed class VentaPosPayload
