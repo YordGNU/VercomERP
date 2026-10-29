@@ -211,7 +211,7 @@
         };
 
         el.categories.appendChild(chip('Todos', null, state.selectedCategory === null));
-        el.categories.appendChild(chip('★ Favoritos', '__fav__', state.selectedCategory === '__fav__'));
+        el.categories.appendChild(chip('Favoritos', '__fav__', state.selectedCategory === '__fav__'));
 
         (state.categories || []).forEach(function (c) {
             el.categories.appendChild(chip(c.nombre, c.id, state.selectedCategory === c.id));
@@ -415,11 +415,23 @@
                         '<small class="text-muted">Stock: ' + esc(p.stock) + '</small>' +
                     '</div>' +
                     (sinStock ? '<small class="text-danger d-block mt-1">Sin existencia</small>' : '') +
+                    '<button type="button" class="btn btn-sm btn-primary w-100 mt-2 pos-add-btn">+ Agregar</button>' +
                 '</div>';
+            const addBtn = card.querySelector('.pos-add-btn');
+            if (addBtn) {
+                if (sinStock || precio == null || !(precio > 0)) {
+                    addBtn.disabled = true;
+                } else {
+                    addBtn.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        addToCart(p);
+                    });
+                }
+            }
             if (!(sinStock || precio == null || !(precio > 0))) {
                 card.style.cursor = 'pointer';
                 card.addEventListener('click', function (e) {
-                    if (e.target.closest('.pos-fav-btn')) return;
+                    if (e.target.closest('.pos-fav-btn') || e.target.closest('.pos-add-btn')) return;
                     addToCart(p);
                 });
             }
