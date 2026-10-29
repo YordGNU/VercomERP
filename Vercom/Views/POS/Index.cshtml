@@ -11,6 +11,9 @@
 
     <div class="card shadow-sm border-0 mb-3">
         <div class="card-body py-2 d-flex flex-wrap align-items-center gap-3">
+            <a asp-controller="Dashboard" asp-action="Index" class="btn btn-sm btn-outline-secondary" title="Volver al panel del ERP">
+                <i class="ti ti-arrow-left me-1"></i>Menú / Panel
+            </a>
             <div class="d-flex align-items-center gap-2">
                 <label for="posDevice" class="text-muted small text-uppercase fw-bold mb-0">Terminal</label>
                 <select id="posDevice" class="form-select form-select-sm" style="min-width: 260px;" disabled>
@@ -231,5 +234,13 @@
 }
 
 @section Scripts {
+    <script>
+        // Garantizar que el menu lateral quede visible en el terminal POS
+        try {
+            var cfg = JSON.parse(sessionStorage.getItem('__THEME_CONFIG__') || '{}');
+            cfg.sidenavSize = 'default';
+            sessionStorage.setItem('__THEME_CONFIG__', JSON.stringify(cfg));
+        } catch (e) { }
+    </script>
     <script src="~/js/pages/pos-terminal.js" asp-append-version="true"></script>
 }
