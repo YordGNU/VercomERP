@@ -229,7 +229,7 @@ public partial class AppDbContext : DbContext
     {
         if (!optionsBuilder.IsConfigured)
         {
-            // Fallback para herramientas de diseño o fallos de inyección
+            // Fallback para herramientas de diseÃ±o o fallos de inyecciÃ³n
             optionsBuilder.UseSqlServer("Server=localhost;Database=VERCOMERP;User Id=sa;Password=sql2025*;TrustServerCertificate=True;MultipleActiveResultSets=true");
         }
     }
@@ -568,7 +568,7 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValueSql("(newid())")
                 .HasColumnName("id");
             entity.Property(e => e.AsientoReversionId)
-                .HasComment("RF-12: un asiento contabilizado jamás se edita ni elimina; solo se revierte mediante un nuevo asiento de ajuste enlazado aquí.")
+                .HasComment("RF-12: un asiento contabilizado jamÃ¡s se edita ni elimina; solo se revierte mediante un nuevo asiento de ajuste enlazado aquÃ­.")
                 .HasColumnName("asiento_reversion_id");
             entity.Property(e => e.Concepto).HasColumnName("concepto");
             entity.Property(e => e.CreadoEn)
@@ -864,7 +864,7 @@ public partial class AppDbContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK__certific__3213E83F2CFE0D95");
 
-            entity.ToTable("certificado_medico", "rrhh", tb => tb.HasComment("RNF-20: acceso restringido — datos de salud del trabajador, solo RR.HH. y dirección."));
+            entity.ToTable("certificado_medico", "rrhh", tb => tb.HasComment("RNF-20: acceso restringido â€” datos de salud del trabajador, solo RR.HH. y direcciÃ³n."));
 
             entity.Property(e => e.Id)
                 .HasDefaultValueSql("(newid())")
@@ -899,7 +899,7 @@ public partial class AppDbContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK__cliente__3213E83FAA15231A");
 
-            entity.ToTable("cliente", "comercial", tb => tb.HasComment("El \"cliente mostrador\" del POS (venta anónima) se modela como registro fijo con nit_o_ci=NULL, nombre_razon_social='CONSUMIDOR FINAL'."));
+            entity.ToTable("cliente", "comercial", tb => tb.HasComment("El \"cliente mostrador\" del POS (venta anÃ³nima) se modela como registro fijo con nit_o_ci=NULL, nombre_razon_social='CONSUMIDOR FINAL'."));
 
             entity.HasIndex(e => new { e.EntidadId, e.NitOCi }, "uq_cliente_nit_o_ci")
                 .IsUnique()
@@ -993,7 +993,7 @@ public partial class AppDbContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK__consecut__3213E83F59538ECE");
 
-            entity.ToTable("consecutivo", "nucleo", tb => tb.HasComment("Actualizar con SELECT ... FOR UPDATE dentro de la transacción para evitar saltos/duplicados concurrentes (POS + ERP simultáneo)."));
+            entity.ToTable("consecutivo", "nucleo", tb => tb.HasComment("Actualizar con SELECT ... FOR UPDATE dentro de la transacciÃ³n para evitar saltos/duplicados concurrentes (POS + ERP simultÃ¡neo)."));
 
             entity.HasIndex(e => new { e.EntidadId, e.SucursalId, e.TipoDocumento, e.Serie }, "UQ__consecut__F13666106111EF8C").IsUnique();
 
@@ -1979,7 +1979,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.MotivoAnulacion).HasColumnName("motivo_anulacion");
             entity.Property(e => e.NumeroFactura)
                 .HasMaxLength(30)
-                .HasComment("RNF-51: asignado vía nucleo.consecutivo con SELECT...FOR UPDATE; numeración reservada por sesión offline (ver integracion.pos_venta_pendiente) para sobrevivir cortes de red del POS.")
+                .HasComment("RNF-51: asignado vÃ­a nucleo.consecutivo con SELECT...FOR UPDATE; numeraciÃ³n reservada por sesiÃ³n offline (ver integracion.pos_venta_pendiente) para sobrevivir cortes de red del POS.")
                 .HasColumnName("numero_factura");
             entity.Property(e => e.Serie)
                 .HasMaxLength(10)
@@ -2077,7 +2077,7 @@ public partial class AppDbContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK__ficha_co__3213E83F84D992D0");
 
-            entity.ToTable("ficha_costo", "produccion", tb => tb.HasComment("RNF-40: versionada para permitir redefinición ágil ante cambios de precios de insumos."));
+            entity.ToTable("ficha_costo", "produccion", tb => tb.HasComment("RNF-40: versionada para permitir redefiniciÃ³n Ã¡gil ante cambios de precios de insumos."));
 
             entity.HasIndex(e => new { e.ProductoId, e.Version }, "UQ__ficha_co__2CC7B279602A14E8").IsUnique();
 
@@ -2156,7 +2156,7 @@ public partial class AppDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
 
-            entity.ToTable("notificacion", "nucleo", tb => tb.HasComment("Centro de notificaciones: eventos generados por el sistema (POS, inventario, seguridad) hacia la entidad, un usuario concreto o el maestro. Persistidas para mostrar bandeja e historial; además de emitirse en vivo por SignalR."));
+            entity.ToTable("notificacion", "nucleo", tb => tb.HasComment("Centro de notificaciones: eventos generados por el sistema (POS, inventario, seguridad) hacia la entidad, un usuario concreto o el maestro. Persistidas para mostrar bandeja e historial; ademÃ¡s de emitirse en vivo por SignalR."));
 
             entity.HasIndex(e => new { e.EntidadId, e.Leida, e.CreadoEn }, "IX_notificacion_entidad_leida").HasFilter("[entidad_id] IS NOT NULL");
             entity.HasIndex(e => new { e.UsuarioId, e.Leida, e.CreadoEn }, "IX_notificacion_usuario_leida").HasFilter("[usuario_id] IS NOT NULL");
@@ -2674,7 +2674,7 @@ public partial class AppDbContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK__nomina_d__3213E83F6FB41BCF");
 
-            entity.ToTable("nomina_detalle_concepto", "rrhh", tb => tb.HasComment("RNF-22: histórico salarial inalterable — no se actualiza tras CONTABILIZADA, solo se referencia para reportes probatorios."));
+            entity.ToTable("nomina_detalle_concepto", "rrhh", tb => tb.HasComment("RNF-22: histÃ³rico salarial inalterable â€” no se actualiza tras CONTABILIZADA, solo se referencia para reportes probatorios."));
 
             entity.HasIndex(e => new { e.NominaDetalleId, e.ConceptoId }, "UQ__nomina_d__7AD6F1A3AED02ED9").IsUnique();
 
@@ -3224,7 +3224,7 @@ public partial class AppDbContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK__pos_rang__3213E83F4CD36FB3");
 
-            entity.ToTable("pos_rango_numeracion", "integracion", tb => tb.HasComment("Alternativa a reservar consecutivos: el servidor asigna bloques (p.ej. 1000 números) a cada terminal al sincronizar. El terminal numera localmente dentro de su rango incluso sin conexión, preservando RNF-51 (sin duplicados ni saltos) sin depender de la red para cada venta."));
+            entity.ToTable("pos_rango_numeracion", "integracion", tb => tb.HasComment("Alternativa a reservar consecutivos: el servidor asigna bloques (p.ej. 1000 nÃºmeros) a cada terminal al sincronizar. El terminal numera localmente dentro de su rango incluso sin conexiÃ³n, preservando RNF-51 (sin duplicados ni saltos) sin depender de la red para cada venta."));
 
             entity.Property(e => e.Id)
                 .HasDefaultValueSql("(newid())")
@@ -3290,7 +3290,7 @@ public partial class AppDbContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK__pos_vent__3213E83F110240B8");
 
-            entity.ToTable("pos_venta_pendiente", "integracion", tb => tb.HasComment("RNF-02/RNF-50: la app POS crea el registro localmente con idempotency_key propio y hace upsert al reconectar. El worker de sincronización procesa PENDIENTE -> crea factura_venta -> marca PROCESADO. Reintentos seguros gracias a la clave única (dispositivo, idempotency_key)."));
+            entity.ToTable("pos_venta_pendiente", "integracion", tb => tb.HasComment("RNF-02/RNF-50: la app POS crea el registro localmente con idempotency_key propio y hace upsert al reconectar. El worker de sincronizaciÃ³n procesa PENDIENTE -> crea factura_venta -> marca PROCESADO. Reintentos seguros gracias a la clave Ãºnica (dispositivo, idempotency_key)."));
 
             entity.HasIndex(e => new { e.DispositivoPosId, e.IdempotencyKey }, "UQ__pos_vent__C11F94FFB26DE216").IsUnique();
 
@@ -3756,7 +3756,7 @@ public partial class AppDbContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK__sesion_c__3213E83F408B869D");
 
-            entity.ToTable("sesion_caja_pos", "integracion", tb => tb.HasComment("Una caja puede tener una única sesión ABIERTA, compartida por todos sus dispositivos (índice único parcial UNIQUE(caja_id) WHERE estado='ABIERTA')."));
+            entity.ToTable("sesion_caja_pos", "integracion", tb => tb.HasComment("Una caja puede tener una Ãºnica sesiÃ³n ABIERTA, compartida por todos sus dispositivos (Ã­ndice Ãºnico parcial UNIQUE(caja_id) WHERE estado='ABIERTA')."));
 
             entity.HasIndex(e => new { e.DispositivoPosId, e.Estado }, "idx_sesion_caja_dispositivo");
 
@@ -4345,13 +4345,13 @@ public partial class AppDbContext : DbContext
             var parameter = System.Linq.Expressions.Expression.Parameter(entityType.ClrType, "e");
             System.Linq.Expressions.Expression? filterBody = null;
 
-            // Referencias dinámicas a propiedades del Contexto (EF las convertirá en parámetros SQL)
+            // Referencias dinÃ¡micas a propiedades del Contexto (EF las convertirÃ¡ en parÃ¡metros SQL)
             var contextExpr = System.Linq.Expressions.Expression.Constant(this);
             var isMasterExpr = System.Linq.Expressions.Expression.Property(contextExpr, nameof(IsMaster));
             var currentEntidadIdExpr = System.Linq.Expressions.Expression.Property(contextExpr, nameof(CurrentEntidadId));
             var currentSucursalIdExpr = System.Linq.Expressions.Expression.Property(contextExpr, nameof(CurrentSucursalId));
 
-            // Función local para comparar Guids de forma segura (maneja Nullables)
+            // FunciÃ³n local para comparar Guids de forma segura (maneja Nullables)
             System.Linq.Expressions.Expression SafeEqual(System.Linq.Expressions.Expression left, System.Linq.Expressions.Expression right)
             {
                 if (left.Type != right.Type)
@@ -4364,7 +4364,7 @@ public partial class AppDbContext : DbContext
                 return System.Linq.Expressions.Expression.Equal(left, right);
             }
 
-            // 1. Aislamiento por Entidad (Directo o Jerárquico para silenciar warnings 10622)
+            // 1. Aislamiento por Entidad (Directo o JerÃ¡rquico para silenciar warnings 10622)
             var entidadIdProp = entityType.FindProperty("EntidadId");
             if (entidadIdProp != null)
             {
@@ -4380,7 +4380,7 @@ public partial class AppDbContext : DbContext
             }
             else
             {
-                // Estrategia Jerárquica: Buscar el ancestro más cercano que tenga EntidadId (Máx 2 niveles)
+                // Estrategia JerÃ¡rquica: Buscar el ancestro mÃ¡s cercano que tenga EntidadId (MÃ¡x 2 niveles)
                 var parentNav = entityType.GetNavigations()
                     .FirstOrDefault(n => n.ForeignKey.DeclaringEntityType == entityType && n.ForeignKey.IsRequired);
 
@@ -4410,7 +4410,7 @@ public partial class AppDbContext : DbContext
                 }
             }
 
-            // 2. Aplicar Excepción para el Usuario Master (Ve todo) y Sellar Filtro
+            // 2. Aplicar ExcepciÃ³n para el Usuario Master (Ve todo) y Sellar Filtro
             if (filterBody != null)
             {
                 var finalFilter = System.Linq.Expressions.Expression.OrElse(isMasterExpr, filterBody);
