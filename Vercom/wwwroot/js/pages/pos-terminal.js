@@ -361,6 +361,32 @@
         renderResults();
     }
 
+    function addToCart(product) {
+        const precio = Number(product.precioVentaActual);
+        if (!isFinite(precio) || precio < 0) {
+            fail('El producto no tiene precio de venta asignado.');
+            return;
+        }
+        const line = state.cart.find(function (l) { return l.productoId === product.id; });
+        const stock = Number(product.stock) || 0;
+
+        if (line) {
+            if (line.cantidad + 1 > stock) { toast('warning', 'Existencia insuficiente'); return; }
+            line.cantidad += 1;
+        } else {
+            state.cart.push({
+                productoId: product.id,
+                codigo: product.codigo,
+                nombre: product.nombre,
+                precio: precio,
+                cantidad: 1,
+                descuento: 0,
+                stock: stock
+            });
+        }
+        renderCart();
+    }
+
     function renderResults() {
         el.results.innerHTML = '';
         const q = (el.search.value || '').trim().toLowerCase();
