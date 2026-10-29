@@ -4427,7 +4427,7 @@ EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Alternativa a 
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'RNF-02/RNF-50: la app POS crea el registro localmente con idempotency_key propio y hace upsert al reconectar. El worker de sincronización procesa PENDIENTE -> crea factura_venta -> marca PROCESADO. Reintentos seguros gracias a la clave única (dispositivo, idempotency_key).' , @level0type=N'SCHEMA',@level0name=N'integracion', @level1type=N'TABLE',@level1name=N'pos_venta_pendiente'
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Una caja puede tener una Ãºnica sesiÃ³n ABIERTA, compartida por todos sus dispositivos (UNIQUE(caja_id) WHERE estado=''ABIERTA'').' , @level0type=N'SCHEMA',@level0name=N'integracion', @level1type=N'TABLE',@level1name=N'sesion_caja_pos'
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Una caja puede tener una única sesión ABIERTA, compartida por todos sus dispositivos (UNIQUE(caja_id) WHERE estado=''ABIERTA'').' , @level0type=N'SCHEMA',@level0name=N'integracion', @level1type=N'TABLE',@level1name=N'sesion_caja_pos'
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Actualizar con SELECT ... FOR UPDATE dentro de la transacción para evitar saltos/duplicados concurrentes (POS + ERP simultáneo).' , @level0type=N'SCHEMA',@level0name=N'nucleo', @level1type=N'TABLE',@level1name=N'consecutivo'
 GO
@@ -4441,7 +4441,7 @@ EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'RNF-22: histó
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Equivalente a modelo SC-4-08 u oficial vigente MTSS.' , @level0type=N'SCHEMA',@level0name=N'rrhh', @level1type=N'TABLE',@level1name=N'registro_salario_tiempo_servicio'
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'ConciliaciÃ³n de arqueo de caja POS: diferencia declarada vs sistema y su estado contable (item 21).' , @level0type=N'SCHEMA',@level0name=N'contabilidad', @level1type=N'VIEW',@level1name=N'v_arqueo_caja'
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Conciliación de arqueo de caja POS: diferencia declarada vs sistema y su estado contable (item 21).' , @level0type=N'SCHEMA',@level0name=N'contabilidad', @level1type=N'VIEW',@level1name=N'v_arqueo_caja'
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Base para balance general y estado de resultados. Los reportes NCC (RF-13) se construyen agregando esta vista por clase de cuenta.' , @level0type=N'SCHEMA',@level0name=N'contabilidad', @level1type=N'VIEW',@level1name=N'v_saldo_cuenta'
 GO
