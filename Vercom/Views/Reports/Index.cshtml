@@ -1,9 +1,9 @@
-@model Vercom.ViewModels.ReportsIndexViewModel
+@model VERCOM.ViewModels.ReportsIndexViewModel
 @{
     ViewBag.Title = Model.Title;
 }
 
-@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Reportes Oficiales y Fiscales", Subtitle = "Consolidación de estados financieros y cumplimiento normativo ante la ONAT.", Icon = "ti-file", Tone = "primary" }; }
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Reportes Oficiales y Fiscales", Subtitle = "Consolidación de estados financieros y cumplimiento normativo ante la ONAT.", Icon = "ti-file"}; }
 <partial name='_PageHeader' model='pageHeader' />
 
 
@@ -136,6 +136,17 @@
             const button = event.relatedTarget;
             const type = button.getAttribute('data-type');
             document.getElementById('reportType').value = type;
+        });
+        const reportForm = reportModal.querySelector('form');
+        reportForm.addEventListener('submit', event => {
+            const format = reportForm.querySelector('input[name="format"]:checked')?.value;
+            if (format === 'PDF') {
+                event.preventDefault();
+                const periodId = reportForm.querySelector('select[name="periodId"]').value;
+                const type = document.getElementById('reportType').value;
+                const url = '@Url.Action("ExportFinancialStatementPdf", "Reports")' + '?periodId=' + encodeURIComponent(periodId) + '&type=' + encodeURIComponent(type);
+                window.open(url, '_blank');
+            }
         });
     </script>
 }

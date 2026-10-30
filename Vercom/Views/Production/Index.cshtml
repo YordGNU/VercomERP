@@ -1,7 +1,7 @@
-@model IEnumerable<Vercom.Models.OrdenProduccion>
+@model IEnumerable<VERCOM.Models.OrdenProduccion>
 @{ ViewBag.Title = "Monitor de Planta"; }
 
-@{ var headerActions = "<a href='" + Url.Action("Plans") + "' class='btn btn-sm btn-outline-primary me-1'><i class='ti ti-calendar-event me-1'></i> PLANES DE PRODUCCIÓN</a><a href='" + Url.Action("CreateOrder") + "' class='btn btn-sm btn-primary'><i class='ti ti-settings-plus me-1'></i> NUEVA ORDEN DE TRABAJO</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Monitor de Planta: Órdenes de Producción", Subtitle = "Seguimiento en tiempo real del flujo de fabricación y cumplimiento de metas.", Icon = "ti-settings-plus", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Plans") + "' class='btn btn-sm btn-outline-primary me-1'><i class='ti ti-calendar-event me-1'></i> PLANES DE PRODUCCIÓN</a><a href='" + Url.Action("CreateOrder") + "' class='btn btn-sm btn-primary'><i class='ti ti-settings-plus me-1'></i> NUEVA ORDEN DE TRABAJO</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Monitor de Planta: Órdenes de Producción", Subtitle = "Seguimiento en tiempo real del flujo de fabricación y cumplimiento de metas.", Icon = "ti-settings-plus", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' /><div class="row">
     <div class="row row-cards">
         @foreach (var item in Model.OrderByDescending(o => o.CreadoEn))
@@ -39,7 +39,7 @@
                             @if(item.Estado == "EN_PROCESO") {
                                 <div class="progress progress-xs mt-3">
                                     @{ var progress = (item.CantidadPlanificada > 0) ? (item.CantidadProducida / item.CantidadPlanificada * 100) : 0; }
-                                    <div class="progress-bar bg-info" style="width: @progress%"></div>
+                                    <div class="progress-bar bg-info" style="width: @progress.ToString("N0")%"></div>
                                 </div>
                             }
                         </div>

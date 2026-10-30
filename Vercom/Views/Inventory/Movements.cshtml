@@ -1,9 +1,9 @@
-@model IEnumerable<Vercom.Models.MovimientoInventario>
+@model IEnumerable<VERCOM.Models.MovimientoInventario>
 @{
     ViewBag.Title = "Registro de Movimientos";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("CreateMovement") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-plus me-1'></i> REGISTRAR OPERACIÓN</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Bitácora y Trazabilidad de Almacén", Subtitle = "Historial completo de entradas, salidas y transferencias internas.", Icon = "ti-plus", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("CreateMovement") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-plus me-1'></i> REGISTRAR OPERACIÓN</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Bitácora y Trazabilidad de Almacén", Subtitle = "Historial completo de entradas, salidas y transferencias internas.", Icon = "ti-plus", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

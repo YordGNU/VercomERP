@@ -2,11 +2,11 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using Vercom.Models;
-using Vercom.ViewModels;
+using VERCOM.Models;
+using VERCOM.ViewModels;
 using BC = BCrypt.Net.BCrypt;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public interface IAuthService
 {

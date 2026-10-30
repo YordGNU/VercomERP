@@ -1,0 +1,89 @@
+name: Build & Push VercomERP
+
+on:
+  push:
+    branches: [ main, develop ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/vercom-erp
+
+jobs:
+  # ============================================================
+  # 1. Compilar y testear
+  # ============================================================
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore Vercom/Vercom.csproj
+
+      - name: Build
+        run: dotnet build Vercom/Vercom.csproj --no-restore -c Release
+
+      - name: Test (si existen)
+        run: |
+          if ls Vercom.Tests/*.csproj 1> /dev/null 2>&1; then
+            dotnet test Vercom.Tests/Vercom.Tests.csproj --no-restore -c Release
+          else
+            echo "Sin proyecto de tests todavia"
+          fi
+
+  # ============================================================
+  # 2. Construir y publicar imagen Docker en GHCR
+  # ============================================================
+  docker:
+    name: Docker Build & Push
+    needs: build-test
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login a GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=sha-,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build & Push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./Vercom
+          file: ./Vercom/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_CONFIGURATION=Release

@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Vercom.DTOs;
-using Vercom.Models;
-using Vercom.ViewModels;
+using VERCOM.DTOs;
+using VERCOM.Models;
+using VERCOM.ViewModels;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public interface IPosService
 {
@@ -13,7 +13,8 @@ public interface IPosService
     Task<IEnumerable<DispositivoPo>> GetDevicesAsync();
     Task<DispositivoPo?> GetDeviceByIdAsync(Guid id);
     Task<DispositivoPosFormViewModel> GetDeviceFormContextAsync(DispositivoPo? existing = null);
-    Task<(bool Succeeded, string Message)> SaveDeviceAsync(DispositivoPo device);
+    Task<(IEnumerable<SelectListItem> Almacenes, IEnumerable<SelectListItem> Cajas)> GetUbicacionesPorSucursalAsync(Guid sucursalId);
+    Task<(bool Succeeded, string Message)> SaveDeviceAsync(DispositivoPo device, Guid? entidadId = null);
     Task<(bool Succeeded, string? Message)> HeartbeatAsync(Guid dispositivoPosId);
 
     // Sesiones
@@ -25,10 +26,8 @@ public interface IPosService
     Task<IEnumerable<PosVentaPendiente>> GetPendingSalesAsync();
     Task<PosVentaPendiente?> GetPendingSaleByIdAsync(Guid id);
     Task<(bool Succeeded, string Message)> ProcessPendingSaleAsync(Guid pendingId);
-    Task<(bool Succeeded, string Message)> QueuePendingSalesAsync(List<Vercom.DTOs.OperacionRequestDto> operaciones);
 
     // Numeración
-    Task<(string Serie, long Desde, long Hasta)> ReserveNumberRangeAsync(Guid dispositivoId, string serie, int cantidad);
     Task<IEnumerable<PosRangoNumeracion>> GetRangesAsync();
 
     // Sincronización de Datos (Master Data para POS)
@@ -71,34 +70,84 @@ public class PosService : IPosService
 
     public async Task<DispositivoPosFormViewModel> GetDeviceFormContextAsync(DispositivoPo? existing = null)
     {
-        var entidadId = EntidadId();
-        IQueryable<Sucursal> sucursales = _context.Sucursals.Where(s => s.Activo);
-        IQueryable<Almacen> almacenes = _context.Almacens.Where(a => a.Activo);
-        IQueryable<Caja> cajas = _context.Cajas.Where(c => c.Activa);
-        if (entidadId.HasValue)
-        {
-            sucursales = sucursales.Where(s => s.EntidadId == entidadId.Value);
-            almacenes = almacenes.Where(a => a.EntidadId == entidadId.Value);
-            cajas = cajas.Where(c => c.EntidadId == entidadId.Value);
-        }
+        // La entidad no se elige: sale del usuario (o de la sesión, en MASTER). La cascada es
+        // sucursal -> cajas/almacenes, y para un usuario con sucursal asignada esa es la suya.
+        var entidad = existing is { EntidadId: var e } && e != Guid.Empty ? e : _entidadProvider.CurrentEntidadId;
+        var sucursalUsuario = _entidadProvider.IsMaster ? null : _entidadProvider.CurrentSucursalId;
+        var sucursal = existing is { SucursalId: var s } && s != Guid.Empty ? s : sucursalUsuario;
+
+        var sucursales = await _context.Sucursals
+            .Where(x => x.Activo && x.EntidadId == entidad)
+            .Where(x => sucursalUsuario == null || x.Id == sucursalUsuario || x.Id == sucursal)
+            .OrderBy(x => x.Nombre)
+            .Select(x => new SelectListItem(x.Nombre, x.Id.ToString()))
+            .ToListAsync();
+
+        var ubicaciones = sucursal.HasValue
+            ? await GetUbicacionesPorSucursalAsync(sucursal.Value)
+            : (Almacenes: (IEnumerable<SelectListItem>)new List<SelectListItem>(),
+               Cajas: (IEnumerable<SelectListItem>)new List<SelectListItem>());
 
         return new DispositivoPosFormViewModel
         {
-            Dispositivo = existing ?? new DispositivoPo { Estado = "ACTIVO" },
-            Sucursales = new SelectList(await sucursales.OrderBy(s => s.Nombre).ToListAsync(), "Id", "Nombre"),
-            Almacenes = new SelectList(await almacenes.OrderBy(a => a.Nombre).ToListAsync(), "Id", "Nombre"),
-            Cajas = new SelectList(await cajas.OrderBy(c => c.Nombre).ToListAsync(), "Id", "Nombre")
+            Dispositivo = existing ?? new DispositivoPo
+            {
+                Estado = "ACTIVO",
+                EntidadId = entidad,
+                SucursalId = sucursalUsuario ?? Guid.Empty
+            },
+            EntidadNombre = entidad == Guid.Empty
+                ? null
+                : await _context.Entidads.Where(x => x.Id == entidad)
+                    .Select(x => x.NombreComercial ?? x.RazonSocial).FirstOrDefaultAsync(),
+            Sucursales = sucursales,
+            Almacenes = ubicaciones.Almacenes,
+            Cajas = ubicaciones.Cajas
         };
     }
 
-    public async Task<(bool Succeeded, string Message)> SaveDeviceAsync(DispositivoPo device)
+    // Cajas y almacenes de una sucursal concreta: alimenta la carga dinámica del formulario.
+    public async Task<(IEnumerable<SelectListItem> Almacenes, IEnumerable<SelectListItem> Cajas)> GetUbicacionesPorSucursalAsync(Guid sucursalId)
+    {
+        if (sucursalId == Guid.Empty)
+            return (new List<SelectListItem>(), new List<SelectListItem>());
+
+        var almacenes = await _context.Almacens.Where(a => a.Activo && a.SucursalId == sucursalId)
+            .OrderBy(a => a.Nombre).Select(a => new SelectListItem(a.Nombre, a.Id.ToString())).ToListAsync();
+        var cajas = await _context.Cajas.Where(c => c.Activa && c.SucursalId == sucursalId)
+            .OrderBy(c => c.Nombre).Select(c => new SelectListItem(c.Nombre, c.Id.ToString())).ToListAsync();
+
+        return (almacenes, cajas);
+    }
+
+    public async Task<(bool Succeeded, string Message)> SaveDeviceAsync(DispositivoPo device, Guid? entidadId = null)
     {
         try
         {
+            var entidad = entidadId is { } id && id != Guid.Empty ? id : _entidadProvider.CurrentEntidadId;
+            if (entidad == Guid.Empty)
+                return (false, "El usuario no tiene una entidad asignada; no se puede registrar el terminal.");
+
+            if (device.SucursalId == Guid.Empty || device.AlmacenId == Guid.Empty || device.CajaId == Guid.Empty)
+                return (false, "Seleccione sucursal, almacén y caja del terminal.");
+
+            var sucursal = await _context.Sucursals.FirstOrDefaultAsync(s => s.Id == device.SucursalId && s.EntidadId == entidad);
+            if (sucursal == null)
+                return (false, "La sucursal seleccionada no pertenece a la entidad del usuario.");
+
+            var sucursalUsuario = _entidadProvider.IsMaster ? null : _entidadProvider.CurrentSucursalId;
+            if (sucursalUsuario.HasValue && sucursalUsuario.Value != device.SucursalId)
+                return (false, "Solo puede registrar terminales en su sucursal asignada.");
+
+            if (!await _context.Almacens.AnyAsync(a => a.Id == device.AlmacenId && a.SucursalId == device.SucursalId))
+                return (false, "El almacén seleccionado no pertenece a la sucursal del terminal.");
+            if (!await _context.Cajas.AnyAsync(c => c.Id == device.CajaId && c.SucursalId == device.SucursalId))
+                return (false, "La caja seleccionada no pertenece a la sucursal del terminal.");
+
             if (device.Id == Guid.Empty)
             {
                 device.Id = Guid.NewGuid();
-                device.EntidadId = _entidadProvider.CurrentEntidadId;
+                device.EntidadId = entidad;
                 device.CreadoEn = DateTimeOffset.UtcNow;
                 _context.DispositivoPos.Add(device);
             }
@@ -107,7 +156,7 @@ public class PosService : IPosService
                 var existing = await _context.DispositivoPos.FindAsync(device.Id);
                 if (existing == null) return (false, "No existe.");
                 _context.Entry(existing).CurrentValues.SetValues(device);
-                existing.EntidadId = _entidadProvider.CurrentEntidadId;
+                existing.EntidadId = entidad;
             }
             await _context.SaveChangesAsync();
             return (true, "Dispositivo guardado.");
@@ -225,117 +274,17 @@ public class PosService : IPosService
         if (pending.Estado == "PROCESADO") return (true, "La venta ya estaba procesada.");
         if (pending.Estado != "PENDIENTE") return (false, $"La venta está en estado {pending.Estado} y no se puede procesar.");
 
-        // Formato nuevo (VentaPosPayload): procesar de forma síncrona reutilizando el flujo
-        // transaccional del API (valida sesión, existencias, crea factura y mueve inventario).
-        if (pending.PayloadJson.IndexOf("TipoMovimientoId", StringComparison.OrdinalIgnoreCase) >= 0)
-        {
-            using var scope = _serviceScopeFactory.CreateScope();
-            var sync = scope.ServiceProvider.GetRequiredService<PosSincronizacionService>();
-            var result = await sync.ProcesarAsync(pending.DispositivoPosId, pending.IdempotencyKey, CancellationToken.None);
-            if (result.Error is not null) return (false, result.Error);
-            return result.Result!.Estado == "PROCESADO"
-                ? (true, "Venta procesada correctamente.")
-                : (true, "La venta quedó pendiente.");
-        }
-
-        // Formato legacy: lo toma el worker de sincronización en el siguiente barrido (hasta 30s).
-        return (true, "Venta legacy encargada al procesador en segundo plano (hasta 30 segundos).");
-    }
-
-    public async Task<(bool Succeeded, string Message)> QueuePendingSalesAsync(List<Vercom.DTOs.OperacionRequestDto> operaciones)
-    {
-        try
-        {
-            foreach (var op in operaciones)
-            {
-                var deviceId = Guid.Parse(op.TerminalId ?? Guid.Empty.ToString());
-                var existe = await _context.PosVentaPendientes
-                    .AnyAsync(p => p.IdempotencyKey == op.LocalId.ToString() && p.DispositivoPosId == deviceId);
-
-                if (existe) continue;
-
-                var pendiente = new PosVentaPendiente
-                {
-                    Id = Guid.NewGuid(),
-                    DispositivoPosId = deviceId,
-                    IdempotencyKey = op.LocalId.ToString(),
-                    PayloadJson = System.Text.Json.JsonSerializer.Serialize(op),
-                    Estado = "PENDIENTE",
-                    FechaRecibidoServidor = DateTimeOffset.Now,
-                    FechaVentaLocal = op.Fecha ?? DateTimeOffset.Now
-                };
-
-                _context.PosVentaPendientes.Add(pendiente);
-            }
-
-            await _context.SaveChangesAsync();
-            return (true, "Operaciones encoladas correctamente.");
-        }
-        catch (Exception ex) { return (false, ex.Message); }
-    }
-
-    public async Task<(string Serie, long Desde, long Hasta)> ReserveNumberRangeAsync(Guid dispositivoId, string serie, int cantidad)
-    {
-        var dispositivo = await _context.DispositivoPos.FindAsync(dispositivoId);
-        if (dispositivo == null) throw new Exception("Dispositivo no registrado");
-        if (cantidad <= 0 || cantidad > 100000) throw new Exception("La cantidad reservada debe estar entre 1 y 100000.");
-
-        // Reserva atómica: UPDLOCK en la misma transacción garantiza exclusión mutua
-        // entre dispositivos de la sucursal y evita reservas duplicadas.
-        await using var transaction = await _context.Database.BeginTransactionAsync();
-        var sql = @"
-            SELECT * FROM nucleo.consecutivo WITH (UPDLOCK, ROWLOCK)
-            WHERE entidad_id = {0}
-            AND (sucursal_id = {1} OR ({1} IS NULL AND sucursal_id IS NULL))
-            AND tipo_documento = {2}
-            AND serie = {3}";
-
-        var consecutivo = await _context.Consecutivos
-            .FromSqlRaw(sql, dispositivo.EntidadId, (object?)dispositivo.SucursalId ?? DBNull.Value, Vercom.Helpers.DocumentoTipo.FacturaVenta, serie)
-            .FirstOrDefaultAsync();
-
-        long start;
-        if (consecutivo == null)
-        {
-            consecutivo = new Consecutivo
-            {
-                EntidadId = dispositivo.EntidadId,
-                SucursalId = dispositivo.SucursalId,
-                TipoDocumento = Vercom.Helpers.DocumentoTipo.FacturaVenta,
-                Serie = serie,
-                UltimoNumero = 1,
-                LongitudPadding = 8,
-                ActualizadoEn = DateTimeOffset.Now
-            };
-            _context.Consecutivos.Add(consecutivo);
-            start = 1;
-        }
-        else
-        {
-            start = consecutivo.UltimoNumero + 1;
-        }
-
-        var end = start + cantidad - 1;
-        consecutivo.UltimoNumero = end;
-        consecutivo.ActualizadoEn = DateTimeOffset.Now;
-
-        var reserva = new PosRangoNumeracion
-        {
-            Id = Guid.NewGuid(),
-            DispositivoPosId = dispositivoId,
-            Serie = serie,
-            NumeroDesde = (int)start,
-            NumeroHasta = (int)end,
-            NumeroSiguienteLocal = (int)start,
-            AsignadoEn = DateTimeOffset.Now,
-            Agotado = false
-        };
-
-        _context.PosRangoNumeracions.Add(reserva);
-        await _context.SaveChangesAsync();
-        await transaction.CommitAsync();
-
-        return (serie, start, end);
+        // Se procesa de forma síncrona reutilizando el mismo flujo transaccional que la API
+        // JWT (valida sesión, existencias, crea factura, mueve inventario y contabiliza).
+        // Un payload de un formato anterior al actual no se procesa: ProcesarAsync lo rechaza
+        // con el motivo concreto en vez de encolarlo a un procesador que ya no existe.
+        using var scope = _serviceScopeFactory.CreateScope();
+        var sync = scope.ServiceProvider.GetRequiredService<PosSincronizacionService>();
+        var result = await sync.ProcesarAsync(pending.DispositivoPosId, pending.IdempotencyKey, CancellationToken.None);
+        if (result.Error is not null) return (false, result.Error);
+        return result.Result!.Estado == "PROCESADO"
+            ? (true, "Venta procesada correctamente.")
+            : (true, "La venta quedó pendiente.");
     }
 
     public async Task<IReadOnlyList<PosCatalogoProductoDto>> GetCatalogForPosAsync(DateTimeOffset? updatedSince, Guid? clienteId = null)

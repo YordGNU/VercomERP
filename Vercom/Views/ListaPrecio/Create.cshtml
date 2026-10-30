@@ -1,9 +1,9 @@
-@model Vercom.ViewModels.ListaPrecioFormViewModel
+@model VERCOM.ViewModels.ListaPrecioFormViewModel
 @{
     ViewBag.Title = "Nueva Lista de Precios";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti ti-arrow-left me-1'></i> Volver</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Ventas", Title = "Definir Nueva Lista de Precios", Subtitle = "Gestión de tarifas y condiciones comerciales personalizadas.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti ti-arrow-left me-1'></i> Volver</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Ventas", Title = "Definir Nueva Lista de Precios", Subtitle = "Gestión de tarifas y condiciones comerciales personalizadas.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 <div class="row mt-4">

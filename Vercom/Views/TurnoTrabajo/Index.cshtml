@@ -1,7 +1,7 @@
-@model IEnumerable<Vercom.Models.TurnoTrabajo>
+@model IEnumerable<VERCOM.Models.TurnoTrabajo>
 @{ ViewBag.Title = "Turnos de Trabajo"; }
 
-@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVO TURNO</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = "Turnos de Trabajo", Subtitle = "Configuración de jornadas para control de retardos y asistencia.", Icon = "ti-clock", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVO TURNO</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = "Turnos de Trabajo", Subtitle = "Configuración de jornadas para control de retardos y asistencia.", Icon = "ti-clock", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

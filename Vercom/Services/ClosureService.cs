@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using Vercom.Helpers;
-using Vercom.Models;
+using VERCOM.Helpers;
+using VERCOM.Models;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public interface IClosureService
 {

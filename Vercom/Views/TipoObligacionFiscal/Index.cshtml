@@ -1,0 +1,65 @@
+@model IEnumerable<VERCOM.Models.TipoObligacionFiscal>
+@{
+    ViewBag.Title = "Tipos de Obligación Fiscal";
+}
+
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Tipos de Obligación Fiscal", Subtitle = "Nomenclador de obligaciones fiscales (ONAT) por periodicidad y tasa.", Icon = "ti-file-invoice" }; }
+<partial name='_PageHeader' model='pageHeader' />
+
+<div class="row">
+    <div class="card">
+        <div class="card-header border-light justify-content-between d-flex align-items-center">
+            <h5 class="m-0 fw-bold"><i class="ti ti-file-invoice me-2 text-primary"></i>Obligaciones Registradas</h5>
+            <a asp-action="Create" class="btn btn-primary btn-sm"><i class="ti ti-plus me-1"></i>Nueva</a>
+        </div>
+        <div class="card-body">
+            @if (TempData["Success"] != null) { <div class="alert alert-success">@TempData["Success"]</div> }
+            @if (TempData["Error"] != null) { <div class="alert alert-danger">@TempData["Error"]</div> }
+            <table id="obligTable" class="table table-striped table-hover dt-responsive">
+                <thead class="thead-sm text-uppercase fs-xxs">
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Periodicidad</th>
+                        <th>Tasa</th>
+                        <th>Base Legal</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="text-numeric fw-bold text-primary">@item.Codigo</td>
+                            <td class="fw-semibold">@item.Nombre</td>
+                            <td>@item.Periodicidad</td>
+                            <td>@(item.TasaActual?.ToString("0.####") ?? "-")</td>
+                            <td class="small">@item.BaseLegal</td>
+                            <td>
+                                <div class="d-flex justify-content-center gap-1">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-light btn-icon btn-sm rounded-circle" title="Editar"><i class="ti ti-edit"></i></a>
+                                    <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar esta obligación?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-light btn-icon btn-sm rounded-circle text-danger" title="Eliminar"><i class="ti ti-trash"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#obligTable').DataTable({
+                language: { url: '@Url.Content("~/lib/i18n/es-ES.json")' },
+                order: [[1, 'asc']],
+                dom: '<"row align-items-center"<"col-md-6"l><"col-md-6"f>>rt<"row align-items-center"<"col-md-5"i><"col-md-7"p>>',
+            });
+        });
+    </script>
+}

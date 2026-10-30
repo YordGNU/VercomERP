@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
 using System.Threading.Tasks;
 
-namespace Vercom.Hubs;
+namespace VERCOM.Hubs;
 
 public class NotificationHub : Hub
 {

@@ -1,0 +1,52 @@
+.pos-results {
+    max-height: 52vh;
+    overflow-y: auto;
+}
+
+.pos-result-item {
+    cursor: pointer;
+}
+
+.pos-result-item:hover,
+.pos-result-item:focus {
+    background: rgba(var(--bs-primary-rgb), .06);
+}
+
+.pos-result-item.sin-stock {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.pos-cart-wrap {
+    max-height: 42vh;
+    overflow-y: auto;
+}
+
+.pos-qty {
+    width: 52px;
+    text-align: center;
+}
+
+.pos-product-card {
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease;
+}
+
+.pos-product-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 .25rem .75rem rgba(0,0,0,.08);
+}
+
+.pos-product-card.sin-stock {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.pos-product-card.is-fav {
+    border-color: var(--bs-warning);
+}
+
+.pos-fav-btn {
+    line-height: 1;
+    text-decoration: none;
+}

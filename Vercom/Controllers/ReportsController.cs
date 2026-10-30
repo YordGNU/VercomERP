@@ -2,12 +2,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Vercom.Models;
-using Vercom.Security;
-using Vercom.Services;
-using Vercom.ViewModels;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
+using VERCOM.Models;
+using VERCOM.Security;
+using VERCOM.Services;
+using VERCOM.ViewModels;
 
-namespace Vercom.Controllers;
+namespace VERCOM.Controllers;
 
 [Authorize]
 public class ReportsController : Controller
@@ -51,6 +54,9 @@ public class ReportsController : Controller
             ? await _intelligenceService.GetBalanceGeneralContextAsync(_entidadProvider.CurrentEntidadId, periodId)
             : await _intelligenceService.GetEstadoResultadosContextAsync(_entidadProvider.CurrentEntidadId, periodId);
 
+        vm.PeriodId = periodId;
+        vm.ReportType = type;
+
         return View("FinancialReport", vm);
     }
 
@@ -67,6 +73,73 @@ public class ReportsController : Controller
 
         var csv = _exportService.ExportToCsv(data);
         return File(csv, "text/csv", $"Reporte_{type}_{vm.PeriodName.Replace("/", "_")}.csv");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportFinancialStatementPdf(Guid periodId, string type)
+    {
+        QuestPDF.Settings.License = LicenseType.Community;
+
+        var vm = type == "BALANCE"
+            ? await _intelligenceService.GetBalanceGeneralContextAsync(_entidadProvider.CurrentEntidadId, periodId)
+            : await _intelligenceService.GetEstadoResultadosContextAsync(_entidadProvider.CurrentEntidadId, periodId);
+
+        var document = Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(1.5f, Unit.Centimetre);
+                page.Header().AlignCenter().Column(col =>
+                {
+                    col.Item().Text(vm.EntityName).FontSize(14).Bold();
+                    col.Item().Text(vm.ReportName).FontSize(12).FontColor(Colors.Grey.Darken2);
+                    col.Item().Text($"AL CIERRE DE: {vm.PeriodName}").FontSize(10).Italic();
+                    col.Item().PaddingTop(4).LineHorizontal(1);
+                });
+
+                page.Content().PaddingTop(10).Column(col =>
+                {
+                    if (vm.Balance != null)
+                    {
+                        col.Item().Text("ACTIVOS").Bold().FontSize(11);
+                        foreach (var a in vm.Balance.Activos)
+                            col.Item().Row(r => { r.RelativeItem().Text($"{a.Codigo} - {a.Nombre}").FontSize(9); r.ConstantItem(90).AlignRight().Text(a.Saldo.ToString("N2")).FontSize(9); });
+                        col.Item().Row(r => { r.RelativeItem().Text("TOTAL ACTIVOS").Bold().FontSize(9); r.ConstantItem(90).AlignRight().Text(vm.Balance.TotalActivos.ToString("N2")).Bold().FontSize(9); });
+                        col.Item().PaddingTop(6);
+
+                        col.Item().Text("PASIVOS").Bold().FontSize(11);
+                        foreach (var p in vm.Balance.Pasivos)
+                            col.Item().Row(r => { r.RelativeItem().Text($"{p.Codigo} - {p.Nombre}").FontSize(9); r.ConstantItem(90).AlignRight().Text(p.Saldo.ToString("N2")).FontSize(9); });
+                        col.Item().Row(r => { r.RelativeItem().Text("TOTAL PASIVOS").Bold().FontSize(9); r.ConstantItem(90).AlignRight().Text(vm.Balance.TotalPasivos.ToString("N2")).Bold().FontSize(9); });
+                        col.Item().PaddingTop(6);
+
+                        col.Item().Text("PATRIMONIO").Bold().FontSize(11);
+                        foreach (var p in vm.Balance.Patrimonio)
+                            col.Item().Row(r => { r.RelativeItem().Text($"{p.Codigo} - {p.Nombre}").FontSize(9); r.ConstantItem(90).AlignRight().Text(p.Saldo.ToString("N2")).FontSize(9); });
+                        col.Item().Row(r => { r.RelativeItem().Text("TOTAL PATRIMONIO").Bold().FontSize(9); r.ConstantItem(90).AlignRight().Text(vm.Balance.TotalPatrimonio.ToString("N2")).Bold().FontSize(9); });
+                        col.Item().PaddingTop(8).LineHorizontal(1);
+                        col.Item().Row(r => { r.RelativeItem().Text("DIFERENCIA (Activo - Pasivo - Patrimonio)").Bold().FontSize(9); r.ConstantItem(90).AlignRight().Text(vm.Balance.Diferencia.ToString("N2")).Bold().FontSize(9); });
+                    }
+                    else if (vm.Resultados != null)
+                    {
+                        col.Item().Text("ESTADO DE RESULTADOS").Bold().FontSize(11);
+                        foreach (var r in vm.Resultados)
+                            col.Item().Row(row => { row.RelativeItem().Text($"{r.Codigo} - {r.Nombre}").FontSize(9); row.ConstantItem(90).AlignRight().Text(r.Saldo.ToString("N2")).FontSize(9); });
+                    }
+                });
+
+                page.Footer().AlignCenter().Text(x =>
+                {
+                    x.Span("Generado: ").FontSize(8).FontColor(Colors.Grey.Medium);
+                    x.Span(vm.GeneratedAt.ToString("dd/MM/yyyy HH:mm")).FontSize(8).FontColor(Colors.Grey.Medium);
+                });
+            });
+        });
+
+        using var ms = new MemoryStream();
+        document.GeneratePdf(ms);
+        return File(ms.ToArray(), "application/pdf", $"Reporte_{type}_{vm.PeriodName.Replace("/", "_")}.pdf");
     }
 
     public class GeneratePackageRequest

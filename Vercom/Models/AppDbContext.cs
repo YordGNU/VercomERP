@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
-namespace Vercom.Models;
+namespace VERCOM.Models;
 
 public partial class AppDbContext : DbContext
 {
@@ -230,7 +230,7 @@ public partial class AppDbContext : DbContext
         if (!optionsBuilder.IsConfigured)
         {
             // Fallback para herramientas de diseño o fallos de inyección
-            optionsBuilder.UseSqlServer("Server=localhost;Database=VercomERP;User Id=sa;Password=sql2025*;TrustServerCertificate=True;MultipleActiveResultSets=true");
+            optionsBuilder.UseSqlServer("Server=localhost;Database=VERCOMERP;User Id=sa;Password=sql2025*;TrustServerCertificate=True;MultipleActiveResultSets=true");
         }
     }
 

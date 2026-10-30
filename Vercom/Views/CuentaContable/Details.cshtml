@@ -1,11 +1,11 @@
-@model Vercom.Models.CuentaContable
-@inject Vercom.Services.IAccountingService AccountingService
+@model VERCOM.Models.CuentaContable
+@inject VERCOM.Services.IAccountingService AccountingService
 @{
     ViewBag.Title = "Ficha de Cuenta Contable";
     var balance = await AccountingService.GetAccountBalanceAsync(Model.Id);
 }
 
-@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Cuenta: ", Subtitle = "Atributos técnicos, jerarquía y saldo actual en el Libro Mayor.", Icon = "ti-file", Tone = "primary" }; }
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Cuenta: ", Subtitle = "Atributos técnicos, jerarquía y saldo actual en el Libro Mayor.", Icon = "ti-file"}; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

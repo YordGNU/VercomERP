@@ -1,9 +1,9 @@
-@model Vercom.Models.OrdenProduccion
+@model VERCOM.Models.OrdenProduccion
 @{
     ViewBag.Title = "Reporte de Cierre de Trabajo";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Monitor</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Reporte de Cierre: " + Model.NumeroOrden, Subtitle = "Captación de resultados reales y liquidación contable del lote de producción.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Monitor</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Reporte de Cierre: " + Model.NumeroOrden, Subtitle = "Captación de resultados reales y liquidación contable del lote de producción.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 
@@ -26,7 +26,7 @@
                             <div class="col-md-6 text-md-end mt-3 mt-md-0">
                                 <label class="fw-bold d-block mb-2 text-uppercase tiny">Cantidad Final Realmente Producida:</label>
                                 <div class="input-group input-group-lg float-md-end" style="max-width: 250px;">
-                                    <input type="number" name="actualQuantity" class="form-control text-center fw-bold text-success" value="@Model.CantidadPlanificada.ToString("F2")" step="0.01" required />
+                                    <input type="number" name="actualQuantity" class="form-control text-center fw-bold text-success" value="@Model.CantidadPlanificada.ToString("F2")" step="0.01" min="0.01" required />
                                     <span class="input-group-text bg-success text-white fw-bold">@Model.ProductoTerminado.UnidadMedida.Codigo</span>
                                 </div>
                             </div>
@@ -69,7 +69,7 @@
                                                        class="form-control form-control-sm text-end fw-bold input-actual"
                                                        value="@c.CantidadPlanificada.ToString("F4")"
                                                        data-plan="@c.CantidadPlanificada"
-                                                       step="0.0001" required />
+                                                       step="0.0001" min="0" required />
                                             </td>
                                             <td class="small text-muted">@c.ProductoInsumo.UnidadMedida?.Codigo</td>
                                             <td class="pe-4 text-end">

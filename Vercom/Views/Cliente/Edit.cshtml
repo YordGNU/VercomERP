@@ -1,9 +1,9 @@
-@model Vercom.ViewModels.ClientFormViewModel
+@model VERCOM.ViewModels.ClientFormViewModel
 @{
     ViewData["Title"] = "Editar Cliente";
     var esActivo = Model.Client.Activo;
 }
-@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Ventas", Title = "Editar Cliente", Subtitle = "Actualice los datos del cliente: ", Icon = "ti-file", Tone = "primary" }; }
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Ventas", Title = "Editar Cliente", Subtitle = "Actualice los datos del cliente: ", Icon = "ti-file"}; }
 <partial name='_PageHeader' model='pageHeader' />
 
 
@@ -83,7 +83,7 @@
                         <!-- ============================================================ -->
                         <div class="col-md-8">
                             <label asp-for="Client.NombreRazonSocial" class="form-label fw-bold">Nombre Completo o Razón Social</label>
-                            <input asp-for="Client.NombreRazonSocial" class="form-control" placeholder="Ej: Tierra Prometida SURL" maxlength="255" required />
+                            <input asp-for="Client.NombreRazonSocial" class="form-control" placeholder="Ej: VERCOM" maxlength="255" required />
                             <span asp-validation-for="Client.NombreRazonSocial" class="text-danger small"></span>
                         </div>
 

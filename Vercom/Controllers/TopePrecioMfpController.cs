@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Vercom.Services;
-using Vercom.ViewModels;
+using VERCOM.Services;
+using VERCOM.ViewModels;
 
-namespace Vercom.Controllers;
+namespace VERCOM.Controllers;
 
 [Authorize]
 public class TopePrecioMfpController : Controller
@@ -57,7 +57,7 @@ public class TopePrecioMfpController : Controller
     public async Task<IActionResult> GetTope(Guid productoId)
     {
         // Obtener el producto para saber su familia
-        var context = (Vercom.Models.AppDbContext)HttpContext.RequestServices.GetService(typeof(Vercom.Models.AppDbContext));
+        var context = (VERCOM.Models.AppDbContext)HttpContext.RequestServices.GetService(typeof(VERCOM.Models.AppDbContext));
         var prod = await context.Productos.FindAsync(productoId);
         if (prod == null) return Json(new { exists = false });
 

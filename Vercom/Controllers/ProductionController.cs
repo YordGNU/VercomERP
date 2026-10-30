@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Vercom.Models;
-using Vercom.Security;
-using Vercom.Services;
-using Vercom.ViewModels;
+using VERCOM.Models;
+using VERCOM.Security;
+using VERCOM.Services;
+using VERCOM.ViewModels;
 
-namespace Vercom.Controllers;
+namespace VERCOM.Controllers;
 
 [Authorize]
 public class ProductionController : Controller
@@ -36,6 +36,15 @@ public class ProductionController : Controller
 
     [HttpGet]
     [Authorize(Policy = "PRODUCCION.ORDEN.CREAR")]
+    public async Task<IActionResult> Create(Guid? productId)
+    {
+        var vm = await _productionService.GetProductionOrderCreateContextAsync();
+        if (productId.HasValue) vm.Order.ProductoTerminadoId = productId.Value;
+        return View("CreateOrder", vm);
+    }
+
+    [HttpGet]
+    [Authorize(Policy = "PRODUCCION.ORDEN.CREAR")]
     public async Task<IActionResult> CreateOrder(Guid? productId)
     {
         var vm = await _productionService.GetProductionOrderCreateContextAsync();
@@ -54,6 +63,9 @@ public class ProductionController : Controller
         ModelState.Remove("Order.ProductoTerminado");
         ModelState.Remove("Order.EntidadId");
         ModelState.Remove("Order.NumeroOrden");
+        ModelState.Remove("Order.AlmacenInsumos");
+        ModelState.Remove("Order.AlmacenProducto");
+        ModelState.Remove("Order.ListaMateriales");
 
         if (ModelState.IsValid)
         {

@@ -1,10 +1,10 @@
-@model IEnumerable<Vercom.Services.SC408Row>
+@model IEnumerable<VERCOM.Services.SC408Row>
 @{
     ViewBag.Title = "Modelo Oficial SC-4-08";
     var empName = ViewBag.EmployeeName;
 }
 
-@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = "Registro de Salarios y Tiempo de Servicio", Subtitle = "", Icon = "ti-file", Tone = "primary" }; }
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = "Registro de Salarios y Tiempo de Servicio", Subtitle = "", Icon = "ti-file"}; }
 <partial name='_PageHeader' model='pageHeader' />
 
 
@@ -36,7 +36,7 @@
                     </tr>
                 </thead>
                 <tbody>
-@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
+@inject VERCOM.Services.IEntidadDisplayService EntidadDisplay
 @{
                         decimal cumul = 0;
                     }

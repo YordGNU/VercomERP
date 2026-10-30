@@ -1,12 +1,12 @@
-@model Vercom.Models.MovimientoInventario
-@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
+@model VERCOM.Models.MovimientoInventario
+@inject VERCOM.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewBag.Title = "Detalle de Operación";
     var isEntrada = Model.TipoMovimiento.Naturaleza == "ENTRADA";
     var docName = isEntrada ? "Informe de Recepción" : (Model.TipoMovimiento.Naturaleza == "SALIDA" ? "Vale de Entrega / Salida" : "Transferencia de Mercancía");
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Movements") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Volver al Registro</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Documento Primario de Almacén", Subtitle = "", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Movements") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Volver al Registro</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Documento Primario de Almacén", Subtitle = "", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

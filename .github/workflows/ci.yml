@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [feat/pos-terminal-web, main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_SA_PASSWORD: "CiTestPass123*"
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CiTestPass123*' -C -Q 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      VERCOM_TEST_CONNECTION: "Server=localhost,1433;Database=VERCOMERP;User Id=sa;Password=CiTestPass123*;TrustServerCertificate=True;MultipleActiveResultSets=true"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Locate SQL Server container
+        id: sql
+        run: |
+          CID=$(docker ps -q -f "ancestor=mcr.microsoft.com/mssql/server:2022-latest" | head -n1)
+          echo "cid=$CID" >> $GITHUB_OUTPUT
+          echo "SQL container: $CID"
+
+      - name: Wait for SQL Server
+        run: |
+          for i in $(seq 1 30); do
+            if docker exec ${{ steps.sql.outputs.cid }} /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CiTestPass123*' -C -Q 'SELECT 1' >/dev/null 2>&1; then
+              echo "SQL Server listo"
+              break
+            fi
+            echo "Esperando SQL Server... ($i)"
+            sleep 5
+          done
+
+      - name: Init schema
+        run: |
+          docker cp Vercom/init-docker.sql ${{ steps.sql.outputs.cid }}:/tmp/init-docker.sql
+          docker exec ${{ steps.sql.outputs.cid }} /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CiTestPass123*' -C -b -i /tmp/init-docker.sql
+
+      - name: Seed data
+        run: |
+          docker cp Vercom/seed-docker.sql ${{ steps.sql.outputs.cid }}:/tmp/seed-docker.sql
+          docker exec ${{ steps.sql.outputs.cid }} /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CiTestPass123*' -C -b -i /tmp/seed-docker.sql
+
+      - name: Build
+        run: dotnet build Vercom.Tests/Vercom.Tests.csproj --configuration Release
+
+      - name: Test
+        run: dotnet test Vercom.Tests/Vercom.Tests.csproj --configuration Release --no-build --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/*.trx'

@@ -1,10 +1,10 @@
-@model Vercom.Models.Sucursal
-@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
+@model VERCOM.Models.Sucursal
+@inject VERCOM.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewBag.Title = "Detalles de Sucursal";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Sucursales</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Unidad Organizativa: " + Model.Nombre, Subtitle = "Configuración operativa, geográfica y vinculación de recursos.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Sucursales</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Unidad Organizativa: " + Model.Nombre, Subtitle = "Configuración operativa, geográfica y vinculación de recursos.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

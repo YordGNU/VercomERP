@@ -1,9 +1,9 @@
-@model Vercom.ViewModels.FinancialReportViewModel
+@model VERCOM.ViewModels.FinancialReportViewModel
 @{
     ViewBag.Title = Model.ReportName;
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-printer me-1'></i> VOLVER</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = Model.ReportName, Subtitle = "Emisión de estado contable oficial para el periodo solicitado.", Icon = "ti-printer", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("ExportFinancialStatementPdf", new { periodId = Model.PeriodId, type = Model.ReportType }) + "' class='btn btn-sm btn-outline-danger me-2'><i class='ti-file-type-pdf me-1'></i> EXPORTAR PDF</a><a href='" + Url.Action("ExportFinancialStatement", new { periodId = Model.PeriodId, type = Model.ReportType }) + "' class='btn btn-sm btn-outline-success me-2'><i class='ti-download me-1'></i> EXPORTAR CSV</a><a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-arrow-left me-1'></i> VOLVER</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = Model.ReportName, Subtitle = "Emisión de estado contable oficial para el periodo solicitado.", Icon = "ti-printer", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 
@@ -113,7 +113,7 @@
             </div>
 
             <div class="text-center mt-5">
-                <p class="tiny text-muted">Generado automáticamente por VERCOM ELITE el @Model.GeneratedAt.ToString("dd/MM/yyyy HH:mm")</p>
+                <p class="tiny text-muted">Generado automáticamente por VERCOM el @Model.GeneratedAt.ToString("dd/MM/yyyy HH:mm")</p>
             </div>
         </div>
     </div>

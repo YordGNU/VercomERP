@@ -1,12 +1,15 @@
-# Vercom ERP
+# VERCOM ERP
 
 > Sistema integral de gestión empresarial para S.U.R.L. cubana, conforme a normativas NCC/NCIF, ONAT y Resolución 60/2011 de la CGR.
+
+
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![SQL Server](https://img.shields.io/badge/SQL%20Server-2022-CC2927?logo=microsoft-sql-server)](https://www.microsoft.com/sql-server)
 [![Kotlin](https://img.shields.io/badge/Kotlin-Android-7F52FF?logo=kotlin)](https://kotlinlang.org/)
 [![License](https://img.shields.io/badge/license-Private-red)]()
-
+[![Build & Push](https://github.com/YordGNU/VERCOMERP/actions/workflows/docker-build.yml/badge.svg)](https://github.com/YordGNU/VERCOMERP/actions/workflows/docker-build.yml)
+[![Container](https://img.shields.io/badge/ghcr.io-VERCOM--erp-blue)](https://github.com/YordGNU/VERCOMERP/pkgs/container/VERCOM-erp)
 ---
 
 ## 📋 Tabla de Contenidos
@@ -30,12 +33,13 @@
 
 ## 📖 Descripción
 
-**Vercom ERP** es un sistema de planificación de recursos empresariales diseñado para una S.U.R.L. cubana con múltiples sucursales y centros de costo. Cubre el ciclo completo de operación: contabilidad, inventario, producción, recursos humanos, compras, ventas y gestión fiscal.
+**VERCOM ERP** es un sistema de planificación de recursos empresariales diseñado para una S.U.R.L. cubana con múltiples sucursales y centros de costo. Cubre el ciclo completo de operación: contabilidad, inventario, producción, recursos humanos, compras, ventas y gestión fiscal.
 
-El sistema está compuesto por dos aplicaciones:
+El sistema está compuesto por tres clientes:
 
 1. **Backend + Web (ASP.NET Core MVC)**: Interfaz administrativa completa.
-2. **App POS Android (Kotlin + Jetpack Compose)**: Terminal de punto de venta con soporte **offline-first**.
+2. **Terminal POS Web (dentro del ERP, `/POS`)**: Punto de venta en el navegador sobre la misma API POS, con cobro en efectivo, transferencias y **mixto**, descuentos por línea, devoluciones y arqueo/cierre de turno.
+3. **App POS Android (Kotlin + Jetpack Compose)**: Terminal de punto de venta con soporte **offline-first**.
 
 ### Objetivos principales
 
@@ -53,6 +57,7 @@ El sistema está compuesto por dos aplicaciones:
 | **Núcleo y Seguridad** | ✅ Producción | Usuarios, roles, permisos granulares, auditoría inmutable |
 | **Inventario** | ✅ Producción | Productos, familias, almacenes, movimientos, conteo físico |
 | **Comercial (POS + Ventas)** | ✅ Producción | Facturación, clientes, proveedores, órdenes de compra |
+| **Terminal POS Web** | ✅ Producción | Cobro efectivo/transferencias/mixto, descuentos, devoluciones y arqueo |
 | **Punto de Venta Android** | ✅ Producción | App nativa offline-first con sincronización |
 | **Contabilidad** | 🔄 En desarrollo | Plan de cuentas MFP, asientos, estados financieros NCC |
 | **RR.HH. y Nómina** | 🔄 En desarrollo | Expedientes, contratos, nómina, vacaciones, SC-4-08 |
@@ -265,24 +270,29 @@ El plan de cuentas sigue la **Resolución 494/2016 del MFP**, con soporte para:
 ## 📁 Estructura del Repositorio
 
 ```
-Vercom-ERP/
-├── src/
-│   ├── Vercom.Web/              # ASP.NET Core MVC
-│   │   ├── Controllers/
-│   │   ├── Views/
-│   │   ├── wwwroot/
-│   │   └── Program.cs
-│   ├── Vercom.Services/         # Lógica de negocio
-│   ├── Vercom.Data/             # EF Core DbContext + Entidades
-│   └── Vercom.Shared/           # DTOs, ViewModels, Utilidades
-├── android/
-│   └── VercomPos/               # App POS Android (Kotlin)
-├── database/
-│   ├── scripts/                 # Scripts SQL
-│   └── seed/                    # Datos iniciales
-├── docs/
-│   ├── architecture.md
-│   └── screenshots/
+VERCOM-ERP/
+├── VERCOM/ # Proyecto ASP.NET Core MVC (.NET 10)
+│ ├── Controllers/ # Controladores (delgados)
+│ ├── Views/ # Vistas Razor
+│ ├── Services/ # Lógica de negocio + SeedData
+│ ├── Models/ # Entidades EF Core + AppDbContext
+│ ├── DTOs/ # Data Transfer Objects
+│ ├── Security/ # IEntidadProvider, policies
+│   ├── wwwroot/ # Archivos estáticos
+│   ├── Program.cs
+│   └── appsettings.json
+├── Vercom.Tests/ # Tests xUnit (integración contra SQL Server)
+├── database/ # Scripts SQL
+│ ├── scripts/
+│ │ ├── 01-schema.sql # Esquema completo
+│ │ └── 02-cleanup-demo.sql # Limpieza de demo
+│ ├── seed/
+│ │ └── cuentas-mfp.sql # Plan de cuentas oficial
+│ └── README.md
+├── docs/ # Documentación
+│ └── screenshots/
+├── docker-compose.yml
+├── Dockerfile
 └── README.md
 ```
 
@@ -302,8 +312,8 @@ Vercom-ERP/
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/YordGNU/Vercom-ERP.git
-cd Vercom-ERP
+git clone https://github.com/YordGNU/VERCOM-ERP.git
+cd VERCOM-ERP
 ```
 
 ### 2. Configurar la base de datos
@@ -315,12 +325,12 @@ sqlcmd -S localhost -U sa -P 'tu_password' -i database/seed/initial_data.sql
 
 ### 3. Configurar la conexión
 
-Edita `src/Vercom.Web/appsettings.Development.json`:
+Edita `src/VERCOM.Web/appsettings.Development.json`:
 
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost;Database=VercomERP;UID=sa;Password=tu_password;TrustServerCertificate=True"
+    "DefaultConnection": "Server=localhost;Database=VERCOMERP;UID=sa;Password=tu_password;TrustServerCertificate=True"
   },
   "Jwt": {
     "SecretKey": "tu_clave_de_al_menos_32_caracteres_aqui"
@@ -331,7 +341,7 @@ Edita `src/Vercom.Web/appsettings.Development.json`:
 ### 4. Ejecutar la aplicación
 
 ```bash
-cd src/Vercom.Web
+cd src/VERCOM.Web
 dotnet restore
 dotnet run
 ```
@@ -351,7 +361,7 @@ La aplicación estará disponible en `https://localhost:5001`.
 ### Compilar y ejecutar
 
 ```bash
-cd android/VercomPos
+cd android/VERCOMPos
 ./gradlew assembleDebug
 ```
 
@@ -409,13 +419,13 @@ El sistema está desplegado en **Debian 12** con:
 
 ```bash
 # Publicar
-dotnet publish -c Release -o /var/www/vercom
+dotnet publish -c Release -o /var/www/VERCOM
 
 # Reiniciar servicio
-sudo systemctl restart vercom
+sudo systemctl restart VERCOM
 
 # Verificar logs
-sudo journalctl -u vercom.service -f
+sudo journalctl -u VERCOM.service -f
 ```
 
 ---

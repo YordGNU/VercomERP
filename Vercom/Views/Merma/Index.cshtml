@@ -1,9 +1,9 @@
-@model IEnumerable<Vercom.Models.Merma>
+@model IEnumerable<VERCOM.Models.Merma>
 @{
     ViewBag.Title = "Control de Mermas";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> REPORTAR INCIDENCIA</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Gestión de Desperdicios y Mermas", Subtitle = "Control de mermas industriales y mermas extraordinarias por rotura o vencimiento.", Icon = "ti-minus me-1", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> REPORTAR INCIDENCIA</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Gestión de Desperdicios y Mermas", Subtitle = "Control de mermas industriales y mermas extraordinarias por rotura o vencimiento.", Icon = "ti-minus me-1", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 
