@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using VERCOM.Services;
+using VERCOM.Security;
+using VERCOM.Models;
 using VERCOM.ViewModels;
 
 namespace VERCOM.Controllers;
@@ -9,10 +12,14 @@ namespace VERCOM.Controllers;
 public class ProductoController : Controller
 {
     private readonly IInventoryService _inventoryService;
+    private readonly AppDbContext _db;
+    private readonly IEntidadProvider _entidadProvider;
 
-    public ProductoController(IInventoryService inventoryService)
+    public ProductoController(IInventoryService inventoryService, AppDbContext db, IEntidadProvider entidadProvider)
     {
         _inventoryService = inventoryService;
+        _db = db;
+        _entidadProvider = entidadProvider;
     }
 
     [Authorize(Policy = "INVENTARIO.PRODUCTO.VER")]
@@ -78,6 +85,46 @@ public class ProductoController : Controller
 
         var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
         return Json(new { success = false, message = "Verifique los datos del formulario.", errors = errorList });
+    }
+
+    // ============================================================
+    // AUTOMATIZACION: codigo siguiente, validacion de duplicados
+    // ============================================================
+    [HttpGet]
+    public async Task<IActionResult> NextCode()
+    {
+        var entidadId = _entidadProvider.CurrentEntidadId;
+        var codigos = await _db.Productos
+            .Where(p => p.EntidadId == entidadId)
+            .Select(p => p.Codigo)
+            .ToListAsync();
+        int max = 0;
+        foreach (var c in codigos)
+        {
+            if (string.IsNullOrWhiteSpace(c)) continue;
+            var digits = new string(c.Where(char.IsDigit).ToArray());
+            if (int.TryParse(digits, out var n) && n > max) max = n;
+        }
+        var next = "P-" + (max + 1).ToString("D3");
+        return Json(new { code = next });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> CheckCodigo(string codigo)
+    {
+        if (string.IsNullOrWhiteSpace(codigo)) return Json(new { exists = false });
+        var entidadId = _entidadProvider.CurrentEntidadId;
+        var exists = await _db.Productos.AnyAsync(p => p.EntidadId == entidadId && p.Codigo == codigo.Trim());
+        return Json(new { exists });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> CheckCodigoBarras(string codigoBarras)
+    {
+        if (string.IsNullOrWhiteSpace(codigoBarras)) return Json(new { exists = false });
+        var entidadId = _entidadProvider.CurrentEntidadId;
+        var exists = await _db.Productos.AnyAsync(p => p.EntidadId == entidadId && p.CodigoBarras == codigoBarras.Trim());
+        return Json(new { exists });
     }
 
     [Authorize(Policy = "INVENTARIO.PRODUCTO.EDITAR")]
@@ -146,7 +193,7 @@ public class ProductoController : Controller
                 return Json(new { success = false, message = "No se puede eliminar porque tiene movimientos de inventario." });
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Json(new { success = false, message = "Ocurrió un error al eliminar el producto." });
         }
@@ -173,7 +220,7 @@ public class ProductoController : Controller
                 return Json(new { success = false, message = result.Message, failedIds = result.FailedIds });
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
 
             return Json(new { success = false, message = "Ocurrió un error al eliminar los productos." });
