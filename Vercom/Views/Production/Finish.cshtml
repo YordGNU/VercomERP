@@ -60,7 +60,7 @@
                                         <tr>
                                           <td>
                                                 <input type="hidden" name="actualConsumptions[@i].ProductoInsumoId" value="@c.ProductoInsumoId" />
-                                                <div class="fw-bold fs-13">@c.ProductoInsumo.Nombre</div>
+                                                <div class="fw-bold fs-14">@c.ProductoInsumo.Nombre</div>
                                                 <small class="text-muted tiny">COD: @c.ProductoInsumo.Codigo</small>
                                             </td>
                                            <td class="fw-semibold">@c.CantidadPlanificada.ToString("N4")</td>
@@ -123,7 +123,3 @@
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }
 
-<style>
-    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
-    .fs-13 { font-size: 0.8125rem; }
-</style>

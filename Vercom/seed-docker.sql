@@ -452,8 +452,14 @@ IF NOT EXISTS (SELECT 1 FROM nucleo.parametro_sistema WHERE entidad_id = @Entida
 IF NOT EXISTS (SELECT 1 FROM nucleo.parametro_sistema WHERE entidad_id = @EntidadId AND codigo = 'META_VENTAS_MENSUAL')
     INSERT INTO nucleo.parametro_sistema (entidad_id, codigo, valor, tipo_dato, descripcion, vigente_desde) VALUES (@EntidadId, 'META_VENTAS_MENSUAL', '100000.00', 'NUMERIC', 'Meta mensual de ventas', CAST(GETDATE() AS DATE));
 
--- ==============================================================================
--- 12. CONSECUTIVOS DEL SISTEMA
+IF NOT EXISTS (SELECT 1 FROM nucleo.parametro_sistema WHERE entidad_id = @EntidadId AND codigo = 'CTA_MANTENIMIENTO')
+    INSERT INTO nucleo.parametro_sistema (entidad_id, codigo, valor, tipo_dato, descripcion, vigente_desde) VALUES (@EntidadId, 'CTA_MANTENIMIENTO', '822.0000', 'STRING', 'Cuenta de gasto de mantenimiento', CAST(GETDATE() AS DATE));
+
+IF NOT EXISTS (SELECT 1 FROM nucleo.parametro_sistema WHERE entidad_id = @EntidadId AND codigo = 'CTA_MANO_OBRA_PRODUCCION')
+    INSERT INTO nucleo.parametro_sistema (entidad_id, codigo, valor, tipo_dato, descripcion, vigente_desde) VALUES (@EntidadId, 'CTA_MANO_OBRA_PRODUCCION', '810.0000', 'STRING', 'Subcuenta imputable de mano de obra en produccion', CAST(GETDATE() AS DATE));
+
+IF NOT EXISTS (SELECT 1 FROM nucleo.parametro_sistema WHERE entidad_id = @EntidadId AND codigo = 'CTA_GIF_PRODUCCION')
+    INSERT INTO nucleo.parametro_sistema (entidad_id, codigo, valor, tipo_dato, descripcion, vigente_desde) VALUES (@EntidadId, 'CTA_GIF_PRODUCCION', '810.0000', 'STRING', 'Subcuenta imputable de gastos indirectos en produccion', CAST(GETDATE() AS DATE));
 -- ==============================================================================
 IF NOT EXISTS (SELECT 1 FROM nucleo.consecutivo WHERE entidad_id = @EntidadId AND tipo_documento = 'FACTURA_VENTA' AND serie = 'A')
     INSERT INTO nucleo.consecutivo (entidad_id, sucursal_id, tipo_documento, serie, ultimo_numero, actualizado_en)

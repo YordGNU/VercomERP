@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VERCOM.Security;
 using VERCOM.Services;
 using VERCOM.ViewModels;
 
@@ -9,10 +10,12 @@ namespace VERCOM.Controllers;
 public class PlanProduccionController : Controller
 {
     private readonly IProductionService _productionService;
+    private readonly IEntidadProvider _entidadProvider;
 
-    public PlanProduccionController(IProductionService productionService)
+    public PlanProduccionController(IProductionService productionService, IEntidadProvider entidadProvider)
     {
         _productionService = productionService;
+        _entidadProvider = entidadProvider;
     }
 
     [Authorize(Policy = "PRODUCCION.PLAN.VER")]
@@ -100,11 +103,11 @@ public class PlanProduccionController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Policy = "PRODUCCION.PLAN.APROBAR")]
-    public async Task<IActionResult> Approve(Guid id)
+    [Authorize(Policy = "PRODUCCION.PLAN.CREAR")]
+    public async Task<IActionResult> GenerateOrders(Guid id)
     {
-        var result = await _productionService.ApprovePlanAsync(id);
+        var result = await _productionService.GenerateOrdersFromPlanAsync(id, _entidadProvider.CurrentUsuarioId);
         TempData[result.Succeeded ? "Success" : "Error"] = result.Message;
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Details), new { id });
     }
 }

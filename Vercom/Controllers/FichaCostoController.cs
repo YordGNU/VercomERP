@@ -69,11 +69,21 @@ public class FichaCostoController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Policy = "PRODUCCION.FICHA.APROBAR")]
-    public async Task<IActionResult> Approve(Guid id)
+    [Authorize(Policy = "PRODUCCION.FICHA.CREAR")]
+    public async Task<IActionResult> BuildFromBom(Guid productId)
     {
-        var result = await _productionService.ApproveCostSheetAsync(id);
-        TempData[result.Succeeded ? "Success" : "Error"] = result.Message;
+        var result = await _productionService.BuildCostSheetFromBomAsync(productId);
+        if (result.Succeeded && result.CostSheet != null)
+        {
+            var aprobacion = await _productionService.ApproveCostSheetAsync(result.CostSheet.Id);
+            TempData[aprobacion.Succeeded ? "Success" : "Error"] = aprobacion.Succeeded
+                ? $"Ficha de costo generada desde la BOM y aprobada. Costo MP estándar: {result.CostSheet.CostoMateriaPrima}."
+                : aprobacion.Message;
+        }
+        else
+        {
+            TempData["Error"] = result.Message;
+        }
         return RedirectToAction(nameof(Index));
     }
 }

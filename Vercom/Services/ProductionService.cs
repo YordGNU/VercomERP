@@ -62,9 +62,12 @@ public interface IProductionService
     Task<CostSheetCreateViewModel> GetCostSheetCreateContextAsync(FichaCosto? existing = null);
     Task<(bool Succeeded, string Message, FichaCosto? CostSheet)> CreateCostSheetAsync(FichaCosto costSheet);
     Task<(bool Succeeded, string Message)> ApproveCostSheetAsync(Guid costSheetId);
+    Task<(bool Succeeded, string Message, FichaCosto? CostSheet)> BuildCostSheetFromBomAsync(Guid productId);
     Task<(bool Succeeded, string Message, OrdenProduccion? Order)> CreateProductionOrderAsync(OrdenProduccion order);
     Task<(bool Succeeded, string Message)> StartProductionAndConsumeAsync(Guid orderId, Guid userId);
     Task<(bool Succeeded, string Message)> FinishProductionAsync(Guid orderId, decimal actualQuantity, List<OrdenProduccionConsumo> actualConsumptions, Guid userId);
+    Task<(bool Succeeded, string Message)> ReverseProductionOrderAsync(Guid orderId, Guid userId);
+    Task<(bool Succeeded, string Message, int OrdersCreated)> GenerateOrdersFromPlanAsync(Guid planId, Guid userId);
     Task<decimal> CalculateStandardCostAsync(Guid productId);
 }
 
@@ -355,6 +358,47 @@ public class ProductionService : IProductionService
         }
     }
 
+    public async Task<(bool Succeeded, string Message, FichaCosto? CostSheet)> BuildCostSheetFromBomAsync(Guid productId)
+    {
+        var entidadId = _entidadProvider.CurrentEntidadId;
+        var product = await _context.Productos.FirstOrDefaultAsync(p => p.Id == productId && p.EntidadId == entidadId && p.Activo && p.Tipo == "TERMINADO");
+        if (product == null) return (false, "El producto terminado no existe, esta inactivo o no pertenece a la entidad.", null);
+
+        var bom = await _context.ListaMateriales
+            .Include(l => l.ListaMaterialesDetalles)
+            .FirstOrDefaultAsync(l => l.ProductoTerminadoId == productId && l.Activa);
+        if (bom == null || !bom.ListaMaterialesDetalles.Any())
+            return (false, "No existe una lista de materiales (BOM) activa con componentes para este producto.", null);
+
+        // Costo MP estandar = suma de (cantidad requerida * costo promedio del insumo).
+        decimal costoMateriaPrima = 0m;
+        foreach (var item in bom.ListaMaterialesDetalles)
+        {
+            var insumo = await _context.Productos.FirstOrDefaultAsync(p => p.Id == item.ProductoInsumoId);
+            var costoUnitario = 0m;
+            if (insumo != null)
+            {
+                var stock = await _context.Existencia
+                    .Where(e => e.ProductoId == insumo.Id)
+                    .OrderByDescending(e => e.ActualizadoEn)
+                    .FirstOrDefaultAsync();
+                costoUnitario = stock?.CostoPromedio ?? 0m;
+            }
+            costoMateriaPrima += item.CantidadRequerida * (1 + (item.PorcentajeMerma / 100m)) * costoUnitario;
+        }
+        costoMateriaPrima = Math.Round(costoMateriaPrima, 4);
+
+        var ficha = new FichaCosto
+        {
+            ProductoId = productId,
+            CostoMateriaPrima = costoMateriaPrima,
+            CostoManoObra = 0m,
+            GastosIndirectos = 0m,
+            MargenPorcentaje = null
+        };
+        return await CreateCostSheetAsync(ficha);
+    }
+
     public async Task<IEnumerable<Equipo>> GetEquipmentsAsync()
     {
         return await _context.Equipos.Include(e => e.Sucursal).OrderBy(e => e.Nombre).ToListAsync();
@@ -521,18 +565,67 @@ public class ProductionService : IProductionService
 
     public async Task<(bool Succeeded, string Message)> ExecuteMaintenanceAsync(Guid maintenanceId, DateOnly executionDate)
     {
-        var maintenance = await _context.MantenimientoProgramados
-            .Include(m => m.Equipo)
-            .FirstOrDefaultAsync(m => m.Id == maintenanceId && m.Equipo.EntidadId == _entidadProvider.CurrentEntidadId);
-        if (maintenance == null) return (false, "No se encontró el mantenimiento.");
-        if (maintenance.Estado != "PROGRAMADO") return (false, "Solo se pueden ejecutar mantenimientos programados.");
-        if (executionDate < maintenance.FechaProgramada) return (false, "La fecha de ejecución no puede ser anterior a la fecha programada.");
+        var ownsTransaction = _context.Database.CurrentTransaction == null;
+        using var transaction = ownsTransaction ? await _context.Database.BeginTransactionAsync() : null;
+        await BeginSavepointAsync();
+        try
+        {
+            var maintenance = await _context.MantenimientoProgramados
+                .Include(m => m.Equipo)
+                .FirstOrDefaultAsync(m => m.Id == maintenanceId && m.Equipo.EntidadId == _entidadProvider.CurrentEntidadId);
+            if (maintenance == null) return (false, "No se encontró el mantenimiento.");
+            if (maintenance.Estado != "PROGRAMADO") return (false, "Solo se pueden ejecutar mantenimientos programados.");
+            if (executionDate < maintenance.FechaProgramada) return (false, "La fecha de ejecución no puede ser anterior a la fecha programada.");
 
-        maintenance.Estado = "EJECUTADO";
-        maintenance.FechaEjecutada = executionDate;
-        maintenance.Equipo.FechaUltimaRevision = executionDate;
-        await _context.SaveChangesAsync();
-        return (true, "Mantenimiento marcado como ejecutado y revisión del equipo actualizada.");
+            maintenance.Estado = "EJECUTADO";
+            maintenance.FechaEjecutada = executionDate;
+            maintenance.Equipo.FechaUltimaRevision = executionDate;
+
+            if (maintenance.Costo.HasValue && maintenance.Costo.Value > 0)
+            {
+                var cuentaGastoCodigo = await _paramService.ObtenerValorVigenteAsync(maintenance.Equipo.EntidadId, "CTA_MANTENIMIENTO") ?? "822.0000";
+                var cuentaCajaCodigo = await _paramService.ObtenerValorVigenteAsync(maintenance.Equipo.EntidadId, "CTA_CAJA_MN") ?? "101.0000";
+                var cuentaGasto = await _context.CuentaContables.FirstOrDefaultAsync(c => c.EntidadId == maintenance.Equipo.EntidadId && c.Codigo == cuentaGastoCodigo && c.Activo && c.AceptaMovimiento);
+                var cuentaCaja = await _context.CuentaContables.FirstOrDefaultAsync(c => c.EntidadId == maintenance.Equipo.EntidadId && c.Codigo == cuentaCajaCodigo && c.Activo && c.AceptaMovimiento);
+                if (cuentaGasto == null || cuentaCaja == null)
+                    throw new InvalidOperationException("Configure las cuentas CTA_MANTENIMIENTO y CTA_CAJA_MN para contabilizar el mantenimiento.");
+
+                var tipoComprobante = await _context.TipoComprobantes.FirstOrDefaultAsync(t => t.Codigo == "DIA");
+                if (tipoComprobante == null)
+                    throw new InvalidOperationException("No existe el tipo de comprobante DIA.");
+
+                var entry = new AsientoContable
+                {
+                    Id = Guid.NewGuid(),
+                    EntidadId = maintenance.Equipo.EntidadId,
+                    Fecha = DateOnly.FromDateTime(DateTime.Now),
+                    Concepto = $"COSTO DE MANTENIMIENTO {maintenance.Tipo} - {maintenance.Equipo.Codigo}",
+                    ModuloOrigen = "PRODUCCION",
+                    DocumentoOrigenTipo = "MANTENIMIENTO",
+                    DocumentoOrigenId = maintenance.Id,
+                    TipoComprobanteId = tipoComprobante.Id,
+                    Estado = "CONTABILIZADO",
+                    CreadoPor = _entidadProvider.CurrentUsuarioId,
+                    CreadoEn = DateTimeOffset.Now
+                };
+                entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = cuentaGasto.Id, Debe = maintenance.Costo.Value, Glosa = "Costo de mantenimiento" });
+                entry.AsientoDetalles.Add(new AsientoDetalle { Id = Guid.NewGuid(), CuentaId = cuentaCaja.Id, Haber = maintenance.Costo.Value, Glosa = "Pago de mantenimiento" });
+
+                var result = await _accountingService.CreateEntryAsync(entry);
+                if (!result.Succeeded)
+                    throw new InvalidOperationException($"No se pudo contabilizar el mantenimiento: {result.Message}");
+            }
+
+            await _context.SaveChangesAsync();
+            if (ownsTransaction) await transaction!.CommitAsync();
+            return (true, "Mantenimiento marcado como ejecutado y revision del equipo actualizada.");
+        }
+        catch (Exception ex)
+        {
+            if (ownsTransaction) await transaction!.RollbackAsync();
+            else await RollbackSavepointAsync();
+            return (false, $"No se pudo ejecutar el mantenimiento: {ex.Message}");
+        }
     }
 
     public async Task<IEnumerable<Presupuesto>> GetBudgetsAsync()
@@ -831,6 +924,57 @@ public class ProductionService : IProductionService
         return (true, "Plan de producción aprobado.");
     }
 
+    public async Task<(bool Succeeded, string Message, int OrdersCreated)> GenerateOrdersFromPlanAsync(Guid planId, Guid userId)
+    {
+        var ownsTransaction = _context.Database.CurrentTransaction == null;
+        using var transaction = ownsTransaction ? await _context.Database.BeginTransactionAsync() : null;
+        await BeginSavepointAsync();
+        try
+        {
+            var plan = await _context.PlanProduccions
+                .Include(p => p.PlanProduccionDetalles)
+                .FirstOrDefaultAsync(p => p.Id == planId && p.EntidadId == _entidadProvider.CurrentEntidadId);
+            if (plan == null) return (false, "No se encontró el plan de producción.", 0);
+            if (plan.Estado != "APROBADO")
+                return (false, "Solo se pueden generar órdenes desde planes aprobados.", 0);
+
+            int created = 0;
+            foreach (var line in plan.PlanProduccionDetalles)
+            {
+                var remaining = line.CantidadPlanificada - line.CantidadEjecutada;
+                if (remaining <= 0) continue;
+
+                var bom = await _context.ListaMateriales
+                    .Include(l => l.ListaMaterialesDetalles)
+                    .FirstOrDefaultAsync(l => l.ProductoTerminadoId == line.ProductoId && l.Activa);
+                if (bom == null) continue;
+
+                var order = new OrdenProduccion
+                {
+                    EntidadId = plan.EntidadId,
+                    ProductoTerminadoId = line.ProductoId,
+                    AlmacenInsumosId = await _context.Almacens.Where(a => a.EntidadId == plan.EntidadId && a.Activo).Select(a => a.Id).FirstAsync(),
+                    AlmacenProductoId = await _context.Almacens.Where(a => a.EntidadId == plan.EntidadId && a.Activo).Select(a => a.Id).FirstAsync(),
+                    CantidadPlanificada = remaining,
+                    FechaInicioPlan = new DateOnly(plan.Anio, plan.Mes ?? 1, 1),
+                    FechaFinPlan = new DateOnly(plan.Anio, plan.Mes ?? 12, DateTime.DaysInMonth(plan.Anio, plan.Mes ?? 12)),
+                    CreadoPor = userId
+                };
+                var result = await CreateProductionOrderAsync(order);
+                if (result.Succeeded) created++;
+            }
+
+            if (ownsTransaction) await transaction!.CommitAsync();
+            return (true, $"Se generaron {created} órdenes de producción desde el plan.", created);
+        }
+        catch (Exception ex)
+        {
+            if (ownsTransaction) await transaction!.RollbackAsync();
+            else await RollbackSavepointAsync();
+            return (false, $"No se pudieron generar las órdenes: {ex.Message}", 0);
+        }
+    }
+
     public async Task<(bool Succeeded, string Message)> CancelPlannedOrderAsync(Guid orderId)
     {
         var order = await _context.OrdenProduccions
@@ -845,6 +989,79 @@ public class ProductionService : IProductionService
         order.Estado = "CANCELADA";
         await _context.SaveChangesAsync();
         return (true, "Orden planificada cancelada.");
+    }
+
+    public async Task<(bool Succeeded, string Message)> ReverseProductionOrderAsync(Guid orderId, Guid userId)
+    {
+        var ownsTransaction = _context.Database.CurrentTransaction == null;
+        using var transaction = ownsTransaction ? await _context.Database.BeginTransactionAsync() : null;
+        await BeginSavepointAsync();
+        try
+        {
+            var order = await _context.OrdenProduccions
+                .Include(o => o.OrdenProduccionConsumos)
+                .FirstOrDefaultAsync(o => o.Id == orderId && o.EntidadId == _entidadProvider.CurrentEntidadId);
+            if (order == null) return (false, "No se encontro la orden de produccion.");
+            if (order.Estado != "EN_PROCESO")
+                return (false, "Solo se pueden revertir ordenes que estan en proceso.");
+
+            // 1. Revertir el consumo inicial: devolver MP al almacen.
+            var movSalida = new MovimientoInventario
+            {
+                EntidadId = order.EntidadId,
+                TipoMovimientoId = await _inventoryService.EnsureMovementTypeAsync("DEVOLUCION_PRODUCCION"),
+                NumeroDocumento = $"{order.NumeroOrden}-REV",
+                AlmacenDestinoId = order.AlmacenInsumosId,
+                Fecha = DateTimeOffset.Now,
+                ReferenciaExternaTipo = "ORDEN_PRODUCCION",
+                ReferenciaExternaId = order.Id,
+                Canal = "ERP",
+                CreadoPor = userId
+            };
+            foreach (var item in order.OrdenProduccionConsumos)
+            {
+                movSalida.MovimientoInventarioDetalles.Add(new MovimientoInventarioDetalle
+                {
+                    Id = Guid.NewGuid(),
+                    ProductoId = item.ProductoInsumoId,
+                    Cantidad = item.CantidadPlanificada,
+                    CostoUnitario = item.CostoUnitario
+                });
+            }
+            var invResult = await _inventoryService.ProcessMovementAsync(movSalida);
+            if (!invResult.Succeeded)
+                throw new InvalidOperationException($"No se pudo revertir el consumo: {invResult.Message}");
+
+            // 2. Revertir el asiento de consumo.
+            if (order.AsientoConsumoId.HasValue)
+            {
+                var rev = await _accountingService.ReverseEntryAsync(order.AsientoConsumoId.Value, $"Reversion de orden {order.NumeroOrden}");
+                if (!rev.Succeeded)
+                    throw new InvalidOperationException($"No se pudo revertir el asiento de consumo: {rev.Message}");
+            }
+
+            // 3. Resetear la orden a PLANIFICADA.
+            foreach (var c in order.OrdenProduccionConsumos)
+            {
+                c.CantidadReal = 0;
+                c.CostoUnitario = null;
+                c.MovimientoInventarioId = null;
+            }
+            order.Estado = "PLANIFICADA";
+            order.FechaInicioReal = null;
+            order.CostoRealTotal = null;
+            order.AsientoConsumoId = null;
+            await _context.SaveChangesAsync();
+
+            if (ownsTransaction) await transaction!.CommitAsync();
+            return (true, "Orden revertida a planificada; el consumo de materiales fue devuelto al inventario.");
+        }
+        catch (Exception ex)
+        {
+            if (ownsTransaction) await transaction!.RollbackAsync();
+            else await RollbackSavepointAsync();
+            return (false, $"No se pudo revertir la orden: {ex.Message}");
+        }
     }
 
     private async Task<string?> ValidatePlanLinesAsync(PlanProduccion plan)

@@ -96,6 +96,17 @@ public class ProductionController : Controller
         return RedirectToAction(nameof(Details), new { id });
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "PRODUCCION.ORDEN.CANCELAR")]
+    public async Task<IActionResult> Reverse(Guid id)
+    {
+        var result = await _productionService.ReverseProductionOrderAsync(id, _entidadProvider.CurrentUsuarioId);
+        if (result.Succeeded) TempData["Success"] = result.Message;
+        else TempData["Error"] = result.Message;
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
     [HttpGet]
     [Authorize(Policy = "PRODUCCION.ORDEN.TERMINAR")]
     public async Task<IActionResult> Finish(Guid id)

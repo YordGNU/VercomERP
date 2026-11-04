@@ -29,7 +29,7 @@
                             var canApprove = item.Estado == "BORRADOR" && (await AuthorizationService.AuthorizeAsync(User, null, "PRODUCCION.FICHA.APROBAR")).Succeeded;
                             <tr>
                                 <td>
-                                    <div class="fw-bold fs-13">@item.Producto.Nombre</div>
+                                    <div class="fw-bold fs-14">@item.Producto.Nombre</div>
                                     <small class="text-muted tiny font-monospace">@item.Producto.Codigo</small>
                                 </td>
                                 <td >
