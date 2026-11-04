@@ -85,14 +85,8 @@
             </div>
         }
         @if (!Model.Any()) {
-            <div class="col-12 text-center py-5">
-                <div class="avatar avatar-xl bg-light-subtle text-muted rounded-circle mb-3 mx-auto">
-                    <i class="ti ti-assembly fs-48"></i>
-                </div>
-                <h3 class="fw-bold">Sin actividad de planta</h3>
-                <p class="text-muted">No existen órdenes de producción activas en este periodo.</p>
-                <a asp-action="CreateOrder" class="btn btn-primary mt-2">PLANIFICAR TRABAJO</a>
-            </div>
+            var emptyState = new VERCOM.ViewModels.EmptyStateModel { Icon = "ti-assembly", Title = "Sin actividad de planta", Description = "No existen órdenes de producción activas en este periodo.", ActionHtml = new Microsoft.AspNetCore.Html.HtmlString("<a href='" + Url.Action("CreateOrder") + "' class='btn btn-primary mt-2'>PLANIFICAR TRABAJO</a>") };
+            <partial name="_EmptyState" model="emptyState" />
         }
     </div>
 </div>

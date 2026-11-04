@@ -3,8 +3,16 @@
     ViewBag.Title = "Análisis de Eficiencia";
 }
 
-@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Desviaciones de Producción", Subtitle = "", Icon = "ti-file"}; }
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Desviaciones de Producción", Subtitle = "Análisis de eficiencia: costo estándar vs real.", Icon = "ti-chart-area-line"}; }
 <partial name='_PageHeader' model='pageHeader' />
+
+@if (!Model.Any())
+{
+    var emptyState = new VERCOM.ViewModels.EmptyStateModel { Icon = "ti-chart-area-line", Title = "Sin desviaciones registradas", Description = "Las desviaciones se generan al finalizar órdenes de producción.", ActionHtml = new Microsoft.AspNetCore.Html.HtmlString("<a href='" + Url.Action("Index", "Production") + "' class='btn btn-primary mt-2'>VER ÓRDENES</a>") };
+    <partial name="_EmptyState" model="emptyState" />
+}
+else
+{
 
 
 
@@ -75,3 +83,4 @@
         </div>
     </div>
 </div>
+}
