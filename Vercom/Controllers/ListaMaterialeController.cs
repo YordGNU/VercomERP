@@ -38,12 +38,22 @@ public class ListaMaterialeController : Controller
         return View(vm);
     }
 
+    [Authorize(Policy = "PRODUCCION.BOM.EDITAR")]
+    public async Task<IActionResult> Edit(Guid id)
+    {
+        var bom = await _productionService.GetBomByIdAsync(id);
+        if (bom == null) return NotFound();
+        var vm = await _productionService.GetBomCreateContextAsync(bom);
+        vm.Title = $"Nueva versión BOM: {bom.ProductoTerminado.Nombre}";
+        return View("Create", vm);
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Policy = "PRODUCCION.BOM.CREAR")]
     public async Task<IActionResult> Create([Bind(Prefix = "Bom")] ListaMateriale bom)
     {
-        ModelState.Remove("Bom.ProductoTerminado");
+        LimpiarNavegacionBom();
 
         if (ModelState.IsValid)
         {
@@ -57,5 +67,38 @@ public class ListaMaterialeController : Controller
 
         var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
         return Json(new { success = false, message = "Errores de validación.", errors = errorList });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "PRODUCCION.BOM.EDITAR")]
+    public async Task<IActionResult> Edit(Guid id, [Bind(Prefix = "Bom")] ListaMateriale bom)
+    {
+        bom.Id = id;
+        LimpiarNavegacionBom();
+        if (ModelState.IsValid)
+        {
+            var result = await _productionService.UpdateBomAsync(bom);
+            if (result.Succeeded)
+                return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });
+            ModelState.AddModelError(string.Empty, result.Message);
+        }
+
+        var context = await _productionService.GetBomCreateContextAsync(bom);
+        context.Title = "Editar versión de BOM";
+        return View("Create", context);
+    }
+
+    private void LimpiarNavegacionBom()
+    {
+        ModelState.Remove("Bom.ProductoTerminado");
+        foreach (var key in ModelState.Keys
+                     .Where(k => k.StartsWith("Bom.ListaMaterialesDetalles[", StringComparison.Ordinal) &&
+                                 (k.EndsWith(".ProductoInsumo", StringComparison.Ordinal) ||
+                                  k.EndsWith(".ListaMateriales", StringComparison.Ordinal)))
+                     .ToList())
+        {
+            ModelState.Remove(key);
+        }
     }
 }

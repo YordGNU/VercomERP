@@ -87,7 +87,7 @@ public class ProductionController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Policy = "PRODUCCION.ORDEN.EJECUTAR")]
+    [Authorize(Policy = "PRODUCCION.ORDEN.INICIAR")]
     public async Task<IActionResult> Start(Guid id)
     {
         var result = await _productionService.StartProductionAndConsumeAsync(id, _entidadProvider.CurrentUsuarioId);
@@ -97,7 +97,7 @@ public class ProductionController : Controller
     }
 
     [HttpGet]
-    [Authorize(Policy = "PRODUCCION.ORDEN.EJECUTAR")]
+    [Authorize(Policy = "PRODUCCION.ORDEN.TERMINAR")]
     public async Task<IActionResult> Finish(Guid id)
     {
         var order = await _productionService.GetOrderByIdAsync(id);
@@ -109,7 +109,7 @@ public class ProductionController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Policy = "PRODUCCION.ORDEN.EJECUTAR")]
+    [Authorize(Policy = "PRODUCCION.ORDEN.TERMINAR")]
     public async Task<IActionResult> Finish(Guid id, decimal actualQuantity, List<OrdenProduccionConsumo> actualConsumptions)
     {
         var result = await _productionService.FinishProductionAsync(id, actualQuantity, actualConsumptions, _entidadProvider.CurrentUsuarioId);
@@ -131,7 +131,7 @@ public class ProductionController : Controller
         return View(deviations);
     }
 
-    [Authorize(Policy = "PRODUCCION.ORDEN.CREAR")]
+    [Authorize(Policy = "PRODUCCION.PLAN.VER")]
     public async Task<IActionResult> Plans()
     {
         var plans = await _productionService.GetProductionPlansAsync();
@@ -140,7 +140,7 @@ public class ProductionController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Policy = "PRODUCCION.ORDEN.CREAR")]
+    [Authorize(Policy = "PRODUCCION.PLAN.CREAR")]
     public async Task<IActionResult> GenerateSuggestedPlan(short year, short month)
     {
         var plan = await _productionService.GenerateSuggestedPlanAsync(_entidadProvider.CurrentEntidadId, year, month);

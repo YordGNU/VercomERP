@@ -67,9 +67,9 @@ public class ReportsController : Controller
             ? await _intelligenceService.GetBalanceGeneralContextAsync(_entidadProvider.CurrentEntidadId, periodId)
             : await _intelligenceService.GetEstadoResultadosContextAsync(_entidadProvider.CurrentEntidadId, periodId);
 
-        var data = type == "BALANCE"
-            ? vm.Balance.Activos.Concat(vm.Balance.Pasivos).Concat(vm.Balance.Patrimonio)
-            : vm.Resultados;
+        IEnumerable<AccountSummary> data = type == "BALANCE"
+            ? vm.Balance?.TodasLasCuentas() ?? Enumerable.Empty<AccountSummary>()
+            : vm.Resultados ?? Enumerable.Empty<AccountSummary>();
 
         var csv = _exportService.ExportToCsv(data);
         return File(csv, "text/csv", $"Reporte_{type}_{vm.PeriodName.Replace("/", "_")}.csv");

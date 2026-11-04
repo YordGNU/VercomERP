@@ -1,7 +1,8 @@
 @model IEnumerable<VERCOM.Models.MantenimientoProgramado>
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
 @{ ViewBag.Title = "Mantenimiento Programado"; }
 
-@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVA PROGRAMACIÓN</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Mantenimiento Programado", Subtitle = "Planificación y seguimiento de mantenimientos preventivos/correctivos.", Icon = "ti-tools", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var canCreate = (await AuthorizationService.AuthorizeAsync(User, null, "PRODUCCION.MANTENIMIENTO.CREAR")).Succeeded; var headerActions = canCreate ? "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVA PROGRAMACIÓN</a>" : null; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Mantenimiento Programado", Subtitle = "Planificación y seguimiento de mantenimientos preventivos/correctivos.", Icon = "ti-tools", ActionsHtml = headerActions != null ? new Microsoft.AspNetCore.Html.HtmlString(headerActions) : null }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 
@@ -58,12 +59,17 @@
                                <td class="fw-bold">@(item.Costo?.ToString("N2") ?? "0.00")</td>
                                 <td>
                                     <div class="btn-list justify-content-end">
-                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-icon btn-light rounded-circle" title="Editar / Reportar Cierre">
-                                            <i class="ti ti-edit"></i>
-                                        </a>
-                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-icon btn-light rounded-circle">
-                                            <i class="ti ti-eye"></i>
-                                        </a>
+                                        @if (item.Estado == "PROGRAMADO" && (await AuthorizationService.AuthorizeAsync(User, null, "PRODUCCION.MANTENIMIENTO.EJECUTAR")).Succeeded)
+                                        {
+                                            <form asp-action="Execute" asp-route-id="@item.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-icon btn-light rounded-circle text-success" title="Marcar ejecutado"><i class="ti ti-check"></i></button>
+                                            </form>
+                                        }
+                                        else if (item.FechaEjecutada.HasValue)
+                                        {
+                                            <span class="text-muted small">Ejecutado @item.FechaEjecutada.Value.ToString("dd/MM/yyyy")</span>
+                                        }
                                     </div>
                                 </td>
                             </tr>

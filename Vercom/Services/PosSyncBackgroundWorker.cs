@@ -88,9 +88,12 @@ public class PosSyncBackgroundWorker : BackgroundService
             // El servicio no persiste nada en caso de error de validación; se marca aquí para
             // no reprocesarla sin fin (poison). El reintento del dispositivo por JWT sigue
             // siendo la ruta normal.
-            pending.Estado = "ERROR";
+            if (pending.Estado != "ERROR")
+            {
+                pending.Estado = "ERROR";
+                pending.IntentosProcesamiento++;
+            }
             pending.MensajeError = result.Error;
-            pending.IntentosProcesamiento++;
             await context.SaveChangesAsync(ct);
         }
     }

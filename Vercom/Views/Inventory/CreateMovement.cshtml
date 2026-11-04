@@ -36,7 +36,7 @@
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Ejecutante</label>
-                                <input type="text" class="form-control w-100 bg-light-subtle" value="@User.Identity.Name" readonly />
+                                <input type="text" class="form-control w-100 bg-light-subtle" value="@(User.Identity?.Name ?? "")" readonly />
                             </div>
 
                             <div class="col-md-6" id="divOrigen">

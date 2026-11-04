@@ -291,7 +291,7 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
         {
             var term = search.Trim();
             query = query.Where(c => c.Cliente.NombreRazonSocial.Contains(term)
-                || c.Cliente.NitOCi.Contains(term)
+                || (c.Cliente.NitOCi != null && c.Cliente.NitOCi.Contains(term))
                 || (c.DocumentoOrigenNumero != null && c.DocumentoOrigenNumero.Contains(term)));
         }
 
@@ -361,7 +361,7 @@ public class ReceivablesPayablesService : IReceivablesPayablesService
         {
             var term = search.Trim();
             query = query.Where(c => c.Proveedor.RazonSocial.Contains(term)
-                || c.Proveedor.Nit.Contains(term)
+                || (c.Proveedor.Nit != null && c.Proveedor.Nit.Contains(term))
                 || (c.DocumentoOrigenNumero != null && c.DocumentoOrigenNumero.Contains(term)));
         }
 

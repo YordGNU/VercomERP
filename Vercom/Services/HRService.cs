@@ -63,8 +63,8 @@ public interface IHRService
     // Baja Laboral (RF-21)
     Task<TerminateEmployeeViewModel> GetTerminationContextAsync(Guid id);
     Task<(bool Succeeded, string Message)> TerminateEmployeeAsync(Guid id, DateOnly terminationDate, string reason);
-    Task<EmpleadoExpedienteViewModel?> GetExpedienteAsync(Guid value);
-    Task<PlantillaStatusViewModel?> GetPlantillaStatusAsync(Guid? sucursalId, string? search);
+    Task<EmpleadoExpedienteViewModel> GetExpedienteAsync(Guid value);
+    Task<PlantillaStatusViewModel> GetPlantillaStatusAsync(Guid? sucursalId, string? search);
 }
 
 public class HRService : IHRService
@@ -174,8 +174,8 @@ public class HRService : IHRService
     public async Task<(bool Succeeded, string Message)> CreateEmployeeWithContractAsync(Empleado empleado, ContratoLaboral contract, IFormFile? document)
     {
         // Limpiar navegación para evitar conflictos con EF (Iteración 3)
-        contract.Empleado = null;
-        contract.Cargo = null;
+        contract.Empleado = null!;
+        contract.Cargo = null!;
 
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -1204,11 +1204,8 @@ public class HRService : IHRService
 
         // Calcular edad
         var edad = 0;
-        if (empleado.FechaNacimiento != null)
-        {
-            edad = hoy.Year - empleado.FechaNacimiento.Year;
-            if (hoy < empleado.FechaNacimiento.AddYears(edad)) edad--;
-        }
+        edad = hoy.Year - empleado.FechaNacimiento.Year;
+        if (hoy < empleado.FechaNacimiento.AddYears(edad)) edad--;
 
         // Obtener saldo de vacaciones del año actual
         var saldoVacaciones = await _context.SaldoVacaciones

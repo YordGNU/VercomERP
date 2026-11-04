@@ -105,10 +105,10 @@
                                         <span class="badge @statusClass">@(isExpired ? "VENCIDO" : item.Estado)</span>
                                     </td>
                                     <td>
-                                        @if (hasDoc)
+                                        @if (item.DocumentoUrl is { Length: > 0 } documentoUrl)
                                         {
-                                            var isPdf = item.DocumentoUrl.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
-                                            <a href="@item.DocumentoUrl" target="_blank" class="btn btn-sm btn-icon btn-ghost-primary rounded-circle" title="Descargar Contrato">
+                                            var isPdf = documentoUrl.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
+                                            <a href="@documentoUrl" target="_blank" class="btn btn-sm btn-icon btn-ghost-primary rounded-circle" title="Descargar Contrato">
                                                 <i class="ti ti-file-@(isPdf ? "type-pdf" : "type-doc") fs-18"></i>
                                             </a>
                                         }

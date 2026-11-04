@@ -66,4 +66,14 @@ public class FichaCostoController : Controller
         var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
         return Json(new { success = false, message = "Verifique los datos de la ficha.", errors = errorList });
     }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "PRODUCCION.FICHA.APROBAR")]
+    public async Task<IActionResult> Approve(Guid id)
+    {
+        var result = await _productionService.ApproveCostSheetAsync(id);
+        TempData[result.Succeeded ? "Success" : "Error"] = result.Message;
+        return RedirectToAction(nameof(Index));
+    }
 }

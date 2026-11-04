@@ -78,7 +78,7 @@ public class SalesService : ISalesService
             .Include(f => f.Contrato)
             .Include(f => f.FacturaVentaDetalles).ThenInclude(d => d.Producto).ThenInclude(p => p.UnidadMedida)
             .Include(f => f.FormaPagoVenta)
-            .Include(f => f.Asiento).ThenInclude(a => a.AsientoDetalles)
+            .Include(f => f.Asiento).ThenInclude(a => a!.AsientoDetalles)
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 

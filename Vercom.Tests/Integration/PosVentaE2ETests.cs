@@ -409,7 +409,7 @@ public class PosVentaE2ETests
             sesion.DispositivoPosId, segunda.IdempotencyKey, CancellationToken.None);
 
         // El índice único (entidad, sucursal, serie, número) se reporta como error de negocio,
-        // no como fallo 500, y la venta duplicada no se persiste.
+        // no como fallo 500; el pendiente queda ERROR para que el worker no lo reintente en bucle.
         Assert.Null(result);
         Assert.NotNull(error);
         Assert.False(conflict);
@@ -419,18 +419,21 @@ public class PosVentaE2ETests
 
         var pendienteDuplicado = await db.PosVentaPendientes.AsNoTracking()
             .FirstAsync(p => p.IdempotencyKey == segunda.IdempotencyKey);
-        Assert.Equal("PENDIENTE", pendienteDuplicado.Estado);
+        Assert.Equal("ERROR", pendienteDuplicado.Estado);
+        Assert.Equal(1, pendienteDuplicado.IntentosProcesamiento);
 
         // El fallo no puede dejar el pendiente marcado PROCESADO con una factura inexistente:
         // cualquier SaveChanges posterior (el del worker) lo persistiría.
         var rastreado = db.ChangeTracker.Entries<PosVentaPendiente>()
             .First(e => e.Entity.IdempotencyKey == segunda.IdempotencyKey);
-        Assert.Equal("PENDIENTE", rastreado.Entity.Estado);
+        Assert.Equal("ERROR", rastreado.Entity.Estado);
         Assert.Null(rastreado.Entity.FacturaId);
 
         // Y el llamador puede volver a fallar limpiamente: nada quedó a medio insertar.
         var repetido = await servicio.ProcesarAsync(sesion.DispositivoPosId, segunda.IdempotencyKey, CancellationToken.None);
-        Assert.NotNull(repetido.Error);
+        Assert.NotNull(repetido.Result);
+        Assert.Null(repetido.Error);
+        Assert.Equal("ERROR", repetido.Result!.Estado);
         Assert.Equal(1, await db.FacturaVenta.AsNoTracking()
             .CountAsync(f => f.Serie == ctx.Serie && f.NumeroFactura == "700"));
 

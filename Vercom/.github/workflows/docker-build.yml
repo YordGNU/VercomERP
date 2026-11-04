@@ -27,18 +27,21 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore
-        run: dotnet restore Vercom/Vercom.csproj
+        run: dotnet restore Vercom.Tests/Vercom.Tests.csproj
 
       - name: Build
         run: dotnet build Vercom/Vercom.csproj --no-restore -c Release
 
-      - name: Test (si existen)
-        run: |
-          if ls Vercom.Tests/*.csproj 1> /dev/null 2>&1; then
-            dotnet test Vercom.Tests/Vercom.Tests.csproj --no-restore -c Release
-          else
-            echo "Sin proyecto de tests todavia"
-          fi
+      - name: Test
+        run: dotnet test Vercom.Tests/Vercom.Tests.csproj --no-restore -c Release --collect:"XPlat Code Coverage" --results-directory Vercom.Tests/TestResults
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-report
+          path: Vercom.Tests/TestResults/**/coverage.cobertura.xml
+          if-no-files-found: warn
 
   # ============================================================
   # 2. Construir y publicar imagen Docker en GHCR

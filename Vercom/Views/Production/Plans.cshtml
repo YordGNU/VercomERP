@@ -4,6 +4,7 @@
     var meses = new[] { "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
     var activePlans = Model.Count();
     var draftPlans = Model.Count(p => p.Estado == "BORRADOR");
+    var approvedPlans = Model.Count(p => p.Estado == "APROBADO");
 }
 
 @{ var headerActions = "<button type='button' class='btn btn-sm btn-primary me-2' data-bs-toggle='modal' data-bs-target='#suggestPlanModal'><i class='ti ti-wand me-1'></i> GENERAR SUGERENCIA</button><a asp-controller='PlanProduccion' asp-action='Create' class='btn btn-sm btn-outline-primary'><i class='ti ti-plus me-1'></i> NUEVO PLAN</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Planes de Producción (B2M)", Subtitle = "Gestión de metas de fabricación y proyección de necesidades de stock (RF-44).", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
@@ -36,8 +37,8 @@
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body d-flex align-items-center justify-content-between">
                 <div>
-                    <div class="text-muted small text-uppercase">Cobertura</div>
-                    <h3 class="fw-bold mb-0">@((activePlans > 0 ? Math.Min(100, activePlans * 25) : 0))%</h3>
+                    <div class="text-muted small text-uppercase">Aprobados</div>
+                    <h3 class="fw-bold mb-0">@approvedPlans</h3>
                 </div>
                 <div class="avatar avatar-md bg-success-subtle text-success rounded-circle"><i class="ti ti-target"></i></div>
             </div>
@@ -75,7 +76,14 @@
                             <td>
                                 <div class="btn-list justify-content-end">
                                     <a asp-controller="PlanProduccion" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-icon btn-outline-primary rounded-circle" title="Ver detalle"><i class="ti ti-eye"></i></a>
-                                    <a asp-controller="PlanProduccion" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-icon btn-outline-secondary rounded-circle" title="Editar"><i class="ti ti-edit"></i></a>
+                                    @if (item.Estado == "BORRADOR")
+                                    {
+                                        <a asp-controller="PlanProduccion" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-icon btn-outline-secondary rounded-circle" title="Editar"><i class="ti ti-edit"></i></a>
+                                        <form asp-controller="PlanProduccion" asp-action="Approve" asp-route-id="@item.Id" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-icon btn-outline-success rounded-circle" title="Aprobar plan"><i class="ti ti-check"></i></button>
+                                        </form>
+                                    }
                                 </div>
                             </td>
                         </tr>

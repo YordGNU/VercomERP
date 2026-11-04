@@ -1270,7 +1270,7 @@ public class InventoryService : IInventoryService
             await _context.SaveChangesAsync();
             return true;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
 
             return false;
@@ -1324,7 +1324,7 @@ public class InventoryService : IInventoryService
             result.DeletedCount = productos.Count;
             result.Message = $"{productos.Count} producto(s) eliminado(s) correctamente.";
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             result.Success = false;
             result.Message = "Ocurrió un error al eliminar los productos.";

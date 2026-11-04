@@ -94,6 +94,9 @@ if (string.IsNullOrWhiteSpace(jwtSecret))
     }
 }
 
+if (string.IsNullOrWhiteSpace(jwtSecret))
+    throw new InvalidOperationException("Configure Jwt:SecretKey o monte el secreto /run/secrets/jwt_key.");
+
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {

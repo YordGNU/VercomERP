@@ -13,5 +13,6 @@ public class PlanProduccionFormViewModel
 {
     public PlanProduccion Plan { get; set; } = new();
     public IEnumerable<SelectListItem> Presupuestos { get; set; } = new List<SelectListItem>();
+    public IEnumerable<SelectListItem> ProductosTerminados { get; set; } = new List<SelectListItem>();
     public string Title { get; set; } = "Plan de Producción Mensual";
 }

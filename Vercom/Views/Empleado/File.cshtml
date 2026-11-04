@@ -196,17 +196,16 @@
                                     @foreach (var c in Model.Contratos)
                                     {
                                         var vigente = c.Estado == "VIGENTE";
-                                        var hasDoc = !string.IsNullOrEmpty(c.DocumentoUrl);
                                         <tr>
                                              <td>@c.FechaInicio.ToString("dd/MM/yyyy")</td>
                                              <td>@(c.FechaFin?.ToString("dd/MM/yyyy") ?? "Indefinido")</td>
                                             <td><span class="badge badge-soft-info">@c.TipoContrato</span></td>
                                             <td class="text-numeric fw-bold text-success">@c.SalarioPactado.ToString("N2")</td>
                                             <td>
-                                                @if (hasDoc)
+                                                @if (c.DocumentoUrl is { Length: > 0 } documentoUrl)
                                                 {
-                                                    var isPdf = c.DocumentoUrl.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
-                                                    <a href="@c.DocumentoUrl" target="_blank" class="btn btn-sm btn-icon btn-ghost-primary rounded-circle" title="Descargar Contrato">
+                                                    var isPdf = documentoUrl.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
+                                                    <a href="@documentoUrl" target="_blank" class="btn btn-sm btn-icon btn-ghost-primary rounded-circle" title="Descargar Contrato">
                                                         <i class="ti ti-file-@(isPdf ? "type-pdf" : "type-doc") fs-18"></i>
                                                     </a>
                                                 }

@@ -22,7 +22,7 @@
 
                         <div class="col-md-7">
                             <label class="form-label fw-bold">Orden de Producción (Origen)</label>
-                            <select asp-for="Merma.OrdenProduccionId" class="form-control form-select w-100 select2" asp-items="ViewBag.OrdenProduccionId">
+                            <select asp-for="Merma.OrdenProduccionId" class="form-control form-select w-100 select2" asp-items="Model.OrdenesProduccion">
                                 <option value="">-- Merma no vinculada a OP (Ajuste Directo) --</option>
                             </select>
                         </div>
@@ -34,9 +34,17 @@
 
                         <div class="col-md-12">
                             <label class="form-label fw-bold">Artículo / Insumo Afectado</label>
-                            <select asp-for="Merma.ProductoId" class="form-control form-select w-100 select2" asp-items="ViewBag.ProductoId" required>
+                            <select asp-for="Merma.ProductoId" class="form-control form-select w-100 select2" asp-items="Model.Productos" required>
                                 <option value="">-- Buscar en Catálogo --</option>
                             </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="AlmacenId" class="form-label fw-bold">Almacén afectado</label>
+                            <select asp-for="AlmacenId" class="form-select" asp-items="Model.Almacenes" required>
+                                <option value="">-- Seleccione almacén --</option>
+                            </select>
+                            <span asp-validation-for="AlmacenId" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-6">

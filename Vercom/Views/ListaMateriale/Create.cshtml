@@ -9,8 +9,15 @@
 
 
 <div class="row">
-    <form asp-action="Create" method="post" id="bomForm">
+    <form asp-action="@(Model.Bom.Id == Guid.Empty ? "Create" : "Edit")" asp-route-id="@(Model.Bom.Id == Guid.Empty ? null : Model.Bom.Id)" method="post" id="bomForm">
         @Html.AntiForgeryToken()
+        @if (Model.Bom.Id != Guid.Empty)
+        {
+            <input type="hidden" asp-for="Bom.Id" />
+        }
+        <select id="bomInsumoOptions" class="d-none" asp-items="Model.InsumosDisponibles" aria-hidden="true">
+            <option value="">-- Seleccione insumo --</option>
+        </select>
         <div class="row">
             <!-- Encabezado de la Estructura -->
             <div class="col-lg-12 mb-4">
@@ -60,7 +67,25 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Dinámico por JS -->
+                                    @for (var index = 0; index < Model.Bom.ListaMaterialesDetalles.Count; index++)
+                                    {
+                                        var detail = Model.Bom.ListaMaterialesDetalles.ElementAt(index);
+                                        <tr>
+                                            <td>
+                                                <select name="Bom.ListaMaterialesDetalles[@index].ProductoInsumoId" class="form-select" required>
+                                                    <option value="">-- Seleccione insumo --</option>
+                                                    @foreach (var insumo in Model.InsumosDisponibles)
+                                                    {
+                                                        <option value="@insumo.Value" selected="@(insumo.Value == detail.ProductoInsumoId.ToString())">@insumo.Text</option>
+                                                    }
+                                                </select>
+                                            </td>
+                                            <td><input name="Bom.ListaMaterialesDetalles[@index].CantidadRequerida" type="number" min="0.0001" step="0.0001" value="@detail.CantidadRequerida" class="form-control" required /></td>
+                                            <td><input name="Bom.ListaMaterialesDetalles[@index].PorcentajeMerma" type="number" min="0" step="0.01" value="@detail.PorcentajeMerma" class="form-control" required /></td>
+                                            <td></td>
+                                            <td><button type="button" class="btn btn-sm btn-outline-danger remove-row" title="Quitar insumo"><i class="ti ti-trash"></i></button></td>
+                                        </tr>
+                                    }
                                 </tbody>
                             </table>
                         </div>
@@ -84,9 +109,67 @@
 
 @section Scripts {
     <script>
-        // ... (resto del código JS de addRow)
+        function renumberRows() {
+            document.querySelectorAll('#detailsTable tbody tr').forEach((row, index) => {
+                row.querySelectorAll('[name]').forEach(input => {
+                    input.name = input.name.replace(/Bom\.ListaMaterialesDetalles\[\d+\]/, `Bom.ListaMaterialesDetalles[${index}]`);
+                });
+            });
+        }
+
+        function addRow(productId = '', quantity = '', waste = '0') {
+            const body = document.querySelector('#detailsTable tbody');
+            const index = body.querySelectorAll('tr').length;
+            const row = document.createElement('tr');
+            const productCell = document.createElement('td');
+            const product = document.createElement('select');
+            product.className = 'form-select';
+            product.name = `Bom.ListaMaterialesDetalles[${index}].ProductoInsumoId`;
+            product.required = true;
+            document.querySelectorAll('#bomInsumoOptions option').forEach(option => product.appendChild(option.cloneNode(true)));
+            product.value = productId;
+            productCell.appendChild(product);
+
+            const quantityCell = document.createElement('td');
+            const quantityInput = document.createElement('input');
+            quantityInput.type = 'number';
+            quantityInput.min = '0.0001';
+            quantityInput.step = '0.0001';
+            quantityInput.required = true;
+            quantityInput.className = 'form-control';
+            quantityInput.name = `Bom.ListaMaterialesDetalles[${index}].CantidadRequerida`;
+            quantityInput.value = quantity;
+            quantityCell.appendChild(quantityInput);
+
+            const wasteCell = document.createElement('td');
+            const wasteInput = document.createElement('input');
+            wasteInput.type = 'number';
+            wasteInput.min = '0';
+            wasteInput.step = '0.01';
+            wasteInput.required = true;
+            wasteInput.className = 'form-control';
+            wasteInput.name = `Bom.ListaMaterialesDetalles[${index}].PorcentajeMerma`;
+            wasteInput.value = waste;
+            wasteCell.appendChild(wasteInput);
+
+            const notesCell = document.createElement('td');
+            const removeCell = document.createElement('td');
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'btn btn-sm btn-outline-danger remove-row';
+            remove.title = 'Quitar insumo';
+            remove.innerHTML = '<i class="ti ti-trash"></i>';
+            remove.addEventListener('click', () => { row.remove(); renumberRows(); });
+            removeCell.appendChild(remove);
+
+            row.append(productCell, quantityCell, wasteCell, notesCell, removeCell);
+            body.appendChild(row);
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('#detailsTable tbody .remove-row').forEach(button => {
+                button.addEventListener('click', () => { button.closest('tr').remove(); renumberRows(); });
+            });
             if (document.querySelectorAll("#detailsTable tbody tr").length === 0) addRow();
             window.SubmitAjaxForm('bomForm');
         });

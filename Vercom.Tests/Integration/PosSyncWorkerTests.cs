@@ -37,8 +37,9 @@ public class PosSyncWorkerTests
 
         // Dos ventas distintas (claves idempotentes distintas) con la misma serie y número: la
         // primera del lote factura; la segunda choca contra el índice único y queda en ERROR.
-        var buena = PosVentaFixture.Request(sesion, ctx, cantidad: 2m, precioUnitario: 100m, numeroFactura: "900");
-        var venenosa = PosVentaFixture.Request(sesion, ctx, cantidad: 1m, precioUnitario: 100m, numeroFactura: "900");
+        var numeroDuplicado = "T" + Guid.NewGuid().ToString("N")[..10].ToUpperInvariant();
+        var buena = PosVentaFixture.Request(sesion, ctx, cantidad: 2m, precioUnitario: 100m, numeroFactura: numeroDuplicado);
+        var venenosa = PosVentaFixture.Request(sesion, ctx, cantidad: 1m, precioUnitario: 100m, numeroFactura: numeroDuplicado);
 
         await sync.RecibirAsync(buena, CancellationToken.None);
         await sync.RecibirAsync(venenosa, CancellationToken.None);
@@ -78,8 +79,12 @@ public class PosSyncWorkerTests
         Assert.Contains("Ya existe una factura", venenoDb.MensajeError);
         Assert.Equal(1, venenoDb.IntentosProcesamiento);
         Assert.Null(venenoDb.FacturaId);
-        Assert.Equal(1, await db.FacturaVenta.AsNoTracking()
-            .CountAsync(f => f.Serie == ctx.Serie && f.NumeroFactura == "900"));
+        var facturasConNumeroDuplicado = await db.FacturaVenta.AsNoTracking()
+            .Where(f => f.Serie == ctx.Serie && f.NumeroFactura == numeroDuplicado)
+            .Select(f => new { f.Id, f.EntidadId, f.SucursalId, f.Serie, f.NumeroFactura })
+            .ToListAsync();
+        Assert.True(facturasConNumeroDuplicado.Count == 1,
+            $"Se esperó una factura {ctx.Serie}/{numeroDuplicado}; encontradas: {string.Join("; ", facturasConNumeroDuplicado.Select(f => $"{f.Id}:{f.EntidadId}/{f.SucursalId}/{f.Serie}/{f.NumeroFactura}"))}");
 
         // Nada a medias de la venta venenosa llegó a persistirse: solo queda el movimiento de
         // inventario de la venta buena. (Su decremento crudo de existencia no se revierte aquí

@@ -66,7 +66,7 @@
                 @Html.DisplayFor(modelItem => item.Conteo.Id)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.MovimientoAjuste.Id)
+                @(item.MovimientoAjuste?.Id.ToString() ?? "-")
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Producto.Id)

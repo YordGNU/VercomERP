@@ -15,21 +15,21 @@ public class PlanProduccionController : Controller
         _productionService = productionService;
     }
 
-    [Authorize(Policy = "PRODUCCION.FICHA.VER")]
+    [Authorize(Policy = "PRODUCCION.PLAN.VER")]
     public async Task<IActionResult> Index()
     {
         var items = await _productionService.GetProductionPlansAsync();
         return View(items);
     }
 
-    [Authorize(Policy = "PRODUCCION.FICHA.CREAR")]
+    [Authorize(Policy = "PRODUCCION.PLAN.CREAR")]
     public async Task<IActionResult> Create()
     {
         var vm = await _productionService.GetPlanFormContextAsync();
         return View(vm);
     }
 
-    [Authorize(Policy = "PRODUCCION.FICHA.VER")]
+    [Authorize(Policy = "PRODUCCION.PLAN.VER")]
     public async Task<IActionResult> Details(Guid id)
     {
         var plan = await _productionService.GetProductionPlanByIdAsync(id);
@@ -37,7 +37,7 @@ public class PlanProduccionController : Controller
         return View(plan);
     }
 
-    [Authorize(Policy = "PRODUCCION.FICHA.CREAR")]
+    [Authorize(Policy = "PRODUCCION.PLAN.CREAR")]
     public async Task<IActionResult> Edit(Guid id)
     {
         var plan = await _productionService.GetProductionPlanByIdAsync(id);
@@ -49,7 +49,7 @@ public class PlanProduccionController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Policy = "PRODUCCION.FICHA.CREAR")]
+    [Authorize(Policy = "PRODUCCION.PLAN.CREAR")]
     public async Task<IActionResult> Edit(Guid id, PlanProduccionFormViewModel vm)
     {
         var plan = vm.Plan;
@@ -77,7 +77,7 @@ public class PlanProduccionController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Policy = "PRODUCCION.FICHA.CREAR")]
+    [Authorize(Policy = "PRODUCCION.PLAN.CREAR")]
     public async Task<IActionResult> Create(PlanProduccionFormViewModel vm)
     {
         var plan = vm.Plan;
@@ -96,5 +96,15 @@ public class PlanProduccionController : Controller
 
         var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
         return Json(new { success = false, message = "Errores de validación.", errors = errorList });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "PRODUCCION.PLAN.APROBAR")]
+    public async Task<IActionResult> Approve(Guid id)
+    {
+        var result = await _productionService.ApprovePlanAsync(id);
+        TempData[result.Succeeded ? "Success" : "Error"] = result.Message;
+        return RedirectToAction(nameof(Index));
     }
 }

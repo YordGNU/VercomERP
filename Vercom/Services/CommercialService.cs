@@ -67,7 +67,7 @@ public class CommercialService : ICommercialService
         var query = _context.Clientes.AsQueryable();
 
         if (!string.IsNullOrEmpty(search))
-            query = query.Where(c => c.NombreRazonSocial.Contains(search) || c.NitOCi.Contains(search));
+            query = query.Where(c => c.NombreRazonSocial.Contains(search) || (c.NitOCi != null && c.NitOCi.Contains(search)));
 
         if (!string.IsNullOrEmpty(segment))
             query = query.Where(c => c.Segmento == segment);
@@ -88,7 +88,7 @@ public class CommercialService : ICommercialService
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim();
-            query = query.Where(c => c.NombreRazonSocial.Contains(term) || c.NitOCi.Contains(term));
+            query = query.Where(c => c.NombreRazonSocial.Contains(term) || (c.NitOCi != null && c.NitOCi.Contains(term)));
         }
 
         if (!string.IsNullOrWhiteSpace(segment))
@@ -211,7 +211,7 @@ public class CommercialService : ICommercialService
         var query = _context.Proveedors.AsQueryable();
 
         if (!string.IsNullOrEmpty(search))
-            query = query.Where(p => p.RazonSocial.Contains(search) || p.Nit.Contains(search));
+            query = query.Where(p => p.RazonSocial.Contains(search) || (p.Nit != null && p.Nit.Contains(search)));
 
         if (active.HasValue)
             query = query.Where(p => p.Activo == active.Value);
@@ -229,7 +229,7 @@ public class CommercialService : ICommercialService
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim();
-            query = query.Where(p => p.RazonSocial.Contains(term) || p.Nit.Contains(term));
+            query = query.Where(p => p.RazonSocial.Contains(term) || (p.Nit != null && p.Nit.Contains(term)));
         }
 
         if (!string.IsNullOrWhiteSpace(tipoPersona))
@@ -429,10 +429,12 @@ public class CommercialService : ICommercialService
             contract.MontoTotalOriginal = contract.MontoTotal;
 
             var numeroContrato = contract.NumeroContrato?.Trim();
+            if (string.IsNullOrWhiteSpace(numeroContrato))
+                return (false, "El número de contrato es obligatorio.");
             if (await ExisteNumeroContratoParaElTerceroAsync(contract.EntidadId, numeroContrato, contract.ClienteId, contract.ProveedorId))
                 return (false, MensajeNumeroContratoRepetido(numeroContrato, contract.ClienteId, contract.ProveedorId));
 
-            contract.NumeroContrato = numeroContrato ?? contract.NumeroContrato;
+            contract.NumeroContrato = numeroContrato;
 
             // ============================================================
             // 1. GUARDAR DOCUMENTO ADJUNTO (usando el servicio)
@@ -483,10 +485,12 @@ public class CommercialService : ICommercialService
             if (existing == null) return (false, "El contrato no existe.");
 
             var numeroContrato = contract.NumeroContrato?.Trim();
+            if (string.IsNullOrWhiteSpace(numeroContrato))
+                return (false, "El número de contrato es obligatorio.");
             if (await ExisteNumeroContratoParaElTerceroAsync(_entidadProvider.CurrentEntidadId, numeroContrato, contract.ClienteId, contract.ProveedorId, contract.Id))
                 return (false, MensajeNumeroContratoRepetido(numeroContrato, contract.ClienteId, contract.ProveedorId));
 
-            contract.NumeroContrato = numeroContrato ?? contract.NumeroContrato;
+            contract.NumeroContrato = numeroContrato;
 
             var tieneSuplementos = await _context.ContratoEconomicoSuplementos
                 .AsNoTracking()

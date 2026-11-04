@@ -33,7 +33,7 @@
                         <div class="col-md-6">
                             <label class="form-label">Sucursal Asociada</label>
                             <select asp-for="CentroCosto.SucursalId" name="CentroCosto.SucursalId" class="form-control form-select w-100 select2" asp-items="Model.Sucursales">
-                                <option value="@Model.CentroCosto.SucursalId"> @Model.CentroCosto.Sucursal.Nombre</option>
+                                <option value="@Model.CentroCosto.SucursalId">@(Model.CentroCosto.Sucursal?.Nombre ?? "Sucursal actual")</option>
                             </select>
                             <span asp-validation-for="CentroCosto.SucursalId" class="text-danger small"></span>
                         </div>

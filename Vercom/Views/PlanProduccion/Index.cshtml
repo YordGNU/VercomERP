@@ -1,10 +1,11 @@
 @model IEnumerable<VERCOM.Models.PlanProduccion>
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
 @{
     ViewBag.Title = "Planificación de Producción";
     var meses = new[] { "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVO PLAN MENSUAL</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Planificación Mensual de Producción", Subtitle = "Gestión de metas de fabricación alineadas con el presupuesto corporativo.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var canCreate = (await AuthorizationService.AuthorizeAsync(User, null, "PRODUCCION.PLAN.CREAR")).Succeeded; var headerActions = canCreate ? "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVO PLAN MENSUAL</a>" : null; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Planificación Mensual de Producción", Subtitle = "Gestión de metas de fabricación alineadas con el presupuesto corporativo.", Icon = "ti-file", ActionsHtml = headerActions != null ? new Microsoft.AspNetCore.Html.HtmlString(headerActions) : null }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 
@@ -63,6 +64,10 @@
                                             <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-icon btn-light rounded-circle" title="Editar">
                                                 <i class="ti ti-edit"></i>
                                             </a>
+                                            <form asp-action="Approve" asp-route-id="@item.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-icon btn-light rounded-circle text-success" title="Aprobar plan"><i class="ti ti-check"></i></button>
+                                            </form>
                                         }
                                     </div>
                                 </td>

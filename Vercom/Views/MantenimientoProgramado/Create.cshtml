@@ -22,7 +22,7 @@
 
                         <div class="col-md-12">
                             <label class="form-label fw-bold">Equipo / Maquinaria</label>
-                            <select asp-for="Mantenimiento.EquipoId" class="form-control form-select w-100 select2" asp-items="ViewBag.EquipoId" required>
+                            <select asp-for="Mantenimiento.EquipoId" class="form-control form-select w-100 select2" asp-items="Model.Equipos" required>
                                 <option value="">-- Seleccione Maquinaria --</option>
                             </select>
                         </div>
@@ -58,7 +58,9 @@
 
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Responsable Técnico</label>
-                            <input asp-for="Mantenimiento.ResponsableId" class="form-control" placeholder="Nombre del técnico o proveedor..." />
+                            <select asp-for="Mantenimiento.ResponsableId" class="form-select" asp-items="Model.Responsables">
+                                <option value="">-- Sin asignar --</option>
+                            </select>
                             <small class="text-muted tiny">Persona encargada de la ejecución.</small>
                         </div>
 

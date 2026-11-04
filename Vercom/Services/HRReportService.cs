@@ -65,7 +65,7 @@ public class HRReportService : IHRReportService
             Periodo = $"{r.Mes}/{r.Anio}",
             DiasTrabajados = r.DiasTrabajados,
             SalarioDevengado = r.SalarioDevengado,
-            TiempoServicioMeses = (int)r.TiempoServicioAcumuladoMeses
+            TiempoServicioMeses = r.TiempoServicioAcumuladoMeses ?? 0
         }).ToList();
     }
 

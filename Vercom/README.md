@@ -390,19 +390,23 @@ El APK se generará en `app/build/outputs/apk/debug/`.
 
 ## 🧪 Testing
 
-El proyecto usa:
+Suite automatizada con **xUnit**, **Moq**, Entity Framework Core InMemory para pruebas unitarias, y SQL Server para pruebas de integración.
 
-- **xUnit** para tests unitarios
-- **Moq** para mocking
-- **FluentAssertions** para aserciones legibles
-
-Ejecutar tests:
+Ejecutar toda la suite:
 
 ```bash
-dotnet test
+dotnet test Vercom.Tests/Vercom.Tests.csproj
 ```
 
-Cobertura en lógica crítica: **>85%** (contabilidad, nómina, seguridad).
+Las pruebas de integración requieren SQL Server con el esquema y datos base del proyecto. Configure `VERCOM_TEST_CONNECTION`; las pruebas marcadas con `DbFact` se omiten cuando la base no está disponible. Las pruebas unitarias de producción se pueden ejecutar sin SQL Server:
+
+```bash
+dotnet test Vercom.Tests/Vercom.Tests.csproj --filter "FullyQualifiedName~ProductionServiceTests"
+```
+
+Última medición local (2026-11-03), suite completa en Release con SQL Server: **25,79% de líneas** (6.069/23.526) y **4,08% de ramas** (572/13.987). No es una afirmación de cobertura de requisitos: incluye código generado Razor y los tests de integración dependen de la configuración SQL disponible. La CI publica el XML Cobertura como artefacto para poder comparar ejecuciones.
+
+La guía de escenarios y configuración del módulo está en [Docs/PRODUCCION-TESTING.md](Docs/PRODUCCION-TESTING.md).
 
 ---
 

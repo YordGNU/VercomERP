@@ -1,14 +1,13 @@
 @model VERCOM.ViewModels.PageTitleHeadModel
 @{
     var showBreadcrumb = Model.ShowBreadcrumb;
-    var showAction = Model.PrimaryAction != null;
     var primaryActionUrl = "";
-    if (showAction)
+    if (Model.PrimaryAction is { } primaryAction)
     {
-        primaryActionUrl = Url.Action(Model.PrimaryAction.Action, Model.PrimaryAction.Controller);
-        if (!string.IsNullOrEmpty(Model.PrimaryAction.Id))
+        primaryActionUrl = Url.Action(primaryAction.Action, primaryAction.Controller) ?? "#";
+        if (!string.IsNullOrEmpty(primaryAction.Id))
         {
-            primaryActionUrl += $"?id={Model.PrimaryAction.Id}";
+            primaryActionUrl += $"?id={primaryAction.Id}";
         }
     }
 }
@@ -21,11 +20,11 @@
         }
     </div>
     <div class="text-end d-flex align-items-center gap-3">
-        @if (showAction)
+        @if (Model.PrimaryAction is { } action)
         {
             <a href="@primaryActionUrl" class="btn btn-primary shadow-sm">
-                @if (!string.IsNullOrEmpty(Model.PrimaryAction.Icon)) { <i class="@Model.PrimaryAction.Icon me-1"></i> }
-                @Model.PrimaryAction.Text
+            @if (!string.IsNullOrEmpty(action.Icon)) { <i class="@action.Icon me-1"></i> }
+            @action.Text
             </a>
         }
         @if (showBreadcrumb && Model.BreadcrumbItems?.Any() == true)

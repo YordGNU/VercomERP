@@ -22,7 +22,9 @@ public class MantenimientoFormViewModel
 public class MermaFormViewModel
 {
     public Merma Merma { get; set; } = new();
+    public Guid AlmacenId { get; set; }
     public IEnumerable<SelectListItem> OrdenesProduccion { get; set; } = new List<SelectListItem>();
     public IEnumerable<SelectListItem> Productos { get; set; } = new List<SelectListItem>();
+    public IEnumerable<SelectListItem> Almacenes { get; set; } = new List<SelectListItem>();
     public string Title { get; set; } = "Registro de Merma / Desperdicio";
 }

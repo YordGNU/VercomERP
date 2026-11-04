@@ -1,8 +1,10 @@
 @model VERCOM.ViewModels.DataTableCardModel
 @{
     var tableId = Model.TableId ?? "dataTable";
-    var showCreate = Model.CreateAction != null;
-    var showFilters = Model.Filters?.Any() == true;
+    var createAction = Model.CreateAction;
+    var filters = Model.Filters ?? new List<VERCOM.ViewModels.DataTableFilter>();
+    var showCreate = createAction is not null;
+    var showFilters = filters.Count > 0;
 }
 <div class="row justify-content-center">
     <div class="@(Model.ColumnClass ?? "col-xxl-12")">
@@ -23,13 +25,13 @@
                     }
                     @if (showCreate)
                     {
-                        var createUrl = Url.Action(Model.CreateAction.Action, Model.CreateAction.Controller);
-                        if (!string.IsNullOrEmpty(Model.CreateAction.Id))
+                        var createUrl = Url.Action(createAction!.Action, createAction.Controller) ?? "#";
+                        if (!string.IsNullOrEmpty(createAction.Id))
                         {
-                            createUrl += $"?id={Model.CreateAction.Id}";
+                            createUrl += $"?id={createAction.Id}";
                         }
                         <a href="@createUrl" class="btn btn-sm btn-primary">
-                            <i class="ti ti-plus me-1"></i> @Model.CreateAction.Text
+                            <i class="ti ti-plus me-1"></i> @createAction.Text
                         </a>
                     }
                 </div>
@@ -39,7 +41,7 @@
                 {
                     <div class="ux-filters">
                         <form method="get" class="d-flex flex-wrap align-items-end gap-2 w-100" id="@($"{tableId}-filters")">
-                            @foreach (var filter in Model.Filters)
+                            @foreach (var filter in filters)
                             {
                                 <div class="@filter.ColumnClass">
                                     <label class="form-label" for="@filter.Name">@filter.Label</label>

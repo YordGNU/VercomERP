@@ -283,7 +283,7 @@ public sealed class PosSincronizacionService
         var entidadSolicitante = EntidadSolicitante();
         if (device is null || device.EntidadId != data.EntidadId || device.AlmacenId != data.AlmacenId ||
             (entidadSolicitante is Guid ent && device.EntidadId != ent))
-            return (null, "La venta no corresponde al dispositivo POS.", false);
+            return (null, "La venta no corresponde al dispositivo POS.", true);
 
         // Numeración: si el servidor reservó rangos a este dispositivo para la serie, el número
         // debe caer dentro de uno de ellos. Sin rango reservado se conserva el comportamiento
@@ -328,6 +328,21 @@ public sealed class PosSincronizacionService
             return (null, "El total de la venta debe ser mayor que cero.", false);
         if (Math.Abs(data.Pagos.Sum(x => x.Monto - (x.VueltoEntregado ?? 0m)) - total) > 0.01m)
             return (null, "Los pagos no coinciden con el total de la venta.", false);
+
+        var numeroExistenteEnContexto = _db.ChangeTracker.Entries<FacturaVentum>()
+            .Any(e => e.State != EntityState.Deleted &&
+                      e.Entity.EntidadId == data.EntidadId &&
+                      e.Entity.SucursalId == data.SucursalId &&
+                      e.Entity.Serie == data.Serie &&
+                      e.Entity.NumeroFactura == data.NumeroFactura);
+        var numeroExistente = numeroExistenteEnContexto || await _db.FacturaVenta.IgnoreQueryFilters().AnyAsync(f =>
+            f.EntidadId == data.EntidadId &&
+            f.SucursalId == data.SucursalId &&
+            f.Serie == data.Serie &&
+            f.NumeroFactura == data.NumeroFactura,
+            cancellationToken);
+        if (numeroExistente)
+            return (null, "Ya existe una factura con esa numeración (serie y número) en la entidad y sucursal de la venta.", false);
 
         // IgnoreQueryFilters: el query filter global (vía caja → entidad) depende del HttpContext;
         // en el scope del worker no existe y vaciaría la sesión. La pertenencia a la caja/entidad
