@@ -72,7 +72,7 @@
                                 </div>
 
                                 <form asp-action="Login" asp-controller="Account" method="post"
-                                      class="auth-form" id="loginForm" autocomplete="on">
+                                      class="" id="loginForm" autocomplete="on">
                                     <input type="hidden" name="returnUrl" value="@returnUrl" />
 
                                     <div class="card mb-0">
@@ -106,11 +106,11 @@
                                             <div class="mb-2">
                                                 <label for="username" class="form-label mb-1">Usuario</label>
                                                 <div class="input-group has-validation">
-                                                    <span class="input-group-text bg-light border-end-0">
+                                                    <span class="input-group-text bg-light ">
                                                         <i class="ti ti-user" aria-hidden="true"></i>
                                                     </span>
                                                     <input type="text" id="username" name="username"
-                                                           class="form-control border-start-0 ps-0"
+                                                           class="form-control "
                                                            placeholder="nombre.usuario"
                                                            autocomplete="username" autocapitalize="none" spellcheck="false"
                                                            required autofocus />
@@ -122,15 +122,15 @@
                                             <div class="mb-2">
                                                 <label for="password" class="form-label mb-1">Contraseña</label>
                                                 <div class="input-group has-validation">
-                                                    <span class="input-group-text bg-light border-end-0">
+                                                    <span class="input-group-text bg-light ">
                                                         <i class="ti ti-lock" aria-hidden="true"></i>
                                                     </span>
                                                     <input type="password" id="password" name="password"
-                                                           class="form-control border-start-0 border-end-0 ps-0 auth-password-input"
+                                                           class="form-control  ps-0 "
                                                            placeholder="••••••••"
                                                            autocomplete="current-password" required />
                                                     <button type="button" id="togglePassword"
-                                                            class="input-group-text bg-light border-start-0 auth-eye"
+                                                            class="input-group-text bg-light border-start-0 "
                                                             aria-label="Mostrar contraseña" aria-pressed="false"
                                                             aria-controls="password">
                                                         <i class="ti ti-eye icon-eye" aria-hidden="true"></i>
@@ -149,7 +149,7 @@
 
                                             <!-- Botón -->
                                             <div class="d-grid">
-                                                <button type="submit" class="btn btn-primary auth-submit" id="submitBtn">
+                                                <button type="submit" class="btn btn-primary " id="submitBtn">
                                                     <span class="btn-text">
                                                         <i class="ti ti-login me-1" aria-hidden="true"></i> Entrar
                                                     </span>
@@ -212,7 +212,7 @@
                 if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
 
                 var root = document.querySelector('.auth-box');
-                var card = document.querySelector('.auth-form .card');
+                var card = document.querySelector('. .card');
                 var logo = document.querySelector('.logo-wrapper');
                 var bubbles = document.querySelector('.circles');
                 if (!root) return;
