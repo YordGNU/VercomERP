@@ -46,6 +46,10 @@
                                         <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline py-1 px-2" title="Ver Detalle">
                                             <i class="ti ti-eye"></i>
                                         </a>
+                                        <form asp-action="BuildFromBom" asp-route-productId="@item.ProductoId" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline py-1 px-2 text-info" title="Generar ficha desde BOM"><i class="ti ti-wand"></i></button>
+                                        </form>
                                         @if (canApprove)
                                         {
                                             <form asp-action="Approve" asp-route-id="@item.Id" method="post" class="d-inline">

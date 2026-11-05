@@ -42,6 +42,17 @@
                                     <span class="fw-bold small">@progress.ToString("N0")%</span>
                                 </div>
                             </div>
+                            @if (Model.Estado == "EN_PROCESO")
+                            {
+                                <div class="col-12">
+                                    <form asp-action="Reverse" asp-route-id="@Model.Id" method="post" class="d-inline w-100">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger w-100" onclick="return confirm('¿Revertir la orden a planificada? Se devolverán los materiales al inventario.');">
+                                            <i class="ti ti-rotate-2 me-1"></i> REVERTIR ORDEN
+                                        </button>
+                                    </form>
+                                </div>
+                            }
                         </div>
                     </div>
                 </div>
