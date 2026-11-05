@@ -2,9 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Text;
-using Vercom.Services;
+using VERCOM.Services;
 
-namespace Vercom.Controllers;
+namespace VERCOM.Controllers;
 
 [Authorize(Policy = "RRHH.REPORTE.VER")]
 public class ReporteAsistenciaController : Controller

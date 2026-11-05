@@ -1,4 +1,4 @@
-﻿namespace Vercom.Models;
+﻿namespace VERCOM.Models;
 
 /// <summary>
 /// Alternativa a reservar consecutivos: el servidor asigna bloques (p.ej. 1000 números) a cada terminal al sincronizar. El terminal numera localmente dentro de su rango incluso sin conexión, preservando RNF-51 (sin duplicados ni saltos) sin depender de la red para cada venta.

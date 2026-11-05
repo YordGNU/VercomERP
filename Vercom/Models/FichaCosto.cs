@@ -1,4 +1,4 @@
-﻿namespace Vercom.Models;
+﻿namespace VERCOM.Models;
 
 /// <summary>
 /// RNF-40: versionada para permitir redefinición ágil ante cambios de precios de insumos.

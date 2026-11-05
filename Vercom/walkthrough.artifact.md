@@ -23,7 +23,7 @@ Se ha completado la construcción y estilización de las interfaces de gestión 
 ## Resultados Técnicos
 
 > [!SUCCESS]
-> **Integridad Visual:** Se unificó el diseño de todas las pantallas de POS bajo el estándar Vercom Elite, utilizando DataTables para búsquedas rápidas y el motor AJAX para ediciones sin recarga.
+> **Integridad Visual:** Se unificó el diseño de todas las pantallas de POS bajo el estándar VERCOM Elite, utilizando DataTables para búsquedas rápidas y el motor AJAX para ediciones sin recarga.
 
 > [!IMPORTANT]
 > **Transparencia Cloud:** Los jefes de ventas ahora tienen visibilidad total de lo que ocurre en los dispositivos móviles, desde la apertura del turno hasta la sincronización del último centavo vendido.

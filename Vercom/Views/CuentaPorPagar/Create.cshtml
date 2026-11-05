@@ -1,10 +1,10 @@
-@model Vercom.ViewModels.CxPFormViewModel
+@model VERCOM.ViewModels.CxPFormViewModel
 @{
     ViewBag.Title = "Registrar Cuenta por Pagar";
     var fmt = new System.Globalization.CultureInfo("es-CU");
 }
 
-@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Registrar Cuenta por Pagar", Subtitle = "Carga manual de pasivos con proveedores o compromisos financieros pendientes.", Icon = "ti-file", Tone = "primary" }; }
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Registrar Cuenta por Pagar", Subtitle = "Carga manual de pasivos con proveedores o compromisos financieros pendientes.", Icon = "ti-file"}; }
 <partial name='_PageHeader' model='pageHeader' />
 
 
@@ -39,7 +39,7 @@
                             <label asp-for="Item.DocumentoOrigenTipo" class="form-label fw-bold">Tipo de documento</label>
                             <select asp-for="Item.DocumentoOrigenTipo" class="form-select">
                                 <option value="">-- Seleccione --</option>
-                                @foreach (var t in Vercom.ViewModels.CarteraCatalogos.TiposDocumento)
+                                @foreach (var t in VERCOM.ViewModels.CarteraCatalogos.TiposDocumento)
                                 {
                                     <!option value="@t" @(t == Model.Item.DocumentoOrigenTipo ? "selected" : "")>@t</!option>
                                 }
@@ -76,7 +76,7 @@
                         <div class="col-md-6">
                             <label asp-for="Item.Moneda" class="form-label fw-bold">Moneda</label>
                             <select asp-for="Item.Moneda" class="form-select">
-                                @foreach (var m in Vercom.ViewModels.CarteraCatalogos.Monedas)
+                                @foreach (var m in VERCOM.ViewModels.CarteraCatalogos.Monedas)
                                 {
                                     <!option value="@m" @(m == Model.Item.Moneda ? "selected" : "")>@m</!option>
                                 }

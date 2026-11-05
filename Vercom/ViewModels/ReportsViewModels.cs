@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 
-namespace Vercom.ViewModels;
+namespace VERCOM.ViewModels;
 
 public class ReportsIndexViewModel
 {

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 
-namespace Vercom.Security;
+namespace VERCOM.Security;
 
 public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
 {

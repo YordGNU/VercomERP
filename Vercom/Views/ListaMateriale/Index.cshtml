@@ -1,7 +1,8 @@
-@model IEnumerable<Vercom.Models.ListaMateriale>
+@model IEnumerable<VERCOM.Models.ListaMateriale>
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
 @{ ViewBag.Title = "Lista de Materiales (BOM)"; }
 
-@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVA LISTA</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Ingeniería: Estructura de Productos (BOM)", Subtitle = "Definición de composición y requerimientos de insumos para la fabricación.", Icon = "ti-layers-intersect", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var canCreate = (await AuthorizationService.AuthorizeAsync(User, null, "PRODUCCION.BOM.CREAR")).Succeeded; var headerActions = canCreate ? "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVA LISTA</a>" : null; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Ingeniería: Estructura de Productos (BOM)", Subtitle = "Definición de composición y requerimientos de insumos para la fabricación.", Icon = "ti-layers-intersect", ActionsHtml = headerActions != null ? new Microsoft.AspNetCore.Html.HtmlString(headerActions) : null }; }
 <partial name='_PageHeader' model='pageHeader' /><div class="container-xxl mt-4">
     <div class="row row-cards">
         @foreach (var item in Model)
@@ -36,6 +37,12 @@
                             <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
                                 <i class="ti ti-list me-1"></i> VER EXPLOSIÓN DE MATERIALES
                             </a>
+                            @if ((await AuthorizationService.AuthorizeAsync(User, null, "PRODUCCION.BOM.EDITAR")).Succeeded)
+                            {
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
+                                    <i class="ti ti-copy me-1"></i> CREAR NUEVA VERSIÓN
+                                </a>
+                            }
                             @if(item.Activa) {
                                 <a asp-controller="Production" asp-action="CreateOrder" asp-route-productId="@item.ProductoTerminadoId" class="btn btn-sm btn-ghost-primary">
                                     <i class="ti ti-player-play me-1"></i> GENERAR ORDEN DE TRABAJO
@@ -49,14 +56,8 @@
 
         @if (!Model.Any())
         {
-            <div class="col-12 text-center py-5">
-                <div class="avatar avatar-xl bg-light-subtle text-muted rounded-circle mb-3 mx-auto">
-                    <i class="ti ti-binary fs-48"></i>
-                </div>
-                <h3 class="fw-bold">No hay estructuras definidas</h3>
-                <p class="text-muted">Empiece definiendo la composición de sus productos elaborados para controlar el consumo de insumos.</p>
-                <a asp-action="Create" class="btn btn-primary mt-3">CREAR MI PRIMERA BOM</a>
-            </div>
+            var emptyState = new VERCOM.ViewModels.EmptyStateModel { Icon = "ti-binary", Title = "No hay estructuras definidas", Description = "Empiece definiendo la composición de sus productos elaborados para controlar el consumo de insumos.", ActionHtml = new Microsoft.AspNetCore.Html.HtmlString("<a href='" + Url.Action("Create") + "' class='btn btn-primary mt-3'>CREAR MI PRIMERA BOM</a>") };
+            <partial name="_EmptyState" model="emptyState" />
         }
     </div>
 </div>

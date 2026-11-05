@@ -1,9 +1,9 @@
-@model Vercom.Models.ListaMateriale
+@model VERCOM.Models.ListaMateriale
 @{
     ViewBag.Title = "Detalle de Estructura (BOM)";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> BOM</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Explosión de Materiales: " + Model.ProductoTerminado.Nombre, Subtitle = "Requerimientos teóricos de insumos y mermas estimadas para la producción.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> BOM</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Explosión de Materiales: " + Model.ProductoTerminado.Nombre, Subtitle = "Requerimientos teóricos de insumos y mermas estimadas para la producción.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 
@@ -33,7 +33,7 @@
                                    // var totalBruta = det.QuantityBruta(); // Asumiendo que implementamos esta lógica en el modelo o la calculamos aquí
                                     <tr>
                                       <td>
-                                            <div class="fw-bold fs-13">@det.ProductoInsumo.Nombre</div>
+                                            <div class="fw-bold fs-14">@det.ProductoInsumo.Nombre</div>
                                             <small class="text-muted tiny font-monospace">@det.ProductoInsumo.Codigo</small>
                                         </td>
                                         <td fw-bold">@det.CantidadRequerida.ToString("N4")</td>
@@ -63,7 +63,3 @@
     </div>
 </div>
 
-<style>
-    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
-    .fs-13 { font-size: 0.8125rem; }
-</style>

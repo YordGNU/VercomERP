@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Vercom.Models;
-using Vercom.Services;
+using VERCOM.Models;
+using VERCOM.Services;
 
-namespace Vercom.Controllers;
+namespace VERCOM.Controllers;
 
 [Authorize(Policy = "SEGURIDAD.ROL.VER")]
 public class RolController : Controller

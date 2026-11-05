@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using Vercom.Models;
-using Vercom.Security;
+using VERCOM.Models;
+using VERCOM.Security;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public interface IWarehouseService
 {

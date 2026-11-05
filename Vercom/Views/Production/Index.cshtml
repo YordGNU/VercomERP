@@ -1,7 +1,7 @@
-@model IEnumerable<Vercom.Models.OrdenProduccion>
+@model IEnumerable<VERCOM.Models.OrdenProduccion>
 @{ ViewBag.Title = "Monitor de Planta"; }
 
-@{ var headerActions = "<a href='" + Url.Action("Plans") + "' class='btn btn-sm btn-outline-primary me-1'><i class='ti ti-calendar-event me-1'></i> PLANES DE PRODUCCIÓN</a><a href='" + Url.Action("CreateOrder") + "' class='btn btn-sm btn-primary'><i class='ti ti-settings-plus me-1'></i> NUEVA ORDEN DE TRABAJO</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Monitor de Planta: Órdenes de Producción", Subtitle = "Seguimiento en tiempo real del flujo de fabricación y cumplimiento de metas.", Icon = "ti-settings-plus", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Plans") + "' class='btn btn-sm btn-outline-primary me-1'><i class='ti ti-calendar-event me-1'></i> PLANES DE PRODUCCIÓN</a><a href='" + Url.Action("CreateOrder") + "' class='btn btn-sm btn-primary'><i class='ti ti-settings-plus me-1'></i> NUEVA ORDEN DE TRABAJO</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Monitor de Planta: Órdenes de Producción", Subtitle = "Seguimiento en tiempo real del flujo de fabricación y cumplimiento de metas.", Icon = "ti-settings-plus", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' /><div class="row">
     <div class="row row-cards">
         @foreach (var item in Model.OrderByDescending(o => o.CreadoEn))
@@ -14,7 +14,7 @@
             };
 
             <div class="col-md-6 col-xl-4">
-                <div class="card card-sm shadow-sm border-0 h-100 transition-all hover-shadow">
+                <div class="card card-sm shadow-sm border-0 h-100 transition-all">
                     <div class="card-status-top bg-@statusColor"></div>
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-start mb-3">
@@ -39,7 +39,7 @@
                             @if(item.Estado == "EN_PROCESO") {
                                 <div class="progress progress-xs mt-3">
                                     @{ var progress = (item.CantidadPlanificada > 0) ? (item.CantidadProducida / item.CantidadPlanificada * 100) : 0; }
-                                    <div class="progress-bar bg-info" style="width: @progress%"></div>
+                                    <div class="progress-bar bg-info" style="width: @progress.ToString("N0")%"></div>
                                 </div>
                             }
                         </div>
@@ -85,19 +85,8 @@
             </div>
         }
         @if (!Model.Any()) {
-            <div class="col-12 text-center py-5">
-                <div class="avatar avatar-xl bg-light-subtle text-muted rounded-circle mb-3 mx-auto">
-                    <i class="ti ti-assembly fs-48"></i>
-                </div>
-                <h3 class="fw-bold">Sin actividad de planta</h3>
-                <p class="text-muted">No existen órdenes de producción activas en este periodo.</p>
-                <a asp-action="CreateOrder" class="btn btn-primary mt-2">PLANIFICAR TRABAJO</a>
-            </div>
+            var emptyState = new VERCOM.ViewModels.EmptyStateModel { Icon = "ti-assembly", Title = "Sin actividad de planta", Description = "No existen órdenes de producción activas en este periodo.", ActionHtml = new Microsoft.AspNetCore.Html.HtmlString("<a href='" + Url.Action("CreateOrder") + "' class='btn btn-primary mt-2'>PLANIFICAR TRABAJO</a>") };
+            <partial name="_EmptyState" model="emptyState" />
         }
     </div>
-</div>
-
-<style>
-    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
-    .hover-shadow:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important; }
-</style>
+}

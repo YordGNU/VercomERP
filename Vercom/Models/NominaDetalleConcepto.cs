@@ -1,4 +1,4 @@
-﻿namespace Vercom.Models;
+﻿namespace VERCOM.Models;
 
 /// <summary>
 /// RNF-22: histórico salarial inalterable — no se actualiza tras CONTABILIZADA, solo se referencia para reportes probatorios.

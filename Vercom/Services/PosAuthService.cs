@@ -3,11 +3,11 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Vercom.DTOs;
-using Vercom.Models;
+using VERCOM.DTOs;
+using VERCOM.Models;
 using BC = BCrypt.Net.BCrypt;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public sealed class PosAuthService
 {
@@ -41,15 +41,32 @@ public sealed class PosAuthService
 
         if (!passwordValid) return (null, "Credenciales inválidas.");
 
+        return await IssueAsync(user, request.SucursalId, cancellationToken);
+    }
+
+    /// <summary>
+    /// Emite un token POS para un usuario ya autenticado por otro medio (p. ej. la sesión
+    /// de cookie del terminal web del ERP), sin volver a pedir la contraseña.
+    /// </summary>
+    public async Task<(PosLoginResponse? Response, string? Error)> IssueForUserAsync(Guid userId, Guid? sucursalId, CancellationToken cancellationToken)
+    {
+        var user = await _db.Usuarios.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == userId && x.Activo, cancellationToken);
+        return user is null
+            ? (null, "El usuario no está activo.")
+            : await IssueAsync(user, sucursalId, cancellationToken);
+    }
+
+    private async Task<(PosLoginResponse? Response, string? Error)> IssueAsync(Usuario user, Guid? sucursalSolicitada, CancellationToken cancellationToken)
+    {
         var assignments = await _db.UsuarioRols.IgnoreQueryFilters().AsNoTracking()
             .Where(x => x.UsuarioId == user.Id)
-            .Where(x => !request.SucursalId.HasValue || x.SucursalId == request.SucursalId.Value)
+            .Where(x => !sucursalSolicitada.HasValue || x.SucursalId == sucursalSolicitada.Value)
             .Include(x => x.Rol)
             .ToListAsync(cancellationToken);
-        if (request.SucursalId.HasValue && assignments.Count == 0)
+        if (sucursalSolicitada.HasValue && assignments.Count == 0)
             return (null, "El usuario no tiene acceso a la sucursal solicitada.");
 
-        var sucursalId = request.SucursalId ?? user.SucursalId ?? assignments.Select(x => (Guid?)x.SucursalId).FirstOrDefault();
+        var sucursalId = sucursalSolicitada ?? user.SucursalId ?? assignments.Select(x => (Guid?)x.SucursalId).FirstOrDefault();
         var roles = assignments.Select(x => string.IsNullOrWhiteSpace(x.Rol.Codigo) ? x.Rol.Nombre : x.Rol.Codigo)
             .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
 

@@ -1,10 +1,10 @@
-@model Vercom.Models.Consecutivo
+@model VERCOM.Models.Consecutivo
 
-@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
+@inject VERCOM.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewBag.Title = "Detalle del Consecutivo";
 }
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Consecutivo</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Detalle del Consecutivo", Subtitle = "Control de numeración por tipo de documento y serie (RNF-51).", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Consecutivo</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Detalle del Consecutivo", Subtitle = "Control de numeración por tipo de documento y serie (RNF-51).", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

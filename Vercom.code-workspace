@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "Vercom"
+		},
+		{
+			"name": "vercom",
+			"path": "D:/Proyectos/c#/vercom 3.0/vercom"
+		}
+	],
+	"settings": {
+		"dotnet.preferCSharpExtension": true
+	}
+}

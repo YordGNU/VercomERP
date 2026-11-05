@@ -1,12 +1,12 @@
-@model Vercom.ViewModels.CxCIndexViewModel
+@model VERCOM.ViewModels.CxCIndexViewModel
 @{ ViewBag.Title = "Cuentas por Cobrar"; var filtros = new RouteValueDictionary { ["search"] = Model.Search, ["tipo"] = Model.DocumentoTipo, ["estado"] = Model.Estado, ["vencidas"] = Model.VencidasOnly }; var aplicarId = Context.Request.Query["aplicar"].ToString(); var fmt = new System.Globalization.CultureInfo("es-CU"); var hoy = DateOnly.FromDateTime(DateTime.Now); }
 
-@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> REGISTRAR</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Cuentas por Cobrar", Subtitle = "Cartera de cobros a clientes, antigüedad de saldos y recepción de pagos.", Icon = "ti-wallet", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> REGISTRAR</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Cuentas por Cobrar", Subtitle = "Cartera de cobros a clientes, antigüedad de saldos y recepción de pagos.", Icon = "ti-wallet", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 
 
-@{ var kpiAbierto = new Vercom.ViewModels.KpiCardModel { Label = "Total abierto", Value = Model.TotalAbierto.ToString("N2", fmt), Icon = "ti-wallet", Tone = "primary" }; var kpiVencido = new Vercom.ViewModels.KpiCardModel { Label = "Vencido (morosidad)", Value = Model.TotalVencido.ToString("N2", fmt), Icon = "ti-alert-triangle", Tone = "danger" }; var kpiPorVencer = new Vercom.ViewModels.KpiCardModel { Label = "Por vencer", Value = Model.TotalPorVencer.ToString("N2", fmt), Icon = "ti-calendar-check", Tone = "success" }; var kpiCobrado = new Vercom.ViewModels.KpiCardModel { Label = "Cobrado acumulado", Value = Model.TotalAplicado.ToString("N2", fmt), Icon = "ti-arrows-exchange", Tone = "info" }; }
+@{ var kpiAbierto = new VERCOM.ViewModels.KpiCardModel { Label = "Total abierto", Value = Model.TotalAbierto.ToString("N2", fmt), Icon = "ti-wallet"}; var kpiVencido = new VERCOM.ViewModels.KpiCardModel { Label = "Vencido (morosidad)", Value = Model.TotalVencido.ToString("N2", fmt), Icon = "ti-alert-triangle", Tone = "danger" }; var kpiPorVencer = new VERCOM.ViewModels.KpiCardModel { Label = "Por vencer", Value = Model.TotalPorVencer.ToString("N2", fmt), Icon = "ti-calendar-check", Tone = "success" }; var kpiCobrado = new VERCOM.ViewModels.KpiCardModel { Label = "Cobrado acumulado", Value = Model.TotalAplicado.ToString("N2", fmt), Icon = "ti-arrows-exchange", Tone = "info" }; }
 <div class='row g-2 mb-3'>
     <div class='col-md-3 col-6'>
         <partial name='_KpiCard' model='kpiAbierto' />
@@ -37,7 +37,7 @@
                 <label class="form-label small fw-bold mb-1">Tipo documento</label>
                 <select name="tipo" class="form-select" onchange="this.form.submit()">
                     <option value="">-- Todos --</option>
-                    @foreach (var t in Vercom.ViewModels.CarteraCatalogos.TiposDocumento)
+                    @foreach (var t in VERCOM.ViewModels.CarteraCatalogos.TiposDocumento)
                     {
                         <!option value="@t" @(t == Model.DocumentoTipo ? "selected" : "")>@t</!option>
                     }
@@ -47,7 +47,7 @@
                 <label class="form-label small fw-bold mb-1">Estado</label>
                 <select name="estado" class="form-select" onchange="this.form.submit()">
                     <!option value="">-- Todos --</!option>
-                    @foreach (var e in Vercom.ViewModels.CarteraCatalogos.Estados)
+                    @foreach (var e in VERCOM.ViewModels.CarteraCatalogos.Estados)
                     {
                         <!option value="@e" @(e == Model.Estado ? "selected" : "")>@e</!option>
                     }
@@ -288,7 +288,7 @@
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Forma de pago</label>
                             <select name="PaymentMethod" class="form-select">
-                                @foreach (var fp in Vercom.ViewModels.CarteraCatalogos.FormasPago)
+                                @foreach (var fp in VERCOM.ViewModels.CarteraCatalogos.FormasPago)
                                 {
                                     <!option value="@fp" @(fp == "EFECTIVO" ? "selected" : "")>@fp</!option>
                                 }

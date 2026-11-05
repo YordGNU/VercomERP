@@ -1,12 +1,12 @@
-@using Vercom.Security
+@using VERCOM.Security
 @inject IEntidadProvider EntidadProvider
-@model Vercom.ViewModels.UserFormViewModel
+@model VERCOM.ViewModels.UserFormViewModel
 @{
     ViewBag.Title = Model.Title;
     var isMaster = EntidadProvider.IsMaster;
 }
 
-@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = Model.Title, Subtitle = "Gestión de accesos y perfiles de seguridad (RF-02).", Icon = "ti-file", Tone = "primary" }; }
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = Model.Title, Subtitle = "Gestión de accesos y perfiles de seguridad (RF-02).", Icon = "ti-file"}; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

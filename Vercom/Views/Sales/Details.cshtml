@@ -1,10 +1,10 @@
-@model Vercom.Models.FacturaVentum
-@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
+@model VERCOM.Models.FacturaVentum
+@inject VERCOM.Services.IEntidadDisplayService EntidadDisplay
 @{
     ViewBag.Title = "Factura de Venta #" + Model.NumeroFactura;
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Volver al Listado</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Comprobante de Venta Fiscal", Subtitle = "", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Volver al Listado</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Comprobante de Venta Fiscal", Subtitle = "", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

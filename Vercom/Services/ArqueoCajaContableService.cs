@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using Vercom.Models;
+using VERCOM.Models;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 /// <summary>
 /// Contabiliza la diferencia de arqueo de una sesión de caja POS (item P3-E2E 21):

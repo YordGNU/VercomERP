@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Vercom.Models;
-using Vercom.Services;
-using Vercom.ViewModels;
+using VERCOM.Models;
+using VERCOM.Services;
+using VERCOM.ViewModels;
 
-namespace Vercom.Controllers;
+namespace VERCOM.Controllers;
 
 [Authorize]
 public class EmpleadoController : Controller

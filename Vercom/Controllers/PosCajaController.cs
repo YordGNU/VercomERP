@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Vercom.DTOs;
-using Vercom.Services;
+using VERCOM.DTOs;
+using VERCOM.Services;
 
-namespace Vercom.Controllers;
+namespace VERCOM.Controllers;
 
 [ApiController]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]

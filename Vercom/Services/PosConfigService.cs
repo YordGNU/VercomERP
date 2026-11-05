@@ -1,14 +1,19 @@
 using Microsoft.EntityFrameworkCore;
-using Vercom.DTOs;
-using Vercom.Models;
+using VERCOM.DTOs;
+using VERCOM.Models;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public sealed class PosConfigService
 {
     private readonly AppDbContext _db;
+    private readonly IParametroSistemaService _parametros;
 
-    public PosConfigService(AppDbContext db) => _db = db;
+    public PosConfigService(AppDbContext db, IParametroSistemaService parametros)
+    {
+        _db = db;
+        _parametros = parametros;
+    }
 
     /// <summary>
     /// Devuelve la configuración completa de la terminal (entidad, sucursal, almacén, dispositivo,
@@ -27,8 +32,27 @@ public sealed class PosConfigService
                 && x.IdentificadorHardware != null
                 && x.IdentificadorHardware.ToUpper().Replace(":", "").Replace("-", "").Replace(".", "").Replace(" ", "") == mac,
                 cancellationToken);
-        if (device is null) return null;
+        return device is null ? null : await BuildAsync(device, cancellationToken);
+    }
 
+    /// <summary>
+    /// Configuración para el terminal web del ERP: el dispositivo se elige por id y debe
+    /// pertenecer a la entidad del token solicitante.
+    /// </summary>
+    public async Task<DispositivoConfigDto?> GetConfiguracionPorDispositivoAsync(Guid dispositivoPosId, Guid? entidadId, CancellationToken cancellationToken)
+    {
+        if (dispositivoPosId == Guid.Empty) return null;
+
+        var device = await _db.DispositivoPos.IgnoreQueryFilters().AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == dispositivoPosId
+                && (x.Estado == "ACTIVO" || x.Estado == "ONLINE")
+                && (!entidadId.HasValue || x.EntidadId == entidadId.Value),
+                cancellationToken);
+        return device is null ? null : await BuildAsync(device, cancellationToken);
+    }
+
+    private async Task<DispositivoConfigDto?> BuildAsync(DispositivoPo device, CancellationToken cancellationToken)
+    {
         var entidad = await _db.Entidads.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == device.EntidadId && x.Activo, cancellationToken);
         if (entidad is null) return null;
@@ -57,6 +81,12 @@ public sealed class PosConfigService
                 .OrderBy(x => x.NombreRazonSocial)
                 .FirstOrDefaultAsync(cancellationToken);
 
+        // Serie de facturación del terminal: configurable por entidad; "A" si no hay parámetro.
+        var serieConfigurada = await _parametros.ObtenerValorVigenteAsync(device.EntidadId, "POS_SERIE");
+        var serie = string.IsNullOrWhiteSpace(serieConfigurada) || serieConfigurada.Trim().Length > 10
+            ? "A"
+            : serieConfigurada.Trim();
+
         return new DispositivoConfigDto
         {
             EntidadId = device.EntidadId,
@@ -75,7 +105,8 @@ public sealed class PosConfigService
             DispositivoCodigo = device.Codigo,
             DispositivoNombre = device.Nombre,
             TipoMovimientoVenta = tipoMovimiento?.Id ?? 1,
-            ClienteConsumidorFinalId = clienteCF?.Id ?? Guid.Empty
+            ClienteConsumidorFinalId = clienteCF?.Id ?? Guid.Empty,
+            Serie = serie
         };
     }
 

@@ -1,9 +1,9 @@
-@model Vercom.Models.PlantillaAprobadum
+@model VERCOM.Models.PlantillaAprobadum
 @{
     ViewBag.Title = "Actualizar Plaza";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Plantilla</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Actualizar Cupo Aprobado", Subtitle = "Modificación de la capacidad de contratación para el cargo seleccionado.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Plantilla</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Actualizar Cupo Aprobado", Subtitle = "Modificación de la capacidad de contratación para el cargo seleccionado.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

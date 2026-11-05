@@ -2,10 +2,10 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Vercom.DTOs;
-using Vercom.Services;
+using VERCOM.DTOs;
+using VERCOM.Services;
 
-namespace Vercom.Controllers;
+namespace VERCOM.Controllers;
 
 [ApiController]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -19,12 +19,23 @@ public sealed class PosCatalogoController : ControllerBase
     [HttpGet("productos")]
     public async Task<ActionResult<IReadOnlyList<PosProductoDto>>> GetProductos(
         [FromQuery] Guid almacenId,
+        [FromQuery] Guid? familiaId = null,
         [FromQuery] string? search = null,
         [FromQuery] DateTimeOffset? updatedSince = null,
         CancellationToken cancellationToken = default)
     {
         if (almacenId == Guid.Empty) return BadRequest("almacenId es obligatorio.");
-        return Ok(await _service.GetProductosAsync(almacenId, search, updatedSince, cancellationToken));
+        var entidadIdRaw = User.FindFirstValue("EntidadId");
+        if (!Guid.TryParse(entidadIdRaw, out var entidadId) || entidadId == Guid.Empty) return Unauthorized();
+        return Ok(await _service.GetProductosAsync(almacenId, entidadId, familiaId, search, updatedSince, cancellationToken));
+    }
+
+    [HttpGet("familias")]
+    public async Task<ActionResult<IReadOnlyList<object>>> GetFamilias(CancellationToken cancellationToken = default)
+    {
+        var entidadIdRaw = User.FindFirstValue("EntidadId");
+        if (!Guid.TryParse(entidadIdRaw, out var entidadId) || entidadId == Guid.Empty) return Unauthorized();
+        return Ok(await _service.GetFamiliasAsync(entidadId, cancellationToken));
     }
 
     [HttpGet("precios")]

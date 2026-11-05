@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Vercom.Models;
-using Vercom.Services;
+using VERCOM.Models;
+using VERCOM.Services;
 
-namespace Vercom.ViewModels;
+namespace VERCOM.ViewModels;
 
 public class CarteraIndexViewModel
 {

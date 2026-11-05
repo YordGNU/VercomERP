@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Vercom.Models;
-using Vercom.Security;
+using VERCOM.Models;
+using VERCOM.Security;
 
-namespace Vercom.Controllers;
+namespace VERCOM.Controllers;
 
 [Authorize(Policy = "RRHH.ASISTENCIA.VER")]
 public class TurnoTrabajoController : Controller

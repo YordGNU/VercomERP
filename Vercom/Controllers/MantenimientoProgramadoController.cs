@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Vercom.Services;
-using Vercom.ViewModels;
+using VERCOM.Services;
+using VERCOM.ViewModels;
 
-namespace Vercom.Controllers;
+namespace VERCOM.Controllers;
 
 [Authorize]
 public class MantenimientoProgramadoController : Controller
@@ -46,5 +46,15 @@ public class MantenimientoProgramadoController : Controller
         }
         var contextVm = await _productionService.GetMaintenanceFormContextAsync(maintenance);
         return View(contextVm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "PRODUCCION.MANTENIMIENTO.EJECUTAR")]
+    public async Task<IActionResult> Execute(Guid id, DateOnly? executionDate)
+    {
+        var result = await _productionService.ExecuteMaintenanceAsync(id, executionDate ?? DateOnly.FromDateTime(DateTime.Today));
+        TempData[result.Succeeded ? "Success" : "Error"] = result.Message;
+        return RedirectToAction(nameof(Index));
     }
 }

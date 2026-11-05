@@ -1,10 +1,10 @@
-@model Vercom.Models.NominaDetalle
+@model VERCOM.Models.NominaDetalle
 @{
     ViewBag.Title = "Boleta de Pago";
     var meses = new[] { "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Details") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> VOLVER</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Comprobante de Pago Individual", Subtitle = "Detalle de haberes y retenciones para el colaborador.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Details") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> VOLVER</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Comprobante de Pago Individual", Subtitle = "Detalle de haberes y retenciones para el colaborador.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

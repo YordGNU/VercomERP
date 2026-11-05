@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using Vercom.Models;
-using Vercom.ViewModels;
+using VERCOM.Models;
+using VERCOM.ViewModels;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public class SC408Row
 {
@@ -65,7 +65,7 @@ public class HRReportService : IHRReportService
             Periodo = $"{r.Mes}/{r.Anio}",
             DiasTrabajados = r.DiasTrabajados,
             SalarioDevengado = r.SalarioDevengado,
-            TiempoServicioMeses = (int)r.TiempoServicioAcumuladoMeses
+            TiempoServicioMeses = r.TiempoServicioAcumuladoMeses ?? 0
         }).ToList();
     }
 

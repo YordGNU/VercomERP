@@ -1,9 +1,9 @@
-@model Vercom.ViewModels.MermaFormViewModel
+@model VERCOM.ViewModels.MermaFormViewModel
 @{
     ViewBag.Title = "Reportar Merma";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Mermas</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Registro de Ineficiencia Extraordinaria", Subtitle = "Captación de desperdicios, roturas o mermas fuera de la norma técnica.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Mermas</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Registro de Ineficiencia Extraordinaria", Subtitle = "Captación de desperdicios, roturas o mermas fuera de la norma técnica.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 
@@ -22,7 +22,7 @@
 
                         <div class="col-md-7">
                             <label class="form-label fw-bold">Orden de Producción (Origen)</label>
-                            <select asp-for="Merma.OrdenProduccionId" class="form-control form-select w-100 select2" asp-items="ViewBag.OrdenProduccionId">
+                            <select asp-for="Merma.OrdenProduccionId" class="form-control form-select w-100 select2" asp-items="Model.OrdenesProduccion">
                                 <option value="">-- Merma no vinculada a OP (Ajuste Directo) --</option>
                             </select>
                         </div>
@@ -34,9 +34,17 @@
 
                         <div class="col-md-12">
                             <label class="form-label fw-bold">Artículo / Insumo Afectado</label>
-                            <select asp-for="Merma.ProductoId" class="form-control form-select w-100 select2" asp-items="ViewBag.ProductoId" required>
+                            <select asp-for="Merma.ProductoId" class="form-control form-select w-100 select2" asp-items="Model.Productos" required>
                                 <option value="">-- Buscar en Catálogo --</option>
                             </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="AlmacenId" class="form-label fw-bold">Almacén afectado</label>
+                            <select asp-for="AlmacenId" class="form-select" asp-items="Model.Almacenes" required>
+                                <option value="">-- Seleccione almacén --</option>
+                            </select>
+                            <span asp-validation-for="AlmacenId" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-6">
@@ -86,6 +94,3 @@
     </script>
 }
 
-<style>
-    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
-</style>

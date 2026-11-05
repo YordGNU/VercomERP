@@ -1,9 +1,9 @@
-@model Vercom.Models.Rol
+@model VERCOM.Models.Rol
 @{
     ViewBag.Title = "Detalle del Rol";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Edit") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> CAMBIAR NOMBRE</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Perfil: " + Model.Nombre, Subtitle = "Código del Sistema: @Model.Codigo", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Edit") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> CAMBIAR NOMBRE</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Perfil: " + Model.Nombre, Subtitle = "Código del Sistema: @Model.Codigo", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

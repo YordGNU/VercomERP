@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Vercom.Models;
-using Vercom.Security;
-using Vercom.Services;
+using VERCOM.Models;
+using VERCOM.Security;
+using VERCOM.Services;
 
-namespace Vercom.Controllers;
+namespace VERCOM.Controllers;
 
 [Authorize]
 public class FichaCostoController : Controller
@@ -65,5 +65,25 @@ public class FichaCostoController : Controller
 
         var errorList = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
         return Json(new { success = false, message = "Verifique los datos de la ficha.", errors = errorList });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = "PRODUCCION.FICHA.CREAR")]
+    public async Task<IActionResult> BuildFromBom(Guid productId)
+    {
+        var result = await _productionService.BuildCostSheetFromBomAsync(productId);
+        if (result.Succeeded && result.CostSheet != null)
+        {
+            var aprobacion = await _productionService.ApproveCostSheetAsync(result.CostSheet.Id);
+            TempData[aprobacion.Succeeded ? "Success" : "Error"] = aprobacion.Succeeded
+                ? $"Ficha de costo generada desde la BOM y aprobada. Costo MP estándar: {result.CostSheet.CostoMateriaPrima}."
+                : aprobacion.Message;
+        }
+        else
+        {
+            TempData["Error"] = result.Message;
+        }
+        return RedirectToAction(nameof(Index));
     }
 }

@@ -1,7 +1,7 @@
-@model IEnumerable<Vercom.Models.PeriodoContable>
+@model IEnumerable<VERCOM.Models.PeriodoContable>
 @{ ViewBag.Title = "Periodos Contables"; var meses = new[] { "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" }; }
 
-@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Control de Periodos Fiscales", Subtitle = "Gestión de aperturas y cierres mensuales para el reporte de estados financieros.", Icon = "ti-calendar-event", Tone = "primary" }; }
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Control de Periodos Fiscales", Subtitle = "Gestión de aperturas y cierres mensuales para el reporte de estados financieros.", Icon = "ti-calendar-event"}; }
 <partial name='_PageHeader' model='pageHeader' /><div class="row">   
     @foreach (var item in Model)    {
         var isClosed = item.Estado == "CERRADO";   

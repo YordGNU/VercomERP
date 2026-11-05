@@ -1,10 +1,10 @@
-@model Vercom.Models.ConteoFisico
+@model VERCOM.Models.ConteoFisico
 @{
     ViewBag.Title = "Detalle de Conteo Físico";
     var diffCount = Model.ConteoFisicoDetalles.Count(d => d.Diferencia != 0);
 }
 
-@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Auditoría de Stock: ", Subtitle = "Resultados del levantamiento físico vs. existencias en sistema.", Icon = "ti-file", Tone = "primary" }; }
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Auditoría de Stock: ", Subtitle = "Resultados del levantamiento físico vs. existencias en sistema.", Icon = "ti-file"}; }
 <partial name='_PageHeader' model='pageHeader' />
 
 
@@ -73,7 +73,7 @@
                                 <label class="form-label small fw-bold">Producto</label>
                                 <select name="productoId" class="form-select" required>
                                     <option value="">-- Seleccione un producto --</option>
-                                    @foreach (var producto in (IEnumerable<Vercom.Models.Producto>)ViewBag.Productos)
+                                    @foreach (var producto in (IEnumerable<VERCOM.Models.Producto>)ViewBag.Productos)
                                     {
                                         <option value="@producto.Id">@producto.Codigo - @producto.Nombre</option>
                                     }

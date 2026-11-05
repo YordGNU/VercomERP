@@ -1,9 +1,9 @@
-@model IEnumerable<Vercom.Models.PosVentaPendiente>
+@model IEnumerable<VERCOM.Models.PosVentaPendiente>
 @{
     ViewBag.Title = "Ventas Offline Pendientes";
 }
 
-@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Ventas", Title = "Monitor de Sincronización POS", Subtitle = "Cola de operaciones recibidas desde terminales móviles en espera de procesamiento fiscal.", Icon = "ti-file", Tone = "primary" }; }
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Ventas", Title = "Monitor de Sincronización POS", Subtitle = "Cola de operaciones recibidas desde terminales móviles en espera de procesamiento fiscal.", Icon = "ti-file"}; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

@@ -1,7 +1,7 @@
-@model IEnumerable<Vercom.Models.ConteoFisico>
+@model IEnumerable<VERCOM.Models.ConteoFisico>
 @{ ViewBag.Title = "Conteos Físicos"; }
 
-@{ var headerActions = "<button type='button' class='btn btn-sm btn-primary' data-bs-toggle='modal' data-bs-target='#startCountModal'><i class='ti ti-scan me-1'></i> INICIAR PROCESO</button>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Conteos Físicos", Subtitle = "Toma física de existencias para conciliación con kardex.", Icon = "ti-scale", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<button type='button' class='btn btn-sm btn-primary' data-bs-toggle='modal' data-bs-target='#startCountModal'><i class='ti ti-scan me-1'></i> INICIAR PROCESO</button>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Conteos Físicos", Subtitle = "Toma física de existencias para conciliación con kardex.", Icon = "ti-scale", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

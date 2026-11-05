@@ -1,4 +1,4 @@
-﻿namespace Vercom.Models;
+﻿namespace VERCOM.Models;
 
 /// <summary>
 /// RNF-20: acceso restringido — datos de salud del trabajador, solo RR.HH. y dirección.
