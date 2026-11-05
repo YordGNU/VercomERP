@@ -56,14 +56,8 @@
 
         @if (!Model.Any())
         {
-            <div class="col-12 text-center py-5">
-                <div class="avatar avatar-xl bg-light-subtle text-muted rounded-circle mb-3 mx-auto">
-                    <i class="ti ti-binary fs-48"></i>
-                </div>
-                <h3 class="fw-bold">No hay estructuras definidas</h3>
-                <p class="text-muted">Empiece definiendo la composición de sus productos elaborados para controlar el consumo de insumos.</p>
-                <a asp-action="Create" class="btn btn-primary mt-3">CREAR MI PRIMERA BOM</a>
-            </div>
+            var emptyState = new VERCOM.ViewModels.EmptyStateModel { Icon = "ti-binary", Title = "No hay estructuras definidas", Description = "Empiece definiendo la composición de sus productos elaborados para controlar el consumo de insumos.", ActionHtml = new Microsoft.AspNetCore.Html.HtmlString("<a href='" + Url.Action("Create") + "' class='btn btn-primary mt-3'>CREAR MI PRIMERA BOM</a>") };
+            <partial name="_EmptyState" model="emptyState" />
         }
     </div>
 </div>

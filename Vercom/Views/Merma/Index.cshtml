@@ -55,15 +55,8 @@
                         }
                         @if (!Model.Any())
                         {
-                            <tr>
-                                <td colspan="7" class="text-center py-5">
-                                    <div class="avatar avatar-xl bg-light-subtle text-success rounded-circle mb-3 mx-auto">
-                                        <i class="ti ti-circle-check fs-48"></i>
-                                    </div>
-                                    <h4 class="fw-bold">Sin mermas registradas</h4>
-                                    <p class="text-muted small">No se han reportado pérdidas extraordinarias en el periodo actual.</p>
-                                </td>
-                            </tr>
+                            var emptyState = new VERCOM.ViewModels.EmptyStateModel { InTable = true, Colspan = 7, Icon = "ti-circle-check", Title = "Sin mermas registradas", Description = "No se han reportado pérdidas extraordinarias en el periodo actual." };
+                            <partial name="_EmptyState" model="emptyState" />
                         }
                     </tbody>
                 </table>

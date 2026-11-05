@@ -76,12 +76,8 @@
                         }
                         @if (!Model.Any())
                         {
-                            <tr>
-                                <td colspan="6" class="text-center py-5 text-muted small">
-                                    <i class="ti ti-calendar-off fs-40 d-block mb-2 opacity-50"></i>
-                                    No hay mantenimientos programados para el periodo actual.
-                                </td>
-                            </tr>
+                            var emptyState = new VERCOM.ViewModels.EmptyStateModel { InTable = true, Colspan = 6, Icon = "ti-calendar-off", Title = "Sin mantenimientos programados", Description = "No hay mantenimientos programados para el periodo actual." };
+                            <partial name="_EmptyState" model="emptyState" />
                         }
                     </tbody>
                 </table>

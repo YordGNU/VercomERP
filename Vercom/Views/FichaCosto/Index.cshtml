@@ -23,6 +23,11 @@
                         </tr>
                     </thead>
                     <tbody>
+                        @if (!Model.Any())
+                        {
+                            var emptyState = new VERCOM.ViewModels.EmptyStateModel { InTable = true, Colspan = 7, Icon = "ti-file-analytics", Title = "Sin fichas de costo", Description = "Defina la ingeniería de costos de sus productos elaborados." };
+                            <partial name="_EmptyState" model="emptyState" />
+                        }
                         @foreach (var item in Model)
                         {
                             var isVigente = item.Estado == "VIGENTE";
