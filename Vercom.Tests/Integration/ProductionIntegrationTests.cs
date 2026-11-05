@@ -464,4 +464,51 @@ public class ProductionIntegrationTests
             Assert.Equal(8m, linea.CantidadPlanificada);
             Assert.DoesNotContain(plan.PlanProduccionDetalles, d => d.ProductoId == datos.MateriaPrimaId);
         });
-}
+    [DbFact(RequiereDatosBase = true)]
+    public async Task RevertirOrden_EnProceso_VuelveAPlanificadaYRestauraStock()
+        => await EnTransaccionAsync(async db =>
+        {
+            var prep = await PrepararOrdenAsync(db);
+            var inicio = await prep.Servicios.Produccion.StartProductionAndConsumeAsync(prep.Orden.Id, prep.Datos.UsuarioId);
+            Assert.True(inicio.Succeeded, inicio.Message);
+            Assert.Equal(79.8m, await StockAsync(db, prep.Datos.AlmacenAId, prep.Datos.MateriaPrimaId));
+
+            var reversion = await prep.Servicios.Produccion.ReverseProductionOrderAsync(prep.Orden.Id, prep.Datos.UsuarioId);
+            Assert.True(reversion.Succeeded, reversion.Message);
+
+            db.ChangeTracker.Clear();
+            var orden = await db.OrdenProduccions.AsNoTracking().SingleAsync(o => o.Id == prep.Orden.Id);
+            Assert.Equal("PLANIFICADA", orden.Estado);
+            Assert.Null(orden.FechaInicioReal);
+            Assert.Null(orden.AsientoConsumoId);
+            Assert.Equal(100m, await StockAsync(db, prep.Datos.AlmacenAId, prep.Datos.MateriaPrimaId));
+        });
+
+    [DbFact(RequiereDatosBase = true)]
+    public async Task GenerarOrdenesDesdePlan_CreaOrdenesPlanificadas()
+        => await EnTransaccionAsync(async db =>
+        {
+            var prep = await PrepararOrdenAsync(db, stockInicial: 0m);
+            var plan = await CrearPlanAprobadoAsync(prep);
+
+            var resultado = await prep.Servicios.Produccion.GenerateOrdersFromPlanAsync(plan.Id, prep.Datos.UsuarioId);
+            Assert.True(resultado.Succeeded, resultado.Message);
+            Assert.True(resultado.OrdersCreated >= 1);
+
+            var ordenes = await db.OrdenProduccions.AsNoTracking()
+                .Where(o => o.ProductoTerminadoId == prep.Datos.ProductoTerminadoId && o.Estado == "PLANIFICADA")
+                .ToListAsync();
+            Assert.NotEmpty(ordenes);
+        });
+
+    [DbFact(RequiereDatosBase = true)]
+    public async Task GenerarFichaDesdeBOM_CreaBorradorConCostoMP()
+        => await EnTransaccionAsync(async db =>
+        {
+            var prep = await PrepararOrdenAsync(db);
+            var resultado = await prep.Servicios.Produccion.BuildCostSheetFromBomAsync(prep.Datos.ProductoTerminadoId);
+            Assert.True(resultado.Succeeded, resultado.Message);
+            Assert.NotNull(resultado.CostSheet);
+            Assert.Equal("BORRADOR", resultado.CostSheet!.Estado);
+            Assert.True(resultado.CostSheet.CostoMateriaPrima > 0);
+        });}
