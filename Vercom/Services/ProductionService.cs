@@ -433,10 +433,35 @@ public class ProductionService : IProductionService
 
     public async Task<(bool Succeeded, string Message)> CreateEquipmentAsync(Equipo equipment)
     {
+        if (string.IsNullOrWhiteSpace(equipment.Codigo))
+            return (false, "El código del equipo es obligatorio.");
+        if (string.IsNullOrWhiteSpace(equipment.Nombre))
+            return (false, "El nombre del equipo es obligatorio.");
+        var entidadId = _entidadProvider.CurrentEntidadId;
+        if (await _context.Equipos.AnyAsync(e => e.EntidadId == entidadId && e.Codigo == equipment.Codigo.Trim()))
+            return (false, "Ya existe un equipo con ese código en la entidad.");
+        if (equipment.FrecuenciaMantenimientoDias.HasValue && equipment.FrecuenciaMantenimientoDias.Value <= 0)
+            return (false, "La frecuencia de mantenimiento debe ser mayor a cero.");
+        if (equipment.SucursalId.HasValue && !await _context.Sucursals.AnyAsync(s => s.Id == equipment.SucursalId && s.EntidadId == entidadId && s.Activo))
+            return (false, "La sucursal no existe, está inactiva o pertenece a otra entidad.");
+        if (!string.IsNullOrWhiteSpace(equipment.Estado))
+        {
+            var normalizado = equipment.Estado.Trim().ToUpperInvariant();
+            if (normalizado is not ("OPERATIVO" or "MANTENIMIENTO" or "AVERIADO" or "BAJA"))
+                return (false, "El estado del equipo no es válido.");
+            equipment.Estado = normalizado;
+        }
+        else
+        {
+            equipment.Estado = "OPERATIVO";
+        }
+
         try
         {
             equipment.Id = Guid.NewGuid();
-            equipment.EntidadId = _entidadProvider.CurrentEntidadId;
+            equipment.Codigo = equipment.Codigo.Trim();
+            equipment.Nombre = equipment.Nombre.Trim();
+            equipment.EntidadId = entidadId;
             _context.Equipos.Add(equipment);
             await _context.SaveChangesAsync();
             return (true, "Equipo registrado.");
@@ -446,12 +471,28 @@ public class ProductionService : IProductionService
 
     public async Task<(bool Succeeded, string Message)> UpdateEquipmentAsync(Equipo equipment)
     {
+        var entidadId = _entidadProvider.CurrentEntidadId;
+        var existing = await _context.Equipos.FirstOrDefaultAsync(e => e.Id == equipment.Id && e.EntidadId == entidadId);
+        if (existing == null) return (false, "No existe o pertenece a otra entidad.");
+        if (string.IsNullOrWhiteSpace(equipment.Codigo))
+            return (false, "El código del equipo es obligatorio.");
+        if (await _context.Equipos.AnyAsync(e => e.EntidadId == entidadId && e.Id != equipment.Id && e.Codigo == equipment.Codigo.Trim()))
+            return (false, "Ya existe otro equipo con ese código en la entidad.");
+        if (equipment.FrecuenciaMantenimientoDias.HasValue && equipment.FrecuenciaMantenimientoDias.Value <= 0)
+            return (false, "La frecuencia de mantenimiento debe ser mayor a cero.");
+        if (!string.IsNullOrWhiteSpace(equipment.Estado))
+        {
+            var normalizado = equipment.Estado.Trim().ToUpperInvariant();
+            if (normalizado is not ("OPERATIVO" or "MANTENIMIENTO" or "AVERIADO" or "BAJA"))
+                return (false, "El estado del equipo no es válido.");
+            equipment.Estado = normalizado;
+        }
+
         try
         {
-            var existing = await _context.Equipos.FindAsync(equipment.Id);
-            if (existing == null) return (false, "No existe.");
+            equipment.Codigo = equipment.Codigo.Trim();
             _context.Entry(existing).CurrentValues.SetValues(equipment);
-            existing.EntidadId = _entidadProvider.CurrentEntidadId;
+            existing.EntidadId = entidadId;
             await _context.SaveChangesAsync();
             return (true, "Equipo actualizado.");
         }
@@ -518,6 +559,8 @@ public class ProductionService : IProductionService
     public async Task<(bool Succeeded, string Message)> CreateWasteAsync(Merma waste, Guid almacenId)
     {
         if (waste.Cantidad <= 0) return (false, "La cantidad de merma debe ser mayor a cero.");
+        if (string.IsNullOrWhiteSpace(waste.Causa) || waste.Causa is not ("PROCESO_NORMAL" or "DANO" or "VENCIMIENTO" or "ERROR_OPERATIVO" or "OTRO"))
+            return (false, "La causa de merma no es válida.");
         var entidadId = _entidadProvider.CurrentEntidadId;
         var product = await _context.Productos.FirstOrDefaultAsync(p => p.Id == waste.ProductoId && p.EntidadId == entidadId && p.Activo);
         if (product == null) return (false, "El producto no existe, está inactivo o pertenece a otra entidad.");
@@ -669,10 +712,17 @@ public class ProductionService : IProductionService
 
     public async Task<(bool Succeeded, string Message)> CreateBudgetAsync(Presupuesto budget)
     {
+        if (budget.Anio is < 2000 or > 2100)
+            return (false, "El año del presupuesto debe estar entre 2000 y 2100.");
+        if (string.IsNullOrWhiteSpace(budget.Nombre))
+            return (false, "El nombre del presupuesto es obligatorio.");
+
         try
         {
             budget.Id = Guid.NewGuid();
+            budget.Nombre = budget.Nombre.Trim();
             budget.EntidadId = _entidadProvider.CurrentEntidadId;
+            budget.Estado = "BORRADOR";
             budget.CreadoEn = DateTimeOffset.Now;
             _context.Presupuestos.Add(budget);
             await _context.SaveChangesAsync();
@@ -813,13 +863,22 @@ public class ProductionService : IProductionService
 
     public async Task<(bool Succeeded, string Message, OrdenProduccion? Order)> CreateProductionOrderAsync(OrdenProduccion order)
     {
+        if (order.EntidadId == Guid.Empty) return (false, "La orden debe tener una entidad.", null);
+        if (order.CantidadPlanificada <= 0) return (false, "La cantidad planificada debe ser mayor a cero.", null);
+        if (order.FechaInicioPlan.HasValue && order.FechaFinPlan.HasValue && order.FechaFinPlan.Value < order.FechaInicioPlan.Value)
+            return (false, "La fecha fin planificada no puede ser anterior a la fecha inicio.", null);
+        if (!await _context.Productos.AnyAsync(p => p.Id == order.ProductoTerminadoId && p.EntidadId == order.EntidadId && p.Activo && p.Tipo == "TERMINADO"))
+            return (false, "El producto terminado no existe, está inactivo o no pertenece a la entidad.", null);
+        if (!await _context.Almacens.AnyAsync(a => a.Id == order.AlmacenInsumosId && a.EntidadId == order.EntidadId && a.Activo))
+            return (false, "El almacén de insumos no existe, está inactivo o pertenece a otra entidad.", null);
+        if (!await _context.Almacens.AnyAsync(a => a.Id == order.AlmacenProductoId && a.EntidadId == order.EntidadId && a.Activo))
+            return (false, "El almacén de producto no existe, está inactivo o pertenece a otra entidad.", null);
+
         order.Id = Guid.NewGuid();
         var numeroOp = await _consecutivoService.ObtenerSiguienteNumeroAsync(order.EntidadId, null, DocumentoTipo.OrdenProduccion, "A");
         order.NumeroOrden = $"OP-{numeroOp}";
         order.Estado = "PLANIFICADA";
         order.CreadoEn = DateTimeOffset.Now;
-
-        if (order.CantidadPlanificada <= 0) return (false, "La cantidad planificada debe ser mayor a cero.", null);
 
         var bom = await _context.ListaMateriales
             .Include(l => l.ListaMaterialesDetalles)

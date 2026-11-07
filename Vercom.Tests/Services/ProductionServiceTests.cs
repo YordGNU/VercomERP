@@ -224,6 +224,99 @@ public sealed class ProductionServiceTests
         Assert.Equal("EJECUTADO", maintenance.Estado);
         Assert.Equal(new DateOnly(2026, 11, 3), maintenance.Equipo.FechaUltimaRevision);
     }
+    [Fact]
+    public async Task CreateEquipmentAsync_RejectsEmptyCode()
+    {
+        using var fixture = new ProductionServiceFixture();
+        var result = await fixture.Service.CreateEquipmentAsync(new Equipo { Codigo = "", Nombre = "Equipo" });
+        Assert.False(result.Succeeded);
+        Assert.Contains("código", result.Message);
+    }
+
+    [Fact]
+    public async Task CreateEquipmentAsync_RejectsDuplicateCode()
+    {
+        using var fixture = new ProductionServiceFixture();
+        var first = await fixture.Service.CreateEquipmentAsync(new Equipo { Codigo = "EQ-1", Nombre = "Equipo 1" });
+        Assert.True(first.Succeeded, first.Message);
+        var second = await fixture.Service.CreateEquipmentAsync(new Equipo { Codigo = "EQ-1", Nombre = "Equipo 2" });
+        Assert.False(second.Succeeded);
+        Assert.Contains("Ya existe", second.Message);
+    }
+
+    [Fact]
+    public async Task CreateEquipmentAsync_RejectsNonPositiveFrequency()
+    {
+        using var fixture = new ProductionServiceFixture();
+        var result = await fixture.Service.CreateEquipmentAsync(new Equipo { Codigo = "EQ-9", Nombre = "Equipo", FrecuenciaMantenimientoDias = 0 });
+        Assert.False(result.Succeeded);
+        Assert.Contains("frecuencia", result.Message);
+    }
+
+    [Theory]
+    [InlineData("Operativo", "OPERATIVO")]
+    [InlineData("operativo", "OPERATIVO")]
+    [InlineData("Mantenimiento", "MANTENIMIENTO")]
+    public async Task CreateEquipmentAsync_NormalizesEstado(string input, string expected)
+    {
+        using var fixture = new ProductionServiceFixture();
+        var equipo = new Equipo { Codigo = "EQ-EST", Nombre = "Equipo", Estado = input };
+        var result = await fixture.Service.CreateEquipmentAsync(equipo);
+        Assert.True(result.Succeeded, result.Message);
+        Assert.Equal(expected, equipo.Estado);
+    }
+
+    [Fact]
+    public async Task CreateBudgetAsync_RejectsInvalidYear()
+    {
+        using var fixture = new ProductionServiceFixture();
+        var result = await fixture.Service.CreateBudgetAsync(new Presupuesto { Anio = 1999, Nombre = "Presupuesto" });
+        Assert.False(result.Succeeded);
+        Assert.Contains("año", result.Message);
+    }
+
+    [Fact]
+    public async Task CreateProductionOrderAsync_RejectsUnknownWarehouse()
+    {
+        using var fixture = new ProductionServiceFixture();
+        var result = await fixture.Service.CreateProductionOrderAsync(new OrdenProduccion
+        {
+            EntidadId = fixture.EntityId,
+            ProductoTerminadoId = Guid.NewGuid(),
+            AlmacenInsumosId = Guid.NewGuid(),
+            AlmacenProductoId = Guid.NewGuid(),
+            CantidadPlanificada = 1
+        });
+        Assert.False(result.Succeeded);
+        Assert.Contains("producto terminado", result.Message);
+    }
+
+    [Fact]
+    public async Task CreateProductionOrderAsync_RejectsInvertedDates()
+    {
+        using var fixture = new ProductionServiceFixture();
+        var result = await fixture.Service.CreateProductionOrderAsync(new OrdenProduccion
+        {
+            EntidadId = fixture.EntityId,
+            ProductoTerminadoId = Guid.NewGuid(),
+            AlmacenInsumosId = Guid.NewGuid(),
+            AlmacenProductoId = Guid.NewGuid(),
+            CantidadPlanificada = 1,
+            FechaInicioPlan = new DateOnly(2026, 11, 20),
+            FechaFinPlan = new DateOnly(2026, 11, 10)
+        });
+        Assert.False(result.Succeeded);
+        Assert.Contains("fecha fin", result.Message);
+    }
+
+    [Fact]
+    public async Task CreateWasteAsync_RejectsInvalidCausa()
+    {
+        using var fixture = new ProductionServiceFixture();
+        var result = await fixture.Service.CreateWasteAsync(new Merma { Cantidad = 1, Causa = "INVALIDA" }, Guid.NewGuid());
+        Assert.False(result.Succeeded);
+        Assert.Contains("causa", result.Message);
+    }
 }
 
 internal sealed class ProductionServiceFixture : IDisposable
