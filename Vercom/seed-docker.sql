@@ -151,6 +151,7 @@ IF NOT EXISTS (SELECT 1 FROM inventario.tipo_movimiento WHERE codigo = 'RECEPCIO
 IF NOT EXISTS (SELECT 1 FROM inventario.tipo_movimiento WHERE codigo = 'VALE_ENTREGA') INSERT INTO inventario.tipo_movimiento (codigo, nombre, naturaleza, afecta_costo) VALUES ('VALE_ENTREGA', 'Vale de Entrega', 'SALIDA', 1);
 IF NOT EXISTS (SELECT 1 FROM inventario.tipo_movimiento WHERE codigo = 'CONSUMO_PRODUCCION') INSERT INTO inventario.tipo_movimiento (codigo, nombre, naturaleza, afecta_costo) VALUES ('CONSUMO_PRODUCCION', 'Consumo en Producción', 'SALIDA', 1);
 IF NOT EXISTS (SELECT 1 FROM inventario.tipo_movimiento WHERE codigo = 'ENTRADA_PRODUCCION') INSERT INTO inventario.tipo_movimiento (codigo, nombre, naturaleza, afecta_costo) VALUES ('ENTRADA_PRODUCCION', 'Entrada PT', 'ENTRADA', 1);
+IF NOT EXISTS (SELECT 1 FROM inventario.tipo_movimiento WHERE codigo = 'RETIRO_PRODUCCION') INSERT INTO inventario.tipo_movimiento (codigo, nombre, naturaleza, afecta_costo) VALUES ('RETIRO_PRODUCCION', 'Retiro PT (reverso)', 'SALIDA', 0);
 IF NOT EXISTS (SELECT 1 FROM inventario.tipo_movimiento WHERE codigo = 'DEVOLUCION_PRODUCCION') INSERT INTO inventario.tipo_movimiento (codigo, nombre, naturaleza, afecta_costo) VALUES ('DEVOLUCION_PRODUCCION', 'Devolución MP', 'ENTRADA', 1);
 IF NOT EXISTS (SELECT 1 FROM inventario.tipo_movimiento WHERE codigo = 'VENTA_POS') INSERT INTO inventario.tipo_movimiento (codigo, nombre, naturaleza, afecta_costo) VALUES ('VENTA_POS', 'Venta POS', 'SALIDA', 1);
 IF NOT EXISTS (SELECT 1 FROM inventario.tipo_movimiento WHERE codigo = 'AJUSTE_POSITIVO') INSERT INTO inventario.tipo_movimiento (codigo, nombre, naturaleza, afecta_costo) VALUES ('AJUSTE_POSITIVO', 'Ajuste por Sobrante', 'ENTRADA', 1);
@@ -460,6 +461,12 @@ IF NOT EXISTS (SELECT 1 FROM nucleo.parametro_sistema WHERE entidad_id = @Entida
 
 IF NOT EXISTS (SELECT 1 FROM nucleo.parametro_sistema WHERE entidad_id = @EntidadId AND codigo = 'CTA_GIF_PRODUCCION')
     INSERT INTO nucleo.parametro_sistema (entidad_id, codigo, valor, tipo_dato, descripcion, vigente_desde) VALUES (@EntidadId, 'CTA_GIF_PRODUCCION', '810.0000', 'STRING', 'Subcuenta imputable de gastos indirectos en produccion', CAST(GETDATE() AS DATE));
+
+IF NOT EXISTS (SELECT 1 FROM nucleo.parametro_sistema WHERE entidad_id = @EntidadId AND codigo = 'COSTO_MO_POR_UNIDAD')
+    INSERT INTO nucleo.parametro_sistema (entidad_id, codigo, valor, tipo_dato, descripcion, vigente_desde) VALUES (@EntidadId, 'COSTO_MO_POR_UNIDAD', '25.00', 'NUMERIC', 'Mano de obra estandar por unidad de producto terminado', CAST(GETDATE() AS DATE));
+
+IF NOT EXISTS (SELECT 1 FROM nucleo.parametro_sistema WHERE entidad_id = @EntidadId AND codigo = 'GIF_PORCENTAJE_MP')
+    INSERT INTO nucleo.parametro_sistema (entidad_id, codigo, valor, tipo_dato, descripcion, vigente_desde) VALUES (@EntidadId, 'GIF_PORCENTAJE_MP', '10.00', 'NUMERIC', 'Porcentaje de gastos indirectos sobre costo de materia prima', CAST(GETDATE() AS DATE));
 -- ==============================================================================
 IF NOT EXISTS (SELECT 1 FROM nucleo.consecutivo WHERE entidad_id = @EntidadId AND tipo_documento = 'FACTURA_VENTA' AND serie = 'A')
     INSERT INTO nucleo.consecutivo (entidad_id, sucursal_id, tipo_documento, serie, ultimo_numero, actualizado_en)

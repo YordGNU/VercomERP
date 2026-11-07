@@ -23,9 +23,10 @@ public class MermaController : Controller
     }
 
     [Authorize(Policy = "PRODUCCION.MERMA.CREAR")]
-    public async Task<IActionResult> Create()
+    public async Task<IActionResult> Create(Guid? opId)
     {
         var vm = await _productionService.GetWasteFormContextAsync();
+        if (opId.HasValue) vm.Merma.OrdenProduccionId = opId.Value;
         return View(vm);
     }
 

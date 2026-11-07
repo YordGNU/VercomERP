@@ -103,6 +103,16 @@ public class PlanProduccionController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = "PRODUCCION.PLAN.APROBAR")]
+    public async Task<IActionResult> Approve(Guid id)
+    {
+        var result = await _productionService.ApprovePlanAsync(id);
+        TempData[result.Succeeded ? "Success" : "Error"] = result.Message;
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     [Authorize(Policy = "PRODUCCION.PLAN.CREAR")]
     public async Task<IActionResult> GenerateOrders(Guid id)
     {

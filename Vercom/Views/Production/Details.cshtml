@@ -53,6 +53,28 @@
                                     </form>
                                 </div>
                             }
+                            @if (Model.Estado == "PLANIFICADA")
+                            {
+                                <div class="col-12">
+                                    <form asp-action="Cancel" asp-route-id="@Model.Id" method="post" class="d-inline w-100">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary w-100" onclick="return confirm('¿Cancelar esta orden planificada?');">
+                                            <i class="ti ti-x me-1"></i> CANCELAR ORDEN
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                            @if (Model.Estado == "TERMINADA")
+                            {
+                                <div class="col-12">
+                                    <form asp-action="ReverseFinished" asp-route-id="@Model.Id" method="post" class="d-inline w-100">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger w-100" onclick="return confirm('¿Revertir la orden terminada? Se retirará el producto terminado, se devolverá la materia prima y se revertirán los asientos.');">
+                                            <i class="ti ti-arrow-back-up me-1"></i> REVERTIR TERMINADA
+                                        </button>
+                                    </form>
+                                </div>
+                            }
                         </div>
                     </div>
                 </div>

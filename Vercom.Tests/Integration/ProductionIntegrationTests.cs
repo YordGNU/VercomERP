@@ -511,4 +511,106 @@ public class ProductionIntegrationTests
             Assert.NotNull(resultado.CostSheet);
             Assert.Equal("BORRADOR", resultado.CostSheet!.Estado);
             Assert.True(resultado.CostSheet.CostoMateriaPrima > 0);
-        });}
+        });
+    [DbFact(RequiereDatosBase = true)]
+    public async Task RevertirOrdenTerminada_VuelveAPlanificadaYRestauraInventario()
+        => await EnTransaccionAsync(async db =>
+        {
+            var prep = await PrepararOrdenAsync(db);
+            var plan = await CrearPlanAprobadoAsync(prep);
+            var inicio = await prep.Servicios.Produccion.StartProductionAndConsumeAsync(prep.Orden.Id, prep.Datos.UsuarioId);
+            Assert.True(inicio.Succeeded, inicio.Message);
+            var cierre = await prep.Servicios.Produccion.FinishProductionAsync(prep.Orden.Id, 10m, new List<OrdenProduccionConsumo>
+            {
+                new() { ProductoInsumoId = prep.Datos.MateriaPrimaId, CantidadReal = 20m }
+            }, prep.Datos.UsuarioId);
+            Assert.True(cierre.Succeeded, cierre.Message);
+            Assert.Equal(10m, await StockAsync(db, prep.Datos.AlmacenAId, prep.Datos.ProductoTerminadoId));
+            Assert.Equal(80m, await StockAsync(db, prep.Datos.AlmacenAId, prep.Datos.MateriaPrimaId));
+            Assert.Equal(10m, (await db.PlanProduccionDetalles.AsNoTracking()
+                .SingleAsync(d => d.PlanId == plan.Id && d.ProductoId == prep.Datos.ProductoTerminadoId)).CantidadEjecutada);
+            Assert.Equal(3, await db.AnalisisDesviacions.AsNoTracking().CountAsync(d => d.OrdenProduccionId == prep.Orden.Id));
+
+            var reversion = await prep.Servicios.Produccion.ReverseFinishedOrderAsync(prep.Orden.Id, prep.Datos.UsuarioId);
+            Assert.True(reversion.Succeeded, reversion.Message);
+
+            db.ChangeTracker.Clear();
+            var orden = await db.OrdenProduccions.AsNoTracking().SingleAsync(o => o.Id == prep.Orden.Id);
+            Assert.Equal("PLANIFICADA", orden.Estado);
+            Assert.Equal(0m, orden.CantidadProducida);
+            Assert.Null(orden.AsientoTerminadoId);
+            Assert.Null(orden.CostoRealTotal);
+            Assert.Equal(100m, await StockAsync(db, prep.Datos.AlmacenAId, prep.Datos.MateriaPrimaId));
+            Assert.Equal(0m, await StockAsync(db, prep.Datos.AlmacenAId, prep.Datos.ProductoTerminadoId));
+            Assert.Equal(0, await db.AnalisisDesviacions.AsNoTracking().CountAsync(d => d.OrdenProduccionId == prep.Orden.Id));
+            Assert.Equal(0m, (await db.PlanProduccionDetalles.AsNoTracking()
+                .SingleAsync(d => d.PlanId == plan.Id && d.ProductoId == prep.Datos.ProductoTerminadoId)).CantidadEjecutada);
+            var conversionRevertida = await db.AsientoContables.AsNoTracking()
+                .SingleAsync(a => a.DocumentoOrigenTipo == "ORDEN_PRODUCCION_CONVERSION" && a.DocumentoOrigenId == prep.Orden.Id && a.AsientoReversionId != null);
+            Assert.NotNull(conversionRevertida);
+        });
+
+    [DbFact(RequiereDatosBase = true)]
+    public async Task GenerarOrdenesDesdePlanParcial_SoloCreaElRemanente()
+        => await EnTransaccionAsync(async db =>
+        {
+            var prep = await PrepararOrdenAsync(db, stockInicial: 0m);
+            var plan = new PlanProduccion
+            {
+                Anio = 2026,
+                Mes = 11,
+                PlanProduccionDetalles = { new PlanProduccionDetalle { ProductoId = prep.Datos.ProductoTerminadoId, CantidadPlanificada = 10m } }
+            };
+            Assert.True((await prep.Servicios.Produccion.CreatePlanAsync(plan)).Succeeded, "crear plan");
+            var linea = plan.PlanProduccionDetalles.Single();
+            linea.CantidadEjecutada = 4m;
+            await db.SaveChangesAsync();
+            Assert.True((await prep.Servicios.Produccion.ApprovePlanAsync(plan.Id)).Succeeded, "aprobar plan");
+
+            var resultado = await prep.Servicios.Produccion.GenerateOrdersFromPlanAsync(plan.Id, prep.Datos.UsuarioId);
+            Assert.True(resultado.Succeeded, resultado.Message);
+            Assert.Equal(1, resultado.OrdersCreated);
+            var generada = await db.OrdenProduccions.AsNoTracking()
+                .Where(o => o.ProductoTerminadoId == prep.Datos.ProductoTerminadoId && o.Estado == "PLANIFICADA" && o.CantidadPlanificada == 6m)
+                .SingleAsync();
+            Assert.Equal(6m, generada.CantidadPlanificada);
+        });
+
+    [DbFact(RequiereDatosBase = true)]
+    public async Task GenerarFichaDesdeBOM_UsaParametrosMOYGif()
+        => await EnTransaccionAsync(async db =>
+        {
+            var prep = await PrepararOrdenAsync(db);
+            var hoy = DateOnly.FromDateTime(DateTime.Today);
+            db.ParametroSistemas.AddRange(
+                new ParametroSistema { EntidadId = prep.Datos.EntidadId, Codigo = "COSTO_MO_POR_UNIDAD", Valor = "30", TipoDato = "NUMERIC", VigenteDesde = hoy },
+                new ParametroSistema { EntidadId = prep.Datos.EntidadId, Codigo = "GIF_PORCENTAJE_MP", Valor = "25", TipoDato = "NUMERIC", VigenteDesde = hoy });
+            await db.SaveChangesAsync();
+
+            var resultado = await prep.Servicios.Produccion.BuildCostSheetFromBomAsync(prep.Datos.ProductoTerminadoId);
+            Assert.True(resultado.Succeeded, resultado.Message);
+            var ficha = resultado.CostSheet!;
+            Assert.True(ficha.CostoMateriaPrima > 0);
+            Assert.Equal(30m, ficha.CostoManoObra);
+            Assert.Equal(Math.Round(ficha.CostoMateriaPrima * 0.25m, 4), ficha.GastosIndirectos);
+        });
+
+    [DbFact(RequiereDatosBase = true)]
+    public async Task MermaVinculadaAOrdenCancelada_SeRechaza()
+        => await EnTransaccionAsync(async db =>
+        {
+            var prep = await PrepararOrdenAsync(db);
+            var cancelada = await prep.Servicios.Produccion.CancelPlannedOrderAsync(prep.Orden.Id);
+            Assert.True(cancelada.Succeeded, cancelada.Message);
+            var resultado = await prep.Servicios.Produccion.CreateWasteAsync(new Merma
+            {
+                ProductoId = prep.Datos.MateriaPrimaId,
+                Cantidad = 1m,
+                Causa = "DANO",
+                Fecha = DateOnly.FromDateTime(DateTime.Today),
+                OrdenProduccionId = prep.Orden.Id
+            }, prep.Datos.AlmacenAId);
+            Assert.False(resultado.Succeeded);
+            Assert.Contains("cancelada", resultado.Message);
+        });
+}

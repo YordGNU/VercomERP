@@ -663,6 +663,7 @@ public class InventoryService : IInventoryService
         ("CONSUMO_PRODUCCION", "Consumo en Producción", "SALIDA", true),
         ("DEVOLUCION_PRODUCCION", "Devolución de Materiales a Producción", "ENTRADA", true),
         ("ENTRADA_PRODUCCION", "Entrada de Producto Terminado", "ENTRADA", true),
+        ("RETIRO_PRODUCCION", "Retiro de Producto Terminado (reverso)", "SALIDA", false),
         ("VENTA_POS", "Venta en Punto de Venta", "SALIDA", true),
     };
 

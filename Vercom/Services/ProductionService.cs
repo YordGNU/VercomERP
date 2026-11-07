@@ -67,6 +67,7 @@ public interface IProductionService
     Task<(bool Succeeded, string Message)> StartProductionAndConsumeAsync(Guid orderId, Guid userId);
     Task<(bool Succeeded, string Message)> FinishProductionAsync(Guid orderId, decimal actualQuantity, List<OrdenProduccionConsumo> actualConsumptions, Guid userId);
     Task<(bool Succeeded, string Message)> ReverseProductionOrderAsync(Guid orderId, Guid userId);
+    Task<(bool Succeeded, string Message)> ReverseFinishedOrderAsync(Guid orderId, Guid userId);
     Task<(bool Succeeded, string Message, int OrdersCreated)> GenerateOrdersFromPlanAsync(Guid planId, Guid userId);
     Task<decimal> CalculateStandardCostAsync(Guid productId);
 }
@@ -388,12 +389,23 @@ public class ProductionService : IProductionService
         }
         costoMateriaPrima = Math.Round(costoMateriaPrima, 4);
 
+        // MO y GIF desde parametros centrales (vinculo con fuentes de costo):
+        // - COSTO_MO_POR_UNIDAD: importe de mano de obra por unidad de producto terminado.
+        // - GIF_PORCENTAJE_MP: porcentaje sobre el costo de materia prima (si no se
+        //   configura COSTO_GIF_POR_UNIDAD).
+        // Sin parametros, ambos quedan en 0 y la ficha se crea solo con MP.
+        var moPorUnidad = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "COSTO_MO_POR_UNIDAD");
+        var gifPorcentajeMp = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "GIF_PORCENTAJE_MP");
+        var gifPorUnidad = await _paramService.ObtenerValorNumericoVigenteAsync(entidadId, "COSTO_GIF_POR_UNIDAD");
+        if (gifPorUnidad <= 0 && gifPorcentajeMp > 0)
+            gifPorUnidad = Math.Round(costoMateriaPrima * gifPorcentajeMp / 100m, 4);
+
         var ficha = new FichaCosto
         {
             ProductoId = productId,
             CostoMateriaPrima = costoMateriaPrima,
-            CostoManoObra = 0m,
-            GastosIndirectos = 0m,
+            CostoManoObra = Math.Round(moPorUnidad, 4),
+            GastosIndirectos = Math.Round(gifPorUnidad, 4),
             MargenPorcentaje = null
         };
         return await CreateCostSheetAsync(ficha);
@@ -511,8 +523,17 @@ public class ProductionService : IProductionService
         if (product == null) return (false, "El producto no existe, está inactivo o pertenece a otra entidad.");
         if (!await _context.Almacens.AnyAsync(a => a.Id == almacenId && a.EntidadId == entidadId && a.Activo))
             return (false, "El almacén no existe, está inactivo o pertenece a otra entidad.");
-        if (waste.OrdenProduccionId.HasValue && !await _context.OrdenProduccions.AnyAsync(o => o.Id == waste.OrdenProduccionId && o.EntidadId == entidadId))
-            return (false, "La orden asociada no existe o pertenece a otra entidad.");
+        if (waste.OrdenProduccionId.HasValue)
+        {
+            var linkedOrder = await _context.OrdenProduccions
+                .FirstOrDefaultAsync(o => o.Id == waste.OrdenProduccionId && o.EntidadId == entidadId);
+            if (linkedOrder == null)
+                return (false, "La orden asociada no existe o pertenece a otra entidad.");
+            if (linkedOrder.Estado == "CANCELADA")
+                return (false, "No se puede registrar merma sobre una orden cancelada.");
+            if (linkedOrder.AlmacenInsumosId != almacenId && linkedOrder.AlmacenProductoId != almacenId)
+                return (false, "El almacén de la merma debe coincidir con el de insumos o producto de la orden asociada.");
+        }
 
         var stock = await _context.Existencia.FirstOrDefaultAsync(e => e.AlmacenId == almacenId && e.ProductoId == waste.ProductoId);
         if (stock == null || stock.Cantidad < waste.Cantidad)
@@ -1061,6 +1082,147 @@ public class ProductionService : IProductionService
             if (ownsTransaction) await transaction!.RollbackAsync();
             else await RollbackSavepointAsync();
             return (false, $"No se pudo revertir la orden: {ex.Message}");
+        }
+    }
+
+    public async Task<(bool Succeeded, string Message)> ReverseFinishedOrderAsync(Guid orderId, Guid userId)
+    {
+        var ownsTransaction = _context.Database.CurrentTransaction == null;
+        using var transaction = ownsTransaction ? await _context.Database.BeginTransactionAsync() : null;
+        await BeginSavepointAsync();
+        try
+        {
+            var order = await _context.OrdenProduccions
+                .Include(o => o.OrdenProduccionConsumos)
+                .FirstOrDefaultAsync(o => o.Id == orderId && o.EntidadId == _entidadProvider.CurrentEntidadId);
+            if (order == null) return (false, "No se encontró la orden de producción.");
+            if (order.Estado != "TERMINADA")
+                return (false, "Solo se pueden revertir órdenes terminadas.");
+            if (order.CantidadProducida <= 0)
+                return (false, "La orden terminada no tiene cantidad producida registrada.");
+
+            var finalUnitCost = order.CostoRealTotal.HasValue && order.CantidadProducida > 0
+                ? order.CostoRealTotal.Value / order.CantidadProducida
+                : 0m;
+
+            // 1. Retirar el producto terminado del almacén (sin asiento: la
+            // contabilización se revierte aparte con ReverseEntryAsync).
+            var movRetiro = new MovimientoInventario
+            {
+                EntidadId = order.EntidadId,
+                TipoMovimientoId = await _inventoryService.EnsureMovementTypeAsync("RETIRO_PRODUCCION"),
+                NumeroDocumento = $"{order.NumeroOrden}-RET",
+                AlmacenOrigenId = order.AlmacenProductoId,
+                Fecha = DateTimeOffset.Now,
+                ReferenciaExternaTipo = "ORDEN_PRODUCCION",
+                ReferenciaExternaId = order.Id,
+                Canal = "ERP",
+                CreadoPor = userId
+            };
+            movRetiro.MovimientoInventarioDetalles.Add(new MovimientoInventarioDetalle
+            {
+                Id = Guid.NewGuid(),
+                ProductoId = order.ProductoTerminadoId,
+                Cantidad = order.CantidadProducida,
+                CostoUnitario = finalUnitCost
+            });
+            var retiroResult = await _inventoryService.ProcessMovementAsync(movRetiro);
+            if (!retiroResult.Succeeded)
+                throw new InvalidOperationException($"No se pudo retirar el producto terminado: {retiroResult.Message}");
+
+            // 2. Revertir el asiento de entrada del producto terminado.
+            if (order.AsientoTerminadoId.HasValue)
+            {
+                var revPT = await _accountingService.ReverseEntryAsync(order.AsientoTerminadoId.Value, $"Reversión de entrada PT {order.NumeroOrden}");
+                if (!revPT.Succeeded)
+                    throw new InvalidOperationException($"No se pudo revertir el asiento de producto terminado: {revPT.Message}");
+            }
+
+            // 3. Revertir el asiento de conversión (MO/GIF a WIP) si existe.
+            var conversion = await _context.AsientoContables
+                .FirstOrDefaultAsync(a => a.DocumentoOrigenTipo == "ORDEN_PRODUCCION_CONVERSION"
+                                          && a.DocumentoOrigenId == order.Id
+                                          && a.Estado == "CONTABILIZADO");
+            if (conversion != null)
+            {
+                var revConversion = await _accountingService.ReverseEntryAsync(conversion.Id, $"Reversión de conversión {order.NumeroOrden}");
+                if (!revConversion.Succeeded)
+                    throw new InvalidOperationException($"No se pudo revertir el asiento de conversión: {revConversion.Message}");
+            }
+
+            // 4. Devolver la materia prima realmente consumida al almacén de insumos.
+            var consumosReales = order.OrdenProduccionConsumos.Where(c => c.CantidadReal > 0).ToList();
+            if (consumosReales.Any())
+            {
+                var movDevolucion = new MovimientoInventario
+                {
+                    EntidadId = order.EntidadId,
+                    TipoMovimientoId = await _inventoryService.EnsureMovementTypeAsync("DEVOLUCION_PRODUCCION"),
+                    NumeroDocumento = $"{order.NumeroOrden}-REVFIN",
+                    AlmacenDestinoId = order.AlmacenInsumosId,
+                    Fecha = DateTimeOffset.Now,
+                    ReferenciaExternaTipo = "ORDEN_PRODUCCION",
+                    ReferenciaExternaId = order.Id,
+                    Canal = "ERP",
+                    CreadoPor = userId
+                };
+                foreach (var c in consumosReales)
+                {
+                    movDevolucion.MovimientoInventarioDetalles.Add(new MovimientoInventarioDetalle
+                    {
+                        Id = Guid.NewGuid(),
+                        ProductoId = c.ProductoInsumoId,
+                        Cantidad = c.CantidadReal,
+                        CostoUnitario = c.CostoUnitario
+                    });
+                }
+                var devResult = await _inventoryService.ProcessMovementAsync(movDevolucion);
+                if (!devResult.Succeeded)
+                    throw new InvalidOperationException($"No se pudo devolver la materia prima: {devResult.Message}");
+            }
+
+            // 5. Eliminar las desviaciones generadas al finalizar.
+            var desviaciones = await _context.AnalisisDesviacions
+                .Where(d => d.OrdenProduccionId == order.Id)
+                .ToListAsync();
+            _context.AnalisisDesviacions.RemoveRange(desviaciones);
+
+            // 6. Descontar la cantidad ejecutada del plan aprobado.
+            var fechaPlanificada = order.FechaInicioPlan ?? DateOnly.FromDateTime(DateTime.Now);
+            var planLine = await _context.PlanProduccionDetalles
+                .Include(d => d.Plan)
+                .FirstOrDefaultAsync(d => d.Plan.EntidadId == order.EntidadId
+                                       && d.Plan.Anio == fechaPlanificada.Year
+                                       && d.Plan.Mes == fechaPlanificada.Month
+                                       && d.Plan.Estado == "APROBADO"
+                                       && d.ProductoId == order.ProductoTerminadoId);
+            if (planLine != null)
+                planLine.CantidadEjecutada = Math.Max(0m, planLine.CantidadEjecutada - order.CantidadProducida);
+
+            // 7. Resetear la orden a PLANIFICADA.
+            foreach (var c in order.OrdenProduccionConsumos)
+            {
+                c.CantidadReal = 0;
+                c.CostoUnitario = null;
+                c.MovimientoInventarioId = null;
+            }
+            order.CantidadProducida = 0;
+            order.CostoRealTotal = null;
+            order.FechaInicioReal = null;
+            order.FechaFinReal = null;
+            order.AsientoConsumoId = null;
+            order.AsientoTerminadoId = null;
+            order.Estado = "PLANIFICADA";
+            await _context.SaveChangesAsync();
+
+            if (ownsTransaction) await transaction!.CommitAsync();
+            return (true, "Orden terminada revertida a planificada; producto retirado, materia prima devuelta y asientos revertidos.");
+        }
+        catch (Exception ex)
+        {
+            if (ownsTransaction) await transaction!.RollbackAsync();
+            else await RollbackSavepointAsync();
+            return (false, $"No se pudo revertir la orden terminada: {ex.Message}");
         }
     }
 
