@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Prometheus;
 using System.Text;
+using System.Threading.RateLimiting;
 using VERCOM.Filters;
 using VERCOM.Models;
 using VERCOM.Security;
@@ -54,6 +55,7 @@ builder.Services.AddScoped<IImportacionService, ImportacionService>();
 
 // Servicios POS (JWT / API móvil)
 builder.Services.AddScoped<PosAuthService>();
+builder.Services.AddScoped<PosTokenValidator>();
 builder.Services.AddScoped<PosCatalogoService>();
 builder.Services.AddScoped<ArqueoCajaContableService>();
 builder.Services.AddScoped<PosCajaService>();
@@ -117,6 +119,25 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero
         };
+        options.Events = new JwtBearerEvents
+        {
+            // Revocación inmediata: un token emitido deja de valer si la cuenta se
+            // desactiva o si la contraseña cambió después de emitirlo.
+            OnTokenValidated = async context =>
+            {
+                var subject = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!Guid.TryParse(subject, out var usuarioId))
+                {
+                    context.Fail("Token sin identificador de usuario.");
+                    return;
+                }
+
+                var huella = context.Principal?.FindFirst(PosTokenValidator.PasswordStampClaim)?.Value;
+                var validador = context.HttpContext.RequestServices.GetRequiredService<PosTokenValidator>();
+                if (!await validador.IsValidAsync(usuarioId, huella, context.HttpContext.RequestAborted))
+                    context.Fail("La cuenta está inactiva o la contraseña cambió.");
+            }
+        };
     });
 
 builder.Services.AddAuthorization(options =>
@@ -132,6 +153,43 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add<MustChangePasswordFilter>();
+});
+
+// Límites de peticiones para el terminal POS: el login y la auto-configuración anónima
+// (identificador de hardware) son los dos puntos que un atacante puede martillar.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    static string Ip(HttpContext context) =>
+        context.Connection.RemoteIpAddress?.ToString() ?? "sin-ip";
+
+    options.AddPolicy("pos-login", context => RateLimitPartition.GetFixedWindowLimiter(
+        Ip(context),
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
+
+    options.AddPolicy("pos-config", context => RateLimitPartition.GetFixedWindowLimiter(
+        Ip(context),
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 20,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
+
+    options.AddPolicy("pos-api", context => RateLimitPartition.GetFixedWindowLimiter(
+        Ip(context),
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 600,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
 });
 
 builder.Services.AddHealthChecks();
@@ -157,11 +215,16 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
 app.UseHttpMetrics();        // ← métricas HTTP automáticas
+
+app.UseRateLimiter();
+app.UseAuthentication();
+app.UseAuthorization();        // ← métricas HTTP automáticas
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -169,7 +232,7 @@ app.UseAuthorization();
 app.MapHub<VERCOM.Hubs.NotificationHub>("/notificationHub");
 
 app.MapHealthChecks("/health");
-app.MapMetrics("/metrics");  // ← endpoint /metrics
+app.MapMetrics("/metrics").RequireAuthorization();  // ← endpoint /metrics (solo autenticado)
 
 app.MapStaticAssets();
 

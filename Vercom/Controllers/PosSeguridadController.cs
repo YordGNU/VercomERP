@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using VERCOM.DTOs;
 using VERCOM.Services;
 
@@ -10,6 +11,7 @@ namespace VERCOM.Controllers;
 [ApiController]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 [Route("api/pos/seguridad")]
+[EnableRateLimiting("pos-api")]
 public sealed class PosSeguridadController : ControllerBase
 {
     private readonly PosSeguridadService _service;

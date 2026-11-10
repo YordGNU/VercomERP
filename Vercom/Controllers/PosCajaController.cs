@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using VERCOM.DTOs;
 using VERCOM.Services;
 
@@ -9,6 +10,7 @@ namespace VERCOM.Controllers;
 [ApiController]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 [Route("api/pos/caja")]
+[EnableRateLimiting("pos-api")]
 public sealed class PosCajaController : ControllerBase
 {
     private readonly PosCajaService _service;

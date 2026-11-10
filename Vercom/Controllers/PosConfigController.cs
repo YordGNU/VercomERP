@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 using VERCOM.DTOs;
 using VERCOM.Services;
@@ -9,6 +10,7 @@ namespace VERCOM.Controllers;
 
 [ApiController]
 [Route("api/pos/config")]
+[EnableRateLimiting("pos-api")]
 public sealed class PosConfigController : ControllerBase
 {
     private readonly PosConfigService _service;
@@ -20,6 +22,7 @@ public sealed class PosConfigController : ControllerBase
     /// devuelve entidad, sucursal, almacén, dispositivo, tipo de movimiento de venta y cliente mostrador.
     /// </summary>
     [AllowAnonymous]
+    [EnableRateLimiting("pos-config")]
     [HttpPost("dispositivo")]
     public async Task<ActionResult<DispositivoConfigDto>> GetConfiguracion([FromBody] DispositivoConfigRequest request, CancellationToken cancellationToken = default)
     {

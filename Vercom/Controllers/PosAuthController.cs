@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using VERCOM.DTOs;
 using VERCOM.Services;
 
@@ -9,6 +10,7 @@ namespace VERCOM.Controllers;
 
 [ApiController]
 [Route("api/pos/auth")]
+[EnableRateLimiting("pos-api")]
 public sealed class PosAuthController : ControllerBase
 {
     private readonly PosAuthService _service;
@@ -16,6 +18,7 @@ public sealed class PosAuthController : ControllerBase
     public PosAuthController(PosAuthService service) => _service = service;
 
     [AllowAnonymous]
+    [EnableRateLimiting("pos-login")]
     [HttpPost("login")]
     public async Task<ActionResult<PosLoginResponse>> Login([FromBody] PosLoginRequest request, CancellationToken cancellationToken = default)
     {
