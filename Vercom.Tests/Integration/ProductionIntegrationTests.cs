@@ -582,6 +582,16 @@ public class ProductionIntegrationTests
         {
             var prep = await PrepararOrdenAsync(db);
             var hoy = DateOnly.FromDateTime(DateTime.Today);
+
+            // El seed siembra estos parámetros con la fecha de hoy (índice único
+            // entidad + código + vigente_desde), así que se reemplazan dentro de
+            // la transacción para fijar los valores que espera la prueba.
+            var existentes = await db.ParametroSistemas
+                .Where(p => p.EntidadId == prep.Datos.EntidadId
+                            && (p.Codigo == "COSTO_MO_POR_UNIDAD" || p.Codigo == "GIF_PORCENTAJE_MP"))
+                .ToListAsync();
+            db.ParametroSistemas.RemoveRange(existentes);
+
             db.ParametroSistemas.AddRange(
                 new ParametroSistema { EntidadId = prep.Datos.EntidadId, Codigo = "COSTO_MO_POR_UNIDAD", Valor = "30", TipoDato = "NUMERIC", VigenteDesde = hoy },
                 new ParametroSistema { EntidadId = prep.Datos.EntidadId, Codigo = "GIF_PORCENTAJE_MP", Valor = "25", TipoDato = "NUMERIC", VigenteDesde = hoy });

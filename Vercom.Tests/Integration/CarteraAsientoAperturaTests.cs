@@ -142,7 +142,17 @@ public class CarteraAsientoAperturaTests
         await using var db = TestDb.Create();
         await using var tx = await db.Database.BeginTransactionAsync();
 
-        var proveedor = await db.Proveedors.AsNoTracking().OrderBy(p => p.RazonSocial).FirstAsync();
+        // La prueba crea su propio proveedor: el seed mínimo no siembra ninguno
+        // y depender de datos que solo existen en la BD local la hacía fallar en CI.
+        var proveedor = new Proveedor
+        {
+            EntidadId = TestDb.EntidadIdSeed,
+            TipoPersona = "JURIDICA",
+            RazonSocial = "PROVEEDOR TEST CXP " + Guid.NewGuid().ToString("N")[..8]
+        };
+        db.Proveedors.Add(proveedor);
+        await db.SaveChangesAsync();
+
         var item = new CuentaPorPagar
         {
             ProveedorId = proveedor.Id,
