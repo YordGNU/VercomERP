@@ -1,12 +1,9 @@
-@model Vercom.ViewModels.EmptyStateModel
-@{
-    var tone = string.IsNullOrWhiteSpace(Model.Tone) ? "light" : Model.Tone;
-}
+@model VERCOM.ViewModels.EmptyStateModel
 @if (Model.InTable)
 {
     <tr class="ux-empty-row">
         <td colspan="@Math.Max(1, Model.Colspan)" class="p-0 border-0">
-            <div class="ux-empty ux-tone-@tone">
+            <div class="ux-empty">
                 @if (!string.IsNullOrWhiteSpace(Model.Icon))
                 {
                     <span class="ux-empty-icon"><i class="ti @Model.Icon"></i></span>
@@ -29,7 +26,7 @@
 }
 else
 {
-    <div class="ux-empty ux-tone-@tone">
+    <div class="ux-empty">
         @if (!string.IsNullOrWhiteSpace(Model.Icon))
         {
             <span class="ux-empty-icon"><i class="ti @Model.Icon"></i></span>

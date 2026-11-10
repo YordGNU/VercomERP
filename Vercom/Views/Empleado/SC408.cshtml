@@ -1,11 +1,11 @@
-@model IEnumerable<Vercom.Services.SC408Row>
-@inject Vercom.Services.IEntidadDisplayService EntidadDisplay
+@model IEnumerable<VERCOM.Services.SC408Row>
+@inject VERCOM.Services.IEntidadDisplayService EntidadDisplay
 @{
-    var emp = ViewBag.Employee as Vercom.Models.Empleado;
+    var emp = ViewBag.Employee as VERCOM.Models.Empleado;
     ViewBag.Title = "Modelo SC-4-08: " + emp?.Nombres;
 }
 
-@{ var headerActions = "<a href='" + Url.Action("File") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> VOLVER</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = "Registro de Salarios y Tiempo de Servicio", Subtitle = "Certificación oficial para trámites de seguridad social (SC-4-08).", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("File") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> VOLVER</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Recursos Humanos", Title = "Registro de Salarios y Tiempo de Servicio", Subtitle = "Certificación oficial para trámites de seguridad social (SC-4-08).", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 
@@ -96,7 +96,7 @@
             </div>
 
             <div class="text-center mt-5">
-                <p class="tiny text-muted">Certificación generada por el sistema Vercom Elite el @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</p>
+                <p class="tiny text-muted">Certificación generada por el sistema VERCOM el @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</p>
             </div>
         </div>
     </div>

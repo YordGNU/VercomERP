@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using Vercom.Helpers;
-using Vercom.Models;
-using Vercom.ViewModels;
+using VERCOM.Helpers;
+using VERCOM.Models;
+using VERCOM.ViewModels;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public interface IAdminService
 {
@@ -558,7 +558,7 @@ public class AdminService : IAdminService
             PosConflictos = pendientes.Count(p => !string.IsNullOrEmpty(p.MensajeError)),
             TopEntidades = ventasMes.Take(5).Select(v => new TopEntidadItem
             {
-                Nombre = nombresEntidad.TryGetValue(v.EntidadId, out var n) ? n : "Entidad",
+                Nombre = nombresEntidad.TryGetValue(v.EntidadId, out var n) ? n ?? "Entidad" : "Entidad",
                 Ventas = v.Total,
                 Facturas = v.Facturas
             }).ToList(),

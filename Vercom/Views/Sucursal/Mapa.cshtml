@@ -1,4 +1,4 @@
-@model IEnumerable<Vercom.Models.Sucursal>
+@model IEnumerable<VERCOM.Models.Sucursal>
 @{
     ViewBag.Title = "Mapa de Sucursales";
     var itemsJson = System.Text.Json.JsonSerializer.Serialize(Model.Select(s => new
@@ -26,7 +26,7 @@
     .map-panel .list-group-item:hover { background: #f1f5f9; }
 </style>
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Volver al listado</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Mapa de Sucursales", Subtitle = "Ubicación geográfica de almacenes, tiendas, oficinas y áreas de producción.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Volver al listado</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Mapa de Sucursales", Subtitle = "Ubicación geográfica de almacenes, tiendas, oficinas y áreas de producción.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

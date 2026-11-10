@@ -1,7 +1,7 @@
-@model IEnumerable<Vercom.Models.Rol>
+@model IEnumerable<VERCOM.Models.Rol>
 @{ ViewBag.Title = "Seguridad: Roles de Usuario"; }
 
-@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-shield-plus me-1'></i> CREAR NUEVO ROL</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Gestión de Seguridad: Perfiles de Acceso", Subtitle = "Definición de roles y matrices de permisos según segregación de funciones (Res. 60/2011).", Icon = "ti-shield-plus", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-shield-plus me-1'></i> CREAR NUEVO ROL</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Gestión de Seguridad: Perfiles de Acceso", Subtitle = "Definición de roles y matrices de permisos según segregación de funciones (Res. 60/2011).", Icon = "ti-shield-plus", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 <div class="card border-0 shadow-sm mb-4">

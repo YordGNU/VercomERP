@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Vercom.Models;
-using Vercom.Security;
-using Vercom.Services;
+using VERCOM.Models;
+using VERCOM.Security;
+using VERCOM.Services;
 
-namespace Vercom.Controllers;
+namespace VERCOM.Controllers;
 
 [Authorize]
 public class FeedbackController : Controller

@@ -1,14 +1,14 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Vercom.Models;
+using VERCOM.Models;
 
-namespace Vercom.ViewModels;
+namespace VERCOM.ViewModels;
 
 public class BomCreateViewModel
 {
     public ListaMateriale Bom { get; set; } = new();
 
     public IEnumerable<SelectListItem> ProductosElaborados { get; set; } = new List<SelectListItem>();
-    public IEnumerable<dynamic> InsumosDisponibles { get; set; } = new List<dynamic>();
+    public IEnumerable<SelectListItem> InsumosDisponibles { get; set; } = new List<SelectListItem>();
 
     public string Title { get; set; } = "Lista de Materiales (BOM)";
 }

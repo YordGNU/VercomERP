@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Vercom.Services;
-using Vercom.ViewModels;
+using VERCOM.Services;
+using VERCOM.ViewModels;
 
-namespace Vercom.Controllers;
+namespace VERCOM.Controllers;
 
 [Authorize]
 public class MermaController : Controller
@@ -22,16 +22,17 @@ public class MermaController : Controller
         return View(items);
     }
 
-    [Authorize(Policy = "PRODUCCION.MERMA.REGISTRAR")]
-    public async Task<IActionResult> Create()
+    [Authorize(Policy = "PRODUCCION.MERMA.CREAR")]
+    public async Task<IActionResult> Create(Guid? opId)
     {
         var vm = await _productionService.GetWasteFormContextAsync();
+        if (opId.HasValue) vm.Merma.OrdenProduccionId = opId.Value;
         return View(vm);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Policy = "PRODUCCION.MERMA.REGISTRAR")]
+    [Authorize(Policy = "PRODUCCION.MERMA.CREAR")]
     public async Task<IActionResult> Create(MermaFormViewModel vm)
     {
         var waste = vm.Merma;
@@ -40,7 +41,7 @@ public class MermaController : Controller
 
         if (ModelState.IsValid)
         {
-            var result = await _productionService.CreateWasteAsync(waste);
+            var result = await _productionService.CreateWasteAsync(waste, vm.AlmacenId);
             if (result.Succeeded)
             {
                 return Json(new { success = true, message = result.Message, redirectUrl = Url.Action(nameof(Index)) });

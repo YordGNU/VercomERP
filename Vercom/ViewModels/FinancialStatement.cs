@@ -1,4 +1,4 @@
-﻿namespace Vercom.ViewModels;
+﻿namespace VERCOM.ViewModels;
 
 /// <summary>
 /// Balance General (Estado de Situación Financiera) según Normas Cubanas de Contabilidad.

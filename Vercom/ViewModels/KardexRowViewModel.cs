@@ -1,6 +1,6 @@
 using System;
 
-namespace Vercom.ViewModels;
+namespace VERCOM.ViewModels;
 
 public class KardexRowViewModel
 {

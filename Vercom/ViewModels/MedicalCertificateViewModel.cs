@@ -1,6 +1,6 @@
-using Vercom.Models;
+using VERCOM.Models;
 
-namespace Vercom.ViewModels;
+namespace VERCOM.ViewModels;
 
 public class MedicalCertificateViewModel
 {

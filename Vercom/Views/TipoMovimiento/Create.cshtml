@@ -1,9 +1,9 @@
-@model Vercom.Models.TipoMovimiento
+@model VERCOM.Models.TipoMovimiento
 @{
     ViewBag.Title = "Nuevo Tipo de Movimiento";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Configuración</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Definir Operación de Inventario", Subtitle = "Configuración de la lógica contable y de stock para movimientos de almacén.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Configuración</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Inventario", Title = "Definir Operación de Inventario", Subtitle = "Configuración de la lógica contable y de stock para movimientos de almacén.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

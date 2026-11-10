@@ -1,9 +1,9 @@
-@model IEnumerable<Vercom.Models.DevolucionVentum>
+@model IEnumerable<VERCOM.Models.DevolucionVentum>
 @{
     ViewBag.Title = "Devoluciones de Venta";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVA DEVOLUCIÓN</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Ventas", Title = "Gestión de Devoluciones de Venta", Subtitle = "Control de retornos de mercancía y ajustes de crédito a clientes.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVA DEVOLUCIÓN</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Ventas", Title = "Gestión de Devoluciones de Venta", Subtitle = "Control de retornos de mercancía y ajustes de crédito a clientes.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

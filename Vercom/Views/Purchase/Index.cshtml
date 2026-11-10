@@ -1,7 +1,7 @@
-@model IEnumerable<Vercom.Models.OrdenCompra>
+@model IEnumerable<VERCOM.Models.OrdenCompra>
 @{ ViewBag.Title = "Órdenes de Compra"; }
 
-@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-shopping-cart-plus me-1'></i> NUEVA ORDEN</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Compras", Title = "Abastecimiento y Compras", Subtitle = "Gestión de órdenes de compra a proveedores y recepción de mercancías.", Icon = "ti-shopping-cart-plus", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-shopping-cart-plus me-1'></i> NUEVA ORDEN</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Compras", Title = "Abastecimiento y Compras", Subtitle = "Gestión de órdenes de compra a proveedores y recepción de mercancías.", Icon = "ti-shopping-cart-plus", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 <div class="row">

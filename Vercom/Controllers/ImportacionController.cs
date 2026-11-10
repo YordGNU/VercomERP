@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Vercom.Controllers;
+namespace VERCOM.Controllers;
 
 [Authorize(Policy = "INVENTARIO.PRODUCTO.VER")]
 public sealed class ImportacionController : Controller

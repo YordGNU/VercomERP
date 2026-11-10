@@ -1,11 +1,11 @@
-@model Vercom.Models.DispositivoPo
+@model VERCOM.Models.DispositivoPo
 @{
     ViewBag.Title = "Ficha de Terminal POS";
     var isOnline = Model.UltimaSincronizacion.HasValue && Model.UltimaSincronizacion.Value > DateTimeOffset.Now.AddMinutes(-30);
     var statusColor = Model.Estado == "ACTIVO" ? (isOnline ? "success" : "warning") : "danger";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> VOLVER</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Gestión de Hardware: " + Model.Nombre, Subtitle = "Especificaciones técnicas y registro de actividad de la terminal móvil.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> VOLVER</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Gestión de Hardware: " + Model.Nombre, Subtitle = "Especificaciones técnicas y registro de actividad de la terminal móvil.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

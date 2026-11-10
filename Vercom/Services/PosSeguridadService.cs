@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using Vercom.DTOs;
-using Vercom.Models;
+using VERCOM.DTOs;
+using VERCOM.Models;
 using BC = BCrypt.Net.BCrypt;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public sealed class PosSeguridadService
 {

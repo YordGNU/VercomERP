@@ -1,9 +1,9 @@
-@model IEnumerable<Vercom.Models.Indicador>
+@model IEnumerable<VERCOM.Models.Indicador>
 @{
     ViewBag.Title = "Diccionario de Indicadores";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVO INDICADOR</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Inteligencia de Negocio: Indicadores (KPIs)", Subtitle = "Definición de fórmulas métricas para el análisis de rendimiento y salud financiera.", Icon = "ti-chart-infographic", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVO INDICADOR</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Inteligencia de Negocio: Indicadores (KPIs)", Subtitle = "Definición de fórmulas métricas para el análisis de rendimiento y salud financiera.", Icon = "ti-chart-infographic", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

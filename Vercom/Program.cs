@@ -1,16 +1,21 @@
-using System.Text;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Vercom.Filters;
-using Vercom.Models;
-using Vercom.Security;
-using Vercom.Services;
+using Prometheus;
+using System.Text;
+using System.Threading.RateLimiting;
+using VERCOM.Filters;
+using VERCOM.Models;
+using VERCOM.Security;
+using VERCOM.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IEntidadProvider, HttpContextEntidadProvider>();
@@ -50,6 +55,7 @@ builder.Services.AddScoped<IImportacionService, ImportacionService>();
 
 // Servicios POS (JWT / API móvil)
 builder.Services.AddScoped<PosAuthService>();
+builder.Services.AddScoped<PosTokenValidator>();
 builder.Services.AddScoped<PosCatalogoService>();
 builder.Services.AddScoped<ArqueoCajaContableService>();
 builder.Services.AddScoped<PosCajaService>();
@@ -74,11 +80,24 @@ builder.Services.AddDbContext<AppDbContext>((sp, options) =>
            .AddInterceptors(sp.GetRequiredService<AuditInterceptor>());
 });
 
+builder.Configuration.AddKeyPerFile("/run/secrets", optional: true);
 var jwtSecret = builder.Configuration["Jwt:SecretKey"];
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 var jwtAudience = builder.Configuration["Jwt:Audience"];
-if (string.IsNullOrWhiteSpace(jwtSecret) || Encoding.UTF8.GetByteCount(jwtSecret) < 32)
-    throw new InvalidOperationException("Jwt:SecretKey debe tener al menos 32 bytes.");
+
+if (string.IsNullOrWhiteSpace(jwtSecret))
+{
+    const string secretPath = "/run/secrets/jwt_key";
+    if (File.Exists(secretPath))
+    {
+        jwtSecret = File.ReadAllText(secretPath).Trim();
+        builder.Configuration.AddInMemoryCollection(
+            new Dictionary<string, string?> { ["Jwt:SecretKey"] = jwtSecret });
+    }
+}
+
+if (string.IsNullOrWhiteSpace(jwtSecret))
+    throw new InvalidOperationException("Configure Jwt:SecretKey o monte el secreto /run/secrets/jwt_key.");
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -100,12 +119,34 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero
         };
+        options.Events = new JwtBearerEvents
+        {
+            // Revocación inmediata: un token emitido deja de valer si la cuenta se
+            // desactiva o si la contraseña cambió después de emitirlo.
+            OnTokenValidated = async context =>
+            {
+                var subject = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!Guid.TryParse(subject, out var usuarioId))
+                {
+                    context.Fail("Token sin identificador de usuario.");
+                    return;
+                }
+
+                var huella = context.Principal?.FindFirst(PosTokenValidator.PasswordStampClaim)?.Value;
+                var validador = context.HttpContext.RequestServices.GetRequiredService<PosTokenValidator>();
+                if (!await validador.IsValidAsync(usuarioId, huella, context.HttpContext.RequestAborted))
+                    context.Fail("La cuenta está inactiva o la contraseña cambió.");
+            }
+        };
     });
 
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("pos_gestionar_usuarios", policy => policy.RequireClaim("Permission", "gestionar_usuarios"));
     options.AddPolicy("pos_configuracion", policy => policy.RequireClaim("Permission", "configuracion"));
+    // Permiso real del POS (código en minúsculas, sin puntos): el proveedor dinámico no lo
+    // reconoce como permiso, así que se registra para gatear el terminal de venta.
+    options.AddPolicy("vender", policy => policy.AddRequirements(new PermissionRequirement("vender")));
 });
 
 // Add services to the container.
@@ -114,8 +155,44 @@ builder.Services.AddControllersWithViews(options =>
     options.Filters.Add<MustChangePasswordFilter>();
 });
 
-builder.Services.AddHealthChecks();
+// Límites de peticiones para el terminal POS: el login y la auto-configuración anónima
+// (identificador de hardware) son los dos puntos que un atacante puede martillar.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
+    static string Ip(HttpContext context) =>
+        context.Connection.RemoteIpAddress?.ToString() ?? "sin-ip";
+
+    options.AddPolicy("pos-login", context => RateLimitPartition.GetFixedWindowLimiter(
+        Ip(context),
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
+
+    options.AddPolicy("pos-config", context => RateLimitPartition.GetFixedWindowLimiter(
+        Ip(context),
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 20,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
+
+    options.AddPolicy("pos-api", context => RateLimitPartition.GetFixedWindowLimiter(
+        Ip(context),
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 600,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
+});
+
+builder.Services.AddHealthChecks();
 var app = builder.Build();
 
 app.UseForwardedHeaders(new ForwardedHeadersOptions
@@ -138,16 +215,24 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
+app.UseHttpMetrics();        // ← métricas HTTP automáticas
+
+app.UseRateLimiter();
+app.UseAuthentication();
+app.UseAuthorization();        // ← métricas HTTP automáticas
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapHub<Vercom.Hubs.NotificationHub>("/notificationHub");
+app.MapHub<VERCOM.Hubs.NotificationHub>("/notificationHub");
 
 app.MapHealthChecks("/health");
+app.MapMetrics("/metrics").RequireAuthorization();  // ← endpoint /metrics (solo autenticado)
 
 app.MapStaticAssets();
 
@@ -155,6 +240,5 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Dashboard}/{action=Index}/{id?}")
     .WithStaticAssets();
-
 
 app.Run();

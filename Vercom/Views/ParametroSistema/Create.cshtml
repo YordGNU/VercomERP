@@ -1,9 +1,9 @@
-@model Vercom.Models.ParametroSistema
+@model VERCOM.Models.ParametroSistema
 @{
     ViewBag.Title = "Nuevo Parámetro del Sistema";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Parámetros</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Definir Variable de Configuración", Subtitle = "Creación de parámetros de entorno, tasas fiscales y reglas de negocio dinámicas.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Parámetros</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Administración", Title = "Definir Variable de Configuración", Subtitle = "Creación de parámetros de entorno, tasas fiscales y reglas de negocio dinámicas.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

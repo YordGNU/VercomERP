@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using Vercom.Services;
+using VERCOM.Services;
 
-namespace Vercom.Controllers;
+namespace VERCOM.Controllers;
 
 public class AccountController : Controller
 {
@@ -65,6 +65,12 @@ public class AccountController : Controller
         if (newPassword != confirmPassword)
         {
             ModelState.AddModelError("", "La nueva contraseña y la confirmación no coinciden.");
+            return View();
+        }
+
+        if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 6)
+        {
+            ModelState.AddModelError("", "La nueva contraseña debe tener al menos 6 caracteres.");
             return View();
         }
 

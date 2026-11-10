@@ -1,19 +1,22 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Vercom.Services;
-using Vercom.ViewModels;
+using VERCOM.Models;
+using VERCOM.Services;
+using VERCOM.ViewModels;
 
-namespace Vercom.Controllers;
+namespace VERCOM.Controllers;
 
 [Authorize]
 public class TopePrecioMfpController : Controller
 {
     private readonly ICommercialService _commercialService;
+    private readonly AppDbContext _context;
 
-    public TopePrecioMfpController(ICommercialService commercialService)
+    public TopePrecioMfpController(ICommercialService commercialService, AppDbContext context)
     {
         _commercialService = commercialService;
+        _context = context;
     }
 
     [Authorize(Policy = "COMERCIAL.CLIENTE.VER")]
@@ -57,12 +60,11 @@ public class TopePrecioMfpController : Controller
     public async Task<IActionResult> GetTope(Guid productoId)
     {
         // Obtener el producto para saber su familia
-        var context = (Vercom.Models.AppDbContext)HttpContext.RequestServices.GetService(typeof(Vercom.Models.AppDbContext));
-        var prod = await context.Productos.FindAsync(productoId);
+        var prod = await _context.Productos.FindAsync(productoId);
         if (prod == null) return Json(new { exists = false });
 
         var today = DateOnly.FromDateTime(DateTime.Now);
-        var tope = await context.TopePrecioMfps
+        var tope = await _context.TopePrecioMfps
             .Where(t => (t.ProductoId == productoId || t.FamiliaId == prod.FamiliaId)
                         && t.VigenteDesde <= today && (t.VigenteHasta == null || t.VigenteHasta >= today))
             .OrderByDescending(t => t.ProductoId) // Priorizar producto sobre familia

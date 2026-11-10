@@ -1,11 +1,11 @@
-@model Vercom.ViewModels.CajaFormViewModel
+@model VERCOM.ViewModels.CajaFormViewModel
 
 @{
     ViewData["Title"] = Model.Caja.Id == Guid.Empty ? "Nueva Caja" : "Editar Caja";
     var esNueva = Model.Caja.Id == Guid.Empty;
 }
 
-@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "", Subtitle = "", Icon = "ti-file", Tone = "primary" }; }
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "", Subtitle = "", Icon = "ti-file"}; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

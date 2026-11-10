@@ -1,12 +1,12 @@
-@model Vercom.ViewModels.ClientListViewModel
+@model VERCOM.ViewModels.ClientListViewModel
 @{ ViewData["Title"] = "Cartera de Clientes"; var estado = Model.Activo switch { true => "activa", false => "inactiva", _ => "" }; var desde = Model.TotalItems == 0 ? 0 : ((Model.Page - 1) * Model.PageSize) + 1; var hasta = Math.Min(Model.Page * Model.PageSize, Model.TotalItems); }
 
-@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-user-plus me-1'></i> REGISTRAR CLIENTE</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Gestión Comercial", Title = "Cartera de Clientes", Subtitle = "Directorio unificado de clientes corporativos y consumidores finales.", Icon = "ti-users", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-user-plus me-1'></i> REGISTRAR CLIENTE</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Gestión Comercial", Title = "Cartera de Clientes", Subtitle = "Directorio unificado de clientes corporativos y consumidores finales.", Icon = "ti-users", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 
 
-@{ var kpiTotal = new Vercom.ViewModels.KpiCardModel { Label = "Clientes", Value = Model.Total.ToString(), Icon = "ti-users", Tone = "primary" }; var kpiActivos = new Vercom.ViewModels.KpiCardModel { Label = "Clientes activos", Value = Model.Activos.ToString(), Icon = "ti-circle-check", Tone = "success" }; var kpiInactivos = new Vercom.ViewModels.KpiCardModel { Label = "Clientes inactivos", Value = Model.Inactivos.ToString(), Icon = "ti-circle-x", Tone = "danger" }; var kpiSegmento = new Vercom.ViewModels.KpiCardModel { Label = "Minoristas / Mayoristas", Value = Model.Minoristas + " / " + Model.Mayoristas, Icon = "ti-chart-donut", Tone = "info" }; }
+@{ var kpiTotal = new VERCOM.ViewModels.KpiCardModel { Label = "Clientes", Value = Model.Total.ToString(), Icon = "ti-users"}; var kpiActivos = new VERCOM.ViewModels.KpiCardModel { Label = "Clientes activos", Value = Model.Activos.ToString(), Icon = "ti-circle-check", Tone = "success" }; var kpiInactivos = new VERCOM.ViewModels.KpiCardModel { Label = "Clientes inactivos", Value = Model.Inactivos.ToString(), Icon = "ti-circle-x", Tone = "danger" }; var kpiSegmento = new VERCOM.ViewModels.KpiCardModel { Label = "Minoristas / Mayoristas", Value = Model.Minoristas + " / " + Model.Mayoristas, Icon = "ti-chart-donut", Tone = "info" }; }
 <div class='row g-2 mb-3'>
     <div class='col-md-3 col-6'>
         <partial name='_KpiCard' model='kpiTotal' />

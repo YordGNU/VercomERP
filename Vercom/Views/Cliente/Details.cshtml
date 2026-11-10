@@ -1,11 +1,11 @@
-@model Vercom.Models.Cliente
+@model VERCOM.Models.Cliente
 @{
     ViewBag.Title = "Ficha Comercial de Cliente";
     var balance = Model.CuentaPorCobrars.Where(c => c.Estado != "PAGADA").Sum(c => c.SaldoPendiente);
     var totalSales = Model.FacturaVenta.Where(f => f.Estado == "EMITIDA").Sum(f => f.Total);
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Clientes</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Ventas", Title = "Cliente: " + Model.NombreRazonSocial, Subtitle = "Gestión de cartera, historial de facturación y límites de crédito.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Clientes</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Ventas", Title = "Cliente: " + Model.NombreRazonSocial, Subtitle = "Gestión de cartera, historial de facturación y límites de crédito.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

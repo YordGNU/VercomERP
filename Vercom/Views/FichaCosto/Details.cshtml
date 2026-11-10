@@ -1,9 +1,9 @@
-@model Vercom.Models.FichaCosto
+@model VERCOM.Models.FichaCosto
 @{
     ViewBag.Title = "Ficha de Costo v." + Model.Version;
 }
 
-@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Ingeniería de Costos: ", Subtitle = "Estructura detallada según metodología del MFP para el cálculo de precios.", Icon = "ti-file", Tone = "primary" }; }
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Producción", Title = "Ingeniería de Costos: ", Subtitle = "Estructura detallada según metodología del MFP para el cálculo de precios.", Icon = "ti-file"}; }
 <partial name='_PageHeader' model='pageHeader' />
 
 
@@ -110,7 +110,7 @@
                                     </td>
                                 </tr>
                             </tbody>
-                            <tfoot class="table-dark fs-15">
+                            <tfoot class="table-dark fs-16">
                                 <tr>
                                   <td>COSTO TOTAL DE PRODUCCIÓN</td>
                                    <td class="fw-bold">@Model.CostoTotalUnitario?.ToString("N4")</td>
@@ -136,7 +136,3 @@
     </div>
 </div>
 
-<style>
-    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
-    .fs-15 { font-size: 1rem; }
-</style>

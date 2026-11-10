@@ -1,10 +1,10 @@
-@model Vercom.Models.OrdenProduccion
+@model VERCOM.Models.OrdenProduccion
 @{
     ViewBag.Title = "Hoja de Ruta: " + Model.NumeroOrden;
     var isFinalized = Model.Estado == "TERMINADA";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Monitor</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Hoja de Ruta: " + Model.NumeroOrden, Subtitle = "Control técnico de transformación de @Model.ProductoTerminado.Nombre.", Icon = "ti-file", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Index") + "' class='btn btn-sm btn-outline-secondary'><i class='ti-file me-1'></i> Monitor</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Hoja de Ruta: " + Model.NumeroOrden, Subtitle = "Control técnico de transformación de @Model.ProductoTerminado.Nombre.", Icon = "ti-file", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 
@@ -42,6 +42,39 @@
                                     <span class="fw-bold small">@progress.ToString("N0")%</span>
                                 </div>
                             </div>
+                            @if (Model.Estado == "EN_PROCESO")
+                            {
+                                <div class="col-12">
+                                    <form asp-action="Reverse" asp-route-id="@Model.Id" method="post" class="d-inline w-100">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger w-100" onclick="return confirm('¿Revertir la orden a planificada? Se devolverán los materiales al inventario.');">
+                                            <i class="ti ti-rotate-2 me-1"></i> REVERTIR ORDEN
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                            @if (Model.Estado == "PLANIFICADA")
+                            {
+                                <div class="col-12">
+                                    <form asp-action="Cancel" asp-route-id="@Model.Id" method="post" class="d-inline w-100">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary w-100" onclick="return confirm('¿Cancelar esta orden planificada?');">
+                                            <i class="ti ti-x me-1"></i> CANCELAR ORDEN
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                            @if (Model.Estado == "TERMINADA")
+                            {
+                                <div class="col-12">
+                                    <form asp-action="ReverseFinished" asp-route-id="@Model.Id" method="post" class="d-inline w-100">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger w-100" onclick="return confirm('¿Revertir la orden terminada? Se retirará el producto terminado, se devolverá la materia prima y se revertirán los asientos.');">
+                                            <i class="ti ti-arrow-back-up me-1"></i> REVERTIR TERMINADA
+                                        </button>
+                                    </form>
+                                </div>
+                            }
                         </div>
                     </div>
                 </div>
@@ -114,12 +147,12 @@
 
                                     <tr>
                                       <td>
-                                            <div class="fw-bold fs-13">@c.ProductoInsumo.Nombre</div>
+                                            <div class="fw-bold fs-14">@c.ProductoInsumo.Nombre</div>
                                             <small class="text-muted tiny font-monospace">@c.ProductoInsumo.Codigo</small>
                                         </td>
                                         <td>@c.CantidadPlanificada.ToString("N2")</td>
                                        <td class="fw-bold">@(c.CantidadReal > 0 ? c.CantidadReal.ToString("N2") : "-")</td>
-                                        <td >
+                                        <td title="Plan: @c.CantidadPlanificada.ToString("N2") / Real: @c.CantidadReal.ToString("N2")">
                                             @if (c.CantidadReal > 0)
                                             {
                                                 <span class="badge @(eficiencia < 90 ? "bg-danger-subtle text-danger" : "bg-success-subtle text-success") px-2">@eficiencia.ToString("N1")%</span>
@@ -162,9 +195,3 @@
     </div>
 </div>
 
-<style>
-    .tiny { font-size: 0.65rem; letter-spacing: 0.05em; }
-    .fs-12 { font-size: 0.75rem; }
-    .fs-13 { font-size: 0.8125rem; }
-    .fs-15 { font-size: 1rem; }
-</style>

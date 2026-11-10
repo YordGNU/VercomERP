@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Vercom.ViewModels;
+namespace VERCOM.ViewModels;
 
 public class PaymentRecordViewModel
 {

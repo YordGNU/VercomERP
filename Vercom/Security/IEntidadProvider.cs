@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-namespace Vercom.Security;
+namespace VERCOM.Security;
 
 public interface IEntidadProvider
 {

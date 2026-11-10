@@ -260,7 +260,7 @@
                             <li class="side-nav-item"><a asp-controller="MantenimientoProgramado" asp-action="Index" class="side-nav-link">Mantenimiento Preventivo</a></li>
 
                             <li class="side-nav-title text-primary small mt-2">Costos</li>
-                            <li class="side-nav-item"><a asp-controller="Produccion" asp-action="AnalisisDesviacion" class="side-nav-link">Análisis de Desviaciones</a></li>
+                            <li class="side-nav-item"><a asp-controller="Production" asp-action="Deviations" class="side-nav-link">Análisis de Desviaciones</a></li>
                         </ul>
                     </div>
                 </li>
@@ -269,7 +269,7 @@
             <!-- ════════════════════════════════════════════════════════════════
             ═══ 7. PUNTO DE VENTA (POS) - Módulo 7 ═══
             ════════════════════════════════════════════════════════════════ -->
-            @if (await PuedeAsync("POS.CAJA"))
+            @if (await PuedeAsync("vender"))
             {
                 <li class="side-nav-item">
                     <a data-bs-toggle="collapse" href="#sidebarPos" class="side-nav-link">
@@ -309,13 +309,13 @@
                             @if (await PuedeAsync("REPORTES.INDICADORES.VER"))
                             {
                                 <li class="side-nav-title text-primary small">Gestión</li>
-                                <li class="side-nav-item"><a asp-controller="Reports" asp-action="Dashboard" class="side-nav-link">Dashboard Ejecutivo</a></li>
+                                <li class="side-nav-item"><a asp-controller="Dashboard" asp-action="Index" class="side-nav-link">Dashboard Ejecutivo</a></li>
                             }
                             @if (await PuedeAsync("REPORTES.CONTABLES.VER"))
                             {
-                                <li class="side-nav-item"><a asp-controller="Reports" asp-action="Balance" class="side-nav-link">Balance General</a></li>
-                                <li class="side-nav-item"><a asp-controller="Reports" asp-action="Resultados" class="side-nav-link">Estado de Resultados</a></li>
-                                <li class="side-nav-item"><a asp-controller="Reports" asp-action="Indicadores" class="side-nav-link">Ratios Financieros</a></li>
+                                <li class="side-nav-item"><a asp-controller="Reports" asp-action="Index" class="side-nav-link">Balance General</a></li>
+                                <li class="side-nav-item"><a asp-controller="Reports" asp-action="Index" class="side-nav-link">Estado de Resultados</a></li>
+                                <li class="side-nav-item"><a asp-controller="Indicador" asp-action="Index" class="side-nav-link">Ratios Financieros</a></li>
                             }
                             @if (await PuedeAsync("REPORTES.AUDITORIA.VER"))
                             {

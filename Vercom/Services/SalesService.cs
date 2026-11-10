@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Vercom.Helpers;
-using Vercom.Models;
-using Vercom.ViewModels;
+using VERCOM.Helpers;
+using VERCOM.Models;
+using VERCOM.ViewModels;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public interface ISalesService
 {
@@ -78,7 +78,7 @@ public class SalesService : ISalesService
             .Include(f => f.Contrato)
             .Include(f => f.FacturaVentaDetalles).ThenInclude(d => d.Producto).ThenInclude(p => p.UnidadMedida)
             .Include(f => f.FormaPagoVenta)
-            .Include(f => f.Asiento).ThenInclude(a => a.AsientoDetalles)
+            .Include(f => f.Asiento).ThenInclude(a => a!.AsientoDetalles)
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 

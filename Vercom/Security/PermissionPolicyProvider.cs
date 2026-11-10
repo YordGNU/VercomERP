@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 
-namespace Vercom.Security;
+namespace VERCOM.Security;
 
 public class PermissionPolicyProvider : IAuthorizationPolicyProvider
 {

@@ -1,9 +1,9 @@
-@model Vercom.ViewModels.AttendanceConsoleViewModel
+@model VERCOM.ViewModels.AttendanceConsoleViewModel
 @{
     ViewBag.Title = "Consola de Asistencia";
 }
 
-@{ var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Control de Jornada: " + Model.Date.ToString("dddd, dd MMMM yyyy"), Subtitle = "Captación de incidencias, horas extra y cumplimiento de jornada laboral (RF-21).", Icon = "ti-file", Tone = "primary" }; }
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Sistema", Title = "Control de Jornada: " + Model.Date.ToString("dddd, dd MMMM yyyy"), Subtitle = "Captación de incidencias, horas extra y cumplimiento de jornada laboral (RF-21).", Icon = "ti-file"}; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

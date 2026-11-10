@@ -1,9 +1,9 @@
-@model IEnumerable<Vercom.Models.Existencium>
+@model IEnumerable<VERCOM.Models.Existencium>
 @{
     ViewBag.Title = "Alertas de Inventario";
 }
 
-@{ var headerActions = "<a href='" + Url.Action("Create", "Purchase") + "' class='btn btn-sm btn-outline-danger'><i class='ti ti-shopping-cart-plus me-1'></i> GENERAR ORDEN DE COMPRA</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Alertas de Inventario", Title = "Stock Crítico y Seguridad", Subtitle = "Existencias por agotarse y mínimos de seguridad.", Icon = "ti-alert-triangle", Tone = "danger", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Create", "Purchase") + "' class='btn btn-sm btn-outline-danger'><i class='ti ti-shopping-cart-plus me-1'></i> GENERAR ORDEN DE COMPRA</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Alertas de Inventario", Title = "Stock Crítico y Seguridad", Subtitle = "Existencias por agotarse y mínimos de seguridad.", Icon = "ti-alert-triangle", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

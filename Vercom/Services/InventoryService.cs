@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Vercom.Models;
-using Vercom.ViewModels;
+using VERCOM.Models;
+using VERCOM.ViewModels;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 
 public interface IInventoryService
 {
@@ -663,6 +663,7 @@ public class InventoryService : IInventoryService
         ("CONSUMO_PRODUCCION", "Consumo en Producción", "SALIDA", true),
         ("DEVOLUCION_PRODUCCION", "Devolución de Materiales a Producción", "ENTRADA", true),
         ("ENTRADA_PRODUCCION", "Entrada de Producto Terminado", "ENTRADA", true),
+        ("RETIRO_PRODUCCION", "Retiro de Producto Terminado (reverso)", "SALIDA", false),
         ("VENTA_POS", "Venta en Punto de Venta", "SALIDA", true),
     };
 
@@ -1098,20 +1099,20 @@ public class InventoryService : IInventoryService
                     contraAccId = wipAcc?.Id;
                     break;
                 case "DEVOLUCION_ENTRADA":
-                    var ctaIngresoGeneral = await _paramService.ObtenerValorVigenteAsync(movement.EntidadId, "CTA_INGRESO_GENERAL") ?? "900";
+                    var ctaIngresoGeneral = await _paramService.ObtenerValorVigenteAsync(movement.EntidadId, "CTA_INGRESO_GENERAL") ?? "900.0000";
                     var ingresoGeneralAcc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaIngresoGeneral && c.EntidadId == movement.EntidadId);
                     contraAccId = prod.CuentaIngresoId ?? ingresoGeneralAcc?.Id;
                     break;
                 default:
                     if (tipo.Naturaleza == "ENTRADA")
                     {
-                        var ctaIngresoDefault = await _paramService.ObtenerValorVigenteAsync(movement.EntidadId, "CTA_INGRESO_GENERAL") ?? "900";
+                        var ctaIngresoDefault = await _paramService.ObtenerValorVigenteAsync(movement.EntidadId, "CTA_INGRESO_GENERAL") ?? "900.0000";
                         var ingresoDefaultAcc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaIngresoDefault && c.EntidadId == movement.EntidadId);
                         contraAccId = prod.CuentaIngresoId ?? ingresoDefaultAcc?.Id;
                     }
                     else
                     {
-                        var ctaCostoDefault = await _paramService.ObtenerValorVigenteAsync(movement.EntidadId, "CTA_COSTO_VENTA_GENERAL") ?? "810";
+                        var ctaCostoDefault = await _paramService.ObtenerValorVigenteAsync(movement.EntidadId, "CTA_COSTO_VENTA_GENERAL") ?? "810.0000";
                         var costoDefaultAcc = await _context.CuentaContables.FirstOrDefaultAsync(c => c.Codigo == ctaCostoDefault && c.EntidadId == movement.EntidadId);
                         contraAccId = expenseAccId ?? costoDefaultAcc?.Id;
                     }
@@ -1270,7 +1271,7 @@ public class InventoryService : IInventoryService
             await _context.SaveChangesAsync();
             return true;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
 
             return false;
@@ -1324,7 +1325,7 @@ public class InventoryService : IInventoryService
             result.DeletedCount = productos.Count;
             result.Message = $"{productos.Count} producto(s) eliminado(s) correctamente.";
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             result.Success = false;
             result.Message = "Ocurrió un error al eliminar los productos.";

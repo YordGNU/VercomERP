@@ -1,0 +1,246 @@
+@{
+    ViewBag.Title = "Terminal POS";
+}
+
+@{ var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Punto de venta", Title = "Terminal de Venta", Subtitle = "Cobre en efectivo o por transferencia y emita el ticket sin salir del ERP.", Icon = "ti-device-desktop" }; }
+<partial name="_PageHeader" model="pageHeader" />
+
+<div id="posTerminal"
+     data-token-url="@Url.Action("Token", "Pos")"
+     data-api-base="/api/pos">
+
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body py-2 d-flex flex-wrap align-items-center gap-3">
+            <a asp-controller="Dashboard" asp-action="Index" class="btn btn-sm btn-outline-secondary" title="Volver al panel del ERP">
+                <i class="ti ti-arrow-left me-1"></i>Menú / Panel
+            </a>
+            <div class="d-flex align-items-center gap-2">
+                <label for="posDevice" class="text-muted small text-uppercase fw-bold mb-0">Terminal</label>
+                <select id="posDevice" class="form-select form-select-sm" style="min-width: 260px;" disabled>
+                    <option value="">Cargando terminales…</option>
+                </select>
+            </div>
+            <div id="posShiftState" class="d-flex align-items-center gap-2"></div>
+            <div class="ms-auto d-flex gap-2">
+                <button id="posPending" type="button" class="btn btn-sm btn-outline-warning" disabled>
+                    <i class="ti ti-clock-pause me-1"></i>Ventas pendientes
+                </button>
+                <button id="posReturn" type="button" class="btn btn-sm btn-outline-primary" disabled>
+                    <i class="ti ti-arrow-back-up me-1"></i>Devolución
+                </button>
+                <button id="posOpenShift" type="button" class="btn btn-sm btn-success d-none">
+                    <i class="ti ti-lock-open me-1"></i>Abrir caja
+                </button>
+                <button id="posCloseShift" type="button" class="btn btn-sm btn-outline-danger d-none">
+                    <i class="ti ti-lock me-1"></i>Cerrar caja
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-xl-7">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-light-subtle">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-search me-2 text-primary"></i>Buscar producto</h5>
+                </div>
+                <div class="card-body">
+                    <div class="input-group input-group-lg mb-3">
+                        <span class="input-group-text"><i class="ti ti-barcode"></i></span>
+                        <input id="posSearch" type="text" class="form-control" autocomplete="off" autofocus
+                               placeholder="Escanee el código de barras o escriba código / nombre (F2)" />
+                        <button id="posClearSearch" type="button" class="btn btn-outline-secondary" title="Limpiar">
+                            <i class="ti ti-x"></i>
+                        </button>
+                    </div>
+                    <div id="posCategories" class="d-flex flex-wrap gap-2 mb-3"></div>
+                    <div id="posResults" class="row g-2 pos-results"></div>
+                    <div id="posSearchHint" class="text-muted small mt-2">Seleccione una categoría o escriba al menos 2 caracteres para buscar.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-5">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-light-subtle d-flex justify-content-between align-items-center">
+                    <h5 class="m-0 fw-bold"><i class="ti ti-shopping-cart me-2 text-primary"></i>Venta actual</h5>
+                    <button id="posEmptyCart" type="button" class="btn btn-sm btn-outline-secondary" title="Vaciar">
+                        <i class="ti ti-trash"></i>
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive pos-cart-wrap">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="thead-sm text-uppercase fs-xxs">
+                                <tr>
+                                    <th class="ps-3">Producto</th>
+                                    <th class="text-center" style="width: 110px;">Cant.</th>
+                                    <th class="text-center" style="width: 80px;">Desc. %</th>
+                                    <th class="text-end">Importe</th>
+                                    <th style="width: 40px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="posCartBody">
+                                <tr id="posCartEmpty">
+                                    <td colspan="5" class="text-center text-muted py-4">Sin artículos</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-top-0">
+                    <div class="d-flex justify-content-between fs-5 fw-bold">
+                        <span>TOTAL</span>
+                        <span id="posTotal">0.00</span>
+                    </div>
+                    <label class="text-muted small text-uppercase fw-bold mb-1 mt-2 d-block">Forma de pago</label>
+                    <div id="posPayments" class="d-flex flex-wrap gap-2" role="group" aria-label="Forma de pago">
+                        <input type="radio" class="btn-check" name="posPayment" id="posPayEfectivo" value="EFECTIVO" checked />
+                        <label class="btn btn-outline-success btn-sm flex-fill" for="posPayEfectivo"><i class="ti ti-cash-banknote me-1"></i>Efectivo</label>
+                        <input type="radio" class="btn-check" name="posPayment" id="posPayTransfermovil" value="TRANSFERMOVIL" />
+                        <label class="btn btn-outline-success btn-sm flex-fill" for="posPayTransfermovil"><i class="ti ti-device-mobile me-1"></i>Transfermóvil</label>
+                        <input type="radio" class="btn-check" name="posPayment" id="posPayEnzona" value="ENZONA" />
+                        <label class="btn btn-outline-success btn-sm flex-fill" for="posPayEnzona"><i class="ti ti-qrcode me-1"></i>Enzona</label>
+                        <input type="radio" class="btn-check" name="posPayment" id="posPayTransferencia" value="TRANSFERENCIA_BANCARIA" />
+                        <label class="btn btn-outline-success btn-sm flex-fill" for="posPayTransferencia"><i class="ti ti-building-bank me-1"></i>Transferencia</label>
+                        <input type="radio" class="btn-check" name="posPayment" id="posPayMixto" value="MIXTO" />
+                        <label class="btn btn-outline-success btn-sm flex-fill" for="posPayMixto"><i class="ti ti-arrows-split me-1"></i>Mixto</label>
+                    </div>
+                    <div id="posCashFields" class="row g-2 mt-2 align-items-end">
+                        <div class="col-6">
+                            <label for="posCash" class="text-muted small text-uppercase fw-bold mb-1">Efectivo recibido</label>
+                            <input id="posCash" type="number" min="0" step="0.01" class="form-control form-control-lg text-end" placeholder="0.00" />
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small text-uppercase fw-bold mb-1">Cambio</label>
+                            <div id="posChange" class="form-control form-control-lg text-end bg-light fw-bold">0.00</div>
+                        </div>
+                    </div>
+                    <div id="posTransferFields" class="mt-2 d-none">
+                        <div id="posMixedMethodWrap" class="d-none mb-2">
+                            <label for="posMixedMethod" class="text-muted small text-uppercase fw-bold mb-1">Resto por</label>
+                            <select id="posMixedMethod" class="form-select">
+                                <option value="TRANSFERMOVIL">Transfermóvil</option>
+                                <option value="ENZONA">Enzona</option>
+                                <option value="TRANSFERENCIA_BANCARIA">Transferencia bancaria</option>
+                            </select>
+                            <div class="text-muted tiny mt-1">Se cobrará <b id="posMixedAmount">0.00</b> por este medio.</div>
+                        </div>
+                        <label for="posReference" class="text-muted small text-uppercase fw-bold mb-1">Referencia / No. de operación</label>
+                        <input id="posReference" type="text" maxlength="100" class="form-control" autocomplete="off" placeholder="Opcional" />
+                        <div class="text-muted tiny mt-1">Se cobra el total exacto; no aplica cambio.</div>
+                    </div>
+                    <button id="posCheckout" type="button" class="btn btn-success btn-lg w-100 mt-3" disabled>
+                        <i class="ti ti-cash-banknote me-1"></i>COBRAR
+                    </button>
+                    <div class="text-muted tiny text-center mt-2">Efectivo, Transfermóvil, Enzona o transferencia bancaria. La venta se contabiliza al emitirse.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="posReturnModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="ti ti-arrow-back-up me-2"></i>Devolución de venta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2 align-items-end mb-3">
+                        <div class="col-8">
+                            <label for="posReturnNumber" class="text-muted small text-uppercase fw-bold mb-1">Número de factura</label>
+                            <input id="posReturnNumber" type="text" class="form-control" autocomplete="off" placeholder="Ej. 00000012" />
+                        </div>
+                        <div class="col-4">
+                            <button id="posReturnLoad" type="button" class="btn btn-outline-primary w-100">Cargar factura</button>
+                        </div>
+                    </div>
+                    <div id="posReturnHint" class="text-muted small mb-2">Cargue la factura para ver sus artículos y cantidades devueltas.</div>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="thead-sm text-uppercase fs-xxs">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-end">Vendido</th>
+                                    <th class="text-end">Devuelto</th>
+                                    <th class="text-end">Precio</th>
+                                    <th class="text-center" style="width: 110px;">Devolver</th>
+                                </tr>
+                            </thead>
+                            <tbody id="posReturnLines"></tbody>
+                        </table>
+                    </div>
+                    <div class="row g-2 mt-2">
+                        <div class="col-md-6">
+                            <label for="posReturnReason" class="text-muted small text-uppercase fw-bold mb-1">Motivo</label>
+                            <input id="posReturnReason" type="text" maxlength="200" class="form-control" autocomplete="off" placeholder="Motivo de la devolución" />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="posReturnMethod" class="text-muted small text-uppercase fw-bold mb-1">Forma de reembolso</label>
+                            <select id="posReturnMethod" class="form-select">
+                                <option value="EFECTIVO">Efectivo</option>
+                                <option value="TRANSFERMOVIL">Transfermóvil</option>
+                                <option value="ENZONA">Enzona</option>
+                                <option value="TRANSFERENCIA_BANCARIA">Transferencia bancaria</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <span class="me-auto text-muted small">Total a devolver: <b id="posReturnTotal">0.00</b></span>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button id="posReturnSubmit" type="button" class="btn btn-danger" disabled>Registrar devolución</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    <div class="modal fade" id="posPendingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="ti ti-clock-pause me-2"></i>Ventas pendientes de procesar</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="posPendingHint" class="text-muted small mb-2">Cargando...</div>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="thead-sm text-uppercase fs-xxs">
+                                <tr>
+                                    <th>Clave</th>
+                                    <th>Estado</th>
+                                    <th>Recibida</th>
+                                    <th>Mensaje</th>
+                                    <th class="text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="posPendingLines"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pos-terminal.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script>
+        // Garantizar que el menu lateral quede visible en el terminal POS
+        try {
+            var cfg = JSON.parse(sessionStorage.getItem('__THEME_CONFIG__') || '{}');
+            cfg.sidenavSize = 'default';
+            sessionStorage.setItem('__THEME_CONFIG__', JSON.stringify(cfg));
+        } catch (e) { }
+    </script>
+    <script src="~/js/pages/pos-terminal.js" asp-append-version="true"></script>
+}

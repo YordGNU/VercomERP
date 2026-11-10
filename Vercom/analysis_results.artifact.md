@@ -1,6 +1,6 @@
 # Auditoría de Cumplimiento: Plan de Desarrollo ERP
 
-Se ha realizado una revisión exhaustiva del estado actual del sistema Vercom Elite contrastándolo con las directrices del documento `Plan de desarrollo ERP.txt`. A continuación se detalla el nivel de cumplimiento por módulo y requisito.
+Se ha realizado una revisión exhaustiva del estado actual del sistema VERCOM Elite contrastándolo con las directrices del documento `Plan de desarrollo ERP.txt`. A continuación se detalla el nivel de cumplimiento por módulo y requisito.
 
 ## Resumen Ejecutivo de Avance
 
@@ -10,7 +10,7 @@ Se ha realizado una revisión exhaustiva del estado actual del sistema Vercom El
 | **Módulo 1** | Contabilidad y Finanzas | ✅ Completado | 100% |
 | **Módulo 2** | Recursos Humanos y Nómina | ✅ Completado | 100% |
 | **Módulo 3** | Inventario y Almacén | ✅ Completado | 100% |
-| **Módulo 4** | Producción y Manufactura | ✅ Completado | 100% |
+| **Módulo 4** | Producción y Manufactura | 🔄 En desarrollo | 67% estimado |
 | **Módulo 5** | Compras y Ventas | ✅ Completado | 100% |
 | **Módulo 6** | Reportes e Inteligencia | ✅ Completado | 100% |
 
@@ -37,8 +37,12 @@ Se ha realizado una revisión exhaustiva del estado actual del sistema Vercom El
 - **Novedad Técnica:** Se superó el plan inicial implementando **Gestión por Lotes y Vencimientos**, además del reporte de **Kardex** por producto.
 
 ### Módulo 4: Producción (Metodología MFP)
-- **RF-40 (Fichas de Costo):** Implementadas con el desglose metodológico oficial (MP + MO + GIF).
-- **RF-43 (Desviaciones):** El reporte de cierre de producción calcula automáticamente la eficiencia del consumo.
+- **RF-40:** Fichas de costo versionadas y con aprobación; los importes de MP/MO/GIF aún se capturan manualmente y requieren validación contra fuentes reales.
+- **RF-41:** BOM versionada, órdenes, consumo de insumos y captura de consumo real implementados; pendientes pruebas end-to-end con SQL Server y cierre de cancelación/reversión.
+- **RF-42:** Integración de movimientos con WIP y entrada de producto terminado implementada; la conversión requiere subcuentas imputables por entidad y validación contable de campo.
+- **RF-43:** Desviaciones de costos registradas; falta validar el cálculo y asiento contra datos contables reales.
+- **Complementarios:** Planes, mermas y mantenimiento tienen flujos básicos; el plan sugerido no crea órdenes y el costo de mantenimiento no se contabiliza.
+- **Estimación funcional ponderada:** 67%. Ver criterios, pesos y pendientes en [Docs/PRODUCCION-TESTING.md](Docs/PRODUCCION-TESTING.md). La cobertura automatizada es distinta: 9,75% de líneas en el servicio y controladores principales.
 
 ### Módulo 5: Comercial
 - **RF-50 (Contratos):** Los contratos económicos son obligatorios para ventas mayoristas y el sistema bloquea operaciones fuera de contrato.
@@ -59,4 +63,4 @@ Se ha realizado una revisión exhaustiva del estado actual del sistema Vercom El
 > **Blindaje Multi-Entidad:** El ERP es ahora capaz de alojar múltiples S.U.R.L. de forma aislada y segura, con un Administrador Maestro que posee visión total (Omnipresencia), cumpliendo con el modelo de negocio escalable.
 
 ## Recomendación Final
-El plan de desarrollo se considera **FINALIZADO** en su etapa de construcción. El sistema está listo para pasar a la fase de **Despliegue y Pruebas de Campo**.
+El porcentaje de completamiento no debe declararse 100% basándose solo en pantallas o compilación. Producción se estima en **67% funcional** y requiere cerrar los pendientes señalados y completar pruebas con SQL Server y validación de la política contable por entidad antes de pruebas de campo.

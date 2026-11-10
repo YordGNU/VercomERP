@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Vercom.Security;
-using Vercom.Services;
-using Vercom.ViewModels;
+using VERCOM.Security;
+using VERCOM.Services;
+using VERCOM.ViewModels;
 
-namespace Vercom.Controllers;
+namespace VERCOM.Controllers;
 
 [Authorize]
 public class CuentaPorPagarController : Controller
@@ -56,7 +56,7 @@ public class CuentaPorPagarController : Controller
             return View(reload);
         }
 
-        var result = await _carteraService.CreateCxPAsync(vm.Item, _entidadProvider.CurrentEntidadId);
+        var result = await _carteraService.CreateCxPAsync(vm.Item, _entidadProvider.CurrentEntidadId, _entidadProvider.CurrentUsuarioId);
         if (!result.Succeeded)
         {
             ModelState.AddModelError("", result.Message);
@@ -92,7 +92,7 @@ public class CuentaPorPagarController : Controller
             return View(reload);
         }
 
-        var result = await _carteraService.UpdateCxPAsync(vm.Item, _entidadProvider.CurrentEntidadId);
+        var result = await _carteraService.UpdateCxPAsync(vm.Item, _entidadProvider.CurrentEntidadId, _entidadProvider.CurrentUsuarioId);
         if (!result.Succeeded)
         {
             ModelState.AddModelError("", result.Message);

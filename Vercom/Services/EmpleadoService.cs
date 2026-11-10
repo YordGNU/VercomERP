@@ -1,9 +1,9 @@
 ﻿// Services/EmpleadoService.cs
 using Microsoft.EntityFrameworkCore;
-using Vercom.Models;
-using Vercom.ViewModels;
+using VERCOM.Models;
+using VERCOM.ViewModels;
 
-namespace Vercom.Services;
+namespace VERCOM.Services;
 // Services/IEmpleadoService.cs
 
 
@@ -53,11 +53,8 @@ public class EmpleadoService : IEmpleadoService
 
         // Calcular edad
         var edad = 0;
-        if (empleado.FechaNacimiento != null)
-        {
-            edad = hoy.Year - empleado.FechaNacimiento.Year;
-            if (hoy < empleado.FechaNacimiento.AddYears(edad)) edad--;
-        }
+        edad = hoy.Year - empleado.FechaNacimiento.Year;
+        if (hoy < empleado.FechaNacimiento.AddYears(edad)) edad--;
 
         // Obtener saldo de vacaciones del año actual
         var saldoVacaciones = await _context.SaldoVacaciones

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Vercom.Models;
+namespace VERCOM.Models;
 
 public partial class UtileResponsabilidad
 {

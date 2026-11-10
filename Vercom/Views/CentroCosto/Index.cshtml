@@ -1,7 +1,7 @@
-@model IEnumerable<Vercom.Models.CentroCosto>
+@model IEnumerable<VERCOM.Models.CentroCosto>
 @{ ViewBag.Title = "Centros de Costo"; }
 
-@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVO CENTRO COSTO</a>"; var pageHeader = new Vercom.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Centros de Costo", Subtitle = "Distribución y seguimiento de costos por centro de responsabilidad.", Icon = "ti-chart-pie", Tone = "primary", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
+@{ var headerActions = "<a href='" + Url.Action("Create") + "' class='btn btn-sm btn-primary'><i class='ti ti-plus me-1'></i> NUEVO CENTRO COSTO</a>"; var pageHeader = new VERCOM.ViewModels.PageHeaderModel { Eyebrow = "Contabilidad", Title = "Centros de Costo", Subtitle = "Distribución y seguimiento de costos por centro de responsabilidad.", Icon = "ti-chart-pie", ActionsHtml = new Microsoft.AspNetCore.Html.HtmlString(headerActions) }; }
 <partial name='_PageHeader' model='pageHeader' />
 
 

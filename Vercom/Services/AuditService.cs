@@ -1,8 +1,8 @@
 ﻿using System.Security.Claims;
-using Vercom.Helpers;
-using Vercom.Models;
+using VERCOM.Helpers;
+using VERCOM.Models;
 
-namespace Vercom.Services
+namespace VERCOM.Services
 {
     public class AuditService
     {

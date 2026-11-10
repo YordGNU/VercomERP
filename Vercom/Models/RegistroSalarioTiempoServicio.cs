@@ -1,4 +1,4 @@
-﻿namespace Vercom.Models;
+﻿namespace VERCOM.Models;
 
 /// <summary>
 /// Equivalente a modelo SC-4-08 u oficial vigente MTSS.
