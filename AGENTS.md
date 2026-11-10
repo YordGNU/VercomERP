@@ -381,3 +381,16 @@ Deuda restante (priorizada):
 
 Despliegue (hecho 2026-10-28): local y VM resembrados con el seed del repo, E2E completo (venta 810 → devolucion 405 → cierre 1405=1405, 0 descuadres, stock 99), sesion reabierta. Backups en %TEMP%\opencode\dbbackup (local) y /opt/vercom/backups (VM).
 - Restore drill (2026-10-29): backup local VERCOMERP-local-20261028-113542.bak restaurado en BD temporal VERCOMRESTORETEST (MOVE de data/log) + DBCC CHECKDB sin errores; 2 productos, 1 factura, 4 asientos, 0 descuadres, 1 sesion CERRADA. Procedimiento validado; RPO/RTO por definir por la administracion.
+
+
+## Tanda 2026-11-10 - endurecimiento del terminal POS y pruebas contra la API
+
+- PosAuthService (API JWT del POS): bloqueo tras 5 intentos fallidos (15 min), reinicio del contador en login valido, registro de UltimoLogin y verificacion BCrypt de descarte cuando el usuario no existe (el tiempo de respuesta no delata usuarios validos).
+- Tokens POS: claims jti/iat/pwdstamp. PosTokenValidator + OnTokenValidated rechazan el token si la cuenta se desactiva o si la contrasena cambio; los tokens emitidos antes de este cambio dejan de valer (los usuarios deben volver a entrar).
+- Rate limiting por IP: pos-login 10/min, pos-config 20/min, pos-api 600/min. Verificado en vivo: intento 11 de login devuelve 429.
+- SecurityHeadersMiddleware: nosniff, X-Frame-Options SAMEORIGIN, Referrer-Policy, Permissions-Policy; /api/* responde no-store y CSP default-src 'none'. /metrics deja de ser anonimo (302 al login; el JWT no lo abre).
+- Pruebas backend nuevas: PosAuthSecurityTests (8) y PosHardeningTests (8). Suite completa 115/126; los 11 fallos son los preexistentes por datos del seed minimo (POS/cartera).
+- Pruebas Android: ApiContractTest (8, Gson contra el JSON real del backend) y LiveApiContractTest (6, HttpURLConnection contra VERCOM_API_BASE_URL/USER/PASSWORD; se omiten sin variables). Las 14 pasan contra el Docker local.
+- Gradle: el wrapper 8.13 no arranca con JDK 25; se compilo con Adoptium 21 en C:\Users\Usuario\AppData\Local\Temp\opencode\jdk21\jdk-21.0.13+9 (JAVA_HOME solo para la sesion).
+- Despliegue local: imagen reconstruida y recreada (commit a227483); /health 200, /POS 200, /POS/Token 200 y /api/pos/auth/me con ese token 200.
+- El repo Android (VercomPOS) quedo 3 commits adelante de origin/master (2 previos del usuario + las pruebas de contrato); no se hizo push.
