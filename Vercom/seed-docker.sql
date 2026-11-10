@@ -84,6 +84,14 @@ IF NOT EXISTS (SELECT 1 FROM contabilidad.cuenta_contable WHERE entidad_id = @En
 IF NOT EXISTS (SELECT 1 FROM contabilidad.cuenta_contable WHERE entidad_id = @EntidadId AND codigo = '930.0010')
     INSERT INTO contabilidad.cuenta_contable (id, entidad_id, codigo, nombre, clase, naturaleza, nivel, acepta_movimiento, requiere_centro_costo, requiere_tercero, moneda, activo, creado_en) VALUES (@CtaAjusteId, @EntidadId, '930.0010', 'Ingreso por Ajuste de Inventario', 'INGRESOS', 'ACREEDORA', 1, 1, 0, 0, 'CUP', 1, SYSDATETIMEOFFSET());
 
+-- Contrapartidas del alta manual de cartera (ReceivablesPayablesService): sin estas
+-- cuentas el asiento de apertura de una CxC/CxP manual no se puede contabilizar.
+IF NOT EXISTS (SELECT 1 FROM contabilidad.cuenta_contable WHERE entidad_id = @EntidadId AND codigo = '951')
+    INSERT INTO contabilidad.cuenta_contable (id, entidad_id, codigo, nombre, clase, naturaleza, nivel, acepta_movimiento, requiere_centro_costo, requiere_tercero, moneda, activo, creado_en) VALUES (NEWID(), @EntidadId, '951', 'Otros Ingresos - Contrapartida Alta CxC', 'INGRESOS', 'ACREEDORA', 1, 1, 0, 0, 'CUP', 1, SYSDATETIMEOFFSET());
+
+IF NOT EXISTS (SELECT 1 FROM contabilidad.cuenta_contable WHERE entidad_id = @EntidadId AND codigo = '865')
+    INSERT INTO contabilidad.cuenta_contable (id, entidad_id, codigo, nombre, clase, naturaleza, nivel, acepta_movimiento, requiere_centro_costo, requiere_tercero, moneda, activo, creado_en) VALUES (NEWID(), @EntidadId, '865', 'Otros Gastos - Contrapartida Alta CxP', 'GASTOS', 'DEUDORA', 1, 1, 0, 0, 'CUP', 1, SYSDATETIMEOFFSET());
+
 -- ==============================================================================
 -- 3. TIPOS DE COMPROBANTE Y PERIODO CONTABLE ABIERTO
 -- ==============================================================================
@@ -434,6 +442,12 @@ IF NOT EXISTS (SELECT 1 FROM nucleo.parametro_sistema WHERE entidad_id = @Entida
 
 IF NOT EXISTS (SELECT 1 FROM nucleo.parametro_sistema WHERE entidad_id = @EntidadId AND codigo = 'CTA_CXC_CLIENTES')
     INSERT INTO nucleo.parametro_sistema (entidad_id, codigo, valor, tipo_dato, descripcion, vigente_desde) VALUES (@EntidadId, 'CTA_CXC_CLIENTES', '135.0000', 'STRING', 'Cuenta de CXC clientes', CAST(GETDATE() AS DATE));
+
+IF NOT EXISTS (SELECT 1 FROM nucleo.parametro_sistema WHERE entidad_id = @EntidadId AND codigo = 'CTA_CONTRA_ALTA_CXC')
+    INSERT INTO nucleo.parametro_sistema (entidad_id, codigo, valor, tipo_dato, descripcion, vigente_desde) VALUES (@EntidadId, 'CTA_CONTRA_ALTA_CXC', '951', 'STRING', 'Contrapartida del alta manual de CxC', CAST(GETDATE() AS DATE));
+
+IF NOT EXISTS (SELECT 1 FROM nucleo.parametro_sistema WHERE entidad_id = @EntidadId AND codigo = 'CTA_CONTRA_ALTA_CXP')
+    INSERT INTO nucleo.parametro_sistema (entidad_id, codigo, valor, tipo_dato, descripcion, vigente_desde) VALUES (@EntidadId, 'CTA_CONTRA_ALTA_CXP', '865', 'STRING', 'Contrapartida del alta manual de CxP', CAST(GETDATE() AS DATE));
 
 IF NOT EXISTS (SELECT 1 FROM nucleo.parametro_sistema WHERE entidad_id = @EntidadId AND codigo = 'CTA_IMP_VENTAS')
     INSERT INTO nucleo.parametro_sistema (entidad_id, codigo, valor, tipo_dato, descripcion, vigente_desde) VALUES (@EntidadId, 'CTA_IMP_VENTAS', '440.0001', 'STRING', 'Cuenta del impuesto de ventas', CAST(GETDATE() AS DATE));

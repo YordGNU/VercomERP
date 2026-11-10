@@ -389,8 +389,11 @@ Despliegue (hecho 2026-10-28): local y VM resembrados con el seed del repo, E2E 
 - Tokens POS: claims jti/iat/pwdstamp. PosTokenValidator + OnTokenValidated rechazan el token si la cuenta se desactiva o si la contrasena cambio; los tokens emitidos antes de este cambio dejan de valer (los usuarios deben volver a entrar).
 - Rate limiting por IP: pos-login 10/min, pos-config 20/min, pos-api 600/min. Verificado en vivo: intento 11 de login devuelve 429.
 - SecurityHeadersMiddleware: nosniff, X-Frame-Options SAMEORIGIN, Referrer-Policy, Permissions-Policy; /api/* responde no-store y CSP default-src 'none'. /metrics deja de ser anonimo (302 al login; el JWT no lo abre).
-- Pruebas backend nuevas: PosAuthSecurityTests (8) y PosHardeningTests (8). Suite completa 115/126; los 11 fallos son los preexistentes por datos del seed minimo (POS/cartera).
+- Pruebas backend nuevas: PosAuthSecurityTests (8) y PosHardeningTests (8). Suite completa 126/126 tras arreglar los datos del seed minimo:
+  - `seed-docker.sql` siembra las cuentas 951/865 y los parametros CTA_CONTRA_ALTA_CXC/CTA_CONTRA_ALTA_CXP que exige ReceivablesPayablesService; sin ellas el alta manual de CxC/CxP no podia contabilizar el asiento de apertura.
+  - `PosVentaFixture` resuelve el tipo de movimiento de venta por codigo (VENTA/VENTA_POS o primera SALIDA que afecta costo) en vez del id fijo 2334, que no es estable entre instalaciones.
 - Pruebas Android: ApiContractTest (8, Gson contra el JSON real del backend) y LiveApiContractTest (6, HttpURLConnection contra VERCOM_API_BASE_URL/USER/PASSWORD; se omiten sin variables). Las 14 pasan contra el Docker local.
 - Gradle: el wrapper 8.13 no arranca con JDK 25; se compilo con Adoptium 21 en C:\Users\Usuario\AppData\Local\Temp\opencode\jdk21\jdk-21.0.13+9 (JAVA_HOME solo para la sesion).
 - Despliegue local: imagen reconstruida y recreada (commit a227483); /health 200, /POS 200, /POS/Token 200 y /api/pos/auth/me con ese token 200.
-- El repo Android (VercomPOS) quedo 3 commits adelante de origin/master (2 previos del usuario + las pruebas de contrato); no se hizo push.
+- El repo Android (VercomPOS) quedo sincronizado con origin/master (commit c2e9835, pruebas de contrato) y las 14 pruebas pasan contra el Docker local, incluidas las 6 en vivo.
+- La VM 192.168.5.220 sigue inalcanzable (ping y SSH fallan); quedo en c027e7e y le faltan los commits posteriores. Reintentar `deploy.ps1 -Version latest -SkipBuild` cuando responda.

@@ -24,7 +24,8 @@ public static class PosVentaFixture
         decimal ExistenciaInicial,
         decimal CostoPromedio,
         string Serie,
-        string NumeroFactura);
+        string NumeroFactura,
+        int TipoMovimientoId);
 
     public static async Task<ContextoVenta> PrepararAsync(AppDbContext db, PosFixture.SesionPos sesion, decimal existenciaInicial = 1000m)
     {
@@ -69,6 +70,20 @@ public static class PosVentaFixture
 
         await db.SaveChangesAsync();
 
+        // El id de "venta a cliente" no es estable entre instalaciones (identity):
+        // se resuelve por código y solo se cae al id histórico si la tabla está vacía.
+        var tipoMovimientoId = await db.TipoMovimientos.AsNoTracking()
+            .Where(t => t.Codigo == "VENTA" || t.Codigo == "VENTA_POS")
+            .OrderBy(t => t.Id)
+            .Select(t => (int?)t.Id)
+            .FirstOrDefaultAsync()
+            ?? await db.TipoMovimientos.AsNoTracking()
+                .Where(t => t.Naturaleza == "SALIDA" && t.AfectaCosto)
+                .OrderBy(t => t.Id)
+                .Select(t => (int?)t.Id)
+                .FirstOrDefaultAsync()
+            ?? TipoMovimientoVentaACliente;
+
         // Serie/número fuera de los rangos reales (POS/A/ERP) para no chocar con el
         // índice único (entidad, sucursal, serie, número).
         var serie = "TST";
@@ -83,7 +98,8 @@ public static class PosVentaFixture
             existenciaInicial,
             existencia.CostoPromedio,
             serie,
-            numero);
+            numero,
+            tipoMovimientoId);
     }
 
     /// <summary>
@@ -148,7 +164,7 @@ public static class PosVentaFixture
             SucursalId = ctx.SucursalId,
             ClienteId = ctx.ClienteId,
             AlmacenId = ctx.AlmacenId,
-            TipoMovimientoId = TipoMovimientoVentaACliente,
+            TipoMovimientoId = ctx.TipoMovimientoId,
             NumeroFactura = numeroFactura ?? ctx.NumeroFactura,
             Serie = ctx.Serie,
             Fecha = DateTimeOffset.UtcNow,
