@@ -50,17 +50,26 @@ public class PosSyncBackgroundWorker : BackgroundService
 
         foreach (var pending in pendingList)
         {
+            // Un contexto por venta: un intento fallido (interbloqueo, existencia insuficiente)
+            // deja la factura y el movimiento a medio añadir en el ChangeTracker y, al compartir
+            // contexto, las siguientes ventas del lote se rechazarían como "numeración duplicada".
+            using var itemScope = _serviceProvider.CreateScope();
+            var itemContext = itemScope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var item = await itemContext.PosVentaPendientes.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(p => p.Id == pending.Id, ct);
+            if (item is null || item.Estado != "PENDIENTE") continue;
+
             try
             {
-                await ProcesarPendienteAsync(context, scope.ServiceProvider, pending, ct);
+                await ProcesarPendienteAsync(itemContext, itemScope.ServiceProvider, item, ct);
             }
             catch (Exception ex)
             {
                 // Una fila venenosa (FK rota, número duplicado, cuenta contable sin resolver...)
                 // no debe abortar el barrido completo: se marca ERROR —visible para el operador
                 // y sin reintento infinito— y el resto del lote sigue procesándose.
-                _logger.LogError(ex, "POS: falló el procesamiento de la venta pendiente {PendienteId}.", pending.Id);
-                await MarcarErrorAsync(context, pending, ex.Message, ct);
+                _logger.LogError(ex, "POS: falló el procesamiento de la venta pendiente {PendienteId}.", item.Id);
+                await MarcarErrorAsync(itemContext, item, ex.Message, ct);
             }
         }
     }

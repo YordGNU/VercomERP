@@ -89,7 +89,10 @@ public sealed class PosSincronizacionController : ControllerBase
         return result is null ? NotFound() : Ok(result);
     }
 
+    // El terminal Android llama a "procesar" con POST (su contrato de API); se mantiene
+    // también GET para no romper a otros consumidores que ya lo invocan así.
     [HttpGet("ventas/{dispositivoPosId:guid}/{idempotencyKey}/procesar")]
+    [HttpPost("ventas/{dispositivoPosId:guid}/{idempotencyKey}/procesar")]
     public async Task<ActionResult<VentaPosPendienteDto>> Procesar(Guid dispositivoPosId, string idempotencyKey, CancellationToken cancellationToken = default)
     {
         var result = await _service.ProcesarAsync(dispositivoPosId, idempotencyKey, cancellationToken);

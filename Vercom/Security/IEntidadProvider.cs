@@ -51,7 +51,12 @@ public class HttpContextEntidadProvider : IEntidadProvider
         get
         {
             var user = _httpContextAccessor.HttpContext?.User;
-            if (user == null) return false;
+            // Sin contexto HTTP no hay usuario al que aislar: son procesos internos (worker de
+            // sincronización POS, tareas de fondo). Devolver false vaciaba TODAS las consultas
+            // por el filtro global (EntidadId == Guid.Empty) y, entre otros efectos, el POS
+            // intentaba crear un periodo contable ya existente y la venta fallaba con una
+            // clave duplicada. Los procesos internos ven todas las filas, como el usuario master.
+            if (user == null) return true;
 
             // Prioridad: Rol MASTER, Fallback: Nombre de usuario 'master'
             return user.IsInRole("MASTER") || user.Identity?.Name == "master";

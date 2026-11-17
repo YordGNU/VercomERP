@@ -202,6 +202,12 @@ public sealed class PosSincronizacionService
                 var resultado = await ProcesarCoreAsync(deviceId, key, cancellationToken);
                 if (resultado.Error is not null && !resultado.Conflict)
                     await MarcarPendienteErrorAsync(deviceId, key, resultado.Error, cancellationToken);
+                // Un conflicto deja la transacción revertida pero el contexto sucio (factura y
+                // movimiento añadidos): al compartirse el DbContext entre ventas del mismo lote
+                // esas entidades fantasma harían que la siguiente venta se rechazara como
+                // "numeración duplicada". Se limpia antes de devolver el conflicto.
+                if (resultado.Conflict)
+                    await RevertirCambiosFallidosAsync(cancellationToken);
                 return resultado;
             }
             catch (DbUpdateException ex) when (EsNumeracionDuplicada(ex))
@@ -223,10 +229,14 @@ public sealed class PosSincronizacionService
             }
             catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 1205 })
             {
+                // El interbloqueo revierte la transacción, no el ChangeTracker: sin limpiarlo el
+                // reintento arrastraría la factura del intento fallido (falso duplicado).
+                await RevertirCambiosFallidosAsync(cancellationToken);
                 await Task.Delay(100 * attempt, cancellationToken);
             }
             catch (SqlException ex) when (ex.Number == 1205)
             {
+                await RevertirCambiosFallidosAsync(cancellationToken);
                 await Task.Delay(100 * attempt, cancellationToken);
             }
             catch (DbUpdateException)
@@ -238,9 +248,16 @@ public sealed class PosSincronizacionService
         return (null, "Ocurrió un conflicto de concurrencia al procesar la venta; reintente.", true);
     }
 
-    private static bool EsNumeracionDuplicada(DbUpdateException ex) =>
-        ex.InnerException is SqlException { Number: 2601 or 2627 } ||
-        ex.InnerException?.InnerException is SqlException { Number: 2601 or 2627 };
+    // Solo los índices de numeración de documentos (factura y movimiento de inventario) son
+    // realmente un duplicado de numeración. Otras claves únicas (v. gr. periodo contable)
+    // llegaban aquí y el operador veía "Ya existe una factura..." con un motivo falso.
+    private static bool EsNumeracionDuplicada(DbUpdateException ex)
+    {
+        var sql = (ex.InnerException as SqlException) ?? (ex.InnerException?.InnerException as SqlException);
+        if (sql is not { Number: 2601 or 2627 }) return false;
+        return sql.Message.Contains("UQ__factura___", StringComparison.Ordinal)
+            || sql.Message.Contains("UQ__movimien__", StringComparison.Ordinal);
+    }
 
     // Tras un SaveChanges fallido el contexto queda sucio: ProcesarCoreAsync ya marcó el
     // pendiente PROCESADO (y sumó los totales de la sesión) en memoria antes de guardar, así

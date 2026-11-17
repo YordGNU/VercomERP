@@ -371,6 +371,9 @@ secrets/
 nginx/certs/
 *.crt
 *.key
+# Backups del certificado anterior (creados al regenerarlo con SAN)
+*.crt.*.bak
+*.key.*.bak
 
 # Artefactos de pruebas HTTP manuales (curl/Invoke-WebRequest)
 cookies.txt
